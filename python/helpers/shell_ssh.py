@@ -38,7 +38,6 @@ class SSHInteractiveSession:
                     self.port,
                     self.username,
                     self.password,
-                    allow_atulya=False,
                     look_for_keys=False,
                 )
                 self.shell = self.client.invoke_shell(width=160, height=48)
