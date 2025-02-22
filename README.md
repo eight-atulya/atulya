@@ -242,27 +242,9 @@ ATULYA/
 
 ### Installation
 
-1. **Clone the Repository:**
-   ```bash
-   git clone <ATULYA_repo_url>
-   cd ATULYA
-   ```
-
-2. **Install Dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. **Configure the Environment:**
-   Update configuration files under `config/` (e.g., `development.yaml`, `production.yaml`, and `symbiosis_config.yaml`) as needed.
-
-4. **Run the Application Locally:**
-   ```bash
-   python src/atulya/__main__.py
-   ```
-   Open your browser at `http://localhost:5000` to access the web dashboard.
-
----
+```
+COMING SOON
+```
 
 ## Features
 
