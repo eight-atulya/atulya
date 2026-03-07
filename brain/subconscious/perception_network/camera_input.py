@@ -1,1 +1,0 @@
-# Captures live camera feeds.

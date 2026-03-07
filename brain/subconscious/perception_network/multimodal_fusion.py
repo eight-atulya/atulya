@@ -1,1 +1,0 @@
-# Fuses sensory data into a unified percept.

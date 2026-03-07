@@ -1,1 +1,0 @@
-# Manages real-time webhooks.

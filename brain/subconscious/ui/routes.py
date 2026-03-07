@@ -1,1 +1,0 @@
-# Defines API endpoints and page routes.

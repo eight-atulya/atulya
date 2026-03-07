@@ -1,1 +1,0 @@
-# Generates emotional responses.

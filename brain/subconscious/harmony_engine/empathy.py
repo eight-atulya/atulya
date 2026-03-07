@@ -1,1 +1,0 @@
-# Provides empathetic responses.

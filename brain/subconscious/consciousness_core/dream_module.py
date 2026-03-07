@@ -1,1 +1,0 @@
-# Simulates creative dreaming.

@@ -1,1 +1,0 @@
-# Implements logical reasoning with fractal noise.

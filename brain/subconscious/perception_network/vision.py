@@ -1,1 +1,0 @@
-# Analyzes visual data.

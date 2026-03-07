@@ -1,1 +1,0 @@
-# Interprets textual data.

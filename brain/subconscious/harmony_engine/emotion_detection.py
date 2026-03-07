@@ -1,1 +1,0 @@
-# Detects sentiment from inputs.

@@ -1,1 +1,0 @@
-# Manages user/API authentication.
