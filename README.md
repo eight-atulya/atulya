@@ -2,6 +2,8 @@
 
 ATULYA stands for an algorithm that utilises, learns, yields, and adapts.
 
+>Integrity-Gated State Maintenance for Autonomous Agents and Distributed Multi-Repository Systems Using Scope-Localized Verification and Proof Certificates
+
 It is built to bring the beauty of algorithms and maths back into everyday life and work, in a way that feels simple, useful, and human.
 
 ## Open Patent
