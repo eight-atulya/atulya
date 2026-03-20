@@ -6,6 +6,18 @@ ATULYA stands for an algorithm that utilises, learns, yields, and adapts.
 
 It is built to bring the beauty of algorithms and maths back into everyday life and work, in a way that feels simple, useful, and human.
 
+## What this repository should optimize for
+
+The README should answer what ATULYA is in one pass.
+The protocol itself should live in structured docs so that future commits are easy to place, review, and extend.
+
+### Start here
+
+- [`docs/README.md`](docs/README.md) — documentation map for the repository.
+- [`docs/protocol/README.md`](docs/protocol/README.md) — protocol index and reading order.
+- [`docs/protocol/design-direction.md`](docs/protocol/design-direction.md) — architectural direction and adoption strategy.
+- [`docs/protocol/record-model.md`](docs/protocol/record-model.md) — canonical record model, types, and record families.
+
 ## Integrity-Gated State Maintenance
 
 The flow below summarizes **Integrity-Gated State Maintenance for Autonomous Agents and Distributed Multi-Repository Systems Using Scope-Localized Verification and Proof Certificates**.
