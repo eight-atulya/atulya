@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand Identity Palette — Black / White / Red</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --max: 1240px;
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+
+      --space-1: 8px;
+      --space-2: 12px;
+      --space-3: 16px;
+      --space-4: 20px;
+      --space-5: 24px;
+      --space-6: 32px;
+      --space-7: 40px;
+      --space-8: 56px;
+
+      --shadow-lg: 0 24px 70px rgba(0,0,0,.18);
+      --shadow-md: 0 14px 40px rgba(0,0,0,.10);
+
+      --red: #ff2b2b;
+      --red-deep: #c1121f;
+      --red-soft: #ff6b6b;
+
+      --bg: #070707;
+      --bg-elevated: rgba(255,255,255,.03);
+      --panel: rgba(255,255,255,.04);
+      --panel-strong: rgba(255,255,255,.06);
+      --text: #f5f5f7;
+      --text-dim: #d5d5db;
+      --text-soft: #a6a6b0;
+      --line: rgba(255,255,255,.10);
+      --line-strong: rgba(255,255,255,.18);
+      --hero-glow: rgba(255,43,43,.13);
+      --topbar: rgba(7,7,7,.72);
+      --chip: rgba(255,255,255,.05);
+      --mock-bg: #0b0b0c;
+      --black-swatch: #000000;
+      --white-swatch: #ffffff;
+    }
+
+    html[data-theme="light"]{
+      --bg: #f5f5f3;
+      --bg-elevated: rgba(255,255,255,.78);
+      --panel: rgba(255,255,255,.86);
+      --panel-strong: rgba(255,255,255,.96);
+      --text: #111111;
+      --text-dim: #3d3d45;
+      --text-soft: #666670;
+      --line: rgba(10,10,10,.10);
+      --line-strong: rgba(10,10,10,.18);
+      --hero-glow: rgba(255,43,43,.10);
+      --topbar: rgba(245,245,243,.76);
+      --chip: rgba(0,0,0,.05);
+      --mock-bg: #ffffff;
+      --shadow-lg: 0 22px 60px rgba(0,0,0,.08);
+      --shadow-md: 0 12px 30px rgba(0,0,0,.06);
+    }
+
+    *{ box-sizing:border-box; }
+    html{ scroll-behavior:smooth; }
+    body{
+      margin:0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color:var(--text);
+      line-height:1.5;
+      letter-spacing:-0.01em;
+      background:
+        radial-gradient(circle at 12% 14%, var(--hero-glow), transparent 26%),
+        radial-gradient(circle at 88% 0%, rgba(255,255,255,.05), transparent 18%),
+        linear-gradient(180deg, var(--bg) 0%, var(--bg) 100%);
+      transition: background .25s ease, color .25s ease;
+    }
+
+    a{ color:inherit; }
+    img{ max-width:100%; display:block; }
+    button{ font:inherit; }
+
+    .container{
+      width:min(100%, var(--max));
+      margin-inline:auto;
+      padding-inline: 28px;
+    }
+
+    .surface{
+      background:linear-gradient(180deg, var(--panel), var(--bg-elevated));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-lg);
+      backdrop-filter: blur(14px);
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      backdrop-filter: blur(18px);
+      background:var(--topbar);
+      border-bottom:1px solid var(--line);
+    }
+
+    .topbar-inner{
+      width:min(100%, var(--max));
+      margin-inline:auto;
+      padding:14px 28px;
+      display:grid;
+      grid-template-columns:auto 1fr auto;
+      align-items:center;
+      gap:20px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:max-content;
+      font-weight:700;
+      letter-spacing:-.04em;
+    }
+
+    .brand-mark{
+      width:16px;
+      height:16px;
+      border-radius:5px;
+      background:linear-gradient(135deg, var(--red), var(--red-deep));
+      box-shadow:0 0 22px rgba(255,43,43,.35);
+      flex:0 0 auto;
+    }
+
+    .nav{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+
+    .nav a{
+      text-decoration:none;
+      color:var(--text-dim);
+      font-size:.93rem;
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid transparent;
+      transition:.18s ease;
+      white-space:nowrap;
+    }
+
+    .nav a:hover{
+      color:var(--text);
+      border-color:var(--line);
+      background:var(--chip);
+    }
+
+    .theme-toggle{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:var(--panel);
+      color:var(--text);
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .theme-toggle:hover{
+      transform:translateY(-1px);
+      border-color:var(--line-strong);
+    }
+
+    .theme-dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:linear-gradient(135deg, var(--red), var(--red-deep));
+      box-shadow:0 0 16px rgba(255,43,43,.35);
+    }
+
+    main{
+      padding-block: 30px 52px;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: minmax(0, 1.35fr) minmax(300px, .8fr);
+      gap:24px;
+      align-items:stretch;
+      margin-bottom: var(--space-7);
+    }
+
+    .hero-card,
+    .panel{
+      border-radius:var(--radius-xl);
+    }
+
+    .hero-card{
+      position:relative;
+      overflow:hidden;
+      padding: clamp(24px, 4vw, 38px);
+    }
+
+    .hero-card::after{
+      content:"";
+      position:absolute;
+      right:-90px;
+      bottom:-120px;
+      width:280px;
+      height:280px;
+      background:radial-gradient(circle, rgba(255,43,43,.18), transparent 66%);
+      pointer-events:none;
+    }
+
+    .eyebrow{
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      margin-bottom:18px;
+      color:var(--text-soft);
+      font-size:.82rem;
+      letter-spacing:.16em;
+      text-transform:uppercase;
+    }
+
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      background:var(--red);
+      flex:0 0 auto;
+    }
+
+    h1{
+      margin:0 0 16px;
+      font-size:clamp(2.6rem, 5vw, 4.75rem);
+      line-height:.96;
+      letter-spacing:-.07em;
+      max-width:10ch;
+      text-wrap:balance;
+    }
+
+    .lead{
+      margin:0 0 24px;
+      max-width:62ch;
+      color:var(--text-dim);
+      font-size:1.03rem;
+    }
+
+    .hero-actions{
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+    }
+
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      min-height:46px;
+      padding:0 16px;
+      border-radius:999px;
+      text-decoration:none;
+      font-weight:600;
+      border:1px solid var(--line-strong);
+      transition:.18s ease;
+    }
+
+    .btn:hover{ transform:translateY(-1px); }
+
+    .btn-primary{
+      background:var(--text);
+      color:var(--bg);
+      border-color:transparent;
+    }
+
+    .btn-secondary{
+      background:var(--panel);
+      color:var(--text);
+    }
+
+    .side-card{
+      display:grid;
+      gap:16px;
+      padding:22px;
+      align-content:start;
+    }
+
+    .mini-stat{
+      min-height:110px;
+      padding:18px;
+      border-radius:18px;
+      background:var(--panel);
+      border:1px solid var(--line);
+      display:grid;
+      align-content:start;
+      gap:8px;
+    }
+
+    .mini-stat h3{
+      margin:0;
+      font-size:.78rem;
+      color:var(--text-soft);
+      text-transform:uppercase;
+      letter-spacing:.14em;
+    }
+
+    .mini-stat p{
+      margin:0;
+      font-size:1.05rem;
+      line-height:1.35;
+      font-weight:650;
+      max-width:24ch;
+      text-wrap:balance;
+    }
+
+    .section{
+      padding-block: 0 var(--space-7);
+    }
+
+    .section-head{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) minmax(280px, 520px);
+      gap:20px;
+      align-items:end;
+      margin-bottom:20px;
+    }
+
+    .section-head h2{
+      margin:0;
+      font-size:clamp(1.5rem, 3vw, 2.25rem);
+      line-height:1.02;
+      letter-spacing:-.05em;
+    }
+
+    .section-head p{
+      margin:0;
+      color:var(--text-soft);
+      justify-self:end;
+      max-width:56ch;
+    }
+
+    .grid-3{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+      gap:20px;
+    }
+
+    .swatch{
+      min-height:340px;
+      overflow:hidden;
+      display:grid;
+      grid-template-rows:minmax(190px, 1fr) auto;
+      border-radius:var(--radius-lg);
+    }
+
+    .swatch-top{
+      position:relative;
+      display:flex;
+      align-items:flex-end;
+      padding:20px;
+      font-weight:700;
+      font-size:1.35rem;
+      letter-spacing:-.04em;
+    }
+
+    .swatch-meta{
+      padding:18px;
+      display:grid;
+      gap:2px;
+      border-top:1px solid var(--line);
+      background:var(--bg-elevated);
+    }
+
+    .code-row{
+      display:grid;
+      grid-template-columns:minmax(0, 1fr) minmax(120px, 1.1fr);
+      align-items:start;
+      gap:14px;
+      padding:10px 0;
+      border-bottom:1px dashed var(--line);
+      font-size:.95rem;
+    }
+
+    .code-row:last-child{ border-bottom:0; }
+
+    .token{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      word-break:break-word;
+      color:var(--text);
+    }
+
+    .usage{
+      color:var(--text-soft);
+      text-align:right;
+    }
+
+    .swatch-black .swatch-top{
+      background:#000000;
+      color:#ffffff;
+    }
+
+    .swatch-white .swatch-top{
+      background:#ffffff;
+      color:#111111;
+    }
+
+    .swatch-red .swatch-top{
+      background:linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%);
+      color:#ffffff;
+    }
+
+    .principles,
+    .memory-grid{
+      display:grid;
+      grid-template-columns:repeat(4, minmax(0, 1fr));
+      gap:18px;
+    }
+
+    .memory-grid{
+      grid-template-columns:repeat(3, minmax(0, 1fr));
+    }
+
+    .principle,
+    .usage-card,
+    .memory-card,
+    .ratio-card{
+      padding:22px;
+      border-radius:22px;
+      background:linear-gradient(180deg, var(--panel), var(--bg-elevated));
+      border:1px solid var(--line);
+      box-shadow:var(--shadow-md);
+    }
+
+    .principle{
+      min-height:200px;
+      display:grid;
+      align-content:start;
+    }
+
+    .principle .num{
+      margin-bottom:20px;
+      color:var(--text-soft);
+      font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+    }
+
+    .principle h3,
+    .usage-card h3,
+    .memory-card h3,
+    .ratio-card h3{
+      margin:0 0 10px;
+      font-size:1.06rem;
+      letter-spacing:-.03em;
+      line-height:1.15;
+    }
+
+    .principle p,
+    .usage-card p,
+    .memory-card p,
+    .ratio-card p{
+      margin:0;
+      color:var(--text-dim);
+    }
+
+    .scan-grid,
+    .examples{
+      display:grid;
+      grid-template-columns:minmax(0, 1.08fr) minmax(0, .92fr);
+      gap:20px;
+    }
+
+    .usage-stack{
+      display:grid;
+      gap:18px;
+      align-content:start;
+    }
+
+    .usage-card{
+      min-height:132px;
+      display:grid;
+      align-content:start;
+    }
+
+    .bars{
+      display:grid;
+      gap:14px;
+      margin-top:18px;
+    }
+
+    .bar-wrap{
+      display:grid;
+      grid-template-columns:96px minmax(0,1fr) 52px;
+      align-items:center;
+      gap:12px;
+      font-size:.95rem;
+    }
+
+    .bar{
+      height:12px;
+      border-radius:999px;
+      background:var(--chip);
+      overflow:hidden;
+      border:1px solid var(--line);
+    }
+
+    .bar > span{
+      display:block;
+      height:100%;
+    }
+
+    .b-black{ background:linear-gradient(90deg, #111111, #4a4a4a); }
+    .b-white{ background:linear-gradient(90deg, #ffffff, #d7d7d7); }
+    .b-red{ background:linear-gradient(90deg, var(--red), var(--red-deep)); }
+
+    .memory-card{
+      min-height:156px;
+      display:grid;
+      align-content:start;
+    }
+
+    .mockup{
+      overflow:hidden;
+      border-radius:24px;
+      border:1px solid var(--line);
+      background:var(--mock-bg);
+      box-shadow:var(--shadow-lg);
+    }
+
+    .mockup-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      padding:16px 18px;
+      border-bottom:1px solid var(--line);
+    }
+
+    .chips{
+      display:flex;
+      align-items:center;
+      gap:8px;
+    }
+
+    .chip{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      background:var(--chip);
+      border:1px solid var(--line);
+    }
+
+    .mockup-body{
+      padding:22px;
+    }
+
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      padding:7px 10px;
+      margin-bottom:16px;
+      border-radius:999px;
+      font-size:.82rem;
+      border:1px solid rgba(255,43,43,.20);
+      background:rgba(255,43,43,.10);
+      color:var(--red);
+    }
+
+    .headline{
+      margin:0 0 16px;
+      max-width:8ch;
+      font-size:2.4rem;
+      line-height:.98;
+      letter-spacing:-.07em;
+      text-wrap:balance;
+    }
+
+    .headline .accent{ color:var(--red); }
+
+    .muted-copy{
+      margin:0;
+      max-width:60ch;
+      color:var(--text-dim);
+    }
+
+    .ui-rows{
+      display:grid;
+      gap:14px;
+      margin-top:22px;
+    }
+
+    .ui-row{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto;
+      align-items:start;
+      gap:16px;
+      padding:16px;
+      border-radius:18px;
+      border:1px solid var(--line);
+      background:var(--panel);
+    }
+
+    .ui-row strong{
+      line-height:1.2;
+    }
+
+    .ui-sub{
+      margin-top:6px;
+      color:var(--text-soft);
+    }
+
+    .ui-row--accent{
+      border-color:rgba(255,43,43,.22);
+      background:rgba(255,43,43,.08);
+    }
+
+    .ui-row--accent .ui-sub{
+      color:color-mix(in srgb, var(--red) 65%, var(--text) 35%);
+    }
+
+    .footer{
+      margin-top:8px;
+      padding:22px 24px;
+      border-radius:24px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--panel), var(--bg-elevated));
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:16px;
+      flex-wrap:wrap;
+    }
+
+    .footer p{
+      margin:0;
+      color:var(--text-soft);
+    }
+
+    .mini-palette{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .mini-palette span{
+      width:34px;
+      height:34px;
+      border-radius:10px;
+      border:1px solid var(--line);
+      display:inline-block;
+    }
+
+    .sr-only{
+      position:absolute;
+      width:1px;
+      height:1px;
+      padding:0;
+      margin:-1px;
+      overflow:hidden;
+      clip:rect(0,0,0,0);
+      white-space:nowrap;
+      border:0;
+    }
+
+    @media (max-width: 1080px){
+      .hero,
+      .scan-grid,
+      .examples,
+      .section-head{
+        grid-template-columns:1fr;
+      }
+
+      .section-head p{
+        justify-self:start;
+      }
+
+      .grid-3,
+      .principles,
+      .memory-grid{
+        grid-template-columns:1fr;
+      }
+
+      h1,
+      .headline{
+        max-width:none;
+      }
+    }
+
+    @media (max-width: 760px){
+      .container{ padding-inline:16px; }
+      .topbar-inner{
+        padding:12px 16px;
+        grid-template-columns:1fr auto;
+      }
+      .nav{
+        display:none;
+      }
+      .hero-card,
+      .panel{
+        border-radius:22px;
+      }
+      .hero-card,
+      .side-card,
+      .mockup-body,
+      .footer{
+        padding:20px;
+      }
+      .code-row{
+        grid-template-columns:1fr;
+      }
+      .usage{
+        text-align:left;
+      }
+      .ui-row{
+        grid-template-columns:1fr;
+      }
+      .bar-wrap{
+        grid-template-columns:74px minmax(0,1fr) 44px;
+      }
+      .mini-stat{
+        min-height:auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true"></span>
+        <span>Brand Identity Palette</span>
+      </div>
+
+      <nav class="nav" aria-label="Section navigation">
+        <a href="#palette">Palette</a>
+        <a href="#principles">Principles</a>
+        <a href="#scan">Scan Logic</a>
+        <a href="#memory">Memory Hooks</a>
+        <a href="#example">Example UI</a>
+        <a href="#protocol">Protocol</a>
+        <a href="#builders">Builders</a>
+      </nav>
+
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+        <span class="theme-dot" aria-hidden="true"></span>
+        <span id="themeLabel">Dark mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-card surface">
+        <div class="eyebrow"><span class="dot"></span> Black · White · Red</div>
+        <h1>Clean. Sharp. Easy to remember.</h1>
+        <p class="lead">
+          A minimal brand identity system built for fast recognition, strong contrast, and instant scanning.
+          Black creates authority, white creates clarity, and red creates attention without adding noise.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#palette">View Palette System</a>
+          <a class="btn btn-secondary" href="#example">See UI Example</a>
+        </div>
+      </div>
+
+      <aside class="panel surface side-card">
+        <div class="mini-stat">
+          <h3>Brand Mood</h3>
+          <p>Premium, direct, memorable</p>
+        </div>
+        <div class="mini-stat">
+          <h3>Primary Scan Logic</h3>
+          <p>High contrast first. Red only for priority.</p>
+        </div>
+        <div class="mini-stat">
+          <h3>Retention Rule</h3>
+          <p>One accent. Three core colors. Zero clutter.</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section" id="palette">
+      <div class="section-head">
+        <div>
+          <h2>Core Palette</h2>
+        </div>
+        <p>
+          The system stays intentionally small. Fewer colors improve recognition speed, simplify decisions, and make the identity easier to retain.
+        </p>
+      </div>
+
+      <div class="grid-3">
+        <article class="swatch surface swatch-black">
+          <div class="swatch-top">Signal Black</div>
+          <div class="swatch-meta">
+            <div class="code-row"><span class="token">#000000</span><span class="usage">Authority, depth, main frame</span></div>
+            <div class="code-row"><span class="token">rgb(0, 0, 0)</span><span class="usage">Primary background layer</span></div>
+            <div class="code-row"><span class="token">--black</span><span class="usage">Use to anchor the system</span></div>
+          </div>
+        </article>
+
+        <article class="swatch surface swatch-white">
+          <div class="swatch-top">Pure White</div>
+          <div class="swatch-meta">
+            <div class="code-row"><span class="token">#FFFFFF</span><span class="usage">Clarity, spacing, readability</span></div>
+            <div class="code-row"><span class="token">rgb(255, 255, 255)</span><span class="usage">Primary text and light surface</span></div>
+            <div class="code-row"><span class="token">--white</span><span class="usage">Use to create breathing room</span></div>
+          </div>
+        </article>
+
+        <article class="swatch surface swatch-red">
+          <div class="swatch-top">Accent Red</div>
+          <div class="swatch-meta">
+            <div class="code-row"><span class="token">#FF2B2B</span><span class="usage">Action, emphasis, focus</span></div>
+            <div class="code-row"><span class="token">#C1121F</span><span class="usage">Depth and gradient support</span></div>
+            <div class="code-row"><span class="token">--red</span><span class="usage">Use sparingly for memory</span></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="principles">
+      <div class="section-head">
+        <div><h2>Identity Principles</h2></div>
+        <p>These rules keep the interface simpler, faster to scan, and more durable across web, product, and brand surfaces.</p>
+      </div>
+
+      <div class="principles">
+        <article class="principle">
+          <div class="num">01 / Contrast</div>
+          <h3>Black carries structure</h3>
+          <p>Let black hold the frame so the system feels grounded, serious, and premium.</p>
+        </article>
+        <article class="principle">
+          <div class="num">02 / Clarity</div>
+          <h3>White creates readability</h3>
+          <p>Use white to separate content clearly and reduce cognitive friction while scanning.</p>
+        </article>
+        <article class="principle">
+          <div class="num">03 / Priority</div>
+          <h3>Red signals importance</h3>
+          <p>Reserve red for action, alerts, or brand punctuation so it stays powerful.</p>
+        </article>
+        <article class="principle">
+          <div class="num">04 / Discipline</div>
+          <h3>Small systems scale better</h3>
+          <p>A restricted palette improves consistency and keeps the identity easier to remember.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="scan">
+      <div class="section-head">
+        <div><h2>Human Eye Scan Logic</h2></div>
+        <p>Good interfaces guide attention in layers: headline first, supporting context next, and action last.</p>
+      </div>
+
+      <div class="scan-grid">
+        <article class="ratio-card">
+          <h3>Recommended Color Weight</h3>
+          <p>Keep the accent rare. The eye remembers contrast breaks more effectively than constant intensity.</p>
+          <div class="bars">
+            <div class="bar-wrap">
+              <span>Black</span>
+              <div class="bar"><span class="b-black" style="width:58%"></span></div>
+              <strong>58%</strong>
+            </div>
+            <div class="bar-wrap">
+              <span>White</span>
+              <div class="bar"><span class="b-white" style="width:32%"></span></div>
+              <strong>32%</strong>
+            </div>
+            <div class="bar-wrap">
+              <span>Red</span>
+              <div class="bar"><span class="b-red" style="width:10%"></span></div>
+              <strong>10%</strong>
+            </div>
+          </div>
+        </article>
+
+        <div class="usage-stack">
+          <article class="usage-card">
+            <h3>First Scan</h3>
+            <p>Show one headline, one symbol, and one red focal point. That is the fastest possible entry point.</p>
+          </article>
+          <article class="usage-card">
+            <h3>Second Scan</h3>
+            <p>Use spacing, card boundaries, and calm secondary text to make structure obvious.</p>
+          </article>
+          <article class="usage-card">
+            <h3>Third Scan</h3>
+            <p>Place buttons, metrics, or alerts where attention should convert into action.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="memory">
+      <div class="section-head">
+        <div><h2>Easy-to-Remember Hooks</h2></div>
+        <p>Memory improves when every color has one clear role and one emotional meaning.</p>
+      </div>
+
+      <div class="memory-grid">
+        <article class="memory-card">
+          <h3>Black = Power</h3>
+          <p>Stable, premium, controlled. Best for the frame, backdrop, and trust-heavy surfaces.</p>
+        </article>
+        <article class="memory-card">
+          <h3>White = Precision</h3>
+          <p>Clean, open, obvious. Best for readable content, spacing, and clear separation.</p>
+        </article>
+        <article class="memory-card">
+          <h3>Red = Energy</h3>
+          <p>Urgent, alive, visible. Best for one decisive action or a signature brand moment.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="example">
+      <div class="section-head">
+        <div><h2>Example Brand UI</h2></div>
+        <p>A sample surface showing how the palette behaves inside a modern, minimal interface.</p>
+      </div>
+
+      <div class="examples">
+        <article class="mockup">
+          <div class="mockup-header">
+            <strong>Minimal Identity Surface</strong>
+            <div class="chips" aria-hidden="true">
+              <span class="chip"></span>
+              <span class="chip"></span>
+              <span class="chip" style="background:var(--red); border-color:transparent;"></span>
+            </div>
+          </div>
+
+          <div class="mockup-body">
+            <div class="tag">Signature Accent</div>
+            <h3 class="headline">Built for <span class="accent">clarity</span> and recall.</h3>
+            <p class="muted-copy">
+              Strong typography, disciplined accent usage, and clean spacing create a sharper visual identity with less mental load.
+            </p>
+
+            <div class="ui-rows">
+              <div class="ui-row">
+                <div>
+                  <strong>Primary Navigation</strong>
+                  <div class="ui-sub">Use contrast and spacing to make orientation immediate.</div>
+                </div>
+                <strong>Stable</strong>
+              </div>
+
+              <div class="ui-row ui-row--accent">
+                <div>
+                  <strong>Primary CTA</strong>
+                  <div class="ui-sub">Red appears only where attention should convert.</div>
+                </div>
+                <strong>Action</strong>
+              </div>
+
+              <div class="ui-row">
+                <div>
+                  <strong>Supporting Information</strong>
+                  <div class="ui-sub">Muted copy preserves calm around the main decision path.</div>
+                </div>
+                <strong>Context</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel surface side-card">
+          <div class="mini-stat">
+            <h3>Use Red For</h3>
+            <p>Buttons, active states, alerts, and brand punctuation</p>
+          </div>
+          <div class="mini-stat">
+            <h3>Avoid</h3>
+            <p>Red-heavy backgrounds, red paragraphs, and competing accents</p>
+          </div>
+          <div class="mini-stat">
+            <h3>Best Impression</h3>
+            <p>Luxury tech, editorial clarity, modern premium identity</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="protocol">
+      <div class="section-head">
+        <div><h2>The Protocol Beneath The Palette</h2></div>
+        <p>
+          This identity is not only visual. It is a behavioral protocol for how the system should signal,
+          guide attention, preserve memory, and hand clarity forward to the next builder.
+        </p>
+      </div>
+
+      <div class="scan-grid">
+        <article class="ratio-card">
+          <h3>The System Loop</h3>
+          <p>
+            Every surface should help the user and the developer move through the same sequence:
+            perceive cleanly, understand quickly, remember the structure, and convert into action without noise.
+          </p>
+
+          <div class="ui-rows">
+            <div class="ui-row">
+              <div>
+                <strong>Perceive</strong>
+                <div class="ui-sub">Lead with contrast and hierarchy so the first scan is obvious.</div>
+              </div>
+              <strong>Signal</strong>
+            </div>
+
+            <div class="ui-row">
+              <div>
+                <strong>Understand</strong>
+                <div class="ui-sub">Use direct language and clear spacing so meaning lands without explanation.</div>
+              </div>
+              <strong>Clarity</strong>
+            </div>
+
+            <div class="ui-row ui-row--accent">
+              <div>
+                <strong>Commit</strong>
+                <div class="ui-sub">Reserve red for the moment where attention should become decision.</div>
+              </div>
+              <strong>Action</strong>
+            </div>
+
+            <div class="ui-row">
+              <div>
+                <strong>Remember</strong>
+                <div class="ui-sub">Give each element one role so the identity survives scale and handoff.</div>
+              </div>
+              <strong>Memory</strong>
+            </div>
+          </div>
+        </article>
+
+        <div class="usage-stack">
+          <article class="usage-card">
+            <h3>Protocol Rule 01</h3>
+            <p>Clarity comes before expression. If a surface looks interesting but scans slowly, it is off-protocol.</p>
+          </article>
+          <article class="usage-card">
+            <h3>Protocol Rule 02</h3>
+            <p>Red is not decoration. It is a commitment signal, so every red element should justify itself.</p>
+          </article>
+          <article class="usage-card">
+            <h3>Protocol Rule 03</h3>
+            <p>Build small systems that can be remembered by humans and extended by future developers.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="builders">
+      <div class="section-head">
+        <div><h2>For The Next Generation Of Builders</h2></div>
+        <p>
+          If you inherit this system later, the mission is simple: protect the signal, extend the protocol,
+          and make the idea more legible with every new layer you add.
+        </p>
+      </div>
+
+      <div class="examples">
+        <article class="mockup">
+          <div class="mockup-header">
+            <strong>Developer Reading Layer</strong>
+            <div class="chips" aria-hidden="true">
+              <span class="chip"></span>
+              <span class="chip"></span>
+              <span class="chip" style="background:var(--red); border-color:transparent;"></span>
+            </div>
+          </div>
+
+          <div class="mockup-body">
+            <div class="tag">System Protocol</div>
+            <h3 class="headline">Build so the system can <span class="accent">remember</span> itself.</h3>
+            <p class="muted-copy">
+              ATULYA EIGHT should feel coherent across interface, language, and system behavior.
+              The brand is the visual signal. The protocol is the operating discipline. The product is the proof.
+            </p>
+
+            <div class="ui-rows">
+              <div class="ui-row">
+                <div>
+                  <strong>Identity Layer</strong>
+                  <div class="ui-sub">Black holds authority. White creates legibility. Red marks the irreversible moment.</div>
+                </div>
+                <strong>Visual</strong>
+              </div>
+
+              <div class="ui-row">
+                <div>
+                  <strong>System Layer</strong>
+                  <div class="ui-sub">Brain, memory, validation, and protocol should work as one continuous logic.</div>
+                </div>
+                <strong>Runtime</strong>
+              </div>
+
+              <div class="ui-row ui-row--accent">
+                <div>
+                  <strong>Product Layer</strong>
+                  <div class="ui-sub">Every screen should reduce mental load and increase decisive action.</div>
+                </div>
+                <strong>Proof</strong>
+              </div>
+
+              <div class="ui-row">
+                <div>
+                  <strong>Inheritance Layer</strong>
+                  <div class="ui-sub">Leave cleaner structure, sharper naming, and stronger signal than you found.</div>
+                </div>
+                <strong>Legacy</strong>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="panel surface side-card">
+          <div class="mini-stat">
+            <h3>If You Change The Interface</h3>
+            <p>Preserve contrast hierarchy, keep the accent rare, and make the first scan faster than before.</p>
+          </div>
+          <div class="mini-stat">
+            <h3>If You Change The Language</h3>
+            <p>Write with precision, conviction, and restraint so the idea stays durable across time.</p>
+          </div>
+          <div class="mini-stat">
+            <h3>If You Change The System</h3>
+            <p>Protect the loop between perception, memory, decision, and action. That loop is the protocol.</p>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>Black for authority. White for clarity. Red for memory.</p>
+      <div class="mini-palette" aria-hidden="true">
+        <span style="background:#000000"></span>
+        <span style="background:#ffffff"></span>
+        <span style="background:#ff2b2b"></span>
+      </div>
+    </footer>
+  </main>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const toggle = document.getElementById("themeToggle");
+      const label = document.getElementById("themeLabel");
+      const storageKey = "brand-palette-theme";
+
+      function applyTheme(theme) {
+        root.setAttribute("data-theme", theme);
+        label.textContent = theme === "dark" ? "Dark mode" : "Light mode";
+      }
+
+      const stored = localStorage.getItem(storageKey);
+      const systemPrefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const initialTheme = stored || (systemPrefersDark ? "dark" : "light");
+      applyTheme(initialTheme);
+
+      toggle.addEventListener("click", function () {
+        const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+        applyTheme(next);
+        localStorage.setItem(storageKey, next);
+      });
+    })();
+  </script>
+</body>
+</html>
