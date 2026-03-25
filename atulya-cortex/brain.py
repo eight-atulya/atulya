@@ -19,6 +19,7 @@ You can:
 import time
 import uuid
 import json
+import tempfile
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Any, Optional, Tuple, Callable
 from collections import deque
@@ -1000,6 +1001,30 @@ def build_default_engine(cfg: Optional[PsiConfig] = None) -> PsiEngine:
         tools=tools,
     )
     return engine
+
+
+def build_isolated_config(base_dir: Optional[str] = None) -> PsiConfig:
+    """
+    Build a config whose persistent state lives in an isolated directory.
+    Useful for simulations, tests, and edit-review passes where we do not want
+    to pollute the main persistent profile or memory files.
+    """
+    if base_dir is None:
+        base_dir = tempfile.mkdtemp(prefix="atulya-brain-")
+
+    return PsiConfig(
+        profile_path=os.path.join(base_dir, "psi_profile.json"),
+        memory_path=os.path.join(base_dir, "psi_memory.json"),
+        episodic_path=os.path.join(base_dir, "psi_episodic.json"),
+    )
+
+
+def run_once(user_text: str, cfg: Optional[PsiConfig] = None) -> str:
+    """
+    Run a single prompt through the default engine without entering the REPL.
+    """
+    engine = build_default_engine(cfg or build_isolated_config())
+    return engine.handle_user_message(user_text)
 
 
 def repl():
