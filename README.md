@@ -17,6 +17,7 @@ The protocol itself should live in structured docs so that future commits are ea
 - [`docs/protocol/README.md`](docs/protocol/README.md) — protocol index and reading order.
 - [`docs/protocol/design-direction.md`](docs/protocol/design-direction.md) — architectural direction and adoption strategy.
 - [`docs/protocol/record-model.md`](docs/protocol/record-model.md) — canonical record model, types, and record families.
+- [`docs/architecture/knowledge-compression-loop.md`](docs/architecture/knowledge-compression-loop.md) — text-knowledge compression loop for AI agents and MVP roadmap.
 
 ## Integrity-Gated State Maintenance
 
