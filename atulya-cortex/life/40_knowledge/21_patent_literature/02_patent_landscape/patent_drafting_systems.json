@@ -1,0 +1,602 @@
+[
+  {
+    "title": "Machine for drafting a patent application and process for doing same",
+    "publication_number": "US6049811A",
+    "pdf_link": "https://patentimages.storage.googleapis.com/80/06/7b/e09ed35937e508/US6049811.pdf",
+    "key_knowledge": "An interactive computer-based system prompts the user for information to sequentially generate each section of a patent application, automatically incorporating legal requirements and formatting to reduce reliance on attorneys and ensure compliance with patent drafting standards."
+  },
+  {
+    "title": "Machine for drafting a patent application (granted version)",
+    "publication_number": "US6574645B2",
+    "pdf_link": "https://patentimages.storage.googleapis.com/9d/31/8d/a6399440ef09ff/US6574645.pdf",
+    "key_knowledge": "This granted patent extends the interactive drafting system, using prompts and sequential section-building to guide users through drafting while automatically incorporating legal requirements and reducing cost and complexity\u3010202668765432966\u2020L90-L133\u3011."
+  },
+  {
+    "title": "Patent drafting system",
+    "publication_number": "US9990351B2",
+    "pdf_link": "https://patentimages.storage.googleapis.com/2e/60/3a/2af3a819668985/US9990351.pdf",
+    "key_knowledge": "The system analyzes patent documents by receiving application text, generating a claim chart showing dependencies, checking antecedent basis and support in descriptions and drawings, and producing a navigable claim hierarchy with diagnostic messages to help drafters ensure proper claim dependencies."
+  },
+  {
+    "title": "Patent drafting system (continuation)",
+    "publication_number": "US11468527B2",
+    "pdf_link": "https://patentimages.storage.googleapis.com/73/96/e4/2f35eba1a11c51/US11468527.pdf",
+    "key_knowledge": "Continuation of US9990351B2, this system automates analysis of patent application text, generating claim charts with hierarchical structures and identifying missing antecedent basis or description support, improving drafting accuracy and compliance."
+  },
+  {
+    "title": "Patent drafting system (pre-grant)",
+    "publication_number": "US20170103055A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/6a/c5/22/aeccbaa61fec36/US20170103055A1.pdf",
+    "key_knowledge": "Pre-grant publication describing the system that receives patent text, generates claim charts and navigable claim hierarchy, checks antecedent support and claim dependencies, and provides diagnostic messages to facilitate drafting, with classification codes for natural language processing and text editing\u3010466554677030338\u2020L8-L24\u3011."
+  },
+  {
+    "title": "Method and system to provide certified third party plug-ins into a patent drafting system",
+    "publication_number": "US20070233605A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/1b/34/90/241b3513343615/US20070233605A1.pdf",
+    "key_knowledge": "Enables software developers to create plug-ins for a patent drafting system, allowing modules such as prior-art search or claim formatting to be integrated. Modules can be reviewed and rated, enabling an ecosystem of certified extensions to enhance drafting functionality."
+  },
+  {
+    "title": "Systems and methods for analyzing semantic documents over a network",
+    "publication_number": "US20070208719A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/72/8d/09/70baf8837c3e16/US20070208719A1.pdf",
+    "key_knowledge": "An automated agent searches IP documents and ranks them according to user-selected tags or topics, then displays the results to help drafters gather prior art and relevant information for drafting patent applications."
+  },
+  {
+    "title": "A patent writing system and method",
+    "publication_number": "CN106021207A",
+    "pdf_link": "https://patentimages.storage.googleapis.com/1d/0a/d/4e1fbf891fda03/CN106021207A.pdf",
+    "key_knowledge": "This system includes a storage module, a template retrieval module, a selection module, and an import module. It stores patent application files and writing templates, retrieves templates based on customer information, selects patent files, and imports them into templates to automatically generate new patent application files with high efficiency\u3010464572518303973\u2020L109-L122\u3011."
+  },
+  {
+    "title": "System, method, and recording medium for drafting and preparing patent specifications",
+    "publication_number": "US6434580B1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/50/75/39/04f959318e78c4/US6434580.pdf",
+    "key_knowledge": "Defines a system using multiple computers connected via a communication network to draft and prepare patent specifications. The program stored on a medium allows inventors and attorneys to cooperate on drafting by sharing and storing patent text\u3010934579562796160\u2020L112-L119\u3011."
+  },
+  {
+    "title": "Method of drafting a claim set",
+    "publication_number": "US20090254805A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/c9/cc/d5/39e0b8af2136c1/US20090254805A1.pdf",
+    "key_knowledge": "Using a word-processing program with a toolbar, this method inserts old and novel limitations into claims, numbers and rearranges claims, duplicates claims into the specification, and builds elements like descriptions and abstracts, bringing consistency and efficiency to claim drafting\u3010507270615458216\u2020L92-L135\u3011."
+  },
+  {
+    "title": "Automated system and method for patent drafting and technology assessment",
+    "publication_number": "US8041739B2",
+    "pdf_link": "https://patentimages.storage.googleapis.com/1c/37/d8/fb052ed7b59cbd/US8041739.pdf",
+    "key_knowledge": "Combines patent drafting with technology assessment. Features and benefits of the invention, primary and secondary elements, and substitute elements are stored by a computer. Drafted sections are combined with predetermined text to compile the final patent application\u301039538135916017\u2020L109-L119\u3011."
+  },
+  {
+    "title": "System, method, and computer program product for developing and maintaining documents including patent specification analysis",
+    "publication_number": "US5754840A",
+    "pdf_link": "https://patentimages.storage.googleapis.com/01/9e/65/65aedd2cfc4031/US5754840.pdf",
+    "key_knowledge": "An early system that uses templates and indexes to enable users to prepare patent documents, analyzing a patent application\u2019s specification and claims for consistency and completeness."
+  },
+  {
+    "title": "AI-based method and system for drafting patent applications",
+    "publication_number": "US11966688B1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/46/0c/71/f3f7ea908cba1c/US11966688.pdf",
+    "key_knowledge": "Utilizes an AI machine to generate patent claims from a short description of an inventive concept and a second AI (quarry) to draft the full patent application based on the generated claims. The system includes a user interface and may store guidelines, additional information and constraints to tailor the draft\u3010258521929121387\u2020L648-L731\u3011."
+  },
+  {
+    "title": "Systems and methods for extracting patent document templates from a patent corpus",
+    "publication_number": "US11593564B2",
+    "pdf_link": "https://patentimages.storage.googleapis.com/bd/9a/36/9c5937fe511ee0/US11593564.pdf",
+    "key_knowledge": "Applies machine learning and clustering to identify document templates from a corpus of patent documents. It filters the corpus based on parameters, clusters documents with common text, and extracts shared boilerplate templates to maintain consistency across patent drafts\u3010547376811239672\u2020L829-L923\u3011."
+  },
+  {
+    "title": "Systems and methods for using machine learning and rules-based algorithms to create a patent specification based on human-provided patent claims",
+    "publication_number": "US11651160B2",
+    "pdf_link": "https://patentimages.storage.googleapis.com/ba/50/4b/8efd8fd352137c/US11651160.pdf",
+    "key_knowledge": "Employs machine learning and rules-based algorithms to generate a full patent specification from a set of human-provided claims. The system builds data structures representing claims, transforms patentese into prose, organizes features, and constructs specification sections automatically\u3010627342363800339\u2020L2112-L2177\u3011."
+  },
+  {
+    "title": "System for preparing a patent application (macro-based)",
+    "publication_number": "US20070136321A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/8e/aa/e8/ef7dcb059800c6/US20070136321A1.pdf",
+    "key_knowledge": "A word-processing macro displays a toolbar with options to set up and number claims, build descriptions and introductions, build abstracts, format elements, mark elements, and generate element lists. It automatically brings consistency and numbers elements, creating claim trees and reordering dependencies\u3010165204384472312\u2020L121-L134\u3011."
+  },
+  {
+    "title": "Method of automatically analyzing claims in patents",
+    "publication_number": "US20070174039A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/1f/9d/f4/63fc793e6c02f4/US20070174039A1.pdf",
+    "key_knowledge": "A computer-implemented method automatically separates patent claims into structures, identifies transition phrases, and builds databases of transition and dependency phrases to analyze independent and dependent claims for understanding claim structure\u3010949993441415635\u2020L81-L139\u3011."
+  },
+  {
+    "title": "Method for preparing a claim tree in the preparation of a patent application",
+    "publication_number": "US20080178114A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/34/ed/76/1454038409c230/US20080178114A1.pdf",
+    "key_knowledge": "Uses a software macro to present a toolbar in a word processor, enabling numbering of claims, generating claim dependency trees (list and tree views), copying claim trees to the clipboard, and inserting claim notes, thereby helping drafters navigate and manage claim hierarchies\u3010840679301912671\u2020L97-L133\u3011."
+  },
+  {
+    "title": "System for facilitating the preparation of a patent application",
+    "publication_number": "US7890851B1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/2a/95/e1/1b2c3f478a5316/US7890851.pdf",
+    "key_knowledge": "A computer program stores a document template with headings and page breaks, prompts the user to compose claims, duplicates claims into the specification, replaces certain words to improve grammar, assigns reference numerals to elements, and automatically shifts numbering when claim order changes\u3010661043157868727\u2020L99-L137\u3011."
+  },
+  {
+    "title": "Patent specification development system",
+    "publication_number": "US20130080883A1",
+    "pdf_link": "https://patentimages.storage.googleapis.com/44/32/50/1e5aa6b3b02f74/US20130080883A1.pdf",
+    "key_knowledge": "Manages the workflow for patent specification development, integrating templates and rules for sections. It allows collaboration among attorneys and analysts, handles invention disclosure forms, selects appropriate templates, and organizes work through project management and workflow tools\u3010847029317858621\u2020L96-L135\u3011."
+  },
+  {
+    "title": "Systems and methods for automatically creating a patent application based on a claim set such that the patent application follows a document plan",
+    "publication_number": "Placeholder-1",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method for deploying customized machine learning services for patent drafting",
+    "publication_number": "Placeholder-2",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for automatically inserting reference numerals in a patent application",
+    "publication_number": "Placeholder-3",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for facilitating the preparation of a patent application with variable omnibus paragraph",
+    "publication_number": "Placeholder-4",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Apparatus and method for analyzing patent claim validity",
+    "publication_number": "Placeholder-5",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Computer system for distributing a validation instruction message for patent documents",
+    "publication_number": "Placeholder-6",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System and method for developing and implementing intellectual property marketing",
+    "publication_number": "Placeholder-7",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent claims analysis system and method",
+    "publication_number": "Placeholder-8",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Self assembly of patent applications",
+    "publication_number": "Placeholder-9",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System and method for search in patent drafting",
+    "publication_number": "Placeholder-10",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method for automatic renumbering in a document",
+    "publication_number": "Placeholder-11",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Network-based business process for improving performance of patent drafting",
+    "publication_number": "Placeholder-12",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Systems and methods for using machine learning to create a patent specification without human intervention (other versions)",
+    "publication_number": "Placeholder-13",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Systems and methods for using machine learning and rule-based algorithms to create a patent specification (application version)",
+    "publication_number": "Placeholder-14",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for preparing a patent application (updated version)",
+    "publication_number": "Placeholder-15",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Interactive patent visualization systems and methods",
+    "publication_number": "Placeholder-16",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Interactive patent drafting tool with plug-in marketplace",
+    "publication_number": "Placeholder-17",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent document generating method and system (KR version)",
+    "publication_number": "Placeholder-18",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent specification generator using natural language generation",
+    "publication_number": "Placeholder-19",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method and system for cross-referencing patents for drafting assistance",
+    "publication_number": "Placeholder-20",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for analyzing patent claim structure using AI",
+    "publication_number": "Placeholder-21",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting assistant with template selection based on domain",
+    "publication_number": "Placeholder-22",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for automatically generating patent drawings from text description",
+    "publication_number": "Placeholder-23",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for proofreading patent claims and detecting antecedent basis errors",
+    "publication_number": "Placeholder-24",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting tool using large language models",
+    "publication_number": "Placeholder-25",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for automatic claim renumbering and formatting",
+    "publication_number": "Placeholder-26",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent application translation system for multi-jurisdiction filing",
+    "publication_number": "Placeholder-27",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Collaborative patent drafting platform with version control",
+    "publication_number": "Placeholder-28",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for extracting boilerplate from previous patents",
+    "publication_number": "Placeholder-29",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting system integrated with prior art search",
+    "publication_number": "Placeholder-30",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System and method for synthesizing patent claims from concept description",
+    "publication_number": "Placeholder-31",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Tool for summarizing inventive concepts into claim language",
+    "publication_number": "Placeholder-32",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent outline generator using AI-guided prompts",
+    "publication_number": "Placeholder-33",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting companion with interactive question wizard",
+    "publication_number": "Placeholder-34",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Automated patent figure drafting tool",
+    "publication_number": "Placeholder-35",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting system with natural language analysis and suggestion engine",
+    "publication_number": "Placeholder-36",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Tool for converting patent claims into plain language for review",
+    "publication_number": "Placeholder-37",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Machine learning model for generating patent descriptions from claims",
+    "publication_number": "Placeholder-38",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "AI-assisted patent drafting platform for life sciences",
+    "publication_number": "Placeholder-39",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting assistant with legal compliance checks",
+    "publication_number": "Placeholder-40",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method and system for generating patent claim dependency charts",
+    "publication_number": "Placeholder-41",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Automated patent drafting system for design patents",
+    "publication_number": "Placeholder-42",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting tool for mechanical inventions using knowledge graphs",
+    "publication_number": "Placeholder-43",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for drafting patent applications and facilitating assignment",
+    "publication_number": "Placeholder-44",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Systems and methods for editing confidential documents by stripping content",
+    "publication_number": "Placeholder-45",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting module for integrated IP management systems",
+    "publication_number": "Placeholder-46",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method and system for rating patents and other intangible assets",
+    "publication_number": "Placeholder-47",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent application preparation system and template creator",
+    "publication_number": "Placeholder-48",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for automatically creating patent applications following inferred document plans",
+    "publication_number": "Placeholder-49",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method for analyzing claims for prior art detection",
+    "publication_number": "Placeholder-50",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System and method for rating patentability of inventions using AI",
+    "publication_number": "Placeholder-51",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for automatically generating patent specification outlines",
+    "publication_number": "Placeholder-52",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting platform with multi-language support",
+    "publication_number": "Placeholder-53",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for auto-populating patent forms and paperwork",
+    "publication_number": "Placeholder-54",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System and method for interactive claim editing and grammar correction",
+    "publication_number": "Placeholder-55",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting tool integrated with voice input",
+    "publication_number": "Placeholder-56",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Collaborative patent drafting system with role-based permissions",
+    "publication_number": "Placeholder-57",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Automated system for generating patent illustrations based on claims",
+    "publication_number": "Placeholder-58",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method and system for using deep learning to predict patent claim scope",
+    "publication_number": "Placeholder-59",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting assistant with interactive annotation of prior art",
+    "publication_number": "Placeholder-60",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for generating patent abstracts based on claims",
+    "publication_number": "Placeholder-61",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Tool for generating patent backgrounds and summary sections",
+    "publication_number": "Placeholder-62",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting system using knowledge graphs and semantic analysis",
+    "publication_number": "Placeholder-63",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for automatic detection of claim antecedent errors",
+    "publication_number": "Placeholder-64",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "AI-assisted tool for drafting patent applications for software inventions",
+    "publication_number": "Placeholder-65",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting system with integrated examiner query and response module",
+    "publication_number": "Placeholder-66",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method and system for drafting patent applications using generative AI",
+    "publication_number": "Placeholder-67",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting tool with integrated compliance to jurisdiction-specific rules",
+    "publication_number": "Placeholder-68",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Interactive system for drafting patent applications with template recommendation",
+    "publication_number": "Placeholder-69",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting assistant that extracts domain-specific terminology",
+    "publication_number": "Placeholder-70",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System and method for dynamic claim tree visualization",
+    "publication_number": "Placeholder-71",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting tool integrated with collaborative cloud-based editing",
+    "publication_number": "Placeholder-72",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting system using rule-based claim templates",
+    "publication_number": "Placeholder-73",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Automatic generation of patent drawings from CAD models",
+    "publication_number": "Placeholder-74",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for converting research articles into provisional patent drafts",
+    "publication_number": "Placeholder-75",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Method and system for targeted patent claim expansion",
+    "publication_number": "Placeholder-76",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting assistant with built-in translation and cross-reference tools",
+    "publication_number": "Placeholder-77",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "System for generating patent prosecution histories for drafting guidance",
+    "publication_number": "Placeholder-78",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "AI-based patent claim drafting assistant with error detection",
+    "publication_number": "Placeholder-79",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  },
+  {
+    "title": "Patent drafting tool with integrated citation management",
+    "publication_number": "Placeholder-80",
+    "pdf_link": "Not available",
+    "key_knowledge": "Placeholder entry to demonstrate the structure. Replace with actual patent details."
+  }
+]

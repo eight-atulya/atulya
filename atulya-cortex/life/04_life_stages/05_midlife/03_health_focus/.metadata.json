@@ -1,0 +1,97 @@
+{
+  "id": "4b378285-4dcb-4b31-918a-1ca3357f384a",
+  "name": "03_health_focus",
+  "path": "life\\04_life_stages\\05_midlife\\03_health_focus",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:41.661430",
+  "last_modified": "2025-08-03T23:39:41.661435",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "personal",
+  "life_stage": "all_stages",
+  "priority_level": 2,
+  "access_frequency": "occasional",
+  "maintenance_frequency": "as_needed",
+  "parent": "35d390ef-6716-45b4-bce9-16f9ea968837",
+  "ancestors": [
+    "35d390ef-6716-45b4-bce9-16f9ea968837",
+    "64b1b65d-a60c-4a20-a9e9-f1c137626e18",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "medium",
+  "privacy_level": "private",
+  "encryption_required": true,
+  "backup_frequency": "monthly",
+  "lifecycle_stage": "active",
+  "retention_policy": "5_years",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "personal",
+    "life"
+  ],
+  "labels": [],
+  "keywords": [
+    "focus",
+    "health"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "general",
+    "project_context": "general"
+  },
+  "integrations": [
+    "fitbit",
+    "apple_health",
+    "myfitnesspal"
+  ],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [
+    "hipaa",
+    "medical_privacy"
+  ],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

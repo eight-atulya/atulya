@@ -1,0 +1,90 @@
+{
+  "id": "b6920971-e2ad-4c6e-a6b1-c448e4980e0e",
+  "name": "05_financial_management",
+  "path": "life\\04_life_stages\\03_young_adult\\05_financial_management",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:41.624191",
+  "last_modified": "2025-08-03T23:39:41.624194",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "general",
+  "life_stage": "all_stages",
+  "priority_level": 5,
+  "access_frequency": "occasional",
+  "maintenance_frequency": "as_needed",
+  "parent": "7bf1453b-0b8d-4355-ae32-377f56869721",
+  "ancestors": [
+    "7bf1453b-0b8d-4355-ae32-377f56869721",
+    "64b1b65d-a60c-4a20-a9e9-f1c137626e18",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "high",
+  "privacy_level": "standard",
+  "encryption_required": true,
+  "backup_frequency": "monthly",
+  "lifecycle_stage": "active",
+  "retention_policy": "permanent",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [],
+  "labels": [],
+  "keywords": [
+    "management",
+    "financial"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "general",
+    "project_context": "general"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [
+    "gaap",
+    "tax_compliance"
+  ],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

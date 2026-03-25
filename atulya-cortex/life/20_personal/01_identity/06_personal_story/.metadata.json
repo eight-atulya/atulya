@@ -1,0 +1,90 @@
+{
+  "id": "81b0a5f9-3735-45a5-a44a-5539c9fe08a7",
+  "name": "06_personal_story",
+  "path": "life\\20_personal\\01_identity\\06_personal_story",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:42.776859",
+  "last_modified": "2025-08-03T23:39:42.776863",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "personal",
+  "life_stage": "all_stages",
+  "priority_level": 5,
+  "access_frequency": "occasional",
+  "maintenance_frequency": "weekly",
+  "parent": "920c35c4-b8af-4146-8ac2-2bfa9ab93e33",
+  "ancestors": [
+    "920c35c4-b8af-4146-8ac2-2bfa9ab93e33",
+    "25270ded-f3f7-4a46-b1e6-f6dac907640e",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "medium",
+  "privacy_level": "private",
+  "encryption_required": true,
+  "backup_frequency": "weekly",
+  "lifecycle_stage": "active",
+  "retention_policy": "lifetime",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "personal",
+    "life"
+  ],
+  "labels": [],
+  "keywords": [
+    "personal",
+    "story"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "individual",
+    "project_context": "general"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "daily",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

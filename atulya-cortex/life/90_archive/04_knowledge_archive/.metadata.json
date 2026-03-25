@@ -1,0 +1,93 @@
+{
+  "id": "840785c5-e09e-4962-afbc-d45600870224",
+  "name": "04_knowledge_archive",
+  "path": "life\\90_archive\\04_knowledge_archive",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:44.278383",
+  "last_modified": "2025-08-03T23:39:44.278386",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "learning",
+  "life_stage": "all_stages",
+  "priority_level": 4,
+  "access_frequency": "rarely",
+  "maintenance_frequency": "quarterly",
+  "parent": "56fd8b40-507b-4115-9e68-1f69ca05b174",
+  "ancestors": [
+    "56fd8b40-507b-4115-9e68-1f69ca05b174",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [
+    "Create knowledge maps",
+    "Link related concepts",
+    "Set up spaced repetition"
+  ],
+  "security_level": "low",
+  "privacy_level": "standard",
+  "encryption_required": false,
+  "backup_frequency": "monthly",
+  "lifecycle_stage": "active",
+  "retention_policy": "5_years",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "archived",
+    "rare-access"
+  ],
+  "labels": [],
+  "keywords": [
+    "knowledge",
+    "archive"
+  ],
+  "context": {
+    "time_context": "immediate",
+    "location_context": "general",
+    "person_context": "general",
+    "project_context": "general"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

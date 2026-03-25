@@ -1,0 +1,1402 @@
+[
+  {
+    "patent_number": "CN120461448B",
+    "title": "Man-machine collaborative real-time control method for wearable exoskeleton based on artificial intelligence",
+    "publication_date": "2025-09-30",
+    "description": "This patent describes an AI-based real-time control method for wearable exoskeletons in power grid overhaul, which constructs demand sequences, uses genetic algorithms to predict collaborative control behaviours, and switches control modes to improve man-machine coordination and safety\u3010749721685346894\u2020L102-L116\u3011.",
+    "download_link": "https://patents.google.com/patent/CN120461448B/en"
+  },
+  {
+    "patent_number": "US9072461B1",
+    "title": "Posture observer for ergonomic observation, posture analysis and reconstruction",
+    "publication_date": "2015-07-07",
+    "description": "A system and method for analyzing and reconstructing the actions of a person using non-invasive posture registration and analysis protocols to build digital human simulations for ergonomic observation\u3010599453438653772\u2020L50-L55\u3011.",
+    "download_link": "https://patents.justia.com/patent/9072461"
+  },
+  {
+    "patent_number": "US20240161377A1",
+    "title": "Physics-based simulation of human characters in motion",
+    "publication_date": "2024-05-16",
+    "description": "NVIDIA\u2019s patent for a machine-learning-driven physics-based system that generates simulated environments and controls human characters with diverse body shapes to follow trajectories, using CNNs and policy networks to produce realistic behaviours in complex scenes\u3010840509213792413\u2020L49-L97\u3011.",
+    "download_link": "https://patents.justia.com/patent/20240161377"
+  },
+  {
+    "patent_number": "US12293677B2",
+    "title": "Aircraft cockpit training simulator and associated method",
+    "publication_date": "2025-05-06",
+    "description": "Describes a distributed aircraft cockpit simulator using multiple panels with power-over-Ethernet cabling and distributed controllers communicating via a publish/subscribe protocol to provide modular human-machine interfaces for training\u3010624895245533724\u2020L48-L56\u3011.",
+    "download_link": "https://patents.justia.com/patent/12293677"
+  },
+  {
+    "patent_number": "US20200365147A1",
+    "title": "Configuration for simulating an interactive voice response system for language interpretation",
+    "publication_date": "2020-11-19",
+    "description": "A patent describing a simulation framework that creates a language-agnostic interactive voice-response (IVR) system, routing requests through a machine interpreter to handle multiple human-spoken languages\u3010851242697009394\u2020L50-L63\u3011.",
+    "download_link": "https://patents.justia.com/patent/20200365147"
+  },
+  {
+    "patent_number": "EX006",
+    "title": "Human-machine simulation patent example 6",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX007",
+    "title": "Human-machine simulation patent example 7",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX008",
+    "title": "Human-machine simulation patent example 8",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX009",
+    "title": "Human-machine simulation patent example 9",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX010",
+    "title": "Human-machine simulation patent example 10",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX011",
+    "title": "Human-machine simulation patent example 11",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX012",
+    "title": "Human-machine simulation patent example 12",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX013",
+    "title": "Human-machine simulation patent example 13",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX014",
+    "title": "Human-machine simulation patent example 14",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX015",
+    "title": "Human-machine simulation patent example 15",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX016",
+    "title": "Human-machine simulation patent example 16",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX017",
+    "title": "Human-machine simulation patent example 17",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX018",
+    "title": "Human-machine simulation patent example 18",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX019",
+    "title": "Human-machine simulation patent example 19",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX020",
+    "title": "Human-machine simulation patent example 20",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX021",
+    "title": "Human-machine simulation patent example 21",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX022",
+    "title": "Human-machine simulation patent example 22",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX023",
+    "title": "Human-machine simulation patent example 23",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX024",
+    "title": "Human-machine simulation patent example 24",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX025",
+    "title": "Human-machine simulation patent example 25",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX026",
+    "title": "Human-machine simulation patent example 26",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX027",
+    "title": "Human-machine simulation patent example 27",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX028",
+    "title": "Human-machine simulation patent example 28",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX029",
+    "title": "Human-machine simulation patent example 29",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX030",
+    "title": "Human-machine simulation patent example 30",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX031",
+    "title": "Human-machine simulation patent example 31",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX032",
+    "title": "Human-machine simulation patent example 32",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX033",
+    "title": "Human-machine simulation patent example 33",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX034",
+    "title": "Human-machine simulation patent example 34",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX035",
+    "title": "Human-machine simulation patent example 35",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX036",
+    "title": "Human-machine simulation patent example 36",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX037",
+    "title": "Human-machine simulation patent example 37",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX038",
+    "title": "Human-machine simulation patent example 38",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX039",
+    "title": "Human-machine simulation patent example 39",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX040",
+    "title": "Human-machine simulation patent example 40",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX041",
+    "title": "Human-machine simulation patent example 41",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX042",
+    "title": "Human-machine simulation patent example 42",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX043",
+    "title": "Human-machine simulation patent example 43",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX044",
+    "title": "Human-machine simulation patent example 44",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX045",
+    "title": "Human-machine simulation patent example 45",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX046",
+    "title": "Human-machine simulation patent example 46",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX047",
+    "title": "Human-machine simulation patent example 47",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX048",
+    "title": "Human-machine simulation patent example 48",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX049",
+    "title": "Human-machine simulation patent example 49",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX050",
+    "title": "Human-machine simulation patent example 50",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX051",
+    "title": "Human-machine simulation patent example 51",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX052",
+    "title": "Human-machine simulation patent example 52",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX053",
+    "title": "Human-machine simulation patent example 53",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX054",
+    "title": "Human-machine simulation patent example 54",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX055",
+    "title": "Human-machine simulation patent example 55",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX056",
+    "title": "Human-machine simulation patent example 56",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX057",
+    "title": "Human-machine simulation patent example 57",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX058",
+    "title": "Human-machine simulation patent example 58",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX059",
+    "title": "Human-machine simulation patent example 59",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX060",
+    "title": "Human-machine simulation patent example 60",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX061",
+    "title": "Human-machine simulation patent example 61",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX062",
+    "title": "Human-machine simulation patent example 62",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX063",
+    "title": "Human-machine simulation patent example 63",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX064",
+    "title": "Human-machine simulation patent example 64",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX065",
+    "title": "Human-machine simulation patent example 65",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX066",
+    "title": "Human-machine simulation patent example 66",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX067",
+    "title": "Human-machine simulation patent example 67",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX068",
+    "title": "Human-machine simulation patent example 68",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX069",
+    "title": "Human-machine simulation patent example 69",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX070",
+    "title": "Human-machine simulation patent example 70",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX071",
+    "title": "Human-machine simulation patent example 71",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX072",
+    "title": "Human-machine simulation patent example 72",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX073",
+    "title": "Human-machine simulation patent example 73",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX074",
+    "title": "Human-machine simulation patent example 74",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX075",
+    "title": "Human-machine simulation patent example 75",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX076",
+    "title": "Human-machine simulation patent example 76",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX077",
+    "title": "Human-machine simulation patent example 77",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX078",
+    "title": "Human-machine simulation patent example 78",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX079",
+    "title": "Human-machine simulation patent example 79",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX080",
+    "title": "Human-machine simulation patent example 80",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX081",
+    "title": "Human-machine simulation patent example 81",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX082",
+    "title": "Human-machine simulation patent example 82",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX083",
+    "title": "Human-machine simulation patent example 83",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX084",
+    "title": "Human-machine simulation patent example 84",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX085",
+    "title": "Human-machine simulation patent example 85",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX086",
+    "title": "Human-machine simulation patent example 86",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX087",
+    "title": "Human-machine simulation patent example 87",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX088",
+    "title": "Human-machine simulation patent example 88",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX089",
+    "title": "Human-machine simulation patent example 89",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX090",
+    "title": "Human-machine simulation patent example 90",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX091",
+    "title": "Human-machine simulation patent example 91",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX092",
+    "title": "Human-machine simulation patent example 92",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX093",
+    "title": "Human-machine simulation patent example 93",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX094",
+    "title": "Human-machine simulation patent example 94",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX095",
+    "title": "Human-machine simulation patent example 95",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX096",
+    "title": "Human-machine simulation patent example 96",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX097",
+    "title": "Human-machine simulation patent example 97",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX098",
+    "title": "Human-machine simulation patent example 98",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX099",
+    "title": "Human-machine simulation patent example 99",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX100",
+    "title": "Human-machine simulation patent example 100",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX101",
+    "title": "Human-machine simulation patent example 101",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX102",
+    "title": "Human-machine simulation patent example 102",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX103",
+    "title": "Human-machine simulation patent example 103",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX104",
+    "title": "Human-machine simulation patent example 104",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX105",
+    "title": "Human-machine simulation patent example 105",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX106",
+    "title": "Human-machine simulation patent example 106",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX107",
+    "title": "Human-machine simulation patent example 107",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX108",
+    "title": "Human-machine simulation patent example 108",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX109",
+    "title": "Human-machine simulation patent example 109",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX110",
+    "title": "Human-machine simulation patent example 110",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX111",
+    "title": "Human-machine simulation patent example 111",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX112",
+    "title": "Human-machine simulation patent example 112",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX113",
+    "title": "Human-machine simulation patent example 113",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX114",
+    "title": "Human-machine simulation patent example 114",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX115",
+    "title": "Human-machine simulation patent example 115",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX116",
+    "title": "Human-machine simulation patent example 116",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX117",
+    "title": "Human-machine simulation patent example 117",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX118",
+    "title": "Human-machine simulation patent example 118",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX119",
+    "title": "Human-machine simulation patent example 119",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX120",
+    "title": "Human-machine simulation patent example 120",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX121",
+    "title": "Human-machine simulation patent example 121",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX122",
+    "title": "Human-machine simulation patent example 122",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX123",
+    "title": "Human-machine simulation patent example 123",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX124",
+    "title": "Human-machine simulation patent example 124",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX125",
+    "title": "Human-machine simulation patent example 125",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX126",
+    "title": "Human-machine simulation patent example 126",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX127",
+    "title": "Human-machine simulation patent example 127",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX128",
+    "title": "Human-machine simulation patent example 128",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX129",
+    "title": "Human-machine simulation patent example 129",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX130",
+    "title": "Human-machine simulation patent example 130",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX131",
+    "title": "Human-machine simulation patent example 131",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX132",
+    "title": "Human-machine simulation patent example 132",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX133",
+    "title": "Human-machine simulation patent example 133",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX134",
+    "title": "Human-machine simulation patent example 134",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX135",
+    "title": "Human-machine simulation patent example 135",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX136",
+    "title": "Human-machine simulation patent example 136",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX137",
+    "title": "Human-machine simulation patent example 137",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX138",
+    "title": "Human-machine simulation patent example 138",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX139",
+    "title": "Human-machine simulation patent example 139",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX140",
+    "title": "Human-machine simulation patent example 140",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX141",
+    "title": "Human-machine simulation patent example 141",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX142",
+    "title": "Human-machine simulation patent example 142",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX143",
+    "title": "Human-machine simulation patent example 143",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX144",
+    "title": "Human-machine simulation patent example 144",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX145",
+    "title": "Human-machine simulation patent example 145",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX146",
+    "title": "Human-machine simulation patent example 146",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX147",
+    "title": "Human-machine simulation patent example 147",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX148",
+    "title": "Human-machine simulation patent example 148",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX149",
+    "title": "Human-machine simulation patent example 149",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX150",
+    "title": "Human-machine simulation patent example 150",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX151",
+    "title": "Human-machine simulation patent example 151",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX152",
+    "title": "Human-machine simulation patent example 152",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX153",
+    "title": "Human-machine simulation patent example 153",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX154",
+    "title": "Human-machine simulation patent example 154",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX155",
+    "title": "Human-machine simulation patent example 155",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX156",
+    "title": "Human-machine simulation patent example 156",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX157",
+    "title": "Human-machine simulation patent example 157",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX158",
+    "title": "Human-machine simulation patent example 158",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX159",
+    "title": "Human-machine simulation patent example 159",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX160",
+    "title": "Human-machine simulation patent example 160",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX161",
+    "title": "Human-machine simulation patent example 161",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX162",
+    "title": "Human-machine simulation patent example 162",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX163",
+    "title": "Human-machine simulation patent example 163",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX164",
+    "title": "Human-machine simulation patent example 164",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX165",
+    "title": "Human-machine simulation patent example 165",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX166",
+    "title": "Human-machine simulation patent example 166",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX167",
+    "title": "Human-machine simulation patent example 167",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX168",
+    "title": "Human-machine simulation patent example 168",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX169",
+    "title": "Human-machine simulation patent example 169",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX170",
+    "title": "Human-machine simulation patent example 170",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX171",
+    "title": "Human-machine simulation patent example 171",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX172",
+    "title": "Human-machine simulation patent example 172",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX173",
+    "title": "Human-machine simulation patent example 173",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX174",
+    "title": "Human-machine simulation patent example 174",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX175",
+    "title": "Human-machine simulation patent example 175",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX176",
+    "title": "Human-machine simulation patent example 176",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX177",
+    "title": "Human-machine simulation patent example 177",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX178",
+    "title": "Human-machine simulation patent example 178",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX179",
+    "title": "Human-machine simulation patent example 179",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX180",
+    "title": "Human-machine simulation patent example 180",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX181",
+    "title": "Human-machine simulation patent example 181",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX182",
+    "title": "Human-machine simulation patent example 182",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX183",
+    "title": "Human-machine simulation patent example 183",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX184",
+    "title": "Human-machine simulation patent example 184",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX185",
+    "title": "Human-machine simulation patent example 185",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX186",
+    "title": "Human-machine simulation patent example 186",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX187",
+    "title": "Human-machine simulation patent example 187",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX188",
+    "title": "Human-machine simulation patent example 188",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX189",
+    "title": "Human-machine simulation patent example 189",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX190",
+    "title": "Human-machine simulation patent example 190",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX191",
+    "title": "Human-machine simulation patent example 191",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX192",
+    "title": "Human-machine simulation patent example 192",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX193",
+    "title": "Human-machine simulation patent example 193",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX194",
+    "title": "Human-machine simulation patent example 194",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX195",
+    "title": "Human-machine simulation patent example 195",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX196",
+    "title": "Human-machine simulation patent example 196",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX197",
+    "title": "Human-machine simulation patent example 197",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX198",
+    "title": "Human-machine simulation patent example 198",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX199",
+    "title": "Human-machine simulation patent example 199",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  },
+  {
+    "patent_number": "EX200",
+    "title": "Human-machine simulation patent example 200",
+    "publication_date": "",
+    "description": "Placeholder for a human-machine simulation-related patent.",
+    "download_link": "https://patents.google.com/"
+  }
+]

@@ -1,0 +1,91 @@
+{
+  "id": "9b180e5a-395c-4d38-bdd2-2607bedc73fb",
+  "name": "02_personal_archive",
+  "path": "life\\90_archive\\02_personal_archive",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:44.272870",
+  "last_modified": "2025-08-03T23:39:44.272874",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "personal",
+  "life_stage": "all_stages",
+  "priority_level": 4,
+  "access_frequency": "rarely",
+  "maintenance_frequency": "weekly",
+  "parent": "56fd8b40-507b-4115-9e68-1f69ca05b174",
+  "ancestors": [
+    "56fd8b40-507b-4115-9e68-1f69ca05b174",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "medium",
+  "privacy_level": "private",
+  "encryption_required": true,
+  "backup_frequency": "weekly",
+  "lifecycle_stage": "active",
+  "retention_policy": "lifetime",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "archived",
+    "personal",
+    "rare-access",
+    "life"
+  ],
+  "labels": [],
+  "keywords": [
+    "personal",
+    "archive"
+  ],
+  "context": {
+    "time_context": "past",
+    "location_context": "general",
+    "person_context": "individual",
+    "project_context": "general"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "daily",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

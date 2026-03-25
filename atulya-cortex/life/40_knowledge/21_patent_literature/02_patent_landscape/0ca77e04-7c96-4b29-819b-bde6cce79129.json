@@ -1,0 +1,502 @@
+[
+  {
+    "patent_number": "US5249290",
+    "link": "https://patents.google.com/patent/US5249290",
+    "description": "Method for assigning client requests to the least-loaded server in a client/server network, ensuring balanced load distribution\u3010297045688196069\u2020L14-L16\u3011."
+  },
+  {
+    "patent_number": "US5257381",
+    "link": "https://patents.google.com/patent/US5257381",
+    "description": "Technique for intercepting calls to a network operating system by replacing initial instructions with a call to an intercept routine\u3010297045688196069\u2020L17-L18\u3011."
+  },
+  {
+    "patent_number": "US5247674",
+    "link": "https://patents.google.com/patent/US5247674",
+    "description": "Mechanism for statically allocating an initial memory block when a program loads, using the size in its header\u3010297045688196069\u2020L19-L20\u3011."
+  },
+  {
+    "patent_number": "US5261097",
+    "link": "https://patents.google.com/patent/US5261097",
+    "description": "Multi\u2011threaded C\u2011shell variant that provides commands for manipulating multiple threads\u3010297045688196069\u2020L21-L22\u3011."
+  },
+  {
+    "patent_number": "US4956809",
+    "link": "https://patents.google.com/patent/US4956809",
+    "description": "Host\u2011independent byte ordering technique that allows software to handle network data independent of machine architecture\u3010297045688196069\u2020L23-L23\u3011."
+  },
+  {
+    "patent_number": "US4714989",
+    "link": "https://patents.google.com/patent/US4714989",
+    "description": "Client/server database patent related to handling requests over a network, known as Roger Billings' client/server database patent\u3010297045688196069\u2020L23-L24\u3011."
+  },
+  {
+    "patent_number": "US5218695",
+    "link": "https://patents.google.com/patent/US5218695",
+    "description": "File server that merges multiple pending writes targeting the same metadata to improve efficiency\u3010297045688196069\u2020L28-L30\u3011."
+  },
+  {
+    "patent_number": "US5121492",
+    "link": "https://patents.google.com/patent/US5121492",
+    "description": "System that simulates the slower access times of a CD\u2011ROM by deliberately slowing down a hard drive\u3010297045688196069\u2020L30-L31\u3011."
+  },
+  {
+    "patent_number": "US5129088",
+    "link": "https://patents.google.com/patent/US5129088",
+    "description": "Method for creating variable\u2011size disk partitions that span tracks on multiple disks\u3010297045688196069\u2020L32-L33\u3011."
+  },
+  {
+    "patent_number": "US5257370",
+    "link": "https://patents.google.com/patent/US5257370",
+    "description": "File system read\u2011ahead mechanism that adjusts based on remembered file access behavior\u3010297045688196069\u2020L34-L35\u3011."
+  },
+  {
+    "patent_number": "US5247687",
+    "link": "https://patents.google.com/patent/US5247687",
+    "description": "Technique for altering the working set of a process based on its paging behavior and how that changes with working\u2011set size\u3010297045688196069\u2020L36-L38\u3011."
+  },
+  {
+    "patent_number": "US5175851",
+    "link": "https://patents.google.com/patent/US5175851",
+    "description": "Distributed file\u2011system concurrency control using multiple read\u2011only tokens and a single read\u2011write token\u3010297045688196069\u2020L39-L40\u3011."
+  },
+  {
+    "patent_number": "US4965765",
+    "link": "https://patents.google.com/patent/US4965765",
+    "description": "Graphics system that uses different colors to show the nesting level of nested expressions in code\u3010297045688196069\u2020L44-L45\u3011."
+  },
+  {
+    "patent_number": "US5257347",
+    "link": "https://patents.google.com/patent/US5257347",
+    "description": "Computer graphics method that represents surfaces using an array of dots instead of wire\u2011frame models\u3010297045688196069\u2020L46-L47\u3011."
+  },
+  {
+    "patent_number": "US5247438",
+    "link": "https://patents.google.com/patent/US5247438",
+    "description": "Calendar tool featuring bar graphs showing the duration of meetings and a composite of all meetings\u3010297045688196069\u2020L48-L49\u3011."
+  },
+  {
+    "patent_number": "US4197590",
+    "link": "https://patents.google.com/patent/US4197590",
+    "description": "Cadtrak\u2019s XOR cursor patent for drawing a cursor that can be easily erased by XORing pixels\u3010297045688196069\u2020L50-L50\u3011."
+  },
+  {
+    "patent_number": "US4555775",
+    "link": "https://patents.google.com/patent/US4555775",
+    "description": "Rob Pike\u2019s backing store patent for window systems that save obscured content off\u2011screen to speed redrawing\u3010297045688196069\u2020L51-L52\u3011."
+  },
+  {
+    "patent_number": "US5151991",
+    "link": "https://patents.google.com/patent/US5151991",
+    "description": "Parallelizing compiler that estimates execution times of different parallelizations and selects the fastest\u3010297045688196069\u2020L55-L57\u3011."
+  },
+  {
+    "patent_number": "US5261095",
+    "link": "https://patents.google.com/patent/US5261095",
+    "description": "Partitioning a program for multiprocessor execution by identifying procedures to run on another processor and inserting remote procedure calls\u3010297045688196069\u2020L58-L60\u3011."
+  },
+  {
+    "patent_number": "US4951195",
+    "link": "https://patents.google.com/patent/US4951195",
+    "description": "CPU simulator uses condition\u2011code graph analysis to decide when to simulate condition\u2011code generation\u3010297045688196069\u2020L61-L62\u3011."
+  },
+  {
+    "patent_number": "US5167023",
+    "link": "https://patents.google.com/patent/US5167023",
+    "description": "Technique for caching the most recent branch target in a simulator when simulating a procedure return instruction\u3010297045688196069\u2020L64-L65\u3011."
+  },
+  {
+    "patent_number": "US5261101",
+    "link": "https://patents.google.com/patent/US5261101",
+    "description": "Microsoft patent for a specific calling convention used by a compiler\u3010297045688196069\u2020L66-L67\u3011."
+  },
+  {
+    "patent_number": "US5175828",
+    "link": "https://patents.google.com/patent/US5175828",
+    "description": "Method for dynamically linking a replacement procedure into a running program by rewriting call instructions\u3010297045688196069\u2020L68-L69\u3011."
+  },
+  {
+    "patent_number": "US4656583",
+    "link": "https://patents.google.com/patent/US4656583",
+    "description": "IBM patent for performing global common subexpression elimination by identifying operands used but not defined within each basic block\u3010297045688196069\u2020L70-L72\u3011."
+  },
+  {
+    "patent_number": "US4200770",
+    "link": "https://patents.google.com/patent/US4200770",
+    "description": "Diffie\u2011Hellman secret key exchange patent enabling secure exchange of cryptographic keys\u3010297045688196069\u2020L74-L77\u3011."
+  },
+  {
+    "patent_number": "US4218582",
+    "link": "https://patents.google.com/patent/US4218582",
+    "description": "Hellman\u2013Merkle public key cryptography patent that introduced public\u2011key encryption\u3010297045688196069\u2020L76-L78\u3011."
+  },
+  {
+    "patent_number": "US5272768",
+    "link": "https://patents.google.com/patent/US5272768",
+    "description": "Font compression method that encodes blank rows and columns separately to reduce storage\u3010297045688196069\u2020L78-L80\u3011."
+  },
+  {
+    "patent_number": "US4558302",
+    "link": "https://patents.google.com/patent/US4558302",
+    "description": "LZW compression patent for high\u2011speed data compression and decompression\u3010297045688196069\u2020L80-L80\u3011."
+  },
+  {
+    "patent_number": "US4941125",
+    "link": "https://patents.google.com/patent/US4941125",
+    "description": "Document storage system using a digital camera to scan documents, storing them on optical disks and building an index via OCR\u3010297045688196069\u2020L84-L86\u3011."
+  },
+  {
+    "patent_number": "US5241671",
+    "link": "https://patents.google.com/patent/US5241671",
+    "description": "Compton\u2019s multimedia search patent covering a method for searching multimedia content\u3010297045688196069\u2020L86-L88\u3011."
+  },
+  {
+    "patent_number": "US4947346",
+    "link": "https://patents.google.com/patent/US4947346",
+    "description": "Word processor that monitors key sequences to teach users new features when repetitive sequences are detected\u3010297045688196069\u2020L90-L93\u3011."
+  },
+  {
+    "patent_number": "US5122953",
+    "link": "https://patents.google.com/patent/US5122953",
+    "description": "Word processor with a special mode for typing mathematical formulas\u3010297045688196069\u2020L94-L96\u3011."
+  },
+  {
+    "patent_number": "US4924411",
+    "link": "https://patents.google.com/patent/US4924411",
+    "description": "Word processor feature that shades specified text by embedding commands to turn shading on and off\u3010297045688196069\u2020L96-L100\u3011."
+  },
+  {
+    "patent_number": "US4984162",
+    "link": "https://patents.google.com/patent/US4984162",
+    "description": "Word processor screen layout that displays the page heading/footing and the current page contents simultaneously and allows editing of either\u3010297045688196069\u2020L100-L103\u3011."
+  },
+  {
+    "patent_number": "US5021972",
+    "link": "https://patents.google.com/patent/US5021972",
+    "description": "Word processor that marks and corrects documents using two additional colors\u3010297045688196069\u2020L104-L105\u3011."
+  },
+  {
+    "patent_number": "US5255356",
+    "link": "https://patents.google.com/patent/US5255356",
+    "description": "Spreadsheet with an outline mode that automatically collapses subordinate rows\u3010297045688196069\u2020L107-L110\u3011."
+  },
+  {
+    "patent_number": "US5121499",
+    "link": "https://patents.google.com/patent/US5121499",
+    "description": "Spreadsheet in which each cell contains a \u2018next cell\u2019 attribute defining where to move after data entry\u3010297045688196069\u2020L111-L113\u3011."
+  },
+  {
+    "patent_number": "US5272628",
+    "link": "https://patents.google.com/patent/US5272628",
+    "description": "Spreadsheet combining tables according to row and column headings to produce a new table\u3010297045688196069\u2020L113-L115\u3011."
+  },
+  {
+    "patent_number": "US5247611",
+    "link": "https://patents.google.com/patent/US5247611",
+    "description": "Spreadsheet design where a single cell can contain multiple optional fields\u3010297045688196069\u2020L116-L117\u3011."
+  },
+  {
+    "patent_number": "US4398249",
+    "link": "https://patents.google.com/patent/US4398249",
+    "description": "Refac natural\u2011order recalculation patent for spreadsheets, recalculating formulas in a natural order\u3010297045688196069\u2020L118-L119\u3011."
+  },
+  {
+    "patent_number": "US5175857",
+    "link": "https://patents.google.com/patent/US5175857",
+    "description": "Quicksort algorithm implemented using a linked list of pointers to the objects to be sorted\u3010297045688196069\u2020L122-L123\u3011."
+  },
+  {
+    "patent_number": "US5251165",
+    "link": "https://patents.google.com/patent/US5251165",
+    "description": "Random number generator that feeds the output of one generator into another for improved randomness\u3010297045688196069\u2020L123-L126\u3011."
+  },
+  {
+    "patent_number": "US8046721",
+    "link": "https://patents.google.com/patent/US8046721",
+    "description": "Apple\u2019s \u201cslide\u2011to\u2011unlock\u201d patent for unlocking a device by performing gestures on an unlock image\u3010502573582677513\u2020L0-L13\u3011."
+  },
+  {
+    "patent_number": "US5706456",
+    "link": "https://patents.google.com/patent/US5706456",
+    "description": "Patent covering a graphical user interface where windows overlap and can be manipulated, fundamental to the Windows GUI\u3010860692626128821\u2020L94-L114\u3011."
+  },
+  {
+    "patent_number": "US5787449",
+    "link": "https://patents.google.com/patent/US5787449",
+    "description": "Method and system for editing documents by separating architecture and content; central in the i4i v. Microsoft case\u3010881643011253272\u2020L0-L46\u3011."
+  },
+  {
+    "patent_number": "US6502135",
+    "link": "https://patents.google.com/patent/US6502135",
+    "description": "VirnetX patent for a secure communications protocol using DNS lookup and a virtual private network\u3010438252275595326\u2020L0-L12\u3011."
+  },
+  {
+    "patent_number": "US6201839",
+    "link": "https://patents.google.com/patent/US6201839",
+    "description": "Carnegie Mellon patent for correlation\u2011sensitive adaptive sequence detection used in disk drives\u3010404385175583584\u2020L0-L12\u3011."
+  },
+  {
+    "patent_number": "US6438180",
+    "link": "https://patents.google.com/patent/US6438180",
+    "description": "Carnegie Mellon patent for soft and hard sequence detection in intersymbol interference memory channels\u3010325886976566996\u2020L0-L12\u3011."
+  },
+  {
+    "patent_number": "US5490216",
+    "link": "https://patents.google.com/patent/US5490216",
+    "description": "Uniloc patent for software registration and anti\u2011piracy activation used in licensing software\u3010689865541927724\u2020L0-L41\u3011."
+  },
+  {
+    "patent_number": "US5537533",
+    "link": "https://patents.google.com/patent/US5537533",
+    "description": "Patent for remote mirroring of digital data from a primary server to a remote server; central to Intellectual Ventures v. Symantec\u3010384656933813158\u2020L0-L52\u3011."
+  },
+  {
+    "patent_number": "USD618677",
+    "link": "https://patents.google.com/patent/USD618677",
+    "description": "Apple design patent for the ornamental design of a smartphone with rounded corners\u301066476250124316\u2020L4-L32\u3011."
+  },
+  {
+    "patent_number": "US5838906",
+    "link": "https://patents.google.com/patent/US5838906",
+    "description": "Eolas plug\u2011in patent for interactive web pages with embedded objects\u3010160322443379870\u2020L0-L47\u3011."
+  },
+  {
+    "patent_number": "US5960411",
+    "link": "https://patents.google.com/patent/US5960411",
+    "description": "Amazon\u2019s one\u2011click ordering patent for placing orders via a single action through a communications network\u3010629514688046087\u2020L0-L44\u3011."
+  },
+  {
+    "patent_number": "US6285999",
+    "link": "https://patents.google.com/patent/US6285999",
+    "description": "Google PageRank patent describing a system for ranking web pages based on linking structure\u3010509333420381659\u2020L0-L56\u3011."
+  },
+  {
+    "patent_number": "US4405829",
+    "link": "https://patents.google.com/patent/US4405829",
+    "description": "RSA cryptographic communications patent introducing public\u2011key encryption and digital signatures\u3010198352443240551\u2020L21-L45\u3011."
+  },
+  {
+    "patent_number": "US4200770",
+    "link": "https://patents.google.com/patent/US4200770",
+    "description": "Diffie\u2011Hellman secret key exchange patent enabling secure key agreement over insecure channels\u3010345815562872625\u2020L20-L50\u3011."
+  },
+  {
+    "patent_number": "US4218582",
+    "link": "https://patents.google.com/patent/US4218582",
+    "description": "Merkle\u2011Hellman public key cryptography patent describing a knapsack\u2011based encryption system\u3010561717805393345\u2020L14-L44\u3011."
+  },
+  {
+    "patent_number": "US3821715",
+    "link": "https://patents.google.com/patent/US3821715",
+    "description": "Intel microprocessor patent covering a memory system for a multi\u2011chip digital computer\u3010272617381337696\u2020L21-L47\u3011."
+  },
+  {
+    "patent_number": "US3138743",
+    "link": "https://patents.google.com/patent/US3138743",
+    "description": "Jack Kilby\u2019s integrated circuit patent for miniaturized electronic circuits on a semiconductor substrate\u3010959799596874292\u2020L20-L41\u3011."
+  },
+  {
+    "patent_number": "US4063220",
+    "link": "https://patents.google.com/patent/US4063220",
+    "description": "Xerox Ethernet patent for a multipoint data communication system with collision detection\u3010182158480389779\u2020L21-L63\u3011."
+  },
+  {
+    "patent_number": "US4698672",
+    "link": "https://patents.google.com/patent/US4698672",
+    "description": "JPEG compression patent covering a coding system for reducing redundancy in digital signals\u3010361449731754801\u2020L20-L45\u3011."
+  },
+  {
+    "patent_number": "US5774670",
+    "link": "https://patents.google.com/patent/US5774670",
+    "description": "Netscape\u2019s HTTP cookie patent covering transfer of state information between a web server and client\u3010301823447650914\u2020L59-L80\u3011."
+  },
+  {
+    "patent_number": "US4558302",
+    "link": "https://patents.google.com/patent/US4558302",
+    "description": "LZW compression patent describing high\u2011speed data compression using dictionary substitution\u3010818873218574584\u2020L20-L40\u3011."
+  },
+  {
+    "patent_number": "US5579430",
+    "link": "https://patents.google.com/patent/US5579430",
+    "description": "Fraunhofer MP3 patent for digital encoding of acoustical signals using filter banks and quantization\u3010668254248074266\u2020L20-L41\u3011."
+  },
+  {
+    "patent_number": "US5193056",
+    "link": "https://patents.google.com/patent/US5193056",
+    "description": "State Street Bank patent for a hub\u2011and\u2011spoke financial services data processing system\u3010347190212080662\u2020L14-L41\u3011."
+  },
+  {
+    "patent_number": "US6137498",
+    "link": "https://patents.google.com/patent/US6137498",
+    "description": "Photographic mosaic patent for digitally composing an image mosaic by matching image tiles\u3010860918812982932\u2020L110-L126\u3011."
+  },
+  {
+    "patent_number": "US6384822",
+    "link": "https://patents.google.com/patent/US6384822",
+    "description": "Carmack\u2019s reverse patent for rendering real\u2011time shadows using shadow volumes and a stencil buffer\u3010747073385245361\u2020L92-L127\u3011."
+  },
+  {
+    "patent_number": "US6192407",
+    "link": "https://patents.google.com/patent/US6192407",
+    "description": "Tumbleweed Communications patent for private, trackable URLs that deliver documents securely\u3010802018951856326\u2020L22-L40\u3011."
+  },
+  {
+    "patent_number": "US6269361",
+    "link": "https://patents.google.com/patent/US6269361",
+    "description": "Overture/Yahoo patent for influencing the position of search results using pay\u2011per\u2011click advertising\u3010624383487925448\u2020L9-L44\u3011."
+  },
+  {
+    "patent_number": "US6041345",
+    "link": "https://patents.google.com/patent/US6041345",
+    "description": "Microsoft patent for an active stream format that holds multiple media streams for streaming media\u3010137214339407921\u2020L8-L43\u3011."
+  },
+  {
+    "patent_number": "US2569347",
+    "link": "https://patents.google.com/patent/US2569347",
+    "description": "Shockley\u2019s transistor patent introducing a circuit element using semiconductive material\u301067715594593917\u2020L8-L38\u3011."
+  },
+  {
+    "patent_number": "US174465",
+    "link": "https://patents.google.com/patent/US174465",
+    "description": "Alexander Graham Bell\u2019s telephone patent for transmitting vocal sounds telegraphically\u3010309931841476160\u2020L19-L41\u3011."
+  },
+  {
+    "patent_number": "US223898",
+    "link": "https://patents.google.com/patent/US223898",
+    "description": "Thomas Edison\u2019s electric lamp patent for an improved incandescent light bulb\u3010644216687207084\u2020L19-L40\u3011."
+  },
+  {
+    "patent_number": "US645576",
+    "link": "https://patents.google.com/patent/US645576",
+    "description": "Nikola Tesla\u2019s patent for wireless transmission of electrical energy using resonant coupling\u3010161400339880054\u2020L20-L44\u3011."
+  },
+  {
+    "patent_number": "US6233389",
+    "link": "https://patents.google.com/patent/US6233389",
+    "description": "TiVo\u2019s multimedia time\u2011warping patent for storing live TV in buffers and allowing pause/rewind of broadcasts\u3010252429541860351\u2020L8-L47\u3011."
+  },
+  {
+    "patent_number": "US3120606",
+    "link": "https://patents.google.com/patent/US3120606",
+    "description": "ENIAC patent for the electronic numerical integrator and computer, an early general\u2011purpose digital computer\u3010755162434511767\u2020L21-L33\u3011."
+  },
+  {
+    "patent_number": "US3906166",
+    "link": "https://patents.google.com/patent/US3906166",
+    "description": "Motorola\u2019s portable radio telephone patent enabling the first handheld cell phone\u3010435236166008693\u2020L20-L36\u3011."
+  },
+  {
+    "patent_number": "US1773980",
+    "link": "https://patents.google.com/patent/US1773980",
+    "description": "Philo Farnsworth\u2019s television system patent for transmitting true moving images electronically\u3010276968261676414\u2020L20-L40\u3011."
+  },
+  {
+    "patent_number": "US2612994",
+    "link": "https://patents.google.com/patent/US2612994",
+    "description": "Woodland and Silver\u2019s bar\u2011code patent for classifying items using photo\u2011responsive patterns\u3010230187562597028\u2020L20-L46\u3011."
+  },
+  {
+    "patent_number": "US3789409",
+    "link": "https://patents.google.com/patent/US3789409",
+    "description": "Roger L. Easton\u2019s GPS patent for determining a navigator\u2019s position using satellites and passive ranging\u3010754825984286237\u2020L98-L126\u3011."
+  },
+  {
+    "patent_number": "US6590928",
+    "link": "https://patents.google.com/patent/US6590928",
+    "description": "Bluetooth patent describing frequency\u2011hopping piconets in uncoordinated wireless networks\u3010993175897404529\u2020L235-L246\u3011."
+  },
+  {
+    "patent_number": "US5487069",
+    "link": "https://patents.google.com/patent/US5487069",
+    "description": "CSIRO Wi\u2011Fi patent for a wireless LAN using multi\u2011path signal processing and high\u2011frequency modulation\u3010766351550891676\u2020L20-L40\u3011."
+  },
+  {
+    "patent_number": "US4901307",
+    "link": "https://patents.google.com/patent/US4901307",
+    "description": "Qualcomm\u2019s CDMA patent for a spread\u2011spectrum multiple access communication system with terrestrial or satellite repeaters\u3010916752901173859\u2020L93-L110\u3011."
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering asynchronous JavaScript and XML for dynamic web applications\u3010972534921412095\u2020L160-L165\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering technology behind pop\u2011up ads used in online advertising\u3010972534921412095\u2020L166-L170\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent for voice over Internet Protocol allowing voice communication over the Internet\u3010972534921412095\u2020L171-L175\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering content delivery networks that distribute web content globally\u3010972534921412095\u2020L177-L181\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering technology behind online auction websites like eBay\u3010972534921412095\u2020L183-L187\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering streaming media techniques for real\u2011time delivery of audio and video\u3010972534921412095\u2020L195-L199\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering online mapping services that enable digital map navigation\u3010972534921412095\u2020L201-L205\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering secure online payment systems for e\u2011commerce\u3010972534921412095\u2020L207-L211\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering the design and functionality of Apple\u2019s iOS operating system\u3010972534921412095\u2020L213-L217\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering the design and functionality of Google\u2019s Android OS\u3010972534921412095\u2020L218-L223\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering the Snake game included on many Nokia phones\u3010972534921412095\u2020L230-L233\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering BlackBerry\u2019s mobile email system\u3010972534921412095\u2020L235-L238\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering the design and functionality of Samsung Galaxy smartphones\u3010972534921412095\u2020L240-L244\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering the technology behind Qualcomm\u2019s Snapdragon mobile processor\u3010972534921412095\u2020L246-L249\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering Facebook\u2019s Like button allowing users to express approval\u3010972534921412095\u2020L252-L256\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering the design and functionality of the Amazon Echo smart speaker\u3010972534921412095\u2020L258-L261\u3011"
+  },
+  {
+    "patent_number": null,
+    "link": "https://adibiip.com/software-patent-examples-45-patents-that-made-the-modern-world/",
+    "description": "Patent covering Google\u2019s AdWords advertising platform\u3010972534921412095\u2020L263-L267\u3011"
+  }
+]

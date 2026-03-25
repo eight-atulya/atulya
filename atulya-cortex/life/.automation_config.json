@@ -1,0 +1,44 @@
+{
+  "version": "2.0",
+  "created_at": "2025-08-03T23:39:44.501845",
+  "rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": true,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": true
+  },
+  "schedules": {
+    "daily_cleanup": "06:00",
+    "weekly_backup": "sunday_02:00",
+    "monthly_archive": "first_sunday_03:00",
+    "quarterly_review": "first_sunday_04:00"
+  },
+  "triggers": {
+    "file_created": [
+      "categorize",
+      "tag",
+      "index"
+    ],
+    "file_modified": [
+      "update_metadata",
+      "backup"
+    ],
+    "file_moved": [
+      "update_paths",
+      "update_relationships"
+    ],
+    "file_deleted": [
+      "update_index",
+      "cleanup_references"
+    ]
+  },
+  "integrations": {
+    "calendar": true,
+    "email": true,
+    "cloud_storage": true,
+    "task_manager": true
+  }
+}

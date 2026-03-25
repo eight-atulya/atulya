@@ -1,0 +1,91 @@
+{
+  "id": "c657f5ad-8200-4315-bf65-61ca3a10da04",
+  "name": "02_budget_crisis",
+  "path": "life\\45_crisis_management\\03_financial_crisis\\02_budget_crisis",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:44.066404",
+  "last_modified": "2025-08-03T23:39:44.066406",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "crisis_management",
+  "life_stage": "all_stages",
+  "priority_level": 1,
+  "access_frequency": "occasional",
+  "maintenance_frequency": "quarterly",
+  "parent": "7a5a208e-a8b1-4382-a606-c77ea0e1550a",
+  "ancestors": [
+    "7a5a208e-a8b1-4382-a606-c77ea0e1550a",
+    "b94ef28a-2dbf-407e-9544-5851cfecd037",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "standard",
+  "privacy_level": "standard",
+  "encryption_required": false,
+  "backup_frequency": "monthly",
+  "lifecycle_stage": "active",
+  "retention_policy": "5_years",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [],
+  "labels": [],
+  "keywords": [
+    "crisis",
+    "budget"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "general",
+    "project_context": "general"
+  },
+  "integrations": [
+    "mint",
+    "ynab",
+    "quickbooks"
+  ],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}
