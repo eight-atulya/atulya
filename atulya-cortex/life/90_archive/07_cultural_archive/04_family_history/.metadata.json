@@ -1,0 +1,93 @@
+{
+  "id": "4b774d3f-9e56-49db-a592-89029c553b2e",
+  "name": "04_family_history",
+  "path": "life\\90_archive\\07_cultural_archive\\04_family_history",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:44.323663",
+  "last_modified": "2025-08-03T23:39:44.323665",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "family",
+  "life_stage": "all_stages",
+  "priority_level": 3,
+  "access_frequency": "monthly",
+  "maintenance_frequency": "monthly",
+  "parent": "a497c792-d51d-413b-bf54-998b9847c52a",
+  "ancestors": [
+    "a497c792-d51d-413b-bf54-998b9847c52a",
+    "56fd8b40-507b-4115-9e68-1f69ca05b174",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "medium",
+  "privacy_level": "private",
+  "encryption_required": false,
+  "backup_frequency": "weekly",
+  "lifecycle_stage": "active",
+  "retention_policy": "lifetime",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "family",
+    "relationships"
+  ],
+  "labels": [],
+  "keywords": [
+    "family",
+    "history",
+    "personal",
+    "relationships",
+    "home"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "group",
+    "project_context": "general"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

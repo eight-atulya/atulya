@@ -1,0 +1,98 @@
+{
+  "id": "d4957c95-587c-4b40-8dcf-ecbf69cdb894",
+  "name": "06_family_communication",
+  "path": "life\\20_personal\\07_relationships\\01_family\\06_family_communication",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:43.022991",
+  "last_modified": "2025-08-03T23:39:43.022994",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "family",
+  "life_stage": "all_stages",
+  "priority_level": 3,
+  "access_frequency": "monthly",
+  "maintenance_frequency": "monthly",
+  "parent": "4f11b26b-0bbb-40b4-af50-578554fe0f54",
+  "ancestors": [
+    "4f11b26b-0bbb-40b4-af50-578554fe0f54",
+    "155a608e-1d8f-48e1-8a1b-1bef88b0ff20",
+    "25270ded-f3f7-4a46-b1e6-f6dac907640e",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [],
+  "security_level": "medium",
+  "privacy_level": "private",
+  "encryption_required": false,
+  "backup_frequency": "weekly",
+  "lifecycle_stage": "active",
+  "retention_policy": "lifetime",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "family",
+    "relationships"
+  ],
+  "labels": [],
+  "keywords": [
+    "communication",
+    "family",
+    "personal",
+    "relationships",
+    "home"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "group",
+    "project_context": "general"
+  },
+  "integrations": [
+    "gmail",
+    "outlook",
+    "slack"
+  ],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

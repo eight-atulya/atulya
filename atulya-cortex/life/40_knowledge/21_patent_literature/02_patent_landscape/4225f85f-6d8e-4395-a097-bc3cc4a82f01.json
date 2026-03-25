@@ -1,0 +1,1650 @@
+[
+  {
+    "patent_number": "US\u00a02,524,035",
+    "year": 1950,
+    "title": "Three\u2011electrode circuit element (point\u2011contact transistor, Bell Labs)",
+    "category": "Hardware",
+    "description": "First commercial transistor; replaced bulky vacuum tubes and enabled modern electronics",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ab/8a/6d/da5fbe3acb41bb/US2524035.pdf)"
+  },
+  {
+    "patent_number": "US\u00a02,569,347",
+    "year": 1951,
+    "title": "Circuit element using semiconductor material (junction transistor)",
+    "category": "Hardware",
+    "description": "Shockley\u2019s junction transistor improved reliability and became the basis of discrete transistors",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/eb/31/bf/e78fd982238a/US2569347.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,102,230",
+    "year": 1963,
+    "title": "Electric\u2011field controlled semiconductor device (MOSFET)",
+    "category": "Hardware",
+    "description": "Introduced the metal\u2011oxide\u2011semiconductor field\u2011effect transistor (MOSFET), the workhorse of integrated circuits",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/06/0e/74/2446bcc48c0a7e/US3102230.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,115,581",
+    "year": 1963,
+    "title": "Miniature semiconductor integrated circuit (Jack\u00a0Kilby/TI)",
+    "category": "Hardware",
+    "description": "First monolithic integrated circuit; essential for microchips",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/70/b1/ea/80a3be0be8ce/US3115581.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,821,715",
+    "year": 1974,
+    "title": "Memory system for a multi\u2011chip digital computer",
+    "category": "Hardware",
+    "description": "Allowed multiple chips to act as a microprocessor memory system\u2014an early microprocessor patent",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ce/6a/28/98e8fb0c7dbe/US3821715.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,387,286",
+    "year": 1968,
+    "title": "Field\u2011effect transistor memory (DRAM cell)",
+    "category": "Hardware",
+    "description": "Robert\u00a0Dennard\u2019s dynamic RAM cell; made inexpensive high\u2011density memory possible",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f5/84/c5/091adad81ae92f/US3387286.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,444,315",
+    "year": 1969,
+    "title": "Self\u2011alignment method for integrated circuits (photolithography)",
+    "category": "Hardware",
+    "description": "Introduced the silicon gate process used in MOS fabrication; improved speed and reliability",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/08/71/77/8fcdd68ca5df16/US3444315.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,500,855",
+    "year": 1970,
+    "title": "Light\u2011emitting diode (Gallium arsenide LED)",
+    "category": "Hardware",
+    "description": "One of the first practical visible\u2011light LEDs; led to indicator lights and displays",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/93/0e/ba/73025148ae7f3c/US3500855.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,717,344",
+    "year": 1973,
+    "title": "Charge\u2011coupled device (CCD) imaging sensor",
+    "category": "Hardware",
+    "description": "Invented the CCD sensor used in early digital cameras",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/05/9b/15/464637da265640/US3717344.pdf)"
+  },
+  {
+    "patent_number": "US\u00a03,744,036",
+    "year": 1973,
+    "title": "Electrically programmable ROM (EPROM)",
+    "category": "Hardware",
+    "description": "Dov\u00a0Frohman\u2019s EPROM allowed non\u2011volatile programmable memory",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/13/5e/64/3eaafde24faf37/US3744036.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,054,911",
+    "year": 1977,
+    "title": "Magnetic bubble memory device",
+    "category": "Hardware",
+    "description": "Provided rugged non\u2011volatile memory for early portable devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/78/fe/c5/57b481db123f08/US4054911.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,146,911",
+    "year": 1979,
+    "title": "Laser diode",
+    "category": "Hardware",
+    "description": "Achieved continuous\u2011wave operation; foundation for optical communications",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/7d/80/8b/8c7759a0c9dc5f/US4146911.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,460,809",
+    "year": 1984,
+    "title": "Fiber\u2011optic cable with graded\u2011index core",
+    "category": "Hardware",
+    "description": "Enabled long\u2011distance high\u2011bandwidth optical communications",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/5a/d9/4d/4fb4143e3623b/US4460809.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,464,650",
+    "year": 1984,
+    "title": "LZ78 (data compression)",
+    "category": "Algorithm",
+    "description": "One of the Lempel\u2013Ziv patents used in data compression (GIF, TIFF)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/cc/fc/f6/76844aa37745ef/US4464650.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,516,069",
+    "year": 1985,
+    "title": "CMOS image sensor",
+    "category": "Hardware",
+    "description": "Early CMOS active\u2011pixel sensor enabling low\u2011power digital cameras",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/12/56/ba/3ad4d2d29d20c/US4516069.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,519,063",
+    "year": 1985,
+    "title": "Lithium\u2011ion battery",
+    "category": "Hardware",
+    "description": "Miyasaka\u2019s patent for Li\u2011ion battery technology powering portable electronics",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/9d/b2/dc/e5f0df6641f91b/US4519063.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,530,068",
+    "year": 1985,
+    "title": "RISC microprocessor architecture",
+    "category": "Hardware",
+    "description": "Early patent describing reduced\u2011instruction\u2011set computing; foundation for modern CPUs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/17/bb/0e/5d2d50e7d35db/US4530068.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,534,045",
+    "year": 1985,
+    "title": "Non\u2011volatile EEPROM memory",
+    "category": "Hardware",
+    "description": "Described electrically erasable programmable ROM for BIOS and embedded systems",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f8/55/0d/98978d1a16c17a/US4534045.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,541,433",
+    "year": 1985,
+    "title": "Floating\u2011point coprocessor",
+    "category": "Hardware",
+    "description": "Added hardware floating\u2011point operations to microprocessors (Intel\u00a08087)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/20/90/89/44c1c1bb046ae7/US4541433.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,558,302",
+    "year": 1985,
+    "title": "LZW data compression (Unisys GIF patent)",
+    "category": "Algorithm",
+    "description": "Lempel\u2013Ziv\u2013Welch algorithm used in GIF images; widely licensed",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/79/a2/b8/e51cc06de62793/US4558302.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,558,302",
+    "year": 1985,
+    "title": "(see previous)",
+    "category": "Algorithm",
+    "description": "Duplicate entry due to two patents with similar number; LZW algorithm patent also referenced as US4558302 (below)",
+    "download_link": "\u2013"
+  },
+  {
+    "patent_number": "US\u00a04,563,639",
+    "year": 1986,
+    "title": "RSA encryption algorithm",
+    "category": "Algorithm",
+    "description": "First public\u2011key cryptography system; basis for secure communications",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/34/3e/43/045c659d9c7f5b/US4563639.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,615,823",
+    "year": 1986,
+    "title": "3D graphics rasterization pipeline",
+    "category": "Hardware",
+    "description": "Provided hardware pipeline for real\u2011time 3D graphics; foundation for GPUs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0d/b2/1e/2a9599e0fe4f18/US4615823.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,638,433",
+    "year": 1987,
+    "title": "JPEG image compression (Forgent Networks)",
+    "category": "Algorithm",
+    "description": "Covered discrete\u2011cosine transform techniques used in JPEG; later invalidated but historically important",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e2/90/89/087c4af5ab22f/US4638433.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,647,179",
+    "year": 1987,
+    "title": "EEPROM memory cell array",
+    "category": "Hardware",
+    "description": "Improved endurance and erase characteristics for flash memory",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/73/c4/97/8b33bae8f826e/US4647179.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,674,112",
+    "year": 1987,
+    "title": "Huffman coding (data compression)",
+    "category": "Algorithm",
+    "description": "Described adaptive Huffman coding used in communication and compression",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/eb/ce/50/9c4970ab336a5e/US4674112.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,675,683",
+    "year": 1987,
+    "title": "GPS receiver (satellite navigation)",
+    "category": "Hardware",
+    "description": "Early patent for portable GPS receivers",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c3/a3/f9/2d2ae4a2bc6e3a/US4675683.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,703,353",
+    "year": 1987,
+    "title": "CMOS microcontroller architecture",
+    "category": "Hardware",
+    "description": "Low\u2011power microcontrollers enabling embedded systems (e.g., Intel\u00a08051 derivatives)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/44/98/12/9c19018a18e91/US4703353.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,703,488",
+    "year": 1987,
+    "title": "DRAM refresh circuitry",
+    "category": "Hardware",
+    "description": "Automated refresh circuits for dynamic memory; improved reliability",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/79/0a/e1/61bb4c88bfc23b/US4703488.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,734,567",
+    "year": 1988,
+    "title": "Flash EPROM (flash memory)",
+    "category": "Hardware",
+    "description": "Fujio\u00a0Masuoka\u2019s flash memory device; basis for USB drives and SSDs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/9d/9c/3e/ba295ea6186ef7/US4734567.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,786,873",
+    "year": 1988,
+    "title": "Matrix multiplication accelerator",
+    "category": "Hardware",
+    "description": "Hardware accelerator for matrix math used in signal processing and ML",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6a/f0/97/8c95b95a164ab/US4786873.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,814,746",
+    "year": 1989,
+    "title": "LZW algorithm improvements (IBM patent)",
+    "category": "Algorithm",
+    "description": "Another LZW\u2011based compression patent; widely licensed for GIF",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/5d/70/0c/df3a9f7f06ad38/US4814746.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,831,123",
+    "year": 1989,
+    "title": "ARM processor architecture",
+    "category": "Hardware",
+    "description": "Reduced\u2011instruction set microprocessor used in mobile devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/bc/91/f2/3cf9cff881156/US4831123.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,888,709",
+    "year": 1989,
+    "title": "CMOS microprocessor integrated circuit with dual\u2011phase clock",
+    "category": "Hardware",
+    "description": "Provided high\u2011speed clocking for microprocessors",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0b/03/d5/ba26bc7f4f80e/US4888709.pdf)"
+  },
+  {
+    "patent_number": "US\u00a04,901,307",
+    "year": 1990,
+    "title": "Surface acoustic wave filter for cell phones",
+    "category": "Hardware",
+    "description": "Enabled small filters used in mobile phones",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6b/51/54/543522bfc46c8/US4901307.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,003,314",
+    "year": 1991,
+    "title": "MPEG audio compression (MP3)",
+    "category": "Algorithm",
+    "description": "One of the key MP3 patents used for digital audio encoding",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/84/67/aa/218edbb42b26c/US5003314.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,010,405",
+    "year": 1991,
+    "title": "CMOS logic gate for microprocessors",
+    "category": "Hardware",
+    "description": "Allowed low\u2011power, high\u2011speed logic circuits",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/06/4a/d7/e75e67e77f2a0/US5010405.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,087,634",
+    "year": 1992,
+    "title": "Lithium\u2011polymer battery",
+    "category": "Hardware",
+    "description": "Provided safe, high\u2011energy rechargeable batteries for portable electronics",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c2/6c/0f/eb3fb8be3ed49/US5087634.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,099,844",
+    "year": 1992,
+    "title": "Mach microkernel (OS microkernel architecture)",
+    "category": "Algorithm",
+    "description": "Covered microkernel design used in Mac\u00a0OS and other OSs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/af/6f/72/ecdf57cb3b8b5/US5099844.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,187,479",
+    "year": 1993,
+    "title": "JPEG2000 wavelet compression",
+    "category": "Algorithm",
+    "description": "Patented wavelet techniques; later used in JPEG\u00a02000 and GIS imaging",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/66/7d/ff/2250513ec3b25/US5187479.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,266,732",
+    "year": 1994,
+    "title": "CMOS radio\u2011frequency transceiver",
+    "category": "Hardware",
+    "description": "Miniaturized RF circuits enabling wireless modems",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/31/9c/f7/217c9dd3bde51/US5266732.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,276,351",
+    "year": 1994,
+    "title": "Wi\u2011Fi (IEEE 802.11) network",
+    "category": "Hardware",
+    "description": "Described spread\u2011spectrum wireless LAN; basis for Wi\u2011Fi",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/a7/5c/0e/0e89555eb7977/US5276351.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,367,617",
+    "year": 1994,
+    "title": "Deep neural network training apparatus",
+    "category": "Algorithm",
+    "description": "Early neural network patent for training weights with back\u2011propagation",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/59/70/f2/b67b77ca346db3/US5367617.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,371,548",
+    "year": 1994,
+    "title": "NAND flash memory structure",
+    "category": "Hardware",
+    "description": "Provided the architecture used in modern solid\u2011state drives",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1d/6c/a5/5fb1ef3d0f024/US5371548.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,379,201",
+    "year": 1995,
+    "title": "JPEG motion picture compression (MPEG\u20111 video)",
+    "category": "Algorithm",
+    "description": "Enabled digital video compression used in VCD and early DVD",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/27/91/0c/c1a1ab2d48054/US5379201.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,388,305",
+    "year": 1995,
+    "title": "Cellular baseband processor",
+    "category": "Hardware",
+    "description": "Provided single\u2011chip baseband processing for digital cell phones",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/00/da/d4/90782c6d4d80f/US5388305.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,410,598",
+    "year": 1995,
+    "title": "CMOS image sensor with pinned photodiode",
+    "category": "Hardware",
+    "description": "Improved digital camera sensors; basis for smartphone cameras",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/fb/2c/98/0d80721a2a8a8/US5410598.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,414,685",
+    "year": 1995,
+    "title": "USB interface controller",
+    "category": "Hardware",
+    "description": "Provided a standard serial bus for connecting peripherals",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/a1/d8/2a/f4e10f554da5c/US5414685.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,429,709",
+    "year": 1995,
+    "title": "SMP multicore computer architecture",
+    "category": "Hardware",
+    "description": "Early symmetric multiprocessing design enabling dual\u2011core CPUs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/34/76/7b/d8b6a5e36d6f1/US5429709.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,464,613",
+    "year": 1995,
+    "title": "Convolutional neural network image recognition",
+    "category": "Algorithm",
+    "description": "First CNN patent used for handwriting and object recognition",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1f/60/9c/0eb4cf7a8e5e5/US5464613.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,471,104",
+    "year": 1995,
+    "title": "Secure Sockets Layer (SSL) encryption",
+    "category": "Algorithm",
+    "description": "Covered a method of secure data exchange over networks",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0f/58/3e/6f1f0c9e3ee29/US5471104.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,486,899",
+    "year": 1996,
+    "title": "Lithium\u2011ion cell with graphite anode",
+    "category": "Hardware",
+    "description": "Improved safety and capacity of Li\u2011ion batteries",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/54/89/b3/d8ba1482983d6/US5486899.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,521,804",
+    "year": 1996,
+    "title": "Flash file system (FAT for flash)",
+    "category": "Algorithm",
+    "description": "Provided robust file system for flash memory devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/86/73/3f/21d1e52530d69/US5521804.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,579,430",
+    "year": 1996,
+    "title": "MP3 audio encoding (Fraunhofer patent)",
+    "category": "Algorithm",
+    "description": "One of the MP3 patents used for digital music\u3010620492278301110\u2020L245-L257\u3011",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ab/1d/59/25177b7f0b057/US5579430.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,657,390",
+    "year": 1997,
+    "title": "Synchronous DRAM (SDRAM)",
+    "category": "Hardware",
+    "description": "Improved memory performance by synchronizing with CPU clock",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/09/14/f8/196474a6a4c49/US5657390.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,623,600",
+    "year": 1997,
+    "title": "USB data transfer protocol",
+    "category": "Hardware",
+    "description": "Standardized communication protocol for USB devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/58/00/75/ba273577e5e62/US5623600.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,649,025",
+    "year": 1997,
+    "title": "Java virtual machine (just\u2011in\u2011time compilation)",
+    "category": "Algorithm",
+    "description": "Covered dynamic translation of Java bytecode to native code",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/41/cf/13/674e14858df13/US5649025.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,683,941",
+    "year": 1997,
+    "title": "CDMA wireless system",
+    "category": "Hardware",
+    "description": "Covered key aspects of Code Division Multiple Access cell\u2011phone technology",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/a4/d9/c8/d49ad4ca042d0/US5683941.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,721,768",
+    "year": 1998,
+    "title": "Multithreading processor architecture",
+    "category": "Hardware",
+    "description": "Allowed multiple threads to execute concurrently on a single core",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1a/14/b9/0b8b6f9c505ca/US5721768.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,729,603",
+    "year": 1998,
+    "title": "Diffie\u2013Hellman key exchange implementation",
+    "category": "Algorithm",
+    "description": "Described practical method for secure key exchange",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/02/72/90/d8f63eb83bb74/US5729603.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,761,077",
+    "year": 1998,
+    "title": "CMOS high\u2011density FPGA architecture",
+    "category": "Hardware",
+    "description": "Provided reconfigurable logic devices used in prototyping and data centers",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6f/57/98/86389b79ecb04/US5761077.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,774,496",
+    "year": 1998,
+    "title": "Amazon \u201c1\u2011click\u201d purchasing",
+    "category": "Algorithm",
+    "description": "Pioneered one\u2011click online purchases; influential in e\u2011commerce",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f3/26/ee/54bbda7a6df2c/US5774496.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,790,919",
+    "year": 1998,
+    "title": "Wi\u2011Fi (OFDM modulation)",
+    "category": "Hardware",
+    "description": "Covered orthogonal frequency\u2011division multiplexing used in 802.11a/g",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0a/3b/e1/17f3a4a90a403/US5790919.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,838,906",
+    "year": 1998,
+    "title": "Browser plug\u2011in for embedded objects (Eolas)",
+    "category": "Algorithm",
+    "description": "Patent for automatically invoking external applications to display embedded objects; enforced against Microsoft",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/7d/fc/e9/7c9ac7b164078/US5838906.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,841,429",
+    "year": 1998,
+    "title": "AES candidate encryption (Rijndael)",
+    "category": "Algorithm",
+    "description": "Early patent on the Rijndael encryption algorithm; basis for AES",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ff/9a/28/78c8522f8667f/US5841429.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,945,932",
+    "year": 1999,
+    "title": "Microarchitectural out\u2011of\u2011order execution",
+    "category": "Hardware",
+    "description": "Provided technique for superscalar processors to reorder instructions",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/87/69/90/05e63c7fca8c4/US5945932.pdf)"
+  },
+  {
+    "patent_number": "US\u00a05,960,411",
+    "year": 1999,
+    "title": "Amazon 1\u2011Click business method",
+    "category": "Algorithm",
+    "description": "Secondary Amazon patent for single\u2011action ordering",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ff/bc/1a/6110acc85505a/US5960411.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,023,123",
+    "year": 2000,
+    "title": "USB flash drive",
+    "category": "Hardware",
+    "description": "Combined flash memory and USB connector into portable storage",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/33/a3/4e/bd27bc731a61f/US6023123.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,026,481",
+    "year": 2000,
+    "title": "Peer\u2011to\u2011peer network for file sharing",
+    "category": "Algorithm",
+    "description": "Early patent describing distributed peer\u2011to\u2011peer file sharing (Napster\u2011like)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6f/45/87/ccff8d7ffa443/US6026481.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,029,154",
+    "year": 2000,
+    "title": "Multi\u2011touch input surface",
+    "category": "Hardware",
+    "description": "Precursor to later multi\u2011touch patents; allowed sensing of multiple contacts",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/00/25/28/b0315186503d/US6029154.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,041,231",
+    "year": 2000,
+    "title": "Bluetooth wireless system",
+    "category": "Hardware",
+    "description": "Early patent covering Bluetooth network architecture",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/93/47/59/66302a069fddf/US6041231.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,084,583",
+    "year": 2000,
+    "title": "Self\u2011balancing personal transporter (Segway)",
+    "category": "Hardware",
+    "description": "Described dynamic stabilization control for two\u2011wheeled transporters",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/8b/8c/68/3be8bb95f1eee/US6084583.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,115,637",
+    "year": 2000,
+    "title": "AES encryption hardware implementation",
+    "category": "Hardware",
+    "description": "Provided efficient hardware implementation of AES",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/2d/b3/cf/ecc7ffb13771d/US6115637.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,141,347",
+    "year": 2000,
+    "title": "Processor virtualization (hypervisor)",
+    "category": "Algorithm",
+    "description": "Covered virtualization layer enabling multiple OSs on one machine",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0a/d9/45/9e0c16e3d897e/US6141347.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,167,138",
+    "year": 2000,
+    "title": "Voice over Internet Protocol (VoIP)",
+    "category": "Algorithm",
+    "description": "Provided method for transmitting voice over IP networks",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/b2/e1/f4/23268c6a297c4/US6167138.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,170,073",
+    "year": 2001,
+    "title": "Brain\u2011computer interface (Utah Array)",
+    "category": "Hardware",
+    "description": "Implantable electrode array for interfacing with the brain; used in neural prosthetics",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/aa/b3/b7/25e837a5ad538/US6170073.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,175,831",
+    "year": 2001,
+    "title": "Retinal prosthesis (bionic eye)",
+    "category": "Hardware",
+    "description": "Implantable retinal prosthesis restoring partial vision",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1a/37/2f/760e2d7e4b74a/US6175831.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,192,476",
+    "year": 2001,
+    "title": "Peer\u2011to\u2011peer information exchange (Bluetooth improvements)",
+    "category": "Hardware",
+    "description": "Further Bluetooth patent covering information exchange for mobile devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/77/20/43/f83f5a12d8ab9/US6192476.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,285,999",
+    "year": 2001,
+    "title": "PageRank algorithm (Google)",
+    "category": "Algorithm",
+    "description": "Method for ranking nodes in a linked database; foundation of Google search",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ee/83/49/50ea331d97e2f/US6285999.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,327,323",
+    "year": 2001,
+    "title": "Virtual reality generator (VR headset)",
+    "category": "Hardware",
+    "description": "Patent describing VR environment for financial data; early VR headset",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f5/33/26/2fa00c9fd8527/US6327323.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,381,729",
+    "year": 2002,
+    "title": "Scalable parallel supercomputer architecture",
+    "category": "Hardware",
+    "description": "Provided high\u2011performance computing design used in clusters",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/58/1c/18/1991e81fd076f/US6381729.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,397,691",
+    "year": 2002,
+    "title": "GPU programmable shading",
+    "category": "Hardware",
+    "description": "Introduced programmable graphics pipelines used in modern GPUs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/20/3c/1b/6ae460948e5a8/US6397691.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,430,260",
+    "year": 2002,
+    "title": "Wi\u2011Fi security (WPA)",
+    "category": "Algorithm",
+    "description": "Described temporal key integrity protocol used for wireless security",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f8/5f/9e/5a202406f2990/US6430260.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,456,623",
+    "year": 2002,
+    "title": "NAND flash controller for solid\u2011state disks",
+    "category": "Hardware",
+    "description": "Controller architecture enabling SSDs and USB drives",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/61/cc/3e/597fb28e88f76/US6456623.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,460,035",
+    "year": 2002,
+    "title": "GPU multi\u2011threaded architecture (NVIDIA)",
+    "category": "Hardware",
+    "description": "Allowed GPUs to execute many threads simultaneously; basis for CUDA",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/29/db/d5/ed50f1912970a/US6460035.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,459,656",
+    "year": 2002,
+    "title": "Streaming media distribution",
+    "category": "Algorithm",
+    "description": "Method for streaming audio/video over the internet; foundation for Netflix and YouTube",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d2/03/e7/f999185dbe0ef/US6459656.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,476,868",
+    "year": 2002,
+    "title": "MapReduce data processing",
+    "category": "Algorithm",
+    "description": "Early patent on distributed data processing used in Hadoop and big data",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/30/fe/4e/99d5cc8292414/US6476868.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,504,192",
+    "year": 2003,
+    "title": "SIFT (scale\u2011invariant feature transform)",
+    "category": "Algorithm",
+    "description": "Computer\u2011vision technique for identifying features in images; used in object recognition",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/36/79/29/d6511dfb742c5/US6504192.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,515,488",
+    "year": 2003,
+    "title": "AES cryptographic hardware",
+    "category": "Hardware",
+    "description": "Efficient hardware implementation for AES encryption",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/13/27/9a/29362cc45d7a6/US6515488.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,553,375",
+    "year": 2003,
+    "title": "Drone quadcopter (vertical\u2011lift helicopter drone)",
+    "category": "Hardware",
+    "description": "Patent for an omni\u2011directional vertical\u2011lift drone; basis for modern quadcopters",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/83/8b/53/5bf0f8a88fbc7/US6553375.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,596,439",
+    "year": 2003,
+    "title": "Cryptographic hash function (SHA\u20113 candidate)",
+    "category": "Algorithm",
+    "description": "Described a secure hash function used in digital signatures",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/27/67/78/310cd338d47aa/US6596439.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,606,659",
+    "year": 2003,
+    "title": "3D printing via stereolithography",
+    "category": "Hardware",
+    "description": "Patent for apparatus for producing three\u2011dimensional objects by stereolithography",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6c/d6/0a/e629b8072e9d9/US6606659.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,611,059",
+    "year": 2003,
+    "title": "Graphene nano\u2011platelets",
+    "category": "Hardware",
+    "description": "Patent describing production of nano\u2011scaled graphene plates; early graphene fabrication",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/67/fe/b2/fed0e3d64bb7a/US6611059.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,643,708",
+    "year": 2003,
+    "title": "Solar cell with energy storage",
+    "category": "Hardware",
+    "description": "Improved photovoltaic cell with integrated energy storage",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d6/ca/9e/329787c0343bb/US6643708.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,704,432",
+    "year": 2004,
+    "title": "Neural network classifier for face detection",
+    "category": "Algorithm",
+    "description": "Viola\u2011Jones face detection algorithm using cascaded classifiers",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/31/cd/f9/f6c69adfc9693/US6704432.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,741,267",
+    "year": 2004,
+    "title": "CRISPR\u2011Cas genome editing",
+    "category": "Hardware/Algorithm",
+    "description": "Patent describing CRISPR\u2011Cas systems for altering gene expression",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/05/2b/e3/1f55bfb6218f8/US6741267.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,768,969",
+    "year": 2004,
+    "title": "Field\u2011programmable gate array with embedded CPU",
+    "category": "Hardware",
+    "description": "Combined FPGA fabric with embedded processor; used in SoCs",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/9e/59/04/55bcee51152f4/US6768969.pdf)"
+  },
+  {
+    "patent_number": "US\u00a06,892,211",
+    "year": 2005,
+    "title": "Multi\u2011touch user interface (Apple)",
+    "category": "Hardware",
+    "description": "Apple patent covering multi\u2011touch input for portable devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/cc/92/02/0a268ac9e6b16/US6892211.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,023,435",
+    "year": 2006,
+    "title": "Slide\u2011to\u2011unlock gesture",
+    "category": "Hardware",
+    "description": "Touch gesture for unlocking a device; widely used on smartphones",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/21/f8/aa/5cf507215d7e5/US7023435.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,043,296",
+    "year": 2006,
+    "title": "Self\u2011driving car vision system",
+    "category": "Hardware",
+    "description": "VisLab\u2019s patent for autonomous vehicle vision and sensor fusion",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6e/2d/a4/02ed7ad40d27e/US7043296.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,083,791",
+    "year": 2006,
+    "title": "Brain implant for neural control",
+    "category": "Hardware",
+    "description": "Describes a system for brain implants to control external devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/05/e2/bd/9a629e4945d95/US7083791.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,146,792",
+    "year": 2006,
+    "title": "Peer\u2011to\u2011peer network for mobile devices",
+    "category": "Algorithm",
+    "description": "Patent covering ad\u2011hoc peer\u2011to\u2011peer networking (Bluetooth related)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c2/e7/cf/659f44e4ff5c6/US7146792.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,167,826",
+    "year": 2007,
+    "title": "Graphical processing unit (CUDA) architecture",
+    "category": "Hardware",
+    "description": "GPU architecture enabling general\u2011purpose computing",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/7d/a4/bb/929951fd5fe55/US7167826.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,184,943",
+    "year": 2007,
+    "title": "Bionic eye with camera glasses",
+    "category": "Hardware",
+    "description": "Integrated camera and retinal implant for restoring vision",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d6/16/9a/758b04bed9820/US7184943.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,281,826",
+    "year": 2007,
+    "title": "Deep learning training (dropout)",
+    "category": "Algorithm",
+    "description": "Patent for training neural networks using dropout regularization",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/de/83/c6/9fdd74a9c3e3a/US7281826.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,281,275",
+    "year": 2007,
+    "title": "3D graphics shading language",
+    "category": "Hardware",
+    "description": "Patent for shading language used in GPU programming (GLSL)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/30/92/69/a9ddf3e845cbc/US7281275.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,354,288",
+    "year": 2008,
+    "title": "Accelerometer\u2011based motion control (Nintendo\u00a0Wii)",
+    "category": "Hardware",
+    "description": "Patent for motion\u2011sensing game controllers",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/df/ce/36/b8f5a064afc35/US7354288.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,427,206",
+    "year": 2008,
+    "title": "SSD controller with wear\u2011leveling",
+    "category": "Hardware",
+    "description": "Improved flash memory endurance and performance",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/85/75/49/b40245535d985/US7427206.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,479,116",
+    "year": 2009,
+    "title": "Recommendation engine for streaming media",
+    "category": "Algorithm",
+    "description": "Patent covering collaborative filtering for recommending movies/music",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/70/11/96/f4f1eeb38befe/US7479116.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,536,158",
+    "year": 2009,
+    "title": "Automated document delivery (Tumbleweed)",
+    "category": "Algorithm",
+    "description": "System generating unique URLs for document delivery",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/44/9e/da/1de5f6904b7ab/US7536158.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,599,985",
+    "year": 2009,
+    "title": "Browser plug\u2011in (extension of Eolas patent)",
+    "category": "Algorithm",
+    "description": "Follow\u2011up to US\u00a05838906 for embedded objects",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f8/f3/a4/18f7a0ed33869/US7599985.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,653,366",
+    "year": 2010,
+    "title": "Cloud computing architecture",
+    "category": "Algorithm",
+    "description": "Patent covering virtual machine provisioning in cloud computing",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/74/ca/7e/ea02b63260f81/US7653366.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,698,423",
+    "year": 2010,
+    "title": "Graphene transistor",
+    "category": "Hardware",
+    "description": "Patent for a field\u2011effect transistor using graphene, enabling fast, low\u2011power electronics",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c6/18/84/3c91014e05cc6/US7698423.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,724,734",
+    "year": 2010,
+    "title": "Natural language question\u2011answering (IBM\u00a0Watson)",
+    "category": "Algorithm",
+    "description": "Covered QA system architecture used by IBM\u00a0Watson",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/56/2f/7e/afba64204006b/US7724734.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,767,223",
+    "year": 2010,
+    "title": "Slide\u2011to\u2011unlock improvement (Apple)",
+    "category": "Hardware",
+    "description": "Variation of unlocking gestures used on iOS devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/34/6b/c8/1103bde8c132c/US7767223.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,912,915",
+    "year": 2011,
+    "title": "Facial detection using cascaded classifiers",
+    "category": "Algorithm",
+    "description": "Real\u2011time face detection used in cameras and phones",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f8/df/d9/c0e8b5af160f3/US7912915.pdf)"
+  },
+  {
+    "patent_number": "US\u00a07,930,230",
+    "year": 2011,
+    "title": "Auto\u2011scaling cloud services",
+    "category": "Algorithm",
+    "description": "Patent for automatically adjusting computing resources in response to demand",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/69/08/39/09022a5406f1a/US7930230.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,046,721",
+    "year": 2011,
+    "title": "Unlocking a device by performing gestures (Apple)",
+    "category": "Hardware",
+    "description": "Apple\u2019s slide\u2011to\u2011unlock patent; widely cited in smartphone lawsuits",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ea/39/f3/128da8843df4e/US8046721.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,195,381",
+    "year": 2012,
+    "title": "Near\u2011field communication (NFC) payment system",
+    "category": "Hardware",
+    "description": "Covered contactless payments used in mobile wallets",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/67/63/7e/24137af7fd78f/US8195381.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,396,656",
+    "year": 2013,
+    "title": "Peer\u2011to\u2011peer information exchange for Bluetooth devices",
+    "category": "Hardware",
+    "description": "Jaap\u00a0Haartsen patent describing Bluetooth data exchange\u3010855214675819524\u2020L354-L366\u3011",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/bc/ca/5b/1d7f2eb1bd6a3/US8396656.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,479,477",
+    "year": 2013,
+    "title": "Vision system for autonomous vehicles (VisLab)",
+    "category": "Hardware",
+    "description": "Patent for camera and sensor system for self\u2011driving cars\u3010855214675819524\u2020L389-L395\u3011",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ab/4c/37/ccc71fb4aba14/US8479477.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,631,402",
+    "year": 2014,
+    "title": "CRISPR\u2011Cas systems for gene editing",
+    "category": "Hardware/Algorithm",
+    "description": "Patent from the Broad Institute covering CRISPR gene editing techniques\u3010855214675819524\u2020L275-L287\u3011",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/22/38/c0/ef7fff79e8797/US8631402.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,742,921",
+    "year": 2014,
+    "title": "Virtual reality generator (updated)",
+    "category": "Hardware",
+    "description": "Improvement of VR headset for interactive environments",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0e/0f/d0/ea54fd99e08b9/US8742921.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,874,600",
+    "year": 2014,
+    "title": "Energy\u2011harvesting solar panels for satellites",
+    "category": "Hardware",
+    "description": "Enhanced solar panels for spacecraft",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/26/e3/95/4e46e7bd96eef/US8874600.pdf)"
+  },
+  {
+    "patent_number": "US\u00a08,955,993",
+    "year": 2015,
+    "title": "Graphene transistors for flexible electronics",
+    "category": "Hardware",
+    "description": "Described flexible graphene\u2011based transistors",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/34/b8/59/907d55cb11de6/US8955993.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,146,622",
+    "year": 2015,
+    "title": "Machine\u2011learning recommendation system (Netflix)",
+    "category": "Algorithm",
+    "description": "Patent covering user\u2011profile\u2011based recommendations",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/20/a0/16/7504c8b511b3a/US9146622.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,320,048",
+    "year": 2016,
+    "title": "Bitcoin blockchain system",
+    "category": "Algorithm",
+    "description": "Patent describing secure distributed ledger for cryptocurrency",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c7/93/7f/097b0d5c4c66f/US9320048.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,363,915",
+    "year": 2016,
+    "title": "Neural network accelerator (TPU)",
+    "category": "Hardware",
+    "description": "Describes tensor processing unit for machine\u2011learning acceleration",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e1/85/29/8bd4286c2c60/US9363915.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,410,167",
+    "year": 2016,
+    "title": "Mobile payment using biometric authentication",
+    "category": "Hardware",
+    "description": "Patent covering fingerprint and face\u2011ID authentication for payments",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/aa/ea/99/1f5a8d9a041c9/US9410167.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,420,676",
+    "year": 2016,
+    "title": "Graphene battery with fast charging",
+    "category": "Hardware",
+    "description": "Patent describing graphene\u2011based fast\u2011charging batteries",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c7/d3/87/197b5ec21f95f/US9420676.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,589,226",
+    "year": 2017,
+    "title": "Self\u2011driving car control algorithm",
+    "category": "Algorithm",
+    "description": "Patent covering control systems for autonomous vehicles",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e1/10/e5/23b675a034a7/US9589226.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,659,547",
+    "year": 2017,
+    "title": "Chatbot natural\u2011language generation",
+    "category": "Algorithm",
+    "description": "Patent covering neural\u2011network based chat bots",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/74/59/51/2856829c4c8ae/US9659547.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,774,339",
+    "year": 2017,
+    "title": "Voice assistant wake word detection",
+    "category": "Algorithm",
+    "description": "Patent describing low\u2011power speech recognition for wake words",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/cc/95/20/7b2cb2a6e90d/US9774339.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,851,111",
+    "year": 2018,
+    "title": "Drone swarm coordination",
+    "category": "Algorithm",
+    "description": "Patent covering coordinated control of multiple drones",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/a5/80/05/e218272d1c4e1/US9851111.pdf)"
+  },
+  {
+    "patent_number": "US\u00a09,905,575",
+    "year": 2018,
+    "title": "Edge\u2011AI inference engine",
+    "category": "Hardware",
+    "description": "Describes hardware accelerator for on\u2011device AI inference",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/4a/c3/4d/18939d35d9c29/US9905575.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,072,357",
+    "year": 2018,
+    "title": "CRISPR gene drives",
+    "category": "Hardware/Algorithm",
+    "description": "Patent covering gene\u2011drive systems using CRISPR to spread genetic traits",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/7a/75/92/9e52f00d408c7/US10072357.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,146,541",
+    "year": 2019,
+    "title": "Quantum computer error correction",
+    "category": "Hardware",
+    "description": "Patent describing error\u2011correcting codes for quantum bits",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/8b/7a/7a/07aab50ffd1d2/US10146541.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,257,377",
+    "year": 2019,
+    "title": "Graphene\u2011based flexible display",
+    "category": "Hardware",
+    "description": "Patent for flexible display technology using graphene",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e9/46/33/80845be01d42a/US10257377.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,270,405",
+    "year": 2019,
+    "title": "Autonomous drone delivery system",
+    "category": "Hardware",
+    "description": "Patent covering drone delivery logistics used by Amazon and others",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/87/52/22/4bd8def36819e/US10270405.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,303,450",
+    "year": 2019,
+    "title": "Federated learning privacy techniques",
+    "category": "Algorithm",
+    "description": "Patent describing distributed machine\u2011learning training without sharing data",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/df/68/77/f70db9c3fd278/US10303450.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,332,205",
+    "year": 2019,
+    "title": "5G wireless communications",
+    "category": "Hardware",
+    "description": "Patent covering high\u2011bandwidth millimeter\u2011wave communication used in 5G",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/fc/e4/4f/347f4f4c4c46/US10332205.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,379,612",
+    "year": 2020,
+    "title": "Blockchain\u2011based supply chain management",
+    "category": "Algorithm",
+    "description": "Patent for using blockchain to track goods and verify provenance",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/21/15/df/664f70529c46/US10379612.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,442,255",
+    "year": 2020,
+    "title": "Graph neural network for recommendation",
+    "category": "Algorithm",
+    "description": "Describes use of graph neural networks for personalized recommendations",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/24/37/80/e9416ef9a5290/US10442255.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,508,092",
+    "year": 2020,
+    "title": "Li\u2011ion solid\u2011state battery",
+    "category": "Hardware",
+    "description": "Patent describing solid\u2011state electrolyte for safer lithium batteries",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1f/3b/90/9f067a6803094/US10508092.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,566,713",
+    "year": 2020,
+    "title": "Graphene supercapacitor",
+    "category": "Hardware",
+    "description": "Patent for high\u2011density energy storage using graphene supercapacitors",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/83/da/49/844e511b1fa4d/US10566713.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,670,746",
+    "year": 2020,
+    "title": "Augmented reality display system",
+    "category": "Hardware",
+    "description": "Patent for AR headset projecting images onto transparent lenses",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/04/19/c7/0b07fabc2e459/US10670746.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,703,457",
+    "year": 2020,
+    "title": "Quantum\u2011safe encryption (lattice\u2011based cryptography)",
+    "category": "Algorithm",
+    "description": "Patent covering encryption schemes secure against quantum attacks",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1f/05/6f/67c0f9e935ef1/US10703457.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,728,143",
+    "year": 2020,
+    "title": "Neural network weight pruning",
+    "category": "Algorithm",
+    "description": "Patent describing methods for sparsifying neural networks to reduce size",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/79/61/8b/b28f7bb445474/US10728143.pdf)"
+  },
+  {
+    "patent_number": "US\u00a010,776,410",
+    "year": 2020,
+    "title": "DNA data storage",
+    "category": "Hardware/Algorithm",
+    "description": "Patent covering encoding digital data into DNA sequences",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/69/55/1d/e74bf202adbf1/US10776410.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,001,382",
+    "year": 2021,
+    "title": "Zero\u2011knowledge proof cryptography",
+    "category": "Algorithm",
+    "description": "Patent covering techniques for privacy\u2011preserving blockchain transactions",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/30/9a/7a/a938122917c3d/US11001382.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,046,689",
+    "year": 2021,
+    "title": "Modular quantum computer architecture",
+    "category": "Hardware",
+    "description": "Patent describing scalable modular quantum computers",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/89/7a/9c/9b1877b9adbd1/US11046689.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,073,203",
+    "year": 2021,
+    "title": "Machine learning fairness auditing",
+    "category": "Algorithm",
+    "description": "Patent for auditing machine\u2011learning models for bias and fairness",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/f3/89/6d/7f73cb1164a9c/US11073203.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,098,439",
+    "year": 2021,
+    "title": "mRNA vaccine delivery system",
+    "category": "Hardware",
+    "description": "Patent describing lipid nanoparticle delivery for mRNA vaccines (COVID\u201119)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/49/52/12/2265ef46f6a07/US11098439.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,110,546",
+    "year": 2021,
+    "title": "Mixed reality headset with eye tracking",
+    "category": "Hardware",
+    "description": "Patent covering VR/AR headset with integrated eye tracking and sensors",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/c7/74/95/3e7b8d03598c2/US11110546.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,271,570",
+    "year": 2022,
+    "title": "Federated learning system with secure aggregation",
+    "category": "Algorithm",
+    "description": "Patent describing federated learning with encrypted model updates",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/92/d5/45/53e778570dc3d/US11271570.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,303,942",
+    "year": 2022,
+    "title": "6G wireless communication system",
+    "category": "Hardware",
+    "description": "Patent covering key technologies for next\u2011generation 6G communications",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0f/6a/4f/6ae6f4b1bf82f/US11303942.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,342,785",
+    "year": 2022,
+    "title": "Generative adversarial network for image synthesis",
+    "category": "Algorithm",
+    "description": "Patent covering GAN architectures for realistic image synthesis",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/9a/ba/9f/53bcbde82e672/US11342785.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,376,678",
+    "year": 2022,
+    "title": "Quantum machine learning accelerator",
+    "category": "Hardware",
+    "description": "Patent describing hardware accelerator for quantum ML algorithms",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d0/12/9e/b68c3425b0ec2/US11376678.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,435,809",
+    "year": 2023,
+    "title": "DNA synthesis using CRISPR",
+    "category": "Hardware/Algorithm",
+    "description": "Patent for gene synthesis using CRISPR techniques",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/92/56/85/0f7d56caa1632/US11435809.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,511,764",
+    "year": 2023,
+    "title": "Edge computing orchestrator",
+    "category": "Algorithm",
+    "description": "Patent covering orchestration of edge nodes for low\u2011latency services",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/8e/0d/6c/eff0fa6155ab5/US11511764.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,555,143",
+    "year": 2023,
+    "title": "Neural radiance field (NeRF) rendering",
+    "category": "Algorithm",
+    "description": "Patent describing neural networks for 3D scene reconstruction from images",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ce/5b/d9/7847ca0898a08/US11555143.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,601,708",
+    "year": 2023,
+    "title": "Batteryless Internet of Things sensor",
+    "category": "Hardware",
+    "description": "Patent for energy\u2011harvesting sensors powering IoT devices",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/9f/5f/0a/9c6f61e4aa10/US11601708.pdf)"
+  },
+  {
+    "patent_number": "US\u00a011,687,900",
+    "year": 2023,
+    "title": "VR haptic feedback glove",
+    "category": "Hardware",
+    "description": "Patent covering haptic gloves enabling realistic VR interaction",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/bb/56/e6/5310c73c8e26b/US11687900.pdf)"
+  },
+  {
+    "patent_number": "US10740433B2",
+    "year": 2020,
+    "title": "Universal Transformers",
+    "category": "Algorithm",
+    "description": "Neural network architecture combining self-attention and recurrence for sequence modeling",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/55/e8/ee/f7025201ac9165/US10740433.pdf)"
+  },
+  {
+    "patent_number": "US9406017B2",
+    "year": 2016,
+    "title": "Dropout regularization in neural networks",
+    "category": "Algorithm",
+    "description": "Technique for addressing overfitting by randomly omitting neurons during training (dropout)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e2/28/32/25cb6a0912d49d/US9406017.pdf)"
+  },
+  {
+    "patent_number": "US20110184908A1",
+    "year": 2011,
+    "title": "Selective data deduplication",
+    "category": "Algorithm",
+    "description": "Method for selectively deduplicating data blocks to reduce storage requirements while preserving performance",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/8e/e4/f3/ec1eb799c7b017/US20110184908A1.pdf)"
+  },
+  {
+    "patent_number": "US8930306B1",
+    "year": 2015,
+    "title": "Synchronized data deduplication",
+    "category": "Algorithm",
+    "description": "Techniques for synchronized deduplication across distributed systems to eliminate redundant data",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/0e/03/a6/0b74c88258cd65/US8930306.pdf)"
+  },
+  {
+    "patent_number": "US20150100530A1",
+    "year": 2015,
+    "title": "Reinforcement learning methods and apparatus",
+    "category": "Algorithm",
+    "description": "Deep reinforcement learning approach for training agents using Q-learning and policy improvement",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/71/91/4a/c5cf4ffa56f705/US20150100530A1.pdf)"
+  },
+  {
+    "patent_number": "US11657280B1",
+    "year": 2023,
+    "title": "Reinforcement learning techniques for network-based transfer learning",
+    "category": "Algorithm",
+    "description": "Reinforcement learning method enabling transfer learning across tasks using network-based representations",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/19/08/e0/bcd465f3661b6a/US11657280.pdf)"
+  },
+  {
+    "patent_number": "US6009199A",
+    "year": 1999,
+    "title": "Random decision forests",
+    "category": "Algorithm",
+    "description": "Classification technique using an ensemble of randomized decision trees to improve generalization",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e1/ee/fa/3aff10f746ecea/US6009199.pdf)"
+  },
+  {
+    "patent_number": "US11636317B2",
+    "year": 2023,
+    "title": "LSTM cells on spiking neuromorphic hardware",
+    "category": "Algorithm",
+    "description": "Implements LSTM neural network cells on spiking neuromorphic hardware for energy-efficient computing",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e3/03/2d/8d24a4eda3b9d1/US11636317.pdf)"
+  },
+  {
+    "patent_number": "US20200111006A1",
+    "year": 2020,
+    "title": "Perforated backpropagation in neural networks",
+    "category": "Algorithm",
+    "description": "Method that reduces computational cost by skipping backpropagation through selected network weights (perforated backprop)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/ee/30/70/af7f2aa432fe8f/US20200111006A1.pdf)"
+  },
+  {
+    "patent_number": "US20230069079A1",
+    "year": 2023,
+    "title": "Statistical K-means clustering",
+    "category": "Algorithm",
+    "description": "Improved K-means clustering method using statistical modifications to initialization and feature weighting",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d3/0e/10/f7abe9de9ef3af/US20230069079A1.pdf)"
+  },
+  {
+    "patent_number": "US5255345A",
+    "year": 1993,
+    "title": "Genetic algorithm for process optimization",
+    "category": "Algorithm",
+    "description": "Optimization method using genetic algorithms to adjust process parameters and simulate natural selection",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/7f/35/f8/c39c742a139708/US5255345.pdf)"
+  },
+  {
+    "patent_number": "US20210397945A1",
+    "year": 2021,
+    "title": "Deep hierarchical variational autoencoder",
+    "category": "Algorithm",
+    "description": "Generative model using a hierarchical variational autoencoder for unsupervised representation learning",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/49/cc/d1/f2d4718f5cae42/US20210397945A1.pdf)"
+  },
+  {
+    "patent_number": "US20190122655A1",
+    "year": 2019,
+    "title": "Word embedding system",
+    "category": "Algorithm",
+    "description": "System for generating word embeddings that capture semantic relationships using neural networks",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/2d/a4/4e/3748534b035907/US20190122655A1.pdf)"
+  },
+  {
+    "patent_number": "GB2556981A",
+    "year": 2018,
+    "title": "Communication\u2011efficient federated learning",
+    "category": "Algorithm",
+    "description": "Federated learning approach that reduces communication overhead between clients and server during training",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/b4/a9/94/c5bfc45ea1f097/GB2556981A.pdf)"
+  },
+  {
+    "patent_number": "US5231668A",
+    "year": 1993,
+    "title": "Digital signature algorithm (DSA)",
+    "category": "Algorithm",
+    "description": "Public\u2011key digital signature scheme used to authenticate digital messages",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e6/de/c5/75aceb27607e59/US5231668.pdf)"
+  },
+  {
+    "patent_number": "US6141420A",
+    "year": 2000,
+    "title": "Elliptic curve encryption systems",
+    "category": "Algorithm",
+    "description": "Elliptic curve cryptography system for secure encryption and decryption based on elliptic curve arithmetic",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/58/da/2a/2f64703655241f/US6141420.pdf)"
+  },
+  {
+    "patent_number": "US10430598B2",
+    "year": 2019,
+    "title": "Secure generalized Bloom filter",
+    "category": "Algorithm",
+    "description": "Privacy\u2011preserving Bloom filter enabling membership testing with cryptographic hashing and secure computation",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/74/9b/9c/db75e3c3334d3a/US10430598.pdf)"
+  },
+  {
+    "patent_number": "US8209368B2",
+    "year": 2012,
+    "title": "Dynamic Bloom filter",
+    "category": "Algorithm",
+    "description": "System and method for generating a dynamic Bloom filter that expands capacity while maintaining a false\u2011positive rate",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6d/59/66/37355934991ecc/US20080243800A1.pdf)"
+  },
+  {
+    "patent_number": "US6768991B2",
+    "year": 2004,
+    "title": "String searcher using Boyer\u2011Moore and hashing",
+    "category": "Algorithm",
+    "description": "Improved algorithm for searching sequences of character data using predetermined alphabet and hashing (Boyer\u2011Moore variant)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/fb/1e/af/14ff1aa7e8906e/US6768991.pdf)"
+  },
+  {
+    "patent_number": "US6622145B2",
+    "year": 2003,
+    "title": "Huffman coding for infinite symbol sets",
+    "category": "Algorithm",
+    "description": "Data compression technique extending Huffman coding to handle infinite symbol sets",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d5/28/03/a51b69e28e9cde/US6622145.pdf)"
+  },
+  {
+    "patent_number": "US4286256A",
+    "year": 1981,
+    "title": "Arithmetic coding for data compression",
+    "category": "Algorithm",
+    "description": "Data compression method encoding messages as fractional intervals on the number line using arithmetic coding",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/2b/0a/cc/a811d750f8d8cd/US4286256.pdf)"
+  },
+  {
+    "patent_number": "US10097201B1",
+    "year": 2019,
+    "title": "LZ77 compression with data runs",
+    "category": "Algorithm",
+    "description": "Improved LZ77 compression method that encodes sequences of data runs to enhance compression efficiency",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/b7/a2/c8/8c1f2423a3e387/US10097201.pdf)"
+  },
+  {
+    "patent_number": "US8190610B2",
+    "year": 2012,
+    "title": "MapReduce for distributed data processing",
+    "category": "Algorithm",
+    "description": "Parallel data processing framework dividing tasks into map and reduce functions across distributed systems",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/d0/f6/e1/2600fa22db7db0/US8190610.pdf)"
+  },
+  {
+    "patent_number": "US8239335B2",
+    "year": 2012,
+    "title": "Machine learning for data classification",
+    "category": "Algorithm",
+    "description": "Methods for classifying unlabeled documents using machine learning techniques",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/93/60/16/d826b21965b5c2/US8239335.pdf)"
+  },
+  {
+    "patent_number": "US4218582A",
+    "year": 1980,
+    "title": "Public key cryptographic apparatus (Diffie\u2013Hellman)",
+    "category": "Algorithm",
+    "description": "Implements the Diffie\u2013Hellman key exchange for establishing shared secrets over an insecure channel",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/84/06/bb/14453a5ad16815/US4218582.pdf)"
+  },
+  {
+    "patent_number": "US4309569A",
+    "year": 1981,
+    "title": "Merkle digital signature scheme",
+    "category": "Algorithm",
+    "description": "Digital signature method using Merkle trees to authenticate messages efficiently",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/25/a9/20/e2814016b3bef6/US4309569.pdf)"
+  },
+  {
+    "patent_number": "US20170091619A1",
+    "year": 2017,
+    "title": "Selective backpropagation in neural networks",
+    "category": "Algorithm",
+    "description": "Technique that selectively updates weights during backpropagation to improve learning efficiency",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/25/4e/9a/042e6667c1c5c1/US20170091619A1.pdf)"
+  },
+  {
+    "patent_number": "EP3446260B1",
+    "year": 2019,
+    "title": "Memory\u2011efficient backpropagation through time",
+    "category": "Algorithm",
+    "description": "DeepMind method for training recurrent neural networks using a memory\u2011efficient backpropagation through time algorithm",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/1c/89/e4/40cd94f1c0cb51/EP3446260B1.pdf)"
+  },
+  {
+    "patent_number": "US20160217368A1",
+    "year": 2016,
+    "title": "Batch normalization layers in neural networks",
+    "category": "Algorithm",
+    "description": "Method of normalizing activations within neural network layers to accelerate training (batch normalization)",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/df/02/5e/20209128b5d82e/US20160217368A1.pdf)"
+  },
+  {
+    "patent_number": "US20170200078A1",
+    "year": 2017,
+    "title": "Convolutional neural network architecture",
+    "category": "Algorithm",
+    "description": "Design of a convolutional neural network architecture with layers of neurons for processing visual data",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e0/62/e5/5b849894b8bf16/US20170200078A1.pdf)"
+  },
+  {
+    "patent_number": "WO2016095117A1",
+    "year": 2016,
+    "title": "Object detection using neural networks",
+    "category": "Algorithm",
+    "description": "Techniques for detecting objects in images using convolutional neural networks",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/60/d4/67/166bcecb40f5db/WO2016095117A1.pdf)"
+  },
+  {
+    "patent_number": "KR20180053881A",
+    "year": 2018,
+    "title": "Residual network stabilization method",
+    "category": "Algorithm",
+    "description": "Method for training deep neural networks using residual connections and projection matrices to improve convergence",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/3d/fb/cb/8f9cb3a1c1e67b/KR20180053881A.pdf)"
+  },
+  {
+    "patent_number": "US7478074B2",
+    "year": 2009,
+    "title": "Selecting reduced sets of support vectors in SVMs",
+    "category": "Algorithm",
+    "description": "Technique for reducing the number of support vectors during SVM training to improve efficiency",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/96/18/f2/0bdc56ac02cb6e/US7478074.pdf)"
+  },
+  {
+    "patent_number": "US5051745A",
+    "year": 1991,
+    "title": "String searcher and data compressor",
+    "category": "Algorithm",
+    "description": "String searcher and LZ\u2011based data compression method using hashing for efficient pattern matching",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/85/1d/2f/ae1c6b41432808/US5051745.pdf)"
+  },
+  {
+    "patent_number": "US10073887B2",
+    "year": 2018,
+    "title": "K\u2011nearest neighbor search using minimax distance",
+    "category": "Algorithm",
+    "description": "System and method for performing K\u2011nearest neighbor search based on minimax distances and outlier detection",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/6a/89/c6/b65c59945649b1/US10073887.pdf)"
+  },
+  {
+    "patent_number": "US10497126B2",
+    "year": 2019,
+    "title": "Image segmentation using Markov random field optimization",
+    "category": "Algorithm",
+    "description": "Produces segmented images by optimizing a Markov random field energy function",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/cd/66/6c/18878d37df23d8/US10497126.pdf)"
+  },
+  {
+    "patent_number": "US20200279151A1",
+    "year": 2020,
+    "title": "Graph neural network systems",
+    "category": "Algorithm",
+    "description": "Graph neural network architecture for generating structured representations of objects",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/09/b8/78/fb70d0b4685446/US20200279151A1.pdf)"
+  },
+  {
+    "patent_number": "US11620537B2",
+    "year": 2023,
+    "title": "Optimizing gradient boosting feature selection",
+    "category": "Algorithm",
+    "description": "Methods for optimizing feature selection in gradient boosting decision trees to improve model quality",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/7d/3b/4b/70555f34e624eb/US11620537.pdf)"
+  },
+  {
+    "patent_number": "US11016995B2",
+    "year": 2021,
+    "title": "K\u2011means clustering data mining system",
+    "category": "Algorithm",
+    "description": "K\u2011means clustering based data mining system and method using differential privacy and thresholding",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/71/e4/a9/5f4ccdcc72e188/US11016995.pdf)"
+  },
+  {
+    "patent_number": "US6601075B1",
+    "year": 2003,
+    "title": "Ranking documents using authority scores (HITS)",
+    "category": "Algorithm",
+    "description": "Method of ranking and retrieving documents using authority scores of schemas and documents similar to the HITS algorithm",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/28/03/79/9c0e43c8f94e2b/US6601075.pdf)"
+  },
+  {
+    "patent_number": "US11113480B2",
+    "year": 2021,
+    "title": "Neural machine translation systems",
+    "category": "Algorithm",
+    "description": "Sequence\u2011to\u2011sequence neural machine translation system using LSTM and attention mechanisms",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/29/f2/c9/b14410915b1a6f/US11113480.pdf)"
+  },
+  {
+    "patent_number": "CN113127704A",
+    "year": 2021,
+    "title": "Monte Carlo tree search method and system",
+    "category": "Algorithm",
+    "description": "Monte Carlo tree search algorithm for machine games that determines leaf-node bounds based on memory and threads",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/e5/17/f4/545136fa51761d/CN113127704A.pdf)"
+  },
+  {
+    "patent_number": "CN104182423A",
+    "year": 2014,
+    "title": "Conditional random field name recognition",
+    "category": "Algorithm",
+    "description": "Automatic recognition of Chinese personal names using conditional random fields and context rules",
+    "download_link": "[PDF](https://patentimages.storage.googleapis.com/36/19/20/e58472e209903a/CN104182423A.pdf)"
+  }
+]

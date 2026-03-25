@@ -1,0 +1,103 @@
+{
+  "id": "8d14e8e7-1700-4830-9763-f7b774f2c16c",
+  "name": "06_learning_projects",
+  "path": "life\\35_projects\\01_active\\06_learning_projects",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:43.647307",
+  "last_modified": "2025-08-03T23:39:43.647309",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "learning",
+  "life_stage": "all_stages",
+  "priority_level": 3,
+  "access_frequency": "occasional",
+  "maintenance_frequency": "monthly",
+  "parent": "8951a593-a4ac-474e-bfac-cc2a635585ab",
+  "ancestors": [
+    "8951a593-a4ac-474e-bfac-cc2a635585ab",
+    "3665ff39-90d5-4fc6-b274-5ab98385126b",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [
+    "Link related documents",
+    "Set up project timelines",
+    "Create progress tracking",
+    "Create knowledge maps",
+    "Link related concepts",
+    "Set up spaced repetition"
+  ],
+  "security_level": "standard",
+  "privacy_level": "standard",
+  "encryption_required": false,
+  "backup_frequency": "monthly",
+  "lifecycle_stage": "active",
+  "retention_policy": "7_years",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "creative",
+    "education",
+    "learning",
+    "projects"
+  ],
+  "labels": [],
+  "keywords": [
+    "projects",
+    "study",
+    "learning",
+    "skills",
+    "knowledge",
+    "education"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "general",
+    "project_context": "active_project"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "weekly",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

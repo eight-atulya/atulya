@@ -1,0 +1,100 @@
+{
+  "id": "52271924-4dea-4c56-b859-cdbea691e3fc",
+  "name": "07_creative_work",
+  "path": "life\\10_work\\07_creative_work",
+  "type": "folder",
+  "created_at": "2025-08-03T23:39:42.117217",
+  "last_modified": "2025-08-03T23:39:42.117220",
+  "version": "2.0",
+  "schema_version": "1.0",
+  "category": "work",
+  "life_stage": "all_stages",
+  "priority_level": 3,
+  "access_frequency": "weekly",
+  "maintenance_frequency": "weekly",
+  "parent": "f5acdfd0-7d0d-4f89-bbfa-de4539795e96",
+  "ancestors": [
+    "f5acdfd0-7d0d-4f89-bbfa-de4539795e96",
+    "e7e47853-a8ea-469a-a94c-e383ffbfbaa7"
+  ],
+  "siblings": [],
+  "children": [],
+  "content_type": "mixed",
+  "file_types": [],
+  "estimated_size": 0,
+  "item_count": 0,
+  "usage_patterns": {
+    "read_frequency": "unknown",
+    "write_frequency": "unknown",
+    "search_frequency": "unknown",
+    "last_accessed": null,
+    "access_count": 0
+  },
+  "automation_rules": {
+    "auto_categorize": true,
+    "auto_tag": true,
+    "auto_archive": false,
+    "auto_backup": true,
+    "auto_sync": true,
+    "auto_index": true,
+    "auto_cleanup": false,
+    "triggers": [],
+    "actions": [],
+    "conditions": []
+  },
+  "processing_pipeline": [
+    "index",
+    "categorize",
+    "tag"
+  ],
+  "ai_suggestions": [
+    "Link related documents",
+    "Set up project timelines",
+    "Create progress tracking"
+  ],
+  "security_level": "standard",
+  "privacy_level": "confidential",
+  "encryption_required": false,
+  "backup_frequency": "daily",
+  "lifecycle_stage": "active",
+  "retention_policy": "7_years",
+  "archive_after": "2_years",
+  "delete_after": "never",
+  "tags": [
+    "career",
+    "professional",
+    "work",
+    "projects",
+    "creative"
+  ],
+  "labels": [],
+  "keywords": [
+    "career",
+    "professional",
+    "work",
+    "business",
+    "creative",
+    "job"
+  ],
+  "context": {
+    "time_context": "ongoing",
+    "location_context": "general",
+    "person_context": "general",
+    "project_context": "general"
+  },
+  "integrations": [],
+  "external_systems": [],
+  "sync_requirements": "daily",
+  "performance_metrics": {
+    "load_time": 0,
+    "search_time": 0,
+    "index_size": 0,
+    "optimization_score": 0
+  },
+  "compliance_requirements": [],
+  "audit_trail": [],
+  "version_history": [],
+  "custom_fields": {},
+  "notes": "",
+  "status": "active"
+}

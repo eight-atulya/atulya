@@ -1,0 +1,65 @@
+{
+  "errors": [
+    {
+      "type": "code_issue",
+      "message": "Potential issue marker: # Check for TODO/FIXME comments (potential issues)",
+      "file_path": ".\\evolution\\self_corrector.py",
+      "line_number": 209,
+      "severity": "low",
+      "detected_at": "2025-12-06T22:04:50.880636",
+      "fixed": false,
+      "fix_attempts": 0
+    },
+    {
+      "type": "code_issue",
+      "message": "Potential issue marker: if 'FIXME' in line.upper() or 'XXX' in line.upper():",
+      "file_path": ".\\evolution\\self_corrector.py",
+      "line_number": 219,
+      "severity": "low",
+      "detected_at": "2025-12-06T22:04:50.880646",
+      "fixed": false,
+      "fix_attempts": 0
+    },
+    {
+      "type": "code_issue",
+      "message": "Potential issue marker: # Check for TODO/FIXME comments (potential issues)",
+      "file_path": ".\\evolution\\self_corrector.py",
+      "line_number": 209,
+      "severity": "low",
+      "detected_at": "2025-12-06T22:05:39.813908",
+      "fixed": false,
+      "fix_attempts": 0
+    },
+    {
+      "type": "code_issue",
+      "message": "Potential issue marker: if 'FIXME' in line.upper() or 'XXX' in line.upper():",
+      "file_path": ".\\evolution\\self_corrector.py",
+      "line_number": 219,
+      "severity": "low",
+      "detected_at": "2025-12-06T22:05:39.813918",
+      "fixed": false,
+      "fix_attempts": 0
+    },
+    {
+      "type": "code_issue",
+      "message": "Potential issue marker: # Check for TODO/FIXME comments (potential issues)",
+      "file_path": ".\\evolution\\self_corrector.py",
+      "line_number": 209,
+      "severity": "low",
+      "detected_at": "2025-12-06T22:06:58.671740",
+      "fixed": false,
+      "fix_attempts": 0
+    },
+    {
+      "type": "code_issue",
+      "message": "Potential issue marker: if 'FIXME' in line.upper() or 'XXX' in line.upper():",
+      "file_path": ".\\evolution\\self_corrector.py",
+      "line_number": 219,
+      "severity": "low",
+      "detected_at": "2025-12-06T22:06:58.671749",
+      "fixed": false,
+      "fix_attempts": 0
+    }
+  ],
+  "corrections": []
+}
