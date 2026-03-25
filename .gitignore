@@ -1,0 +1,62 @@
+# Environment variables and local config
+.env
+docker-compose.yml
+docker-compose.override.yml
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# NLTK data (this should be downloaded automatically)
+nltk_data/
+
+# Monitoring stack (Prometheus/Grafana binaries and data files)
+.monitoring/
+.pgbouncer/
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.mcp.json
+.osgrep
+# Virtual environments
+.venv
+
+# Node
+node_modules/
+
+# Large benchmark datasets (will be downloaded automatically)
+**/longmemeval_s_cleaned.json
+
+# Debug logs
+logs/
+
+.DS_Store
+
+# Generated docs files
+atulya-docs/static/llms-full.txt
+
+
+atulya-dev/benchmarks/locomo/results/
+atulya-dev/benchmarks/longmemeval/results/
+atulya-dev/benchmarks/consolidation/results/
+atulya-dev/benchmarks/perf/results/
+benchmarks/results/
+atulya-cli/target
+atulya-clients/rust/target
+.claude
+whats-next.md
+predictions.md
+future.md
+TASK.md
+# Changelog is now tracked in atulya-docs/src/pages/changelog.md
+# CHANGELOG.md
+
+# Blog post drafts, which may contain sensitive information or be incomplete
+blog-post* 
