@@ -34,6 +34,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'developer/brain-and-dream',
+          label: 'Brain and Dream',
+        },
+        {
+          type: 'doc',
           id: 'developer/multilingual',
           label: 'Multilingual',
         },

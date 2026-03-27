@@ -1,12 +1,10 @@
 import React from 'react';
 import Breadcrumbs from '@theme-original/DocBreadcrumbs';
-import type BreadcrumbsType from '@theme/DocBreadcrumbs';
-import type {WrapperProps} from '@docusaurus/types';
 import SkillBanner from '@site/src/components/SkillBanner';
 
-type Props = WrapperProps<typeof BreadcrumbsType>;
+type Props = React.ComponentProps<typeof Breadcrumbs>;
 
-export default function BreadcrumbsWrapper(props: Props): JSX.Element {
+export default function BreadcrumbsWrapper(props: Props): React.JSX.Element {
   return (
     <>
       <Breadcrumbs {...props} />

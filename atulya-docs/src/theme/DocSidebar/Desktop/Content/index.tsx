@@ -1,10 +1,8 @@
 import React from 'react';
 import Content from '@theme-original/DocSidebar/Desktop/Content';
-import type ContentType from '@theme/DocSidebar/Desktop/Content';
-import type {WrapperProps} from '@docusaurus/types';
 
-type Props = WrapperProps<typeof ContentType>;
+type Props = React.ComponentProps<typeof Content>;
 
-export default function ContentWrapper(props: Props): JSX.Element {
+export default function ContentWrapper(props: Props): React.JSX.Element {
   return <Content {...props} />;
 }

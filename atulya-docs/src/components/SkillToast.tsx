@@ -3,7 +3,7 @@ import styles from './SkillToast.module.css';
 
 const STORAGE_KEY = 'atulya-skill-toast-dismissed';
 
-export default function SkillToast(): JSX.Element | null {
+export default function SkillToast(): React.JSX.Element | null {
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
 

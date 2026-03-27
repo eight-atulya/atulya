@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import styles from './SkillBanner.module.css';
 
 function extractMarkdown(element: Element): string {
@@ -61,7 +61,7 @@ function extractMarkdown(element: Element): string {
   return text;
 }
 
-export default function SkillBanner(): JSX.Element {
+export default function SkillBanner(): React.JSX.Element {
   const [commandCopied, setCommandCopied] = useState(false);
   const [pageCopied, setPageCopied] = useState(false);
   const command = 'npx skills add https://github.com/eight-atulya/atulya --skill atulya-docs';

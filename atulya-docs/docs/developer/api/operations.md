@@ -38,12 +38,16 @@ Support for external streaming platforms like Kafka for scale-out processing is 
 - **LLM formatting failures** degrade gracefully via deterministic fallback behavior.
 - **Brain analytics** are query-driven and bounded by request parameters (`window_days`, `top_k`, `entity_type`).
 
+If you want the plain-English overview of how Brain, remote brain learning, and Dream fit together, read [**Brain and Dream**](../brain-and-dream).
+
 ### Common intelligence endpoints
 
 - `POST /v1/default/banks/{bank_id}/dreams/trigger`
 - `GET /v1/default/banks/{bank_id}/dreams`
 - `GET /v1/default/banks/{bank_id}/dreams/stats`
 - `GET /v1/default/banks/{bank_id}/brain/influence`
+- `POST /v1/default/banks/{bank_id}/brain/learn`
+- `POST /v1/default/banks/{bank_id}/sub-routine`
 
 ## Async Retain Example
 

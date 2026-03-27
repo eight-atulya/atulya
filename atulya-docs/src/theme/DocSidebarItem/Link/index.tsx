@@ -1,11 +1,9 @@
 import React from 'react';
 import Link from '@theme-original/DocSidebarItem/Link';
-import type LinkType from '@theme/DocSidebarItem/Link';
-import type {WrapperProps} from '@docusaurus/types';
 
-type Props = WrapperProps<typeof LinkType>;
+type Props = React.ComponentProps<typeof Link>;
 
-export default function LinkWrapper(props: Props): JSX.Element {
+export default function LinkWrapper(props: Props): React.JSX.Element {
   const {item} = props;
   const icon = item.customProps?.icon as string | undefined;
 

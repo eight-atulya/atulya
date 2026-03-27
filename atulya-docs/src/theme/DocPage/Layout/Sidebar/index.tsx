@@ -1,13 +1,11 @@
 import React from 'react';
 import Sidebar from '@theme-original/DocPage/Layout/Sidebar';
-import type SidebarType from '@theme/DocPage/Layout/Sidebar';
-import type {WrapperProps} from '@docusaurus/types';
 import {useLocation} from '@docusaurus/router';
 import SkillBanner from '@site/src/components/SkillBanner';
 
-type Props = WrapperProps<typeof SidebarType>;
+type Props = React.ComponentProps<typeof Sidebar>;
 
-export default function SidebarWrapper(props: Props): JSX.Element | null {
+export default function SidebarWrapper(props: Props): React.JSX.Element | null {
   const location = useLocation();
   const isCookbook = location.pathname.includes('/cookbook');
 

@@ -3,16 +3,16 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "docusaurus": "docusaurus",
-    "start": "docusaurus start",
-    "build": "docusaurus build",
-    "swizzle": "docusaurus swizzle",
-    "deploy": "docusaurus deploy",
-    "clear": "docusaurus clear",
-    "serve": "docusaurus serve",
-    "write-translations": "docusaurus write-translations",
-    "write-heading-ids": "docusaurus write-heading-ids",
-    "typecheck": "tsc"
+    "docusaurus": "node ./scripts/run-docusaurus.cjs",
+    "start": "node ./scripts/run-docusaurus.cjs start",
+    "build": "node ./scripts/run-docusaurus.cjs build",
+    "swizzle": "node ./scripts/run-docusaurus.cjs swizzle",
+    "deploy": "node ./scripts/run-docusaurus.cjs deploy",
+    "clear": "node ./scripts/run-docusaurus.cjs clear",
+    "serve": "node ./scripts/run-docusaurus.cjs serve",
+    "write-translations": "node ./scripts/run-docusaurus.cjs write-translations",
+    "write-heading-ids": "node ./scripts/run-docusaurus.cjs write-heading-ids",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@docusaurus/core": "3.9.2",

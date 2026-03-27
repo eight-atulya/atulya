@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import styles from './styles.module.css';
 
-export default function CopyPageButton(): JSX.Element | null {
+export default function CopyPageButton(): React.JSX.Element | null {
   const [copied, setCopied] = useState(false);
 
   const copyPageAsMarkdown = useCallback(async () => {
