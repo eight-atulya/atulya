@@ -45,5 +45,8 @@ protocol_name/
 
 ## Current Protocols
 
+- `dependency_drift_and_reproducible_toolchains`
+  Use when a stable workflow starts warning or behaving differently after reinstall or rebuild and the real fix is to pin and verify the toolchain, not just quiet the symptom.
+
 - `git_history_rewrite_and_branch_realignment`
   Use when incorrect or sensitive content has landed in Git history and must be removed from one or more branches without losing local work.

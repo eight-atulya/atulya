@@ -14,6 +14,7 @@
     "fast-xml-parser": "^4.5.4",
     "serialize-javascript": "^7.0.3",
     "minimatch": "^3.1.4",
+    "@easyops-cn/docusaurus-search-local": "0.52.2",
     "@redocly/openapi-core": {
       "minimatch": "^5.1.8"
     },
