@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "description": "Models required for Atulya Desktop offline operation",
+  "models": [
+    {
+      "id": "embeddings-default",
+      "name": "BAAI/bge-small-en-v1.5",
+      "role": "embeddings",
+      "source": "huggingface",
+      "required": true,
+      "size_bytes": 133000000,
+      "sha256": null,
+      "license": "MIT",
+      "notes": "Default embedding model. ~133 MB. Dimension: 384."
+    },
+    {
+      "id": "reranker-default",
+      "name": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+      "role": "reranker",
+      "source": "huggingface",
+      "required": true,
+      "size_bytes": 90000000,
+      "sha256": null,
+      "license": "Apache-2.0",
+      "notes": "Default cross-encoder reranker. ~90 MB."
+    }
+  ],
+  "cache_strategy": "first_run_download",
+  "cache_location": "{DATA_DIR}/models"
+}

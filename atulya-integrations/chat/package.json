@@ -1,0 +1,58 @@
+{
+  "name": "@eight-atulya/atulya-chat",
+  "version": "0.8.0",
+  "description": "Atulya memory integration for Vercel Chat SDK - Give your chat bots persistent, per-user memory",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "keywords": [
+    "chat",
+    "chatbot",
+    "slack",
+    "discord",
+    "teams",
+    "memory",
+    "atulya",
+    "agents",
+    "llm",
+    "long-term-memory"
+  ],
+  "author": "Anurag Atulya <support@eightengine.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/eight-atulya/atulya.git",
+    "directory": "atulya-integrations/chat"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "peerDependencies": {
+    "chat": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@vitest/ui": "^4.0.18",
+    "chat": "^4.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

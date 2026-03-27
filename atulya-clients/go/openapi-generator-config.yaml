@@ -1,0 +1,10 @@
+generatorName: go
+outputDir: ./
+inputSpec: ../../atulya-docs/static/openapi.json
+packageName: atulya
+gitUserId: eight-atulya
+gitRepoId: atulya/atulya-clients/go
+isGoSubmodule: true
+enumClassPrefix: true
+structPrefix: true
+generateInterfaces: true

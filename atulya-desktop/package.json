@@ -1,0 +1,12 @@
+{
+  "name": "atulya-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop UI for Atulya — a living algorithm for machine intelligence (MI).",
+  "scripts": {
+    "dev": "cd app && npm run dev",
+    "build": "cd app && npm run build",
+    "tauri:dev": "cd src-tauri && cargo tauri dev",
+    "tauri:build": "cd src-tauri && cargo tauri build"
+  }
+}

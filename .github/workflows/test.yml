@@ -1,0 +1,1658 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-api-python-versions:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12', '3.13', '3.14']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Build atulya-api
+      working-directory: ./atulya-api
+      run: uv build
+
+  build-typescript-client:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      run: npm ci --workspace=atulya-clients/typescript
+
+    - name: Build TypeScript client
+      run: npm run build --workspace=atulya-clients/typescript
+
+  build-openclaw-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/openclaw
+      run: npm ci
+
+    - name: Run tests
+      working-directory: ./atulya-integrations/openclaw
+      run: npm test
+
+    - name: Build
+      working-directory: ./atulya-integrations/openclaw
+      run: npm run build
+
+  build-ai-sdk-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/ai-sdk
+      run: npm ci
+
+    - name: Run tests
+      working-directory: ./atulya-integrations/ai-sdk
+      run: npm test
+
+    - name: Build
+      working-directory: ./atulya-integrations/ai-sdk
+      run: npm run build
+
+  build-chat-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/chat
+      run: npm ci
+
+    - name: Run tests
+      working-directory: ./atulya-integrations/chat
+      run: npm test
+
+    - name: Build
+      working-directory: ./atulya-integrations/chat
+      run: npm run build
+
+  build-control-plane:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install SDK dependencies
+      run: npm ci --workspace=atulya-clients/typescript
+
+    - name: Build SDK
+      run: npm run build --workspace=atulya-clients/typescript
+
+    # Install control plane deps and fix hoisted lightningcss binary
+    # lightningcss gets hoisted to root node_modules, so we need to reinstall it there
+    - name: Install Control Plane dependencies
+      run: |
+        npm install --workspace=atulya-control-plane
+        rm -rf node_modules/lightningcss node_modules/@tailwindcss
+        npm install lightningcss @tailwindcss/postcss @tailwindcss/node
+
+    - name: Build Control Plane
+      run: npm run build --workspace=atulya-control-plane
+
+    - name: Verify standalone build
+      run: |
+        test -f atulya-control-plane/standalone/server.js || exit 1
+        test -d atulya-control-plane/standalone/node_modules || exit 1
+        node atulya-control-plane/bin/cli.js --help
+
+    - name: Smoke test - verify server starts
+      run: |
+        cd atulya-control-plane
+        node bin/cli.js --port 9999 &
+        SERVER_PID=$!
+        sleep 5
+        if curl -sf http://localhost:9999 > /dev/null 2>&1; then
+          echo "Server started successfully"
+          kill $SERVER_PID 2>/dev/null || true
+          exit 0
+        else
+          echo "Server failed to respond"
+          kill $SERVER_PID 2>/dev/null || true
+          exit 1
+        fi
+
+  build-docs:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      run: npm ci --workspace=atulya-docs
+
+    - name: Build docs
+      run: npm run build --workspace=atulya-docs
+
+  test-rust-cli:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          atulya-cli/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Run unit tests
+      working-directory: atulya-cli
+      run: cargo test
+
+    - name: Build CLI
+      working-directory: atulya-cli
+      run: cargo build --release
+
+    - name: Upload CLI artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: atulya-cli
+        path: atulya-cli/target/release/atulya
+        retention-days: 1
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Run CLI smoke test
+      run: |
+        ATULYA_CLI=atulya-cli/target/release/atulya ./atulya-cli/smoke-test.sh
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  lint-helm-chart:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'latest'
+
+    - name: Lint Helm chart
+      run: helm lint helm/atulya
+
+  build-docker-images:
+    name: Build Docker (${{ matrix.name }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: api-only
+            name: api
+            variant: full
+            build_args: ""
+          - target: api-only
+            name: api-slim
+            variant: slim
+            build_args: |
+              INCLUDE_LOCAL_MODELS=false
+              PRELOAD_ML_MODELS=false
+          - target: cp-only
+            name: control-plane
+            variant: full
+            build_args: ""
+          - target: standalone
+            name: standalone
+            variant: full
+            build_args: ""
+          - target: standalone
+            name: standalone-slim
+            variant: slim
+            build_args: |
+              INCLUDE_LOCAL_MODELS=false
+              PRELOAD_ML_MODELS=false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build ${{ matrix.name }} image (${{ matrix.variant }})
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/standalone/Dockerfile
+        target: ${{ matrix.target }}
+        build-args: ${{ matrix.build_args }}
+        push: false
+        load: ${{ matrix.variant == 'slim' }}
+        tags: atulya-${{ matrix.name }}:test
+        # Removed GitHub Actions cache (type=gha) - it frequently returns 502 errors
+        # causing buildx to fail with "failed to parse error response 502"
+        # Build will be slower but more reliable
+
+    # Only test slim variants to save disk space (they're much smaller)
+    # Slim variants require external embedding providers
+    - name: Setup GCP credentials for smoke test
+      if: matrix.variant == 'slim'
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Smoke test - verify container starts
+      if: matrix.variant == 'slim'
+      env:
+        ATULYA_API_LLM_PROVIDER: vertexai
+        ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID: ${{ env.ATULYA_API_LLM_VERTEXAI_PROJECT_ID }}
+        ATULYA_API_EMBEDDINGS_PROVIDER: cohere
+        ATULYA_API_RERANKER_PROVIDER: cohere
+        ATULYA_API_COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      run: ./docker/test-image.sh "atulya-${{ matrix.name }}:test" "${{ matrix.target }}"
+
+  test-api:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      ATULYA_API_EMBEDDINGS_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Prefer CPU-only PyTorch in CI (but keep PyPI for everything else)
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --extra test --no-install-project --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Run tests
+      working-directory: ./atulya-api
+      run: uv run pytest tests -v
+
+  test-python-client:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Prefer CPU-only PyTorch in CI (but keep PyPI for everything else)
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Build Python client
+      working-directory: ./atulya-clients/python
+      run: uv build
+
+    - name: Install client test dependencies
+      working-directory: ./atulya-clients/python
+      run: uv sync --frozen --extra test --index-strategy unsafe-best-match
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Run Python client tests
+      working-directory: ./atulya-clients/python
+      run: uv run pytest tests -v
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  test-typescript-client:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Prefer CPU-only PyTorch in CI (but keep PyPI for everything else)
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Install TypeScript client dependencies
+      working-directory: ./atulya-clients/typescript
+      run: npm ci
+
+    - name: Build TypeScript client
+      working-directory: ./atulya-clients/typescript
+      run: npm run build
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Run TypeScript client tests
+      working-directory: ./atulya-clients/typescript
+      run: npm test
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  build-rust-cli-arm64:
+    runs-on: ubuntu-24.04-arm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: aarch64-unknown-linux-gnu
+
+    - name: Cache cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          atulya-cli/target
+        key: linux-arm64-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build CLI
+      working-directory: atulya-cli
+      run: cargo build --release --target aarch64-unknown-linux-gnu
+
+  test-rust-client:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Prefer CPU-only PyTorch in CI (but keep PyPI for everything else)
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          atulya-clients/rust/target
+        key: ${{ runner.os }}-cargo-client-${{ hashFiles('atulya-clients/rust/Cargo.lock') }}
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Run Rust client tests
+      working-directory: ./atulya-clients/rust
+      run: cargo test --lib
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  test-go-client:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Prefer CPU-only PyTorch in CI (but keep PyPI for everything else)
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.23'
+        cache-dependency-path: atulya-clients/go/go.sum
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Build Go client
+      working-directory: ./atulya-clients/go
+      run: go build ./...
+
+    - name: Run Go client tests
+      working-directory: ./atulya-clients/go
+      run: go test -v -tags=integration
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  test-openclaw-integration:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      ATULYA_EMBED_PACKAGE_PATH: ${{ github.workspace }}/atulya-embed
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Install embed dependencies
+      working-directory: ./atulya-embed
+      run: uv sync --frozen --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Install openclaw integration dependencies
+      working-directory: ./atulya-integrations/openclaw
+      run: npm ci
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Run openclaw integration tests
+      working-directory: ./atulya-integrations/openclaw
+      run: npm run test:integration
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  test-integration:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build API
+      working-directory: ./atulya-api
+      run: uv build
+
+    - name: Install API dependencies
+      working-directory: ./atulya-api
+      run: uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Install integration test dependencies
+      working-directory: ./atulya-integration-tests
+      run: uv sync --frozen
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Run integration tests
+      working-directory: ./atulya-integration-tests
+      run: uv run pytest tests/ -v
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  test-crewai-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build crewai integration
+      working-directory: ./atulya-integrations/crewai
+      run: uv build
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/crewai
+      run: uv sync --frozen
+
+    - name: Run tests
+      working-directory: ./atulya-integrations/crewai
+      run: uv run pytest tests -v
+
+  test-litellm-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build litellm integration
+      working-directory: ./atulya-integrations/litellm
+      run: uv build
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/litellm
+      run: uv sync --frozen --extra dev
+
+    - name: Run tests
+      working-directory: ./atulya-integrations/litellm
+      run: uv run pytest tests -v
+
+  test-pydantic-ai-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build pydantic-ai integration
+      working-directory: ./atulya-integrations/pydantic-ai
+      run: uv build
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/pydantic-ai
+      run: uv sync --frozen
+
+    - name: Run tests
+      working-directory: ./atulya-integrations/pydantic-ai
+      run: uv run pytest tests -v
+
+  test-embed:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      # Prefer CPU-only PyTorch in CI
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Install dependencies
+      working-directory: ./atulya-embed
+      run: uv sync --frozen --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-embed-${{ hashFiles('atulya-embed/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-embed-
+          ${{ runner.os }}-huggingface-
+
+    - name: Run unit and integration tests
+      working-directory: ./atulya-embed
+      run: uv run pytest tests/ -v
+
+    - name: Run smoke test
+      working-directory: ./atulya-embed
+      run: ./test.sh
+
+  test-atulya-all:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      # For test_server_integration.py compatibility
+      ATULYA_LLM_PROVIDER: vertexai
+      ATULYA_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_LLM_MODEL: google/gemini-2.5-flash-lite
+      # Prefer CPU-only PyTorch in CI
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Build atulya-all
+      working-directory: ./atulya
+      run: uv build
+
+    - name: Install dependencies
+      working-directory: ./atulya
+      run: uv sync --frozen --extra test --index-strategy unsafe-best-match
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-all-${{ hashFiles('atulya/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-all-
+          ${{ runner.os }}-huggingface-
+
+    - name: Run unit tests
+      working-directory: ./atulya
+      run: uv run pytest tests/ -v
+
+  test-doc-examples:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [python, node, cli, go]
+    name: test-doc-examples (${{ matrix.language }})
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      ATULYA_API_URL: http://localhost:8888
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Install Rust
+      if: matrix.language == 'cli'
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo
+      if: matrix.language == 'cli'
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          atulya-cli/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Build CLI
+      if: matrix.language == 'cli'
+      working-directory: atulya-cli
+      run: |
+        cargo build --release
+        cp target/release/atulya /usr/local/bin/atulya
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Set up Node.js
+      if: matrix.language == 'node'
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Build and install API
+      working-directory: ./atulya-api
+      run: |
+        uv build
+        uv sync --frozen --no-install-project --index-strategy unsafe-best-match
+
+    - name: Install Python client dependencies
+      if: matrix.language == 'python'
+      working-directory: ./atulya-clients/python
+      run: uv sync --frozen --extra test --index-strategy unsafe-best-match
+
+    - name: Install TypeScript client
+      if: matrix.language == 'node'
+      run: |
+        npm ci --workspace=atulya-clients/typescript
+        npm run build --workspace=atulya-clients/typescript
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading reranker model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Create .env file
+      run: |
+        cat > .env << EOF
+        ATULYA_API_LLM_PROVIDER=${{ env.ATULYA_API_LLM_PROVIDER }}
+        ATULYA_API_LLM_MODEL=${{ env.ATULYA_API_LLM_MODEL }}
+        ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY=/tmp/gcp-credentials.json
+        ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$ATULYA_API_LLM_VERTEXAI_PROJECT_ID
+        EOF
+
+    - name: Start API server
+      run: |
+        ATULYA_API_PORT=8888 ./scripts/dev/start-api.sh --port 8888 > /tmp/api-server.log 2>&1 &
+        echo "Waiting for API server to be ready..."
+        for i in {1..120}; do
+          if curl -sf http://localhost:8888/health > /dev/null 2>&1; then
+            echo "API server is ready after ${i}s"
+            break
+          fi
+          if [ $i -eq 120 ]; then
+            echo "API server failed to start after 120s"
+            cat /tmp/api-server.log
+            exit 1
+          fi
+          sleep 1
+        done
+
+    - name: Configure CLI
+      if: matrix.language == 'cli'
+      run: atulya configure --api-url http://localhost:8888
+
+    - name: Run doc examples (${{ matrix.language }})
+      run: ./scripts/test-doc-examples.sh --lang ${{ matrix.language }}
+
+    - name: Show API server logs
+      if: always()
+      run: |
+        echo "=== API Server Logs ==="
+        cat /tmp/api-server.log || echo "No API server log found"
+
+  test-upgrade:
+    runs-on: ubuntu-latest
+    env:
+      ATULYA_API_LLM_PROVIDER: vertexai
+      ATULYA_API_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY: /tmp/gcp-credentials.json
+      ATULYA_API_LLM_MODEL: google/gemini-2.5-flash-lite
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Full history needed for git clone of tags
+
+    - name: Setup GCP credentials
+      run: |
+        printf '%s' '${{ secrets.GCP_VERTEXAI_CREDENTIALS }}' > /tmp/gcp-credentials.json
+        PROJECT_ID=$(jq -r '.project_id' /tmp/gcp-credentials.json)
+        echo "ATULYA_API_LLM_VERTEXAI_PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
+    - name: Fetch tags
+      run: git fetch --tags
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+        prune-cache: false
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Cache HuggingFace models
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/huggingface
+        key: ${{ runner.os }}-huggingface-${{ hashFiles('atulya-api/pyproject.toml') }}
+        restore-keys: |
+          ${{ runner.os }}-huggingface-
+
+    - name: Install atulya-dev dependencies
+      working-directory: ./atulya-dev
+      run: uv sync --frozen --extra test --index-strategy unsafe-best-match
+
+    - name: Install current atulya-api
+      working-directory: ./atulya-api
+      run: uv sync --frozen --index-strategy unsafe-best-match
+
+    - name: Pre-download models
+      working-directory: ./atulya-api
+      run: |
+        uv run python -c "
+        from sentence_transformers import SentenceTransformer, CrossEncoder
+        print('Downloading embedding model...')
+        SentenceTransformer('BAAI/bge-small-en-v1.5')
+        print('Downloading cross-encoder model...')
+        CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
+        print('Models downloaded successfully')
+        "
+
+    - name: Run upgrade tests
+      working-directory: ./atulya-dev
+      run: uv run pytest upgrade_tests/ -v --tb=short
+
+    - name: Show upgrade test logs
+      if: always()
+      run: |
+        echo "=== Upgrade Test Server Logs ==="
+        for log in /tmp/upgrade-test-*.log; do
+          if [ -f "$log" ]; then
+            echo ""
+            echo "--- $log ---"
+            tail -500 "$log"
+          fi
+        done
+
+  verify-generated-files:
+    runs-on: ubuntu-latest
+    env:
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+        key: ${{ runner.os }}-cargo-gen-${{ hashFiles('**/Cargo.lock') }}
+
+    - name: Install Node dependencies
+      run: npm ci
+
+    - name: Install Python dependencies
+      run: |
+        cd atulya-dev && uv sync --frozen --index-strategy unsafe-best-match
+        cd ../atulya-api && uv sync --frozen --index-strategy unsafe-best-match
+        cd ../atulya-embed && uv sync --frozen --index-strategy unsafe-best-match
+
+    - name: Run generate-openapi
+      run: ./scripts/generate-openapi.sh
+
+    - name: Run generate-clients
+      run: ./scripts/generate-clients.sh
+
+    - name: Run lint
+      run: ./scripts/hooks/lint.sh
+
+    - name: Verify no uncommitted changes
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "❌ Error: Generated files are out of sync with committed files."
+          echo ""
+          echo "The following files have changed after running generation scripts:"
+          git status --porcelain
+          echo ""
+          echo "Please run the following commands locally and commit the changes:"
+          echo "  ./scripts/generate-openapi.sh"
+          echo "  ./scripts/generate-clients.sh"
+          echo "  ./scripts/hooks/lint.sh"
+          echo ""
+          git diff --stat
+          exit 1
+        fi
+        echo "✓ All generated files are up to date"
+
+  check-openapi-compatibility:
+    runs-on: ubuntu-latest
+    env:
+      UV_INDEX: pytorch=https://download.pytorch.org/whl/cpu
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full git history to access base branch
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
+
+    - name: Install atulya-dev dependencies
+      run: |
+        cd atulya-dev && uv sync --frozen --index-strategy unsafe-best-match
+
+    - name: Check OpenAPI compatibility with base branch
+      run: |
+        # Get the base branch (usually main)
+        BASE_BRANCH="${{ github.base_ref }}"
+
+        if [ -z "$BASE_BRANCH" ]; then
+          echo "⚠️  Warning: No base branch found (not a PR?). Skipping compatibility check."
+          exit 0
+        fi
+
+        echo "Checking OpenAPI compatibility against base branch: $BASE_BRANCH"
+
+        # Extract the old OpenAPI spec from base branch
+        git show "origin/$BASE_BRANCH:atulya-docs/static/openapi.json" > /tmp/old-openapi.json
+
+        if [ ! -s /tmp/old-openapi.json ]; then
+          echo "⚠️  Warning: Could not find OpenAPI spec in base branch. Skipping compatibility check."
+          exit 0
+        fi
+
+        # Check compatibility using our tool
+        cd atulya-dev
+        uv run check-openapi-compatibility /tmp/old-openapi.json ../atulya-docs/static/openapi.json

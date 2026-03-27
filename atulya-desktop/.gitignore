@@ -1,0 +1,30 @@
+# Generated runtime payloads (assembled by CI/scripts, never committed)
+.dist/
+
+# Rust build artifacts
+src-tauri/target/
+
+# Node dependencies (if frontend app exists)
+node_modules/
+app/dist/
+app/.next/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Secrets (never commit)
+*.key
+*.pem
+.env.local
+.env.*.local
+
+# Support bundles (user data)
+support-bundle-tmp/

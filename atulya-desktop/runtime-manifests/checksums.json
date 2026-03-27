@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "description": "Runtime artifact checksums (populated by CI build pipeline)",
+  "algorithm": "sha256",
+  "generated_at": null,
+  "entries": {}
+}

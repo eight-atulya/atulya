@@ -1,0 +1,61 @@
+[project]
+name = "atulya-crewai"
+version = "0.8.0"
+description = "CrewAI memory integration via Atulya - persistent memory for AI agent crews"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Anurag Atulya", email = "support@eightengine.com" }
+]
+keywords = [
+    "ai",
+    "memory",
+    "crewai",
+    "agents",
+    "atulya",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    "crewai>=0.86.0",
+    "atulya-client>=0.4.0",
+    # Transitive dependency security fixes
+    "cryptography>=46.0.5", # Subgroup attack vulnerability fix
+    "pillow>=12.1.1", # Out-of-bounds write in PSD image loading fix
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-mock>=3.10.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/eight-atulya/atulya"
+Documentation = "https://github.com/eight-atulya/atulya/tree/main/atulya-integrations/crewai"
+Repository = "https://github.com/eight-atulya/atulya"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["atulya_crewai"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

@@ -1,0 +1,35 @@
+services:
+  grafana-lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: atulya-monitoring
+    ports:
+      # Grafana UI
+      - "3000:3000"
+      # OTLP gRPC (traces)
+      - "4317:4317"
+      # OTLP HTTP (traces)
+      - "4318:4318"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    volumes:
+      # Mount Prometheus config for scraping Atulya API metrics (override LGTM default)
+      - ./prometheus.yml:/otel-lgtm/prometheus.yaml:ro
+      # Mount Atulya dashboards to LGTM directory (where default dashboards are)
+      - ../../../monitoring/grafana/dashboards/atulya-operations.json:/otel-lgtm/atulya-operations.json:ro
+      - ../../../monitoring/grafana/dashboards/atulya-llm.json:/otel-lgtm/atulya-llm.json:ro
+      - ../../../monitoring/grafana/dashboards/atulya-api-service.json:/otel-lgtm/atulya-api-service.json:ro
+      # Mount custom dashboard provisioning config that includes Atulya dashboards
+      - ./grafana-dashboards.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/grafana-dashboards.yaml:ro
+    restart: unless-stopped
+    networks:
+      - atulya
+    extra_hosts:
+      # Allow container to reach host services (Atulya API on localhost:8888)
+      - "host.docker.internal:host-gateway"
+
+networks:
+  atulya:
+    name: atulya-network
+    external: true
