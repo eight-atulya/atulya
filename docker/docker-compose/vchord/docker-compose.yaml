@@ -1,0 +1,93 @@
+name: atulya
+# Docker Compose file for Atulya with PostgreSQL and vectorchord
+# docker compose -f docker/docker-compose/docker-compose.yaml down && sleep 2 && docker compose -f docker/docker-compose/docker-compose.yaml up -d
+# Make sure to set the required environment variables before running:
+# - ATULYA_DB_PASSWORD: Password for the PostgreSQL user
+# - Configure LLM provider variables as needed (see below in the atulya service)
+#
+# Usage:
+# docker compose up -d
+#
+# Optional environment variables with defaults:
+# - ATULYA_VERSION: Atulya application version (default: latest)
+# - ATULYA_DB_USER: PostgreSQL user (default: atulya_user)
+# - ATULYA_DB_NAME: PostgreSQL database name (default: atulya_db)
+# - ATULYA_DB_VERSION: PostgreSQL version (default: 18)
+
+services:
+  db:
+    # Use a PostgreSQL-Image with vectorchord extension pre-installed
+    image: tensorchord/vchord-suite:pg${ATULYA_DB_VERSION:-18-latest}
+    container_name: atulya-db
+    restart: always
+    # Expose PostgreSQL port
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: ${ATULYA_DB_USER:-atulya_user}
+      POSTGRES_PASSWORD: ${ATULYA_DB_PASSWORD:-atulya_password}
+      POSTGRES_DB: ${ATULYA_DB_NAME:-atulya_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/${ATULYA_DB_VERSION:-18}/docker
+    networks:
+      - atulya-net
+
+  vectorchord-init:
+    image: tensorchord/vchord-suite:pg18-latest
+    #container_name: vectorchord-init
+    depends_on:
+      - db
+    environment:
+      - PGPASSWORD=${ATULYA_DB_PASSWORD:-atulya_password}
+    command: >
+      bash -c "
+        echo 'Waiting for PostgreSQL to be ready...';
+        until pg_isready -h atulya-db -p 5432 -U atulya_user; do
+          echo 'PostgreSQL is unavailable - sleeping';
+          sleep 2;
+        done;
+        echo 'PostgreSQL is ready - creating atulya_db database';
+        psql -h atulya-db -p 5432 -U atulya_user -c 'CREATE DATABASE atulya_db;' 2>/dev/null || echo 'Database already exists';
+        echo 'Creating extensions in atulya_db database';
+        psql -h atulya-db -p 5432 -U atulya_user -d atulya_db -c 'CREATE EXTENSION IF NOT EXISTS vchord CASCADE;';
+        psql -h atulya-db -p 5432 -U atulya_user -d atulya_db -c 'CREATE EXTENSION IF NOT EXISTS pg_tokenizer CASCADE;';
+        psql -h atulya-db -p 5432 -U atulya_user -d atulya_db -c 'CREATE EXTENSION IF NOT EXISTS vchord_bm25 CASCADE;';
+        echo 'Creating llmlingua2 tokenizer';
+        psql -h atulya-db -p 5432 -U atulya_user -d atulya_db -c \"SELECT create_tokenizer('llmlingua2', \\$\\$ model = \\\"llmlingua2\\\" \\$\\$);\" 2>/dev/null || echo 'Tokenizer already exists or creation skipped';
+        echo 'Database and extensions created successfully';
+      "
+    restart: "no"
+    networks:
+      - atulya-net
+
+  atulya:
+    image: ghcr.io/eight-atulya/atulya:${ATULYA_VERSION:-latest}
+    container_name: atulya-app
+    ports:
+      - "8888:8888"
+      - "9999:9999"
+    environment:
+      # LLM Configuration (uses OpenAI for testing vchord)
+      # LLM configuration
+      ATULYA_API_LLM_PROVIDER: ${ATULYA_API_LLM_PROVIDER:-openai}
+      ATULYA_API_LLM_API_KEY: ${OPENAI_API_KEY:-your-api-key}
+
+      # Database Configuration
+      ATULYA_API_DATABASE_URL: postgresql://${ATULYA_DB_USER:-atulya_user}:${ATULYA_DB_PASSWORD:-atulya_password}@db:5432/${ATULYA_DB_NAME:-atulya_db}
+
+      # Vector and Text Search Extensions
+      ATULYA_API_VECTOR_EXTENSION: vchord
+      ATULYA_API_TEXT_SEARCH_EXTENSION: vchord
+
+    depends_on:
+      - db
+    networks:
+      - atulya-net
+
+
+networks:
+  atulya-net:
+    driver: bridge
+
+volumes:
+  pg_data:

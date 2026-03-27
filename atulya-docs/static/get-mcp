@@ -1,0 +1,301 @@
+#!/bin/bash
+#
+# Install Atulya MCP server for Claude Desktop
+#
+# Usage:
+#   curl -fsSL https://atulya.eightengine.com/get-mcp | bash -s -- --app claude-desktop --set ATULYA_API_LLM_API_KEY=YOUR_KEY
+#
+# Options:
+#   --app              Required. Target application (currently only: claude-desktop)
+#   --set ENV=VALUE    Set environment variable (can be repeated)
+#
+# Examples:
+#   # With OpenAI
+#   curl -fsSL https://atulya.eightengine.com/get-mcp | bash -s -- \
+#     --app claude-desktop \
+#     --set ATULYA_API_LLM_API_KEY=sk-...
+#
+#   # With Ollama (local LLM)
+#   curl -fsSL https://atulya.eightengine.com/get-mcp | bash -s -- \
+#     --app claude-desktop \
+#     --set ATULYA_API_LLM_PROVIDER=ollama \
+#     --set ATULYA_API_LLM_MODEL=llama3.2
+#
+#   # With custom memory instructions
+#   curl -fsSL https://atulya.eightengine.com/get-mcp | bash -s -- \
+#     --app claude-desktop \
+#     --set ATULYA_API_LLM_API_KEY=sk-... \
+#     --set ATULYA_API_MCP_INSTRUCTIONS="Also store every action you take and code you write."
+#
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+print_info() {
+    echo -e "${BLUE}ℹ${NC} $1"
+}
+
+print_success() {
+    echo -e "${GREEN}✓${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}✗${NC} $1"
+    exit 1
+}
+
+print_warning() {
+    echo -e "${YELLOW}⚠${NC} $1"
+}
+
+print_banner() {
+    echo ""
+    # ANSI logo
+    echo -e "  \033[38;2;9;127;184m▄\033[0m\033[48;2;8;130;178m\033[38;2;5;133;186m▄\033[0m       \033[48;2;10;143;160m\033[38;2;10;143;165m▄\033[0m\033[38;2;7;140;156m▄\033[0m  "
+    echo -e " \033[38;2;8;125;192m▄\033[0m \033[38;2;3;132;191m▀\033[0m\033[38;2;2;133;192m▄\033[0m \033[38;2;3;132;180m▄\033[0m\033[38;2;1;137;184m▄\033[0m\033[38;2;3;133;174m▄\033[0m \033[38;2;3;142;176m▄\033[0m\033[38;2;4;142;169m▀\033[0m \033[38;2;10;144;164m▄\033[0m "
+    echo -e "\033[38;2;6;121;195m▀\033[0m\033[38;2;5;128;203m▀\033[0m\033[48;2;5;124;195m\033[38;2;3;125;200m▄\033[0m\033[38;2;2;126;196m▄\033[0m\033[48;2;3;128;188m\033[38;2;1;131;196m▄\033[0m\033[48;2;0;152;219m\033[38;2;2;131;191m▄\033[0m\033[38;2;1;141;196m▀\033[0m\033[38;2;1;135;183m▀\033[0m\033[38;2;1;148;198m▀\033[0m\033[48;2;1;156;202m\033[38;2;2;135;180m▄\033[0m\033[48;2;4;134;169m\033[38;2;1;137;177m▄\033[0m\033[38;2;3;138;173m▄\033[0m\033[48;2;6;137;165m\033[38;2;2;140;170m▄\033[0m\033[38;2;7;144;169m▀\033[0m\033[38;2;7;139;158m▀\033[0m"
+    echo -e "   \033[48;2;2;128;202m\033[38;2;2;124;201m▄\033[0m\033[48;2;1;130;201m\033[38;2;0;135;212m▄\033[0m\033[38;2;2;128;196m▄\033[0m \033[48;2;2;142;204m\033[38;2;7;138;199m▄\033[0m \033[38;2;1;135;186m▄\033[0m\033[48;2;1;142;186m\033[38;2;2;144;194m▄\033[0m\033[48;2;3;138;176m\033[38;2;2;134;176m▄\033[0m   "
+    echo -e " \033[48;2;8;118;200m\033[38;2;8;121;209m▄\033[0m\033[38;2;3;121;203m▀\033[0m \033[38;2;3;122;192m▀\033[0m\033[38;2;1;138;216m▀\033[0m\033[48;2;0;138;210m\033[38;2;3;128;198m▄\033[0m\033[48;2;0;126;188m\033[38;2;2;131;198m▄\033[0m\033[48;2;0;142;205m\033[38;2;3;132;193m▄\033[0m\033[38;2;1;140;196m▀\033[0m  \033[38;2;4;134;175m▀\033[0m\033[48;2;13;135;167m\033[38;2;8;136;174m▄\033[0m "
+    echo ""
+    echo -e "  ${BLUE}ATULYA MCP INSTALLER${NC}"
+    echo ""
+}
+
+# Parse arguments
+APP=""
+declare -a ENV_VARS=()
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --app)
+            APP="$2"
+            shift 2
+            ;;
+        --set)
+            ENV_VARS+=("$2")
+            shift 2
+            ;;
+        -h|--help)
+            echo "Usage: $0 --app <app> --set ENV=VALUE [--set ENV2=VALUE2 ...]"
+            echo ""
+            echo "Options:"
+            echo "  --app              Required. Target application (currently only: claude-desktop)"
+            echo "  --set ENV=VALUE    Set environment variable (can be repeated)"
+            echo ""
+            echo "Examples:"
+            echo "  # With OpenAI"
+            echo "  $0 --app claude-desktop --set ATULYA_API_LLM_API_KEY=sk-..."
+            echo ""
+            echo "  # With Ollama (local LLM, no API key needed)"
+            echo "  $0 --app claude-desktop --set ATULYA_API_LLM_PROVIDER=ollama --set ATULYA_API_LLM_MODEL=llama3.2"
+            exit 0
+            ;;
+        *)
+            print_error "Unknown option: $1. Use --help for usage."
+            ;;
+    esac
+done
+
+# Validate required arguments
+if [ -z "$APP" ]; then
+    print_error "Missing required argument: --app. Use --help for usage."
+fi
+
+if [ "$APP" != "claude-desktop" ]; then
+    print_error "Unsupported app: $APP. Currently only 'claude-desktop' is supported."
+fi
+
+# Detect OS
+detect_os() {
+    case "$(uname -s)" in
+        Darwin*)    echo "macos" ;;
+        Linux*)     echo "linux" ;;
+        MINGW*|MSYS*|CYGWIN*) echo "windows" ;;
+        *)          echo "unknown" ;;
+    esac
+}
+
+OS=$(detect_os)
+
+# Get Claude Desktop config path based on OS
+get_claude_config_path() {
+    case "$OS" in
+        macos)
+            echo "$HOME/Library/Application Support/Claude/claude_desktop_config.json"
+            ;;
+        linux)
+            echo "$HOME/.config/Claude/claude_desktop_config.json"
+            ;;
+        windows)
+            echo "$APPDATA/Claude/claude_desktop_config.json"
+            ;;
+        *)
+            print_error "Unsupported operating system: $OS"
+            ;;
+    esac
+}
+
+# Check if uvx is installed and return its path
+find_uvx() {
+    # Check if in PATH
+    if command -v uvx &> /dev/null; then
+        command -v uvx
+        return 0
+    fi
+
+    # Check common installation paths
+    local paths=(
+        "$HOME/.local/bin/uvx"
+        "$HOME/.cargo/bin/uvx"
+        "/usr/local/bin/uvx"
+    )
+
+    for path in "${paths[@]}"; do
+        if [ -f "$path" ]; then
+            echo "$path"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Install uv (which includes uvx)
+install_uv() {
+    print_info "Installing uv..."
+
+    if [ "$OS" = "windows" ]; then
+        powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    else
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+    fi
+
+    # Source the env to get uvx in path
+    if [ -f "$HOME/.local/bin/env" ]; then
+        source "$HOME/.local/bin/env"
+    fi
+
+    # Find uvx again
+    if ! UVX_PATH=$(find_uvx); then
+        print_error "uv installed but uvx not found. Please check your installation."
+    fi
+
+    print_success "uv installed successfully"
+}
+
+# Update Claude Desktop config
+update_claude_config() {
+    local config_path="$1"
+    local uvx_path="$2"
+    shift 2
+    local env_vars=("$@")
+
+    # Create config directory if it doesn't exist
+    mkdir -p "$(dirname "$config_path")"
+
+    # Check if jq is available (needed for both new and existing configs)
+    if ! command -v jq &> /dev/null; then
+        print_warning "jq not found. Installing..."
+        if [ "$OS" = "macos" ]; then
+            if command -v brew &> /dev/null; then
+                brew install jq
+            else
+                print_error "Please install jq: brew install jq"
+            fi
+        elif [ "$OS" = "linux" ]; then
+            if command -v apt-get &> /dev/null; then
+                sudo apt-get install -y jq
+            elif command -v yum &> /dev/null; then
+                sudo yum install -y jq
+            else
+                print_error "Please install jq manually"
+            fi
+        fi
+    fi
+
+    # Build the env object from env_vars array
+    local env_json="{}"
+    for env_var in "${env_vars[@]}"; do
+        local key="${env_var%%=*}"
+        local value="${env_var#*=}"
+        env_json=$(echo "$env_json" | jq --arg k "$key" --arg v "$value" '. + {($k): $v}')
+    done
+
+    # Build the atulya server config
+    local atulya_config
+    atulya_config=$(jq -n \
+        --arg uvx "$uvx_path" \
+        --argjson env "$env_json" \
+        '{
+            "command": $uvx,
+            "args": ["--from", "atulya-api", "atulya-local-mcp"],
+            "env": $env
+        }')
+
+    # Check if config file exists and has content
+    if [ -f "$config_path" ] && [ -s "$config_path" ]; then
+        print_info "Updating existing Claude Desktop config..."
+
+        # Backup existing config
+        cp "$config_path" "${config_path}.backup"
+        print_info "Backed up existing config to ${config_path}.backup"
+
+        # Add or update atulya server in existing config
+        local new_config
+        new_config=$(jq --argjson hs "$atulya_config" '.mcpServers.atulya = $hs' "$config_path")
+
+        echo "$new_config" > "$config_path"
+    else
+        print_info "Creating new Claude Desktop config..."
+
+        # Create new config with atulya server
+        local new_config
+        new_config=$(jq -n --argjson hs "$atulya_config" '{"mcpServers": {"atulya": $hs}}')
+        echo "$new_config" > "$config_path"
+    fi
+
+    print_success "Claude Desktop config updated: $config_path"
+}
+
+# Main installation flow
+main() {
+    print_banner
+
+    print_info "App: $APP"
+    if [ ${#ENV_VARS[@]} -gt 0 ]; then
+        print_info "Environment variables: ${#ENV_VARS[@]} configured"
+    fi
+    echo ""
+
+    # Step 1: Check/Install uvx
+    print_info "Checking for uvx..."
+    if UVX_PATH=$(find_uvx); then
+        print_success "uvx found at: $UVX_PATH"
+    else
+        print_warning "uvx not found. Installing uv..."
+        install_uv
+        UVX_PATH=$(find_uvx)
+    fi
+
+    # Step 2: Update Claude Desktop config
+    CONFIG_PATH=$(get_claude_config_path)
+    print_info "Configuring Claude Desktop..."
+    update_claude_config "$CONFIG_PATH" "$UVX_PATH" "${ENV_VARS[@]}"
+
+    # Done!
+    echo ""
+    print_success "Installation complete!"
+    echo ""
+    print_info "Next steps:"
+    echo "  1. Restart Claude Desktop"
+    echo "  2. Look for the 'atulya' tools (retain, recall) in Claude"
+    echo ""
+}
+
+main "$@"

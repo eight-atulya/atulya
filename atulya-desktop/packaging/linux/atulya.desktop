@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Atulya
+Comment=A living algorithm for machine intelligence (MI).
+Exec=atulya-desktop
+Icon=atulya
+Type=Application
+Categories=Utility;Development;
+Terminal=false
+StartupWMClass=Atulya

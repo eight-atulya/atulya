@@ -1,0 +1,270 @@
+# Monitoring
+
+Atulya provides comprehensive observability through Prometheus metrics, OpenTelemetry distributed tracing, and pre-built Grafana dashboards.
+
+## Local Development
+
+For local observability, use the Grafana LGTM (Loki, Grafana, Tempo, Mimir) all-in-one stack:
+
+```bash
+./scripts/dev/start-monitoring.sh
+```
+
+This starts a single Docker container providing:
+- **Grafana UI**: http://localhost:3000 (anonymous admin access)
+- **Traces (Tempo)**: OTLP endpoint at http://localhost:4318 (HTTP) and http://localhost:4317 (gRPC)
+- **Metrics (Prometheus/Mimir)**: Scrapes http://localhost:8888/metrics automatically
+- **Logs (Loki)**: Available for log aggregation
+- **Pre-built Dashboards**: Atulya Operations, LLM Metrics, API Service
+
+**Enable tracing in your API:**
+```bash
+export ATULYA_API_OTEL_TRACES_ENABLED=true
+export ATULYA_API_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+```
+
+:::note Production Deployment
+The local monitoring stack is for development only. In production, deploy Grafana LGTM separately or use commercial platforms (Grafana Cloud, DataDog, New Relic, etc.).
+:::
+
+## Grafana Dashboards
+
+Pre-built dashboards are available in [`monitoring/grafana/dashboards/`](https://github.com/eight-atulya/atulya/tree/main/monitoring/grafana/dashboards). Import these JSON files into your Grafana instance:
+
+| Dashboard | Description |
+|-----------|-------------|
+| **Atulya Operations** | Operation rates, latency percentiles, per-bank metrics |
+| **Atulya LLM Metrics** | LLM calls, token usage, latency by scope/provider |
+| **Atulya API Service** | HTTP requests, error rates, DB pool, process metrics |
+
+The dashboards are automatically provisioned when using the monitoring stack script.
+
+## Metrics Endpoint
+
+Atulya exposes Prometheus metrics at `/metrics`:
+
+```bash
+curl http://localhost:8888/metrics
+```
+
+## Available Metrics
+
+### Operation Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `atulya.operation.duration` | Histogram | operation, bank_id, source, budget, max_tokens, success | Duration of operations in seconds |
+| `atulya.operation.total` | Counter | operation, bank_id, source, budget, max_tokens, success | Total number of operations executed |
+
+**Labels:**
+- `operation`: Operation type (`retain`, `recall`, `reflect`)
+- `bank_id`: Memory bank identifier
+- `source`: Where the operation was triggered from (`api`, `reflect`, `internal`)
+- `budget`: Budget level if specified (`low`, `mid`, `high`)
+- `max_tokens`: Max tokens if specified
+- `success`: Whether the operation succeeded (`true`, `false`)
+
+The `source` label allows distinguishing between:
+- `api`: Direct API calls from clients
+- `reflect`: Internal recall calls made during reflect operations
+- `internal`: Other internal operations
+
+### LLM Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `atulya.llm.duration` | Histogram | provider, model, scope, success | Duration of LLM API calls in seconds |
+| `atulya.llm.calls.total` | Counter | provider, model, scope, success | Total number of LLM API calls |
+| `atulya.llm.tokens.input` | Counter | provider, model, scope, success, token_bucket | Input tokens for LLM calls |
+| `atulya.llm.tokens.output` | Counter | provider, model, scope, success, token_bucket | Output tokens from LLM calls |
+
+**Labels:**
+- `provider`: LLM provider (`openai`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`)
+- `model`: Model name (e.g., `gpt-4`, `claude-3-sonnet`)
+- `scope`: What the LLM call is for (`memory`, `reflect`, `consolidation`, `answer`)
+- `success`: Whether the call succeeded (`true`, `false`)
+- `token_bucket`: Token count bucket for cardinality control (`0-100`, `100-500`, `500-1k`, `1k-5k`, `5k-10k`, `10k-50k`, `50k+`)
+
+### HTTP Request Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `atulya.http.duration` | Histogram | method, endpoint, status_code, status_class | Duration of HTTP requests in seconds |
+| `atulya.http.requests.total` | Counter | method, endpoint, status_code, status_class | Total number of HTTP requests |
+| `atulya.http.requests.in_progress` | UpDownCounter | method, endpoint | Number of HTTP requests currently being processed |
+
+**Labels:**
+- `method`: HTTP method (`GET`, `POST`, `PUT`, `DELETE`)
+- `endpoint`: Request path (normalized to reduce cardinality - UUIDs replaced with `{id}`)
+- `status_code`: HTTP status code (`200`, `400`, `500`, etc.)
+- `status_class`: Status code class (`2xx`, `4xx`, `5xx`)
+
+### Database Pool Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `atulya.db.pool.size` | Gauge | - | Current number of connections in the pool |
+| `atulya.db.pool.idle` | Gauge | - | Number of idle connections in the pool |
+| `atulya.db.pool.min` | Gauge | - | Minimum pool size |
+| `atulya.db.pool.max` | Gauge | - | Maximum pool size |
+
+### Process Metrics
+
+| Metric | Type | Labels | Description |
+|--------|------|--------|-------------|
+| `atulya.process.cpu.seconds` | Gauge | type | Process CPU time in seconds |
+| `atulya.process.memory.bytes` | Gauge | type | Process memory usage in bytes |
+| `atulya.process.open_fds` | Gauge | - | Number of open file descriptors |
+| `atulya.process.threads` | Gauge | - | Number of active threads |
+
+**Labels:**
+- `type` (CPU): `user` or `system`
+- `type` (Memory): `rss_max` (maximum resident set size)
+
+### Histogram Buckets
+
+Custom bucket boundaries are configured for better percentile accuracy:
+
+**Operation Duration Buckets (seconds):**
+```
+0.1, 0.25, 0.5, 0.75, 1.0, 2.0, 3.0, 5.0, 7.5, 10.0, 15.0, 20.0, 30.0, 60.0, 120.0
+```
+
+**LLM Duration Buckets (seconds):**
+```
+0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 5.0, 10.0, 15.0, 30.0, 60.0, 120.0
+```
+
+**HTTP Duration Buckets (seconds):**
+```
+0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0, 30.0
+```
+
+## Prometheus Configuration
+
+```yaml
+scrape_configs:
+  - job_name: 'atulya'
+    static_configs:
+      - targets: ['localhost:8888']
+```
+
+## Example Queries
+
+### Average operation latency by type
+```promql
+rate(atulya_operation_duration_sum[5m]) / rate(atulya_operation_duration_count[5m])
+```
+
+### LLM calls per minute by provider
+```promql
+rate(atulya_llm_calls_total[1m]) * 60
+```
+
+### P95 LLM latency
+```promql
+histogram_quantile(0.95, rate(atulya_llm_duration_bucket[5m]))
+```
+
+### Total tokens consumed by model
+```promql
+sum by (model) (atulya_llm_tokens_input_total + atulya_llm_tokens_output_total)
+```
+
+### Internal vs API recall operations
+```promql
+sum by (source) (rate(atulya_operation_total{operation="recall"}[5m]))
+```
+
+### HTTP requests per second by endpoint
+```promql
+sum by (endpoint) (rate(atulya_http_requests_total[1m]))
+```
+
+### HTTP error rate (5xx)
+```promql
+sum(rate(atulya_http_requests_total{status_class="5xx"}[5m])) / sum(rate(atulya_http_requests_total[5m]))
+```
+
+### P95 HTTP latency
+```promql
+histogram_quantile(0.95, sum by (le) (rate(atulya_http_duration_seconds_bucket[5m])))
+```
+
+### Database pool utilization
+```promql
+atulya_db_pool_size / atulya_db_pool_max
+```
+
+### Active database connections
+```promql
+atulya_db_pool_size - atulya_db_pool_idle
+```
+
+### CPU usage rate
+```promql
+rate(atulya_process_cpu_seconds{type="user"}[1m])
+```
+
+---
+
+## Distributed Tracing
+
+Atulya supports OpenTelemetry distributed tracing for memory operations and LLM calls, following GenAI semantic conventions v1.37+.
+
+### Configuration
+
+See [Configuration - OpenTelemetry Tracing](./configuration#opentelemetry-tracing) for environment variables.
+
+**Quick Start:**
+```bash
+# Enable tracing
+export ATULYA_API_OTEL_TRACES_ENABLED=true
+export ATULYA_API_OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318
+
+# View traces with Grafana LGTM (local dev)
+./scripts/dev/start-monitoring.sh
+# Open http://localhost:3000 → Explore → Tempo
+```
+
+Supports any OTLP-compatible backend (Grafana LGTM, Langfuse, OpenLIT, DataDog, New Relic, Honeycomb, etc.).
+
+### Span Hierarchy
+
+**Parent Spans (Operations):**
+- `atulya.retain` - Memory ingestion
+- `atulya.recall` - Memory retrieval
+  - `atulya.recall_embedding` - Query embedding
+  - `atulya.recall_retrieval` - Parallel search (semantic, BM25, graph, temporal)
+  - `atulya.recall_fusion` - Reciprocal Rank Fusion
+  - `atulya.recall_rerank` - Cross-encoder reranking
+- `atulya.reflect` - Agentic reasoning
+  - `atulya.reflect_tool_call` - Tool execution (recall, lookup, etc.)
+- `atulya.consolidation` - Observation synthesis
+- `atulya.mental_model_refresh` - Mental model updates
+
+**Child Spans (LLM Calls):**
+- Named by scope (e.g., `atulya.memory`, `atulya.reflect`)
+- Contain full prompts/completions as events
+- Follow GenAI semantic conventions for attributes
+
+### Span Attributes
+
+**Operation Spans:**
+- `atulya.operation` - Operation type
+- `atulya.bank_id` - Memory bank ID
+- `atulya.query` - Query text (truncated to 100 chars)
+- `atulya.fact_types` - Fact types for recall
+- `atulya.thinking_budget` - Budget allocation
+- `atulya.max_tokens` - Token limit
+
+**LLM Spans (GenAI Semantic Conventions):**
+- `gen_ai.operation.name` - Always `"chat"`
+- `gen_ai.provider.name` - Provider (`openai`, `anthropic`, `google`, etc.)
+- `gen_ai.request.model` - Model name
+- `gen_ai.usage.input_tokens` - Input tokens
+- `gen_ai.usage.output_tokens` - Output tokens
+- `atulya.scope` - LLM call purpose (`memory`, `reflect`, `consolidation`, etc.)
+
+**Events:**
+- `gen_ai.client.inference.operation.details` - Full prompts and completions

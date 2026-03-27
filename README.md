@@ -1,100 +1,64 @@
-<p>
-  <img src="./atulya_banner.png" alt="ATULYA banner" width="100%" />
+# Atulya
+![Atulya banner](./atulya_banner.png)
+
+**A living algorithm for machine intelligence (MI).**
+
+Atulya is built on one simple idea:  
+>machines should not only store information, they should learn and grow over time.
+
+Most systems try to remove all mistakes. Atulya takes a different path.  
+It treats gaps, change, and feedback as useful signals for learning.
+
+## See it in action
+
+<p align="center">
+  <img src="./atulya-docs/static/img/atulya_landing_surface_light.png" alt="Atulya landing view" width="920" />
 </p>
 
-# ATULYA
-
-## Simple for users. Built for the future.
-
-ATULYA stands for an algorithm that utilises, learns, yields, and adapts.
-
-ATULYA is a protocol and systems design direction for trustworthy autonomous systems operating across distributed repositories. It is built to bring the beauty of algorithms and mathematics back into everyday life and work in a way that feels simple, useful, and human.
-
-<p>
-  <img src="https://img.shields.io/badge/Protocol-Integrity_Gated-111111?style=for-the-badge" alt="Protocol badge" />
-  <img src="https://img.shields.io/badge/Focus-Autonomous_Systems-444444?style=for-the-badge" alt="Autonomous systems badge" />
-  <img src="https://img.shields.io/badge/Model-Distributed_Repositories-777777?style=for-the-badge" alt="Distributed repositories badge" />
+<p align="center">
+  <em>Learn continuously from team history, reduce decision risk, and compound intelligence over time.</em>
 </p>
 
-| What ATULYA is | Why it matters |
-| --- | --- |
-| A framework for stateful, verifiable, multi-repository autonomous systems. | It prioritises correctness, traceability, and controlled propagation instead of unchecked autonomy. |
-| A design language for agent coordination, record models, and proof-backed state transitions. | It gives teams a way to scale intelligence without losing trust, reviewability, or human oversight. |
+<table align="center">
+  <tr>
+    <td align="center"><strong>Continuous learning</strong></td>
+    <td align="center"><strong>Lower decision risk</strong></td>
+    <td align="center"><strong>Compounding intelligence</strong></td>
+  </tr>
+  <tr>
+    <td align="center">Turn historical evidence into better next actions.</td>
+    <td align="center">Use real signals, not gut feel alone.</td>
+    <td align="center">Keep improving with every recall and reflect cycle.</td>
+  </tr>
+</table>
 
-| Read path | Use it for |
-| --- | --- |
-| [`docs/README.md`](docs/README.md) | Navigate the repository and find the right entry point. |
-| [`docs/protocol/README.md`](docs/protocol/README.md) | Understand the protocol in the intended reading order. |
-| [`docs/protocol/design-direction.md`](docs/protocol/design-direction.md) | See the architectural direction and adoption strategy. |
-| [`docs/protocol/record-model.md`](docs/protocol/record-model.md) | Review canonical record types, families, and state structure. |
-| [`docs/architecture/knowledge-compression-loop.md`](docs/architecture/knowledge-compression-loop.md) | Explore the AI knowledge-compression loop and MVP roadmap. |
+<p align="center">
+  <strong>Start with one memory bank, run your first workflow, and build from there.</strong>
+</p>
 
----
+## What Atulya does
 
-## Read This Repository In One Pass
+- Helps machines remember important things over time
+- Improves responses using past context
+- Learns from new inputs instead of starting from zero
+- Supports sharing distilled memory between systems through `.brain` files
 
-This README is the front door.
-The protocol itself lives in structured docs so future commits stay easy to place, review, and extend.
+## Why this matters
 
-### Start Here
+People do not grow by being perfect.  
+People grow by observing, adjusting, and moving forward.
 
-- [`docs/README.md`](docs/README.md) for the documentation map.
-- [`docs/protocol/README.md`](docs/protocol/README.md) for protocol reading order.
-- [`docs/protocol/design-direction.md`](docs/protocol/design-direction.md) for architectural direction and adoption strategy.
-- [`docs/protocol/record-model.md`](docs/protocol/record-model.md) for canonical record types and families.
-- [`docs/architecture/knowledge-compression-loop.md`](docs/architecture/knowledge-compression-loop.md) for the AI knowledge-compression loop and MVP direction.
+Atulya applies this same principle to machine intelligence:  
+keep learning, keep adapting, and keep improving.
 
-## Integrity-Gated State Maintenance
+## Vision
 
-The flow below summarizes **Integrity-Gated State Maintenance for Autonomous Agents and Distributed Multi-Repository Systems Using Scope-Localized Verification and Proof Certificates**.
+Atulya is designed as a long-term foundation for machine intelligence that is:
 
-```mermaid
-flowchart TD
-    A[Intent or change request enters the system] --> B[Identify impacted agent scopes and repositories]
-    B --> C[Load only the localized state required for the task]
-    C --> D[Propose changes and state transitions]
-    D --> E[Run scope-localized verification checks]
-    E --> F{Integrity gate passed?}
-    F -- No --> G[Reject or quarantine candidate state]
-    G --> H[Request repair, rollback, or human review]
-    H --> C
-    F -- Yes --> I[Issue proof certificate with evidence and lineage]
-    I --> J[Propagate approved state to dependent agents and repositories]
-    J --> K[Continuously monitor downstream consistency and drift]
-    K --> L{Drift or conflict detected?}
-    L -- Yes --> C
-    L -- No --> M[Maintain trusted shared state and audit history]
-```
+- useful in real-world systems
+- understandable by humans
+- collaborative instead of isolated
+- always learning
 
-This pattern is designed for environments where correctness, traceability, and controlled propagation matter as much as raw autonomy.
-
-## Open Patent
-
-ATULYA believes in an idea called **open patent**.
-
-Think of it like open source, but for inventions, methods, and standards.
-
-The goal is simple:
-- keep important ideas open to humanity
-- protect the spirit of the work from being locked away or misused
-- create shared standards for the AI and human world
-- make good systems easier for everyone to build on
-
-In plain words, open patent means:
-
-> build in public, protect with purpose, and keep the door open for the future.
-
-This is not about making things complicated.
-This is about making sure the foundations of human and AI systems stay fair, understandable, and useful for everyone.
-
-## A Human Idea for an AI Age
-
-ATULYA is part of a bigger shift toward tools that can learn over time, remember context, support better decisions, and help turn intent into action.
-
-The vision is to create systems that help people think clearly, work better, and stay aligned with what matters.
-
-Not just for one company.
-Not just for one country.
-For people everywhere — worldwide, and one day, interplanetary.
-
-Simple for users. Built for the future.
+The goal is not just smarter software.  
+The goal is a better machine partner for human decisions.

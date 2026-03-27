@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "description": "Runtime artifact manifest for Atulya Desktop",
+  "components": {
+    "api": {
+      "description": "Atulya API (Python + pg0 embedded Postgres)",
+      "install_path": "{DATA_DIR}/runtime/api",
+      "requires": ["python3.11"],
+      "health_endpoint": "http://127.0.0.1:8888/health"
+    },
+    "control_plane": {
+      "description": "Atulya Control Plane (Next.js standalone)",
+      "install_path": "{DATA_DIR}/runtime/control-plane",
+      "requires": ["node20"],
+      "health_endpoint": "http://127.0.0.1:9999/"
+    },
+    "brain_native": {
+      "description": "atulya-brain native library (Rust cdylib)",
+      "install_path": "{DATA_DIR}/runtime/brain",
+      "artifacts": {
+        "darwin-arm64": "libatulya_brain.dylib",
+        "darwin-x64": "libatulya_brain.dylib",
+        "linux-x64": "libatulya_brain.so",
+        "linux-arm64": "libatulya_brain.so",
+        "windows-x64": "atulya_brain.dll"
+      }
+    }
+  },
+  "assembly": {
+    "method": "ci_per_os_arch",
+    "output_dir": ".dist/runtime",
+    "checksum_algorithm": "sha256"
+  }
+}

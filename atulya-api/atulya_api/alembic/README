@@ -1,0 +1,3 @@
+Atulya v0.8.0 resets Alembic history to a fresh baseline.
+
+Pre-v0.8.0 databases are intentionally unsupported. Start from a fresh database and apply the baseline migration in `versions/`.
