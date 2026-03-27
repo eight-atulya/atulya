@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+python3 "$REPO_ROOT/atulya-cortex/scripts/brain_edit_guard.py" --staged

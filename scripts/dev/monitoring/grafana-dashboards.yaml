@@ -1,0 +1,36 @@
+apiVersion: 1
+
+providers:
+  # Default LGTM dashboards
+  - name: "RED Metrics (classic histogram)"
+    type: file
+    options:
+      path: /otel-lgtm/grafana-dashboard-red-metrics-classic.json
+      foldersFromFilesStructure: false
+  - name: "RED Metrics (exponential/native histogram)"
+    type: file
+    options:
+      path: /otel-lgtm/grafana-dashboard-red-metrics-native.json
+      foldersFromFilesStructure: false
+  - name: "JVM Metrics"
+    type: file
+    options:
+      path: /otel-lgtm/grafana-dashboard-jvm-metrics.json
+      foldersFromFilesStructure: false
+
+  # Atulya dashboards
+  - name: "Atulya Operations"
+    type: file
+    options:
+      path: /otel-lgtm/atulya-operations.json
+      foldersFromFilesStructure: false
+  - name: "Atulya LLM"
+    type: file
+    options:
+      path: /otel-lgtm/atulya-llm.json
+      foldersFromFilesStructure: false
+  - name: "Atulya API Service"
+    type: file
+    options:
+      path: /otel-lgtm/atulya-api-service.json
+      foldersFromFilesStructure: false

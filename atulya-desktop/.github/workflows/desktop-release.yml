@@ -1,0 +1,189 @@
+name: Desktop Release
+
+on:
+  push:
+    tags:
+      - 'desktop-v*'
+  workflow_dispatch:
+    inputs:
+      channel:
+        description: 'Release channel'
+        required: true
+        default: 'beta'
+        type: choice
+        options:
+          - stable
+          - beta
+          - internal
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux-x64
+            runner: ubuntu-22.04
+          - os: macos-14
+            target: darwin-arm64
+            runner: macos-14
+          - os: macos-13
+            target: darwin-x64
+            runner: macos-13
+          - os: windows-2022
+            target: windows-x64
+            runner: windows-2022
+
+    runs-on: ${{ matrix.runner }}
+    name: Build Runtime (${{ matrix.target }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Assemble runtime (Unix)
+        if: runner.os != 'Windows'
+        working-directory: atulya-desktop
+        run: |
+          chmod +x scripts/assemble-runtime.sh
+          ./scripts/assemble-runtime.sh
+
+      - name: Assemble runtime (Windows)
+        if: runner.os == 'Windows'
+        working-directory: atulya-desktop
+        run: .\scripts\assemble-runtime.ps1
+
+      - name: Verify runtime
+        if: runner.os != 'Windows'
+        working-directory: atulya-desktop
+        run: |
+          chmod +x scripts/verify-runtime.sh
+          ./scripts/verify-runtime.sh
+
+      - name: Upload runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-${{ matrix.target }}
+          path: atulya-desktop/.dist/runtime/
+          retention-days: 1
+
+  build-desktop:
+    needs: build-runtime
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            target: linux-x64
+          - os: macos-14
+            target: darwin-arm64
+          - os: macos-13
+            target: darwin-x64
+          - os: windows-2022
+            target: windows-x64
+
+    runs-on: ${{ matrix.os }}
+    name: Build Desktop (${{ matrix.target }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install system dependencies (Linux)
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Download runtime artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: runtime-${{ matrix.target }}
+          path: atulya-desktop/.dist/runtime/
+
+      - name: Install Tauri CLI
+        run: npm install -g @tauri-apps/cli@2
+
+      - name: Build Tauri app
+        working-directory: atulya-desktop/src-tauri
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: cargo tauri build
+
+      - name: Upload desktop artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-${{ matrix.target }}
+          path: |
+            atulya-desktop/src-tauri/target/release/bundle/**/*.dmg
+            atulya-desktop/src-tauri/target/release/bundle/**/*.AppImage
+            atulya-desktop/src-tauri/target/release/bundle/**/*.deb
+            atulya-desktop/src-tauri/target/release/bundle/**/*.msi
+            atulya-desktop/src-tauri/target/release/bundle/**/*.exe
+            atulya-desktop/src-tauri/target/release/bundle/**/*.sig
+          retention-days: 7
+
+  create-release:
+    needs: build-desktop
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/desktop-v')
+
+    steps:
+      - name: Download all desktop artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: desktop-*
+          path: release-artifacts/
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release-artifacts/**/*
+          draft: true
+          prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'rc') }}
+          generate_release_notes: true

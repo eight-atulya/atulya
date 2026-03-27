@@ -1,0 +1,13 @@
+apiVersion: v2
+name: atulya
+description: Atulya helm chart
+type: application
+version: 0.8.0
+appVersion: "0.8.0"
+keywords:
+  - ai
+  - memory
+  - llm
+  - agents
+maintainers:
+  - name: Atulya Team

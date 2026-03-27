@@ -1,0 +1,248 @@
+{
+  "developerSidebar": [
+    {
+      "type": "category",
+      "label": "Architecture",
+      "collapsible": false,
+      "items": [
+        {
+          "type": "doc",
+          "id": "developer/index",
+          "label": "Overview"
+        },
+        {
+          "type": "doc",
+          "id": "developer/retain",
+          "label": "Retain"
+        },
+        {
+          "type": "doc",
+          "id": "developer/retrieval",
+          "label": "Recall"
+        },
+        {
+          "type": "doc",
+          "id": "developer/reflect",
+          "label": "Reflect"
+        },
+        {
+          "type": "doc",
+          "id": "developer/observations",
+          "label": "Observations"
+        },
+        {
+          "type": "doc",
+          "id": "developer/multilingual",
+          "label": "Multilingual"
+        },
+        {
+          "type": "doc",
+          "id": "developer/performance",
+          "label": "Performance"
+        },
+        {
+          "type": "doc",
+          "id": "developer/storage",
+          "label": "Storage"
+        },
+        {
+          "type": "doc",
+          "id": "developer/rag-vs-atulya",
+          "label": "RAG vs Memory"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "API",
+      "collapsible": false,
+      "items": [
+        {
+          "type": "doc",
+          "id": "developer/api/quickstart",
+          "label": "Quick Start"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/retain",
+          "label": "Retain"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/recall",
+          "label": "Recall"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/reflect",
+          "label": "Reflect"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/mental-models",
+          "label": "Mental Models"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/memory-banks",
+          "label": "Memory Banks"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/documents",
+          "label": "Documents"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/operations",
+          "label": "Operations"
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/webhooks",
+          "label": "Webhooks"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Hosting",
+      "collapsible": false,
+      "items": [
+        {
+          "type": "doc",
+          "id": "developer/installation",
+          "label": "Installation"
+        },
+        {
+          "type": "doc",
+          "id": "developer/services",
+          "label": "Services"
+        },
+        {
+          "type": "doc",
+          "id": "developer/configuration",
+          "label": "Configuration"
+        },
+        {
+          "type": "doc",
+          "id": "developer/admin-cli",
+          "label": "Admin CLI"
+        },
+        {
+          "type": "doc",
+          "id": "developer/extensions",
+          "label": "Extensions"
+        },
+        {
+          "type": "doc",
+          "id": "developer/models",
+          "label": "Models"
+        },
+        {
+          "type": "doc",
+          "id": "developer/monitoring",
+          "label": "Monitoring"
+        },
+        {
+          "type": "doc",
+          "id": "developer/mcp-server",
+          "label": "MCP Server"
+        }
+      ]
+    }
+  ],
+  "sdksSidebar": [
+    {
+      "type": "category",
+      "label": "Clients",
+      "collapsible": false,
+      "items": [
+        {
+          "type": "doc",
+          "id": "sdks/python",
+          "label": "Python"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/nodejs",
+          "label": "Node.js"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/go",
+          "label": "Go",
+          "customProps": {
+            "icon": "/img/icons/golang.png"
+          }
+        },
+        {
+          "type": "doc",
+          "id": "sdks/cli",
+          "label": "CLI"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/embed",
+          "label": "Embedded Python"
+        }
+      ]
+    },
+    {
+      "type": "category",
+      "label": "Integrations",
+      "collapsible": false,
+      "items": [
+        {
+          "type": "doc",
+          "id": "sdks/integrations/local-mcp",
+          "label": "Local MCP Server"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/litellm",
+          "label": "LiteLLM"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/openclaw",
+          "label": "OpenClaw"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/ai-sdk",
+          "label": "Vercel AI SDK"
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/chat",
+          "label": "Vercel Chat SDK",
+          "customProps": {
+            "icon": "/img/icons/vercel.png"
+          }
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/crewai",
+          "label": "CrewAI",
+          "customProps": {
+            "icon": "/img/icons/crewai.png"
+          }
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/pydantic-ai",
+          "label": "Pydantic AI",
+          "customProps": {
+            "icon": "/img/icons/pydanticai.png"
+          }
+        },
+        {
+          "type": "doc",
+          "id": "sdks/integrations/skills",
+          "label": "Skills"
+        }
+      ]
+    }
+  ]
+}

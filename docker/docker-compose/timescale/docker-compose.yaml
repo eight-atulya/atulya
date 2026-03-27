@@ -1,0 +1,108 @@
+name: atulya
+# Docker Compose file for Atulya with Timescale extensions
+# - pgvectorscale: DiskANN vector search (disk-based, scalable)
+# - pg_textsearch: BM25 text search (high-performance keyword retrieval)
+#
+# Quick start:
+# docker compose -f docker/docker-compose/timescale/docker-compose.yaml up -d --build
+#
+# Required environment variables:
+# - ATULYA_DB_PASSWORD: Password for the PostgreSQL user
+# - OPENAI_API_KEY (or configure another LLM provider)
+#
+# Optional environment variables with defaults:
+# - ATULYA_VERSION: Atulya application version (default: latest)
+# - ATULYA_DB_USER: PostgreSQL user (default: atulya_user)
+# - ATULYA_DB_NAME: PostgreSQL database name (default: atulya_db)
+
+services:
+  db:
+    # Custom PostgreSQL image with Timescale extensions (pgvectorscale + pg_textsearch)
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: atulya-db-timescale
+    restart: always
+    # Expose PostgreSQL port (using 5438 to avoid conflicts with other setups)
+    ports:
+      - "5438:5432"
+    environment:
+      POSTGRES_USER: ${ATULYA_DB_USER:-atulya_user}
+      POSTGRES_PASSWORD: ${ATULYA_DB_PASSWORD:-atulya_password}
+      POSTGRES_DB: ${ATULYA_DB_NAME:-atulya_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - atulya-net
+    # Health check to ensure database is ready
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U atulya_user"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  timescale-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - PGPASSWORD=${ATULYA_DB_PASSWORD:-atulya_password}
+    command: >
+      bash -c "
+        echo 'PostgreSQL is ready - creating atulya_db database';
+        psql -h atulya-db-timescale -p 5432 -U atulya_user -c 'CREATE DATABASE atulya_db;' 2>/dev/null || echo 'Database already exists';
+        echo 'Installing Timescale extensions...';
+        echo '1/3: Installing pgvector (required by pgvectorscale)...';
+        psql -h atulya-db-timescale -p 5432 -U atulya_user -d atulya_db -c 'CREATE EXTENSION IF NOT EXISTS vector CASCADE;';
+        echo '2/3: Installing pgvectorscale (DiskANN vector search)...';
+        psql -h atulya-db-timescale -p 5432 -U atulya_user -d atulya_db -c 'CREATE EXTENSION IF NOT EXISTS vectorscale CASCADE;';
+        echo '3/3: Installing pg_textsearch (BM25 text search)...';
+        psql -h atulya-db-timescale -p 5432 -U atulya_user -d atulya_db -c 'CREATE EXTENSION IF NOT EXISTS pg_textsearch CASCADE;';
+        echo '';
+        echo '✅ Timescale extensions installed successfully';
+        echo '';
+        echo 'Installed extensions:';
+        psql -h atulya-db-timescale -p 5432 -U atulya_user -d atulya_db -c \"\\dx\" | grep -E '(vector|vectorscale|pg_textsearch)';
+      "
+    restart: "no"
+    networks:
+      - atulya-net
+
+  atulya:
+    image: ghcr.io/eight-atulya/atulya:${ATULYA_VERSION:-latest}
+    container_name: atulya-app-timescale
+    ports:
+      - "8888:8888"
+      - "9999:9999"
+    environment:
+      # LLM Configuration
+      ATULYA_API_LLM_PROVIDER: ${ATULYA_API_LLM_PROVIDER:-openai}
+      ATULYA_API_LLM_API_KEY: ${OPENAI_API_KEY:-your-api-key}
+
+      # Database Configuration
+      ATULYA_API_DATABASE_URL: postgresql://${ATULYA_DB_USER:-atulya_user}:${ATULYA_DB_PASSWORD:-atulya_password}@db:5432/${ATULYA_DB_NAME:-atulya_db}
+
+      # Timescale Extensions
+      # pgvectorscale: DiskANN algorithm for disk-based scalable vector search
+      ATULYA_API_VECTOR_EXTENSION: pgvectorscale
+      # pg_textsearch: High-performance BM25 text search
+      ATULYA_API_TEXT_SEARCH_EXTENSION: pg_textsearch
+
+    depends_on:
+      db:
+        condition: service_healthy
+      timescale-init:
+        condition: service_completed_successfully
+    networks:
+      - atulya-net
+
+
+networks:
+  atulya-net:
+    driver: bridge
+
+volumes:
+  pg_data:

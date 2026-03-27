@@ -48,8 +48,14 @@ atulya-dev/benchmarks/longmemeval/results/
 atulya-dev/benchmarks/consolidation/results/
 atulya-dev/benchmarks/perf/results/
 benchmarks/results/
-atulya-cli/target
-atulya-clients/rust/target
+# Rust build output
+target/
+
+# Temp files
+.tmp/
+
+
+
 .claude
 whats-next.md
 predictions.md
