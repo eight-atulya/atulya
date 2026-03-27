@@ -7,7 +7,8 @@ const umamiWebsiteId = process.env.UMAMI_WEBSITE_ID;
 
 // Announcement bar - supports HTML for links
 // Set to empty string '' to hide the bar
-const ANNOUNCEMENT_BAR = 'Atulya is State-of-the-Art on Memory for AI Agents | <a href="https://arxiv.org/abs/2512.12818" target="_blank">Read the paper →</a>';
+const ANNOUNCEMENT_BAR =
+  'Atulya is State-of-the-Art on Memory for AI Agents | <a href="https://arxiv.org/abs/2512.12818" target="_blank" rel="noopener noreferrer">Primitive Logic paper →</a> <a href="https://github.com/eight-atulya/atulya/blob/2c1fe0047c534cbd081cac308ba0fad8dafd77e4/atulya-brain/patent/BRAIN_Patent_Draft.md" target="_blank" rel="noopener noreferrer">Evolved work: BRAIN patent draft →</a>';
 
 const config: Config = {
   title: 'Atulya',

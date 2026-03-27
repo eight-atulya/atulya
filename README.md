@@ -3,6 +3,8 @@
 
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/eight-atulya/atulya)
 
+[Read the evolved BRAIN work](https://github.com/eight-atulya/atulya/blob/2c1fe0047c534cbd081cac308ba0fad8dafd77e4/atulya-brain/patent/BRAIN_Patent_Draft.md)
+
 **A living algorithm for machine intelligence (MI).**
 
 Atulya is built on one simple idea:  
