@@ -11,6 +11,8 @@ jobs:
     environment: pypi
     permissions:
       id-token: write
+    env:
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
 
     steps:
     - uses: actions/checkout@v4
@@ -59,108 +61,108 @@ jobs:
     # Fallback path: token upload when PYPI_API_TOKEN is present in the "pypi" environment.
     - name: Publish atulya-client to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya-clients/python/dist
         skip-existing: true
 
     - name: Publish atulya-client to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya-clients/python/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     - name: Publish atulya-api to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya-api/dist
         skip-existing: true
 
     - name: Publish atulya-api to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya-api/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     - name: Publish atulya-all to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya/dist
         skip-existing: true
 
     - name: Publish atulya-all to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     - name: Publish atulya-litellm to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya-integrations/litellm/dist
         skip-existing: true
 
     - name: Publish atulya-litellm to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya-integrations/litellm/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     - name: Publish atulya-embed to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya-embed/dist
         skip-existing: true
 
     - name: Publish atulya-embed to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya-embed/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     - name: Publish atulya-crewai to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya-integrations/crewai/dist
         skip-existing: true
 
     - name: Publish atulya-crewai to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya-integrations/crewai/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     - name: Publish atulya-pydantic-ai to PyPI (trusted publishing)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN == '' }}
+      if: ${{ env.PYPI_API_TOKEN == '' }}
       with:
         packages-dir: ./atulya-integrations/pydantic-ai/dist
         skip-existing: true
 
     - name: Publish atulya-pydantic-ai to PyPI (token fallback)
       uses: pypa/gh-action-pypi-publish@release/v1
-      if: ${{ secrets.PYPI_API_TOKEN != '' }}
+      if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya-integrations/pydantic-ai/dist
         skip-existing: true
-        password: ${{ secrets.PYPI_API_TOKEN }}
+        password: ${{ env.PYPI_API_TOKEN }}
 
     # Upload artifacts for GitHub release
     - name: Upload artifacts
