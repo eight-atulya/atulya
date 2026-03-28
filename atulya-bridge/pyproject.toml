@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "atulya"
+version = "0.8.0"
+description = "Atulya bridge CLI - first connection between your machine and memory"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "atulya-all==0.8.0",
+]
+
+[tool.uv.sources]
+atulya-all = { workspace = true }
+
+[project.scripts]
+atulya = "atulya_bridge.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["atulya_bridge"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0.0",
+]

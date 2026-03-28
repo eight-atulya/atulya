@@ -40,6 +40,10 @@ jobs:
       working-directory: ./atulya
       run: uv build --out-dir dist
 
+    - name: Build atulya
+      working-directory: ./atulya-bridge
+      run: uv build --out-dir dist
+
     - name: Build atulya-litellm
       working-directory: ./atulya-integrations/litellm
       run: uv build --out-dir dist
@@ -101,6 +105,21 @@ jobs:
       if: ${{ env.PYPI_API_TOKEN != '' }}
       with:
         packages-dir: ./atulya/dist
+        skip-existing: true
+        password: ${{ env.PYPI_API_TOKEN }}
+
+    - name: Publish atulya to PyPI (trusted publishing)
+      uses: pypa/gh-action-pypi-publish@release/v1
+      if: ${{ env.PYPI_API_TOKEN == '' }}
+      with:
+        packages-dir: ./atulya-bridge/dist
+        skip-existing: true
+
+    - name: Publish atulya to PyPI (token fallback)
+      uses: pypa/gh-action-pypi-publish@release/v1
+      if: ${{ env.PYPI_API_TOKEN != '' }}
+      with:
+        packages-dir: ./atulya-bridge/dist
         skip-existing: true
         password: ${{ env.PYPI_API_TOKEN }}
 
@@ -173,6 +192,7 @@ jobs:
           atulya-clients/python/dist/*
           atulya-api/dist/*
           atulya/dist/*
+          atulya-bridge/dist/*
           atulya-integrations/litellm/dist/*
           atulya-embed/dist/*
           atulya-integrations/crewai/dist/*
@@ -780,6 +800,7 @@ jobs:
         cp artifacts/python-packages/atulya-clients/python/dist/* release-assets/ || true
         cp artifacts/python-packages/atulya-api/dist/* release-assets/ || true
         cp artifacts/python-packages/atulya/dist/* release-assets/ || true
+        cp artifacts/python-packages/atulya-bridge/dist/* release-assets/ || true
         cp artifacts/python-packages/atulya-integrations/litellm/dist/* release-assets/ || true
         cp artifacts/python-packages/atulya-integrations/pydantic-ai/dist/* release-assets/ || true
         cp artifacts/python-packages/atulya-embed/dist/* release-assets/ || true

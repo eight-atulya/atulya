@@ -1,5 +1,5 @@
 [tool.uv.workspace]
-members = ["atulya", "atulya-api", "atulya-dev", "atulya-mcp-server", "atulya-clients/python", "atulya-embed"]
+members = ["atulya", "atulya-api", "atulya-bridge", "atulya-dev", "atulya-mcp-server", "atulya-clients/python", "atulya-embed"]
 
 [tool.uv]
 # Allow uv to search all configured indexes for packages, not just the first one
