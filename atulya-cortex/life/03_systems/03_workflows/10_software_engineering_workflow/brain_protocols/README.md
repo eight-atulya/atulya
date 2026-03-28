@@ -50,3 +50,6 @@ protocol_name/
 
 - `git_history_rewrite_and_branch_realignment`
   Use when incorrect or sensitive content has landed in Git history and must be removed from one or more branches without losing local work.
+
+- `pypi_release_fallback_and_tag_realignment`
+  Use when a tag-triggered Python release is blocked by PyPI trusted-publisher setup, token fallback must be enabled temporarily, and the release tag needs to be reattached so the rerun uses the corrected workflow snapshot.
