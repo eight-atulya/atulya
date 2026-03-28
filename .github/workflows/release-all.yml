@@ -1,0 +1,35 @@
+name: Release atulya-all
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release-atulya-all:
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: ".python-version"
+
+      - name: Build atulya-all
+        working-directory: ./atulya
+        run: uv build --out-dir dist
+
+      - name: Publish atulya-all to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ./atulya/dist
+          skip-existing: true
