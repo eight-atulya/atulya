@@ -11,127 +11,740 @@ jobs:
     environment: pypi
     permissions:
       id-token: write
+
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: ".python-version"
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version-file: ".python-version"
 
-      # Build atulya-client and atulya-all only
-      - name: Build atulya-client
-        working-directory: ./atulya-clients/python
-        run: uv build --out-dir dist
+    # Build all packages
+    - name: Build atulya-client
+      working-directory: ./atulya-clients/python
+      run: uv build --out-dir dist
 
-      - name: Build atulya-all
-        working-directory: ./atulya
-        run: uv build --out-dir dist
+    - name: Build atulya-api
+      working-directory: ./atulya-api
+      run: uv build --out-dir dist
 
-      # Publish atulya-client first
-      - name: Publish atulya-client to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: ./atulya-clients/python/dist
-          skip-existing: true
+    - name: Build atulya-all
+      working-directory: ./atulya
+      run: uv build --out-dir dist
 
-      # Publish atulya-all
-      - name: Publish atulya-all to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: ./atulya/dist
-          skip-existing: true
+    - name: Build atulya-litellm
+      working-directory: ./atulya-integrations/litellm
+      run: uv build --out-dir dist
 
-      # Upload artifacts for GitHub release
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: python-packages
-          path: |
-            atulya-clients/python/dist/*
-            atulya/dist/*
-          retention-days: 1
+    - name: Build atulya-embed
+      working-directory: ./atulya-embed
+      run: uv build --out-dir dist
+
+    - name: Build atulya-crewai
+      working-directory: ./atulya-integrations/crewai
+      run: uv build --out-dir dist
+
+    - name: Build atulya-pydantic-ai
+      working-directory: ./atulya-integrations/pydantic-ai
+      run: uv build --out-dir dist
+
+    # Publish in order (client and api first, then atulya-all which depends on them)
+    - name: Publish atulya-client to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya-clients/python/dist
+        skip-existing: true
+
+    - name: Publish atulya-api to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya-api/dist
+        skip-existing: true
+
+    - name: Publish atulya-all to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya/dist
+        skip-existing: true
+
+    - name: Publish atulya-litellm to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya-integrations/litellm/dist
+        skip-existing: true
+
+    - name: Publish atulya-embed to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya-embed/dist
+        skip-existing: true
+
+    - name: Publish atulya-crewai to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya-integrations/crewai/dist
+        skip-existing: true
+
+    - name: Publish atulya-pydantic-ai to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: ./atulya-integrations/pydantic-ai/dist
+        skip-existing: true
+
+    # Upload artifacts for GitHub release
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-packages
+        path: |
+          atulya-clients/python/dist/*
+          atulya-api/dist/*
+          atulya/dist/*
+          atulya-integrations/litellm/dist/*
+          atulya-embed/dist/*
+          atulya-integrations/crewai/dist/*
+          atulya-integrations/pydantic-ai/dist/*
+        retention-days: 1
 
   release-typescript-client:
     runs-on: ubuntu-latest
     environment: npm
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-          cache-dependency-path: package-lock.json
-      - name: Install dependencies
-        run: npm ci --workspace=atulya-clients/typescript
-      - name: Build
-        run: npm run build --workspace=atulya-clients/typescript
-      - name: Publish to npm
-        working-directory: ./atulya-clients/typescript
-        run: |
-          set +e
-          OUTPUT=$(npm publish --access public 2>&1)
-          EXIT_CODE=$?
-          echo "$OUTPUT"
-          if [ $EXIT_CODE -ne 0 ]; then
-            if echo "$OUTPUT" | grep -q "cannot publish over"; then
-              echo "Package version already published, skipping..."
-              exit 0
-            fi
-            exit $EXIT_CODE
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      run: npm ci --workspace=atulya-clients/typescript
+
+    - name: Build
+      run: npm run build --workspace=atulya-clients/typescript
+
+    - name: Publish to npm
+      working-directory: ./atulya-clients/typescript
+      run: |
+        set +e
+        OUTPUT=$(npm publish --access public 2>&1)
+        EXIT_CODE=$?
+        echo "$OUTPUT"
+        if [ $EXIT_CODE -ne 0 ]; then
+          if echo "$OUTPUT" | grep -q "cannot publish over"; then
+            echo "Package version already published, skipping..."
+            exit 0
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Pack for GitHub release
-        working-directory: ./atulya-clients/typescript
-        run: npm pack
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: typescript-client
-          path: atulya-clients/typescript/*.tgz
-          retention-days: 1
+          exit $EXIT_CODE
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Pack for GitHub release
+      working-directory: ./atulya-clients/typescript
+      run: npm pack
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: typescript-client
+        path: atulya-clients/typescript/*.tgz
+        retention-days: 1
+
+  release-openclaw-integration:
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/openclaw
+      run: npm ci
+
+    - name: Build
+      working-directory: ./atulya-integrations/openclaw
+      run: npm run build
+
+    - name: Publish to npm
+      working-directory: ./atulya-integrations/openclaw
+      run: |
+        set +e
+        OUTPUT=$(npm publish --access public 2>&1)
+        EXIT_CODE=$?
+        echo "$OUTPUT"
+        if [ $EXIT_CODE -ne 0 ]; then
+          if echo "$OUTPUT" | grep -q "cannot publish over"; then
+            echo "Package version already published, skipping..."
+            exit 0
+          fi
+          exit $EXIT_CODE
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Pack for GitHub release
+      working-directory: ./atulya-integrations/openclaw
+      run: npm pack
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: openclaw-integration
+        path: atulya-integrations/openclaw/*.tgz
+        retention-days: 1
+
+  release-ai-sdk-integration:
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/ai-sdk
+      run: npm ci
+
+    - name: Build
+      working-directory: ./atulya-integrations/ai-sdk
+      run: npm run build
+
+    - name: Publish to npm
+      working-directory: ./atulya-integrations/ai-sdk
+      run: |
+        set +e
+        OUTPUT=$(npm publish --access public 2>&1)
+        EXIT_CODE=$?
+        echo "$OUTPUT"
+        if [ $EXIT_CODE -ne 0 ]; then
+          if echo "$OUTPUT" | grep -q "cannot publish over"; then
+            echo "Package version already published, skipping..."
+            exit 0
+          fi
+          exit $EXIT_CODE
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Pack for GitHub release
+      working-directory: ./atulya-integrations/ai-sdk
+      run: npm pack
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ai-sdk-integration
+        path: atulya-integrations/ai-sdk/*.tgz
+        retention-days: 1
+
+  release-chat-integration:
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        registry-url: 'https://registry.npmjs.org'
+
+    - name: Install dependencies
+      working-directory: ./atulya-integrations/chat
+      run: npm ci
+
+    - name: Build
+      working-directory: ./atulya-integrations/chat
+      run: npm run build
+
+    - name: Publish to npm
+      working-directory: ./atulya-integrations/chat
+      run: |
+        set +e
+        OUTPUT=$(npm publish --access public 2>&1)
+        EXIT_CODE=$?
+        echo "$OUTPUT"
+        if [ $EXIT_CODE -ne 0 ]; then
+          if echo "$OUTPUT" | grep -q "cannot publish over"; then
+            echo "Package version already published, skipping..."
+            exit 0
+          fi
+          exit $EXIT_CODE
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Pack for GitHub release
+      working-directory: ./atulya-integrations/chat
+      run: npm pack
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: chat-integration
+        path: atulya-integrations/chat/*.tgz
+        retention-days: 1
+
+  release-control-plane:
+    runs-on: ubuntu-latest
+    environment: npm
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+        cache-dependency-path: package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build TypeScript client (dependency)
+      run: npm run build --workspace=atulya-clients/typescript
+
+    - name: Fix platform-specific native modules
+      run: |
+        # npm ci installs from lockfile which may have wrong platform binaries
+        # Delete hoisted native modules and reinstall for current platform
+        rm -rf node_modules/lightningcss node_modules/@tailwindcss
+        npm install lightningcss @tailwindcss/postcss @tailwindcss/node
+
+    - name: Build
+      run: npm run build --workspace=atulya-control-plane
+
+    - name: Verify standalone build
+      run: test -f atulya-control-plane/standalone/server.js || (echo 'standalone/server.js missing - build failed' && exit 1)
+
+    - name: Publish to npm
+      working-directory: ./atulya-control-plane
+      run: |
+        set +e
+        OUTPUT=$(npm publish --access public --ignore-scripts 2>&1)
+        EXIT_CODE=$?
+        echo "$OUTPUT"
+        if [ $EXIT_CODE -ne 0 ]; then
+          if echo "$OUTPUT" | grep -q "cannot publish over"; then
+            echo "Package version already published, skipping..."
+            exit 0
+          fi
+          exit $EXIT_CODE
+        fi
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+    - name: Pack for GitHub release
+      working-directory: ./atulya-control-plane
+      run: npm pack
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: control-plane
+        path: atulya-control-plane/*.tgz
+        retention-days: 1
+
+  release-rust-cli:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: atulya
+            asset_name: atulya-linux-amd64
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: atulya
+            asset_name: atulya-darwin-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact_name: atulya
+            asset_name: atulya-darwin-arm64
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            artifact_name: atulya
+            asset_name: atulya-linux-arm64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Build
+      working-directory: atulya-cli
+      run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Prepare artifact
+      run: |
+        mkdir -p artifacts
+        cp atulya-cli/target/${{ matrix.target }}/release/${{ matrix.artifact_name }} artifacts/${{ matrix.asset_name }}
+        chmod +x artifacts/${{ matrix.asset_name }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: rust-cli-${{ matrix.asset_name }}
+        path: artifacts/${{ matrix.asset_name }}
+        retention-days: 1
+
+  release-brain-native:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_name: libatulya_brain-linux-amd64.so
+            lib_ext: so
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            asset_name: libatulya_brain-linux-arm64.so
+            lib_ext: so
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            asset_name: libatulya_brain-darwin-amd64.dylib
+            lib_ext: dylib
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            asset_name: libatulya_brain-darwin-arm64.dylib
+            lib_ext: dylib
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+
+    - name: Build native brain library
+      working-directory: atulya-brain
+      run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Prepare artifact
+      run: |
+        mkdir -p artifacts
+        cp atulya-brain/target/${{ matrix.target }}/release/libatulya_brain.${{ matrix.lib_ext }} artifacts/${{ matrix.asset_name }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: brain-native-${{ matrix.asset_name }}
+        path: artifacts/${{ matrix.asset_name }}
+        retention-days: 1
+
+  release-docker-images:
+    name: Release Docker (${{ matrix.image_name }}${{ matrix.tag_suffix }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - target: api-only
+            image_name: atulya-api
+            tag_suffix: ""
+            build_args: ""
+          - target: api-only
+            image_name: atulya-api
+            tag_suffix: "-slim"
+            build_args: |
+              INCLUDE_LOCAL_MODELS=false
+              PRELOAD_ML_MODELS=false
+          - target: cp-only
+            image_name: atulya-control-plane
+            tag_suffix: ""
+            build_args: ""
+          - target: standalone
+            image_name: atulya
+            tag_suffix: ""
+            build_args: ""
+          - target: standalone
+            image_name: atulya
+            tag_suffix: "-slim"
+            build_args: |
+              INCLUDE_LOCAL_MODELS=false
+              PRELOAD_ML_MODELS=false
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Free Disk Space
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: true
+        android: true
+        dotnet: true
+        haskell: true
+        large-packages: true
+        docker-images: true
+        swap-storage: true
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Extract metadata for release tags
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ghcr.io/${{ github.repository_owner }}/${{ matrix.image_name }}
+        flavor: |
+          latest=auto
+          suffix=${{ matrix.tag_suffix }}
+        tags: |
+          type=semver,pattern={{version}},value=${{ steps.get_version.outputs.VERSION }}
+          type=semver,pattern={{major}}.{{minor}},value=${{ steps.get_version.outputs.VERSION }}
+          type=semver,pattern={{major}},value=${{ steps.get_version.outputs.VERSION }}
+          type=raw,value=latest
+
+    # TODO: Re-enable smoke test when disk space issue is resolved
+    # # Step 1: Build for local testing (single platform, no push)
+    # # This creates an identical image to what will be released, just for one platform
+    # - name: Build image for testing
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     context: .
+    #     file: docker/standalone/Dockerfile
+    #     target: ${{ matrix.target }}
+    #     push: false
+    #     load: true
+    #     tags: ${{ matrix.image_name }}:test
+    #     cache-from: type=gha
+    #     cache-to: type=gha,mode=max
+
+    # # Step 2: Test the image before pushing anything
+    # - name: Smoke test - verify container starts
+    #   env:
+    #     GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+    #   run: ./docker/test-image.sh "${{ matrix.image_name }}:test" "${{ matrix.target }}"
+
+    # Build multi-platform and push to release tags
+    - name: Build and push release images
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: docker/standalone/Dockerfile
+        target: ${{ matrix.target }}
+        build-args: ${{ matrix.build_args }}
+        push: true
+        platforms: linux/amd64,linux/arm64
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
+  release-helm-chart:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Helm
+      uses: azure/setup-helm@v4
+      with:
+        version: 'latest'
+
+    - name: Log in to GHCR
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Lint Helm chart
+      run: helm lint helm/atulya
+
+    - name: Package Helm chart
+      run: helm package helm/atulya --destination ./helm-packages
+
+    - name: Push to GHCR OCI
+      run: helm push helm-packages/*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: helm-chart
+        path: helm-packages/*.tgz
+        retention-days: 1
 
   create-github-release:
     runs-on: ubuntu-latest
-    needs: [release-python-packages, release-typescript-client]
+    needs: [release-python-packages, release-typescript-client, release-openclaw-integration, release-ai-sdk-integration, release-chat-integration, release-control-plane, release-rust-cli, release-brain-native, release-docker-images, release-helm-chart]
     permissions:
       contents: write
+
     steps:
-      - uses: actions/checkout@v4
-      - name: Extract version from tag
-        id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      - name: Download Python packages
-        uses: actions/download-artifact@v4
-        with:
-          name: python-packages
-          path: ./artifacts/python-packages
-      - name: Download TypeScript client
-        uses: actions/download-artifact@v4
-        with:
-          name: typescript-client
-          path: ./artifacts/typescript-client
-      - name: Prepare release assets
-        run: |
-          mkdir -p release-assets
-          cp artifacts/python-packages/atulya-clients/python/dist/* release-assets/ || true
-          cp artifacts/python-packages/atulya/dist/* release-assets/ || true
-          cp artifacts/typescript-client/*.tgz release-assets/ || true
-          ls -la release-assets/
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release-assets/*
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - uses: actions/checkout@v4
+
+    - name: Extract version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Download Python packages
+      uses: actions/download-artifact@v4
+      with:
+        name: python-packages
+        path: ./artifacts/python-packages
+
+    - name: Download TypeScript client
+      uses: actions/download-artifact@v4
+      with:
+        name: typescript-client
+        path: ./artifacts/typescript-client
+
+    - name: Download OpenClaw Integration
+      uses: actions/download-artifact@v4
+      with:
+        name: openclaw-integration
+        path: ./artifacts/openclaw-integration
+
+    - name: Download AI SDK Integration
+      uses: actions/download-artifact@v4
+      with:
+        name: ai-sdk-integration
+        path: ./artifacts/ai-sdk-integration
+
+    - name: Download Chat Integration
+      uses: actions/download-artifact@v4
+      with:
+        name: chat-integration
+        path: ./artifacts/chat-integration
+
+    - name: Download Control Plane
+      uses: actions/download-artifact@v4
+      with:
+        name: control-plane
+        path: ./artifacts/control-plane
+
+    - name: Download Rust CLI (Linux)
+      uses: actions/download-artifact@v4
+      with:
+        name: rust-cli-atulya-linux-amd64
+        path: ./artifacts/rust-cli-linux
+
+    - name: Download Rust CLI (macOS Intel)
+      uses: actions/download-artifact@v4
+      with:
+        name: rust-cli-atulya-darwin-amd64
+        path: ./artifacts/rust-cli-darwin-amd64
+
+    - name: Download Rust CLI (macOS ARM)
+      uses: actions/download-artifact@v4
+      with:
+        name: rust-cli-atulya-darwin-arm64
+        path: ./artifacts/rust-cli-darwin-arm64
+
+    - name: Download brain native (Linux amd64)
+      uses: actions/download-artifact@v4
+      with:
+        name: brain-native-libatulya_brain-linux-amd64.so
+        path: ./artifacts/brain-native-linux-amd64
+
+    - name: Download brain native (Linux arm64)
+      uses: actions/download-artifact@v4
+      with:
+        name: brain-native-libatulya_brain-linux-arm64.so
+        path: ./artifacts/brain-native-linux-arm64
+
+    - name: Download brain native (macOS Intel)
+      uses: actions/download-artifact@v4
+      with:
+        name: brain-native-libatulya_brain-darwin-amd64.dylib
+        path: ./artifacts/brain-native-darwin-amd64
+
+    - name: Download brain native (macOS ARM)
+      uses: actions/download-artifact@v4
+      with:
+        name: brain-native-libatulya_brain-darwin-arm64.dylib
+        path: ./artifacts/brain-native-darwin-arm64
+
+    - name: Download Helm chart
+      uses: actions/download-artifact@v4
+      with:
+        name: helm-chart
+        path: ./artifacts/helm-chart
+
+    - name: Prepare release assets
+      run: |
+        mkdir -p release-assets
+        # Python packages
+        cp artifacts/python-packages/atulya-clients/python/dist/* release-assets/ || true
+        cp artifacts/python-packages/atulya-api/dist/* release-assets/ || true
+        cp artifacts/python-packages/atulya/dist/* release-assets/ || true
+        cp artifacts/python-packages/atulya-integrations/litellm/dist/* release-assets/ || true
+        cp artifacts/python-packages/atulya-integrations/pydantic-ai/dist/* release-assets/ || true
+        cp artifacts/python-packages/atulya-embed/dist/* release-assets/ || true
+        # TypeScript client
+        cp artifacts/typescript-client/*.tgz release-assets/ || true
+        # OpenClaw Integration
+        cp artifacts/openclaw-integration/*.tgz release-assets/ || true
+        # AI SDK Integration
+        cp artifacts/ai-sdk-integration/*.tgz release-assets/ || true
+        # Chat Integration
+        cp artifacts/chat-integration/*.tgz release-assets/ || true
+        # Control Plane
+        cp artifacts/control-plane/*.tgz release-assets/ || true
+        # Rust CLI binaries
+        cp artifacts/rust-cli-linux/atulya-linux-amd64 release-assets/ || true
+        cp artifacts/rust-cli-darwin-amd64/atulya-darwin-amd64 release-assets/ || true
+        cp artifacts/rust-cli-darwin-arm64/atulya-darwin-arm64 release-assets/ || true
+        # atulya-brain native libraries
+        cp artifacts/brain-native-linux-amd64/libatulya_brain-linux-amd64.so release-assets/ || true
+        cp artifacts/brain-native-linux-arm64/libatulya_brain-linux-arm64.so release-assets/ || true
+        cp artifacts/brain-native-darwin-amd64/libatulya_brain-darwin-amd64.dylib release-assets/ || true
+        cp artifacts/brain-native-darwin-arm64/libatulya_brain-darwin-arm64.dylib release-assets/ || true
+        # Helm chart
+        cp artifacts/helm-chart/*.tgz release-assets/ || true
+        ls -la release-assets/
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: release-assets/*
+        generate_release_notes: true
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
