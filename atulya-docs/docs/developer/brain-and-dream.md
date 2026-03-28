@@ -43,6 +43,48 @@ It does things like:
 
 This is useful when you want Atulya to do more than simple retrieval. It helps the system understand which knowledge is "hot", which patterns are recurring, and when a bank is likely to be active again.
 
+### BRAIN: the integrity-first direction
+
+The longer-term BRAIN idea is not just "more memory." It is an **integrity layer** that helps Atulya keep its reasoning coherent as a bank grows.
+
+In practical terms, that means pushing toward systems that can:
+
+- notice when new evidence contradicts an older belief instead of silently storing both
+- separate normal temporal updates from true inconsistencies
+- keep provenance for why a belief, summary, or artifact exists
+- localize checks to the affected bank, entity, or scope instead of re-checking everything
+- make learning portable across banks and, eventually, across different agent stacks
+
+If memory answers "what happened?", BRAIN tries to answer "is the system still internally consistent?"
+
+That framing matters because long-running agents usually fail from drift, contradictions, and stale assumptions long before they fail from lack of storage.
+
+## Why Integrity Matters
+
+The BRAIN patent draft frames the core problem as **integrity maintenance** for agent memory and reasoning.
+
+That is a useful mental model for Atulya too:
+
+- raw memory alone does not tell you when a belief should be downgraded
+- retrieval alone does not explain whether two memories can both be true
+- summaries alone do not guarantee that the system's picture of the world is still coherent
+
+An integrity-oriented brain layer helps close that gap by combining memory with checks around contradiction, temporal consistency, provenance, and confidence.
+
+## From Patent Concepts to Product Concepts
+
+The patent draft uses broader systems language than the current product docs. A simple translation table is:
+
+| Patent concept | How to think about it in Atulya docs |
+|---|---|
+| **Integrity events** | meaningful state changes worth re-checking |
+| **Scope-localized verification** | re-check only the bank, entity, or artifact that changed |
+| **Proof obligations / certificates** | evidence and traceability for why a conclusion should be trusted |
+| **Temporal versioning** | history-aware memory that can explain how understanding changed |
+| **Cross-LLM memory sharing** | portable learning across banks and environments |
+
+This page does not claim that every patent concept is already exposed as a public API today. The important point is that Brain, remote learning, and Dream are easier to understand when you see them as pieces of a larger integrity-maintenance architecture.
+
 ### Remote Brain Learning
 
 **Remote brain learning** lets one Atulya bank learn from another Atulya bank.
@@ -67,6 +109,18 @@ It takes what the bank already knows and produces a higher-level artifact. Inste
 - what might matter next?
 
 Dream runs do not block your app's normal retain, recall, or reflect requests.
+
+## A More Concrete Mental Model
+
+Here is a more realistic way to picture the stack over time:
+
+1. `retain` stores events, observations, and facts.
+2. consolidation links and normalizes those memories.
+3. Brain tracks activity, influence, and which knowledge appears most "live."
+4. Dream turns recurring patterns into higher-level takeaways.
+5. the integrity layer checks whether the bank's beliefs still make sense together.
+
+That final step is the big idea behind BRAIN. The goal is not just a bigger memory store, but a memory system that can increasingly explain, defend, and revise its own understanding.
 
 ## How They Work Together
 
@@ -100,6 +154,7 @@ With them, Atulya becomes more like a living system that can:
 - build analytics for the control plane
 - transfer learning between banks
 - generate richer, more human-friendly summaries in the background
+- move toward integrity-aware reasoning instead of passive storage alone
 
 ## Useful Endpoints
 
@@ -148,4 +203,3 @@ For the raw settings list, see [Configuration](./configuration#dreamtrance-bank-
 - [**Operations**](./api/operations) for background job behavior
 - [**Services**](./services) for where these jobs run
 - [**Configuration**](./configuration#dreamtrance-bank-config) for Dream settings
-
