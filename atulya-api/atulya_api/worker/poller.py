@@ -658,7 +658,7 @@ class WorkerPoller:
     async def _enqueue_due_dream_cron_tasks_for_schema(self, schema: str | None) -> None:
         banks_table = fq_table("banks", schema)
         ops_table = fq_table("async_operations", schema)
-        dream_table = fq_table("dream_artifacts", schema)
+        dream_table = fq_table("dream_runs", schema)
         async with self._pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""

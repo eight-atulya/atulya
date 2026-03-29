@@ -567,6 +567,14 @@ class LLMProvider:
                 return self._provider_impl.get_mock_calls()
         return self._mock_calls
 
+    def set_mock_exception(self, exception: Exception) -> None:
+        """Set the exception to raise from mock calls."""
+        if self.provider == "mock":
+            from .providers.mock_llm import MockLLM
+
+            if isinstance(self._provider_impl, MockLLM):
+                self._provider_impl.set_mock_exception(exception)
+
     def clear_mock_calls(self) -> None:
         """Clear the recorded mock calls."""
         # Backward compatibility: Clear in both wrapper and provider implementation

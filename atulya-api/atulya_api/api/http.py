@@ -1070,6 +1070,52 @@ class DreamStatsResponse(BaseModel):
     avg_output_tokens: float
     distillation_pass_rate: float
     distilled_count: int
+    validation_rate: float = 0.0
+    avg_novelty: float = 0.0
+    failed_run_count: int = 0
+    duplicate_suppression_count: int = 0
+    prediction_confirmation_rate: float = 0.0
+    unresolved_prediction_backlog: int = 0
+
+
+class DreamRunResponse(BaseModel):
+    run_id: str
+    bank_id: str
+    status: str
+    run_type: str
+    trigger_source: str
+    created_at: str
+    updated_at: str | None = None
+    narrative_html: str | None = None
+    summary: str | None = None
+    evidence_basis: dict[str, Any] = Field(default_factory=dict)
+    signals: dict[str, Any] = Field(default_factory=dict)
+    predictions: list[dict[str, Any]] = Field(default_factory=list)
+    growth_hypotheses: list[dict[str, Any]] = Field(default_factory=list)
+    promotion_proposals: list[dict[str, Any]] = Field(default_factory=list)
+    validation_outcomes: list[dict[str, Any]] = Field(default_factory=list)
+    confidence: dict[str, Any] = Field(default_factory=dict)
+    novelty_score: float = 0.0
+    maturity_tier: str = "sparse"
+    failure_reason: str | None = None
+    quality_score: float = 0.0
+    legacy_run: bool = False
+    source_artifact_id: str | None = None
+
+
+class DreamRunListResponse(BaseModel):
+    items: list[DreamRunResponse]
+
+
+class DreamProposalReviewRequest(BaseModel):
+    action: Literal["approve", "reject", "request_more_evidence"]
+    note: str | None = None
+
+
+class DreamPredictionOutcomeRequest(BaseModel):
+    status: Literal["confirmed", "contradicted", "request_more_evidence"]
+    note: str | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
 
 
 class GraphDataResponse(BaseModel):
@@ -4571,6 +4617,7 @@ def _register_routes(app: FastAPI):
 
     @app.get(
         "/v1/default/banks/{bank_id}/dreams",
+        response_model=DreamRunListResponse,
         summary="List dream artifacts",
         operation_id="list_dream_artifacts",
         tags=["Banks"],
@@ -4586,7 +4633,68 @@ def _register_routes(app: FastAPI):
                 limit=limit,
                 request_context=request_context,
             )
-            return {"items": items}
+            return DreamRunListResponse(items=[DreamRunResponse(**item) for item in items])
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/dreams/proposals/{proposal_id}/review",
+        summary="Review a dream proposal",
+        operation_id="review_dream_proposal",
+        tags=["Banks"],
+    )
+    async def api_review_dream_proposal(
+        bank_id: str,
+        proposal_id: str,
+        body: DreamProposalReviewRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.review_dream_proposal(
+                bank_id=bank_id,
+                proposal_id=proposal_id,
+                action=body.action,
+                note=body.note,
+                request_context=request_context,
+            )
+            return result
+        except ValueError as e:
+            raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/dreams/predictions/{prediction_id}/outcome",
+        summary="Update dream prediction outcome",
+        operation_id="update_dream_prediction_outcome",
+        tags=["Banks"],
+    )
+    async def api_update_dream_prediction_outcome(
+        bank_id: str,
+        prediction_id: str,
+        body: DreamPredictionOutcomeRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.update_dream_prediction_outcome(
+                bank_id=bank_id,
+                prediction_id=prediction_id,
+                status=body.status,
+                note=body.note,
+                evidence_ids=body.evidence_ids,
+                request_context=request_context,
+            )
+            return result
+        except ValueError as e:
+            raise HTTPException(status_code=404 if "not found" in str(e).lower() else 400, detail=str(e))
         except OperationValidationError as e:
             raise HTTPException(status_code=e.status_code, detail=e.reason)
         except (AuthenticationError, HTTPException):

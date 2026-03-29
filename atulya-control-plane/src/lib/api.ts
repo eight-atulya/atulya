@@ -53,17 +53,74 @@ export interface MentalModel {
   reflect_response?: any;
 }
 
+export interface DreamPrediction {
+  prediction_id: string | null;
+  title: string;
+  description: string;
+  target_ref: string | null;
+  target_kind: "entity" | "topic" | "bank" | "theme" | "memory";
+  horizon: "near_term" | "mid_term" | "long_term";
+  confidence: number;
+  success_criteria: string[];
+  expiration_window_days: number;
+  status: "pending" | "confirmed" | "contradicted" | "unresolved";
+  supporting_evidence_ids: string[];
+  validation_notes: string | null;
+}
+
+export interface DreamGrowthHypothesis {
+  title: string;
+  description: string;
+  confidence: number;
+  signals: string[];
+  blind_spot: string | null;
+  opportunity: string | null;
+}
+
+export interface DreamPromotionProposal {
+  proposal_id: string | null;
+  proposal_type: "observation" | "mental_model" | "prediction_candidate" | "growth_candidate";
+  title: string;
+  content: string;
+  confidence: number;
+  tags: string[];
+  supporting_evidence_ids: string[];
+  review_status: "proposed" | "approved" | "rejected" | "needs_more_evidence";
+  rationale: string | null;
+}
+
+export interface DreamValidationOutcome {
+  outcome_id: string | null;
+  prediction_id: string;
+  status: "confirmed" | "contradicted" | "request_more_evidence";
+  note: string | null;
+  evidence_ids: string[];
+  created_at: string | null;
+}
+
 export interface DreamArtifact {
-  id: string;
+  run_id: string;
   bank_id: string;
+  status: "success" | "low_signal" | "duplicate_low_novelty" | "failed_llm" | "failed_validation";
   run_type: string;
   trigger_source: string;
-  html_blob: string;
-  input_refs: Array<{ id: string; type: string }>;
-  stats: Record<string, any>;
-  quality_score: number;
-  distilled_written: boolean;
   created_at: string;
+  updated_at: string | null;
+  narrative_html: string | null;
+  summary: string | null;
+  evidence_basis: Record<string, any>;
+  signals: Record<string, any>;
+  predictions: DreamPrediction[];
+  growth_hypotheses: DreamGrowthHypothesis[];
+  promotion_proposals: DreamPromotionProposal[];
+  validation_outcomes: DreamValidationOutcome[];
+  confidence: Record<string, any>;
+  novelty_score: number;
+  maturity_tier: "sparse" | "emerging" | "mature";
+  failure_reason: string | null;
+  quality_score: number;
+  legacy_run: boolean;
+  source_artifact_id: string | null;
 }
 
 export interface DreamStats {
@@ -75,6 +132,121 @@ export interface DreamStats {
   avg_output_tokens: number;
   distillation_pass_rate: number;
   distilled_count: number;
+  validation_rate: number;
+  avg_novelty: number;
+  failed_run_count: number;
+  duplicate_suppression_count: number;
+  prediction_confirmation_rate: number;
+  unresolved_prediction_backlog: number;
+}
+
+function asNumber(value: unknown, fallback = 0): number {
+  const numeric = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+function asRecord(value: unknown): Record<string, any> {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, any>)
+    : {};
+}
+
+function normalizeDreamPrediction(raw: Partial<DreamPrediction>): DreamPrediction {
+  return {
+    prediction_id: raw.prediction_id ?? null,
+    title: String(raw.title ?? ""),
+    description: String(raw.description ?? ""),
+    target_ref: raw.target_ref ?? null,
+    target_kind: (raw.target_kind ?? "theme") as DreamPrediction["target_kind"],
+    horizon: (raw.horizon ?? "near_term") as DreamPrediction["horizon"],
+    confidence: asNumber(raw.confidence, 0),
+    success_criteria: asArray<string>(raw.success_criteria),
+    expiration_window_days: asNumber(raw.expiration_window_days, 14),
+    status: (raw.status ?? "pending") as DreamPrediction["status"],
+    supporting_evidence_ids: asArray<string>(raw.supporting_evidence_ids),
+    validation_notes: raw.validation_notes ?? null,
+  };
+}
+
+function normalizeDreamGrowthHypothesis(
+  raw: Partial<DreamGrowthHypothesis>
+): DreamGrowthHypothesis {
+  return {
+    title: String(raw.title ?? ""),
+    description: String(raw.description ?? ""),
+    confidence: asNumber(raw.confidence, 0),
+    signals: asArray<string>(raw.signals),
+    blind_spot: raw.blind_spot ?? null,
+    opportunity: raw.opportunity ?? null,
+  };
+}
+
+function normalizeDreamPromotionProposal(
+  raw: Partial<DreamPromotionProposal>
+): DreamPromotionProposal {
+  return {
+    proposal_id: raw.proposal_id ?? null,
+    proposal_type: (raw.proposal_type ?? "observation") as DreamPromotionProposal["proposal_type"],
+    title: String(raw.title ?? ""),
+    content: String(raw.content ?? ""),
+    confidence: asNumber(raw.confidence, 0),
+    tags: asArray<string>(raw.tags),
+    supporting_evidence_ids: asArray<string>(raw.supporting_evidence_ids),
+    review_status: (raw.review_status ?? "proposed") as DreamPromotionProposal["review_status"],
+    rationale: raw.rationale ?? null,
+  };
+}
+
+function normalizeDreamValidationOutcome(
+  raw: Partial<DreamValidationOutcome>
+): DreamValidationOutcome {
+  return {
+    outcome_id: raw.outcome_id ?? null,
+    prediction_id: String(raw.prediction_id ?? ""),
+    status: (raw.status ?? "request_more_evidence") as DreamValidationOutcome["status"],
+    note: raw.note ?? null,
+    evidence_ids: asArray<string>(raw.evidence_ids),
+    created_at: raw.created_at ?? null,
+  };
+}
+
+function normalizeDreamArtifact(raw: Partial<DreamArtifact>): DreamArtifact {
+  return {
+    run_id: String(raw.run_id ?? ""),
+    bank_id: String(raw.bank_id ?? ""),
+    status: (raw.status ?? "failed_validation") as DreamArtifact["status"],
+    run_type: String(raw.run_type ?? "dream"),
+    trigger_source: String(raw.trigger_source ?? "manual"),
+    created_at: String(raw.created_at ?? ""),
+    updated_at: raw.updated_at ?? null,
+    narrative_html: raw.narrative_html ?? null,
+    summary: raw.summary ?? null,
+    evidence_basis: asRecord(raw.evidence_basis),
+    signals: asRecord(raw.signals),
+    predictions: asArray<Partial<DreamPrediction>>(raw.predictions).map((item) =>
+      normalizeDreamPrediction(item)
+    ),
+    growth_hypotheses: asArray<Partial<DreamGrowthHypothesis>>(raw.growth_hypotheses).map((item) =>
+      normalizeDreamGrowthHypothesis(item)
+    ),
+    promotion_proposals: asArray<Partial<DreamPromotionProposal>>(raw.promotion_proposals).map(
+      (item) => normalizeDreamPromotionProposal(item)
+    ),
+    validation_outcomes: asArray<Partial<DreamValidationOutcome>>(raw.validation_outcomes).map(
+      (item) => normalizeDreamValidationOutcome(item)
+    ),
+    confidence: asRecord(raw.confidence),
+    novelty_score: asNumber(raw.novelty_score, 0),
+    maturity_tier: (raw.maturity_tier ?? "sparse") as DreamArtifact["maturity_tier"],
+    failure_reason: raw.failure_reason ?? null,
+    quality_score: asNumber(raw.quality_score, 0),
+    legacy_run: Boolean(raw.legacy_run),
+    source_artifact_id: raw.source_artifact_id ?? null,
+  };
 }
 
 export interface BenchmarkLeaderboardSummary {
@@ -814,11 +986,48 @@ export class ControlPlaneClient {
   }
 
   async listDreamArtifacts(bankId: string, limit = 20) {
-    return this.fetchApi<{ items: DreamArtifact[] }>(`/api/banks/${bankId}/dreams?limit=${limit}`);
+    const response = await this.fetchApi<{ items: Partial<DreamArtifact>[] }>(
+      `/api/banks/${bankId}/dreams?limit=${limit}`
+    );
+    return {
+      items: (response.items || []).map((item) => normalizeDreamArtifact(item)),
+    };
   }
 
   async getDreamStats(bankId: string) {
     return this.fetchApi<DreamStats>(`/api/banks/${bankId}/dreams/stats`);
+  }
+
+  async reviewDreamProposal(
+    bankId: string,
+    proposalId: string,
+    body: { action: "approve" | "reject" | "request_more_evidence"; note?: string | null }
+  ) {
+    return this.fetchApi<DreamPromotionProposal>(
+      `/api/banks/${bankId}/dreams/proposals/${proposalId}/review`,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      }
+    );
+  }
+
+  async updateDreamPredictionOutcome(
+    bankId: string,
+    predictionId: string,
+    body: {
+      status: "confirmed" | "contradicted" | "request_more_evidence";
+      note?: string | null;
+      evidence_ids?: string[];
+    }
+  ) {
+    return this.fetchApi<{
+      prediction: DreamPrediction;
+      outcome: DreamValidationOutcome;
+    }>(`/api/banks/${bankId}/dreams/predictions/${predictionId}/outcome`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
   }
 
   /**

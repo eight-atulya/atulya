@@ -40,7 +40,25 @@ from ..tracing import create_operation_span
 from ..utils import mask_network_location
 from ..worker.exceptions import RetryTaskAt
 from .db_budget import budgeted_operation
-from .dreaming import build_dream_html, normalize_dream_config, score_dream_quality
+from .dreaming import (
+    DreamConfidenceModel,
+    DreamEvidenceBasis,
+    DreamGrowthHypothesis,
+    DreamLLMOutput,
+    DreamPrediction,
+    DreamPromotionProposal,
+    DreamRunRecord,
+    DreamSignals,
+    DreamValidationOutcome,
+    build_dream_html,
+    compute_novelty_score,
+    infer_maturity_tier,
+    normalize_dream_config,
+    render_dream_narrative_html,
+    score_dream_quality,
+    summarize_confidence,
+    to_jsonable,
+)
 from .operation_metadata import (
     BatchRetainChildMetadata,
     BatchRetainParentMetadata,
@@ -111,6 +129,10 @@ _PROTECTED_TABLES = frozenset(
         "async_operations",
         "file_storage",
         "dream_artifacts",
+        "dream_runs",
+        "dream_predictions",
+        "dream_proposals",
+        "dream_prediction_outcomes",
     ]
 )
 
@@ -917,6 +939,304 @@ class MemoryEngine(MemoryEngineInterface):
             )
         return str(artifact_id)
 
+    async def _insert_dream_run_record(
+        self,
+        *,
+        bank_id: str,
+        run_type: str,
+        trigger_source: str,
+        status: str,
+        summary: str | None,
+        narrative_html: str | None,
+        evidence_basis: DreamEvidenceBasis,
+        signals: DreamSignals,
+        predictions: list[DreamPrediction],
+        growth_hypotheses: list[DreamGrowthHypothesis],
+        promotion_proposals: list[DreamPromotionProposal],
+        validation_outcomes: list[DreamValidationOutcome],
+        confidence: DreamConfidenceModel,
+        novelty_score: float,
+        maturity_tier: str,
+        quality_score: float,
+        validation_rate: float,
+        calibration_score: float,
+        failure_reason: str | None,
+        result_metadata: dict[str, Any],
+        source_artifact_id: str | None = None,
+        created_at: datetime | None = None,
+    ) -> DreamRunRecord:
+        created_ts = created_at or datetime.now(UTC)
+        run_id = str(uuid.uuid4())
+        stored_metadata = dict(result_metadata)
+        stored_metadata["growth_hypotheses"] = [item.model_dump(mode="json") for item in growth_hypotheses]
+        prediction_payloads: list[tuple[DreamPrediction, str]] = []
+        for item in predictions:
+            prediction_id = item.prediction_id or str(uuid.uuid4())
+            prediction_payloads.append((item.model_copy(update={"prediction_id": prediction_id}), prediction_id))
+        proposal_payloads: list[tuple[DreamPromotionProposal, str]] = []
+        for item in promotion_proposals:
+            proposal_id = item.proposal_id or str(uuid.uuid4())
+            proposal_payloads.append((item.model_copy(update={"proposal_id": proposal_id}), proposal_id))
+        outcome_payloads: list[tuple[DreamValidationOutcome, str]] = []
+        for item in validation_outcomes:
+            outcome_id = item.outcome_id or str(uuid.uuid4())
+            outcome_payloads.append((item.model_copy(update={"outcome_id": outcome_id}), outcome_id))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {fq_table("dream_runs")}
+                    (id, bank_id, run_type, trigger_source, status, summary, narrative_html,
+                     evidence_basis, signals, confidence, novelty_score, maturity_tier,
+                     quality_score, validation_rate, calibration_score, result_metadata,
+                     failure_reason, source_artifact_id, created_at, updated_at)
+                VALUES
+                    ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10::jsonb,
+                     $11, $12, $13, $14, $15, $16::jsonb, $17, $18, $19, $19)
+                """,
+                uuid.UUID(run_id),
+                bank_id,
+                run_type,
+                trigger_source,
+                status,
+                summary,
+                narrative_html,
+                json.dumps(to_jsonable(evidence_basis)),
+                json.dumps(to_jsonable(signals)),
+                json.dumps(to_jsonable(confidence)),
+                novelty_score,
+                maturity_tier,
+                quality_score,
+                validation_rate,
+                calibration_score,
+                json.dumps(to_jsonable(stored_metadata) or {}),
+                failure_reason,
+                uuid.UUID(source_artifact_id) if source_artifact_id else None,
+                created_ts,
+            )
+            for item, prediction_id in prediction_payloads:
+                await conn.execute(
+                    f"""
+                    INSERT INTO {fq_table("dream_predictions")}
+                        (id, run_id, bank_id, title, description, target_ref, target_kind, horizon,
+                         confidence, success_criteria, expiration_window_days, status,
+                         supporting_evidence_ids, validation_notes, created_at, updated_at)
+                    VALUES
+                        ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11, $12, $13::jsonb, $14, $15, $15)
+                    """,
+                    uuid.UUID(prediction_id),
+                    uuid.UUID(run_id),
+                    bank_id,
+                    item.title,
+                    item.description,
+                    item.target_ref,
+                    item.target_kind,
+                    item.horizon,
+                    item.confidence,
+                    json.dumps(item.success_criteria),
+                    item.expiration_window_days,
+                    item.status,
+                    json.dumps(item.supporting_evidence_ids),
+                    item.validation_notes,
+                    created_ts,
+                )
+            for item, proposal_id in proposal_payloads:
+                await conn.execute(
+                    f"""
+                    INSERT INTO {fq_table("dream_proposals")}
+                        (id, run_id, bank_id, proposal_type, title, content, confidence, tags,
+                         supporting_evidence_ids, review_status, rationale, created_at, updated_at)
+                    VALUES
+                        ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::jsonb, $10, $11, $12, $12)
+                    """,
+                    uuid.UUID(proposal_id),
+                    uuid.UUID(run_id),
+                    bank_id,
+                    item.proposal_type,
+                    item.title,
+                    item.content,
+                    item.confidence,
+                    json.dumps(item.tags),
+                    json.dumps(item.supporting_evidence_ids),
+                    item.review_status,
+                    item.rationale,
+                    created_ts,
+                )
+            for item, outcome_id in outcome_payloads:
+                await conn.execute(
+                    f"""
+                    INSERT INTO {fq_table("dream_prediction_outcomes")}
+                        (id, prediction_id, bank_id, outcome_status, note, evidence_ids, created_at)
+                    VALUES
+                        ($1, $2, $3, $4, $5, $6::jsonb, $7)
+                    """,
+                    uuid.UUID(outcome_id),
+                    uuid.UUID(item.prediction_id),
+                    bank_id,
+                    item.status,
+                    item.note,
+                    json.dumps(item.evidence_ids),
+                    created_ts,
+                )
+
+        return DreamRunRecord(
+            run_id=run_id,
+            bank_id=bank_id,
+            status=status,
+            run_type=run_type,
+            trigger_source=trigger_source,
+            created_at=created_ts.isoformat(),
+            updated_at=created_ts.isoformat(),
+            narrative_html=narrative_html,
+            summary=summary,
+            evidence_basis=evidence_basis,
+            signals=signals,
+            predictions=[item for item, _ in prediction_payloads],
+            growth_hypotheses=growth_hypotheses,
+            promotion_proposals=[item for item, _ in proposal_payloads],
+            validation_outcomes=[item for item, _ in outcome_payloads],
+            confidence=confidence,
+            novelty_score=novelty_score,
+            maturity_tier=cast(Any, maturity_tier),
+            failure_reason=failure_reason,
+            quality_score=quality_score,
+            source_artifact_id=source_artifact_id,
+        )
+
+    def _build_recency_distribution(self, timestamps: list[datetime | None]) -> dict[str, int]:
+        buckets = {"last_24h": 0, "last_7d": 0, "last_30d": 0, "older": 0, "unknown": 0}
+        now = datetime.now(UTC)
+        for item in timestamps:
+            if item is None:
+                buckets["unknown"] += 1
+                continue
+            age_days = max((now - item).total_seconds() / 86400.0, 0.0)
+            if age_days <= 1:
+                buckets["last_24h"] += 1
+            elif age_days <= 7:
+                buckets["last_7d"] += 1
+            elif age_days <= 30:
+                buckets["last_30d"] += 1
+            else:
+                buckets["older"] += 1
+        return buckets
+
+    async def _recent_dream_history(
+        self,
+        *,
+        bank_id: str,
+        validation_lookback_days: int,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            recent_rows = await conn.fetch(
+                f"""
+                SELECT summary
+                FROM {fq_table("dream_runs")}
+                WHERE bank_id = $1
+                ORDER BY created_at DESC
+                LIMIT 6
+                """,
+                bank_id,
+            )
+            prediction_row = await conn.fetchrow(
+                f"""
+                SELECT
+                    COUNT(*) FILTER (WHERE status IN ('pending', 'unresolved')) AS unresolved_count,
+                    COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed_count,
+                    COUNT(*) FILTER (WHERE status = 'contradicted') AS contradicted_count
+                FROM {fq_table("dream_predictions")}
+                WHERE bank_id = $1
+                """,
+                bank_id,
+            )
+            outcomes = await conn.fetch(
+                f"""
+                SELECT outcome_status
+                FROM {fq_table("dream_prediction_outcomes")}
+                WHERE bank_id = $1
+                  AND created_at >= NOW() - ($2::text || ' days')::interval
+                ORDER BY created_at DESC
+                LIMIT 200
+                """,
+                bank_id,
+                str(validation_lookback_days),
+            )
+        outcome_total = len(outcomes)
+        confirmed_total = sum(1 for row in outcomes if row["outcome_status"] == "confirmed")
+        contradicted_total = sum(1 for row in outcomes if row["outcome_status"] == "contradicted")
+        validation_rate = confirmed_total / outcome_total if outcome_total else 0.0
+        calibration_score = confirmed_total / max(confirmed_total + contradicted_total, 1) if outcome_total else 0.0
+        return {
+            "recent_summaries": [str(row["summary"] or "") for row in recent_rows if row["summary"]],
+            "unresolved_prediction_backlog": int(prediction_row["unresolved_count"] or 0) if prediction_row else 0,
+            "confirmed_predictions": int(prediction_row["confirmed_count"] or 0) if prediction_row else 0,
+            "contradicted_predictions": int(prediction_row["contradicted_count"] or 0) if prediction_row else 0,
+            "validation_rate": validation_rate,
+            "calibration_score": calibration_score,
+        }
+
+    def _coerce_dream_output(self, payload: Any) -> DreamLLMOutput:
+        if isinstance(payload, DreamLLMOutput):
+            return payload
+        if isinstance(payload, dict):
+            return DreamLLMOutput.model_validate(payload)
+        raise TypeError("Dream generation returned an unexpected payload type")
+
+    def _apply_prediction_horizon_policy(
+        self,
+        predictions: list[DreamPrediction],
+        *,
+        prediction_horizon: str,
+        unresolved_backlog: int,
+        max_pending_predictions: int,
+    ) -> list[DreamPrediction]:
+        mode = str(prediction_horizon or "mixed").lower()
+        if mode == "near":
+            predictions = [item for item in predictions if item.horizon == "near_term"]
+        elif mode == "far":
+            predictions = [item for item in predictions if item.horizon in ("mid_term", "long_term")]
+
+        available_slots = max(max_pending_predictions - unresolved_backlog, 0)
+        if available_slots <= 0:
+            return []
+        return predictions[:available_slots]
+
+    async def _list_dream_validation_outcomes_by_prediction(
+        self,
+        prediction_ids: list[str],
+    ) -> dict[str, list[DreamValidationOutcome]]:
+        if not prediction_ids:
+            return {}
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT id, prediction_id, outcome_status, note, evidence_ids, created_at
+                FROM {fq_table("dream_prediction_outcomes")}
+                WHERE prediction_id = ANY($1::uuid[])
+                ORDER BY created_at DESC
+                """,
+                [uuid.UUID(item) for item in prediction_ids],
+            )
+        grouped: dict[str, list[DreamValidationOutcome]] = {}
+        for row in rows:
+            prediction_id = str(row["prediction_id"])
+            grouped.setdefault(prediction_id, []).append(
+                DreamValidationOutcome(
+                    outcome_id=str(row["id"]),
+                    prediction_id=prediction_id,
+                    status=row["outcome_status"],
+                    note=row["note"],
+                    evidence_ids=decode_jsonb(row["evidence_ids"], []),
+                    created_at=row["created_at"].isoformat() if row["created_at"] else None,
+                )
+            )
+        return grouped
+
     async def _handle_dream_generation(self, task_dict: dict[str, Any]) -> dict[str, Any]:
         bank_id = task_dict.get("bank_id")
         if not bank_id:
@@ -933,17 +1253,19 @@ class MemoryEngine(MemoryEngineInterface):
         settings = normalize_dream_config(resolved.dream)
         if not settings.get("enabled"):
             return {"skipped": True, "reason": "dream_disabled"}
-        # Runtime cooldown guard (in addition to scheduling-time checks) to prevent
-        # duplicate/trampoline runs during retries or concurrent workers.
+
         cooldown_minutes = int(settings.get("cooldown_minutes", 60))
         trigger_source = str(task_dict.get("trigger_source", "event"))
+        run_type = str(task_dict.get("run_type", "dream"))
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
             recent = await conn.fetchrow(
                 f"""
                 SELECT created_at
-                FROM {fq_table("dream_artifacts")}
-                WHERE bank_id = $1 AND trigger_source = $2
+                FROM {fq_table("dream_runs")}
+                WHERE bank_id = $1
+                  AND trigger_source = $2
+                  AND status IN ('success', 'low_signal', 'duplicate_low_novelty')
                 ORDER BY created_at DESC
                 LIMIT 1
                 """,
@@ -955,7 +1277,6 @@ class MemoryEngine(MemoryEngineInterface):
             if elapsed < timedelta(minutes=cooldown_minutes):
                 return {"skipped": True, "reason": "cooldown_active", "cooldown_minutes": cooldown_minutes}
 
-        # Gather concise, high-signal context using top recalls.
         recall_query = "What patterns, likely next steps, and practical what-if insights are emerging?"
         recall_result = await self.recall_async(
             bank_id=bank_id,
@@ -969,11 +1290,12 @@ class MemoryEngine(MemoryEngineInterface):
         top_k = int(settings["top_k"])
         top_results = recall_result.results[:top_k]
         min_recall_results = int(settings.get("min_recall_results", 2))
-        recall_lines: list[str] = []
         input_refs: list[dict[str, Any]] = []
+        recall_lines: list[str] = []
+        recurring_entities: dict[str, int] = {}
+        recurring_themes: dict[str, int] = {}
+        timestamps: list[datetime | None] = []
         for r in top_results:
-            # Recall returns MemoryFact objects with fact_type (not type). Be defensive
-            # so dream generation survives schema drift or partial objects.
             fact_type = getattr(r, "fact_type", None) or getattr(r, "type", None) or "unknown"
             text = getattr(r, "text", None)
             if not isinstance(text, str):
@@ -981,55 +1303,160 @@ class MemoryEngine(MemoryEngineInterface):
             rid = getattr(r, "id", None)
             input_refs.append({"id": str(rid) if rid is not None else "", "type": str(fact_type)})
             recall_lines.append(f"- ({fact_type}) {text}")
+            timestamps.append(
+                getattr(r, "occurred_start", None) or getattr(r, "mentioned_at", None) or getattr(r, "created_at", None)
+            )
+            for entity_name in list(getattr(r, "entities", []) or []):
+                key = str(entity_name).strip()
+                if key:
+                    recurring_entities[key] = recurring_entities.get(key, 0) + 1
+            for token in {tok for tok in text.lower().split() if len(tok) > 4}:
+                recurring_themes[token] = recurring_themes.get(token, 0) + 1
+
+        graph_intelligence = await self.get_graph_intelligence(
+            bank_id=bank_id,
+            limit=12,
+            confidence_min=0.55,
+            node_kind="all",
+            window_days=90,
+            request_context=internal_context,
+        )
+        graph_signals = [
+            str(node.get("status_reason") or "")
+            for node in graph_intelligence.get("nodes", [])[:4]
+            if node.get("status_reason")
+        ]
+        contradictions = [
+            str(event.get("summary") or "")
+            for event in graph_intelligence.get("change_events", [])
+            if event.get("change_type") == "contradiction"
+        ][:3]
+        history = await self._recent_dream_history(
+            bank_id=bank_id,
+            validation_lookback_days=int(settings.get("validation_lookback_days", 45)),
+            request_context=internal_context,
+        )
+        maturity_tier = infer_maturity_tier(
+            evidence_count=len(top_results),
+            recurring_entities=sum(1 for count in recurring_entities.values() if count > 1),
+            contradiction_count=len(contradictions),
+            confirmed_predictions=int(history["confirmed_predictions"]),
+        )
+        evidence_basis = DreamEvidenceBasis(
+            evidence_count=len(top_results),
+            recall_memory_ids=[item["id"] for item in input_refs if item["id"]],
+            recurring_entities=[
+                name for name, _count in sorted(recurring_entities.items(), key=lambda item: (-item[1], item[0]))[:5]
+            ],
+            recurring_themes=[
+                name
+                for name, count in sorted(recurring_themes.items(), key=lambda item: (-item[1], item[0]))
+                if count > 1
+            ][:5],
+            contradictions=contradictions,
+            graph_signals=graph_signals,
+            recency_distribution=self._build_recency_distribution(timestamps),
+            unresolved_prediction_backlog=int(history["unresolved_prediction_backlog"]),
+            maturity_reason=(
+                "Sparse bank: dreams should emphasize uncertainty mapping."
+                if maturity_tier == "sparse"
+                else (
+                    "Emerging bank: enough recurring evidence exists for near-term forecasts."
+                    if maturity_tier == "emerging"
+                    else "Mature bank: validated prediction history supports mixed-horizon foresight."
+                )
+            ),
+        )
         source_block = "\n".join(recall_lines) if recall_lines else "- No strong recall signal yet."
         if len(top_results) < min_recall_results:
-            generated_text = (
-                "Assumption: there is not enough high-signal evidence yet.\n"
-                "Audit: recall did not return enough reliable results for a causal synthesis.\n"
-                "Train: capture 1-2 more concrete interactions before running deep dream analysis.\n"
-                "What-if: forcing synthesis now may create noisy or misleading guidance.\n"
-                "Value: waiting improves quality and prevents bad decisions.\n"
-                "Action: retain more specific evidence and rerun."
+            summary = "The bank does not yet have enough stable evidence for a trustworthy foresight run."
+            signals = DreamSignals(
+                hypotheses=["The memory bank is still sparse, so uncertainty should be made explicit."],
+                recommended_validations=[
+                    "Capture 1-2 more concrete observations tied to the same entity or topic.",
+                    "Re-run dreams after another consolidation or state-graph change.",
+                ],
             )
-            quality_score = 0.25
-            html_blob = build_dream_html(
+            confidence = summarize_confidence(
+                evidence_count=len(top_results),
+                contradiction_count=len(contradictions),
+                novelty_score=0.0,
+                calibration_score=float(history["calibration_score"]),
+                predictions=[],
+                summary=summary,
+            )
+            quality_score = 0.22
+            narrative_html = render_dream_narrative_html(
                 bank_id=bank_id,
-                run_type=str(task_dict.get("run_type", "dream")),
-                generated_text=generated_text,
+                run_type=run_type,
+                summary=summary,
+                maturity_tier=maturity_tier,
+                hypotheses=signals.hypotheses,
+                predictions=[],
+                growth_hypotheses=[],
+                risks=["Low evidence density can produce misleading conclusions."],
+                opportunities=[],
+                recommended_validations=signals.recommended_validations,
                 quality_score=quality_score,
                 max_bytes=int(settings.get("max_artifact_bytes", 24_000)),
             )
             artifact_id = await self._insert_dream_artifact(
                 bank_id=bank_id,
-                run_type=str(task_dict.get("run_type", "dream")),
+                run_type=run_type,
                 trigger_source=trigger_source,
-                html_blob=html_blob,
+                html_blob=narrative_html,
                 input_refs=input_refs,
                 stats={
                     "top_k_used": len(top_results),
                     "input_tokens": 0,
                     "output_tokens": 0,
-                    "skipped_for_low_signal": True,
+                    "status": "low_signal",
+                    "prompt_template_version": settings.get("prompt_template_version", "v3-evidence-foresight"),
                 },
                 quality_score=quality_score,
                 distilled_written=False,
             )
+            run = await self._insert_dream_run_record(
+                bank_id=bank_id,
+                run_type=run_type,
+                trigger_source=trigger_source,
+                status="low_signal",
+                summary=summary,
+                narrative_html=narrative_html,
+                evidence_basis=evidence_basis,
+                signals=signals,
+                predictions=[],
+                growth_hypotheses=[],
+                promotion_proposals=[],
+                validation_outcomes=[],
+                confidence=confidence,
+                novelty_score=0.0,
+                maturity_tier=maturity_tier,
+                quality_score=quality_score,
+                validation_rate=float(history["validation_rate"]),
+                calibration_score=float(history["calibration_score"]),
+                failure_reason=None,
+                result_metadata={"top_k_used": len(top_results), "status": "low_signal", "input_refs": input_refs},
+                source_artifact_id=artifact_id,
+            )
             return {
+                "run_id": run.run_id,
                 "artifact_id": artifact_id,
+                "status": run.status,
                 "quality_score": quality_score,
-                "distilled_written": False,
                 "top_k_used": len(top_results),
             }
+
         system_prompt = (
-            "You are an Atulya Dream/Trance worker producing causal, business-usable foresight.\n"
-            "Always reason in this chain: Assumption -> Audit -> Train -> What-if -> Value.\n"
-            "Output must be plain-language, concise, and non-technical.\n"
-            "Value must quantify likely effects on time saved, money, and human well-being/happiness.\n"
-            "Never produce verbose theory, jargon, or speculative fluff. No markdown tables."
+            "You are the Atulya dream foresight engine.\n"
+            "Produce structured, evidence-grounded foresight from the bank. Stay concrete, non-fictional, "
+            "and tied to the supplied evidence. Never claim certainty where evidence is weak. "
+            "If evidence is sparse, reflect that in the output instead of inventing detail."
         )
         worker_prompt = str(settings.get("worker_prompt") or "")
         value_focus = settings.get("value_focus", {"money": 1.0, "time": 1.0, "happiness": 1.0})
         tone = settings.get("language_tone", "plain-layman")
+        dream_experience = str(settings.get("dream_experience", "hybrid"))
         layman_clause = (
             "Use very simple language a non-technical user can understand."
             if settings.get("enforce_layman", True)
@@ -1037,97 +1464,197 @@ class MemoryEngine(MemoryEngineInterface):
         )
         user_prompt = (
             f"{worker_prompt}\n\n"
-            "Using the bank context below, produce exactly these sections:\n"
-            "1) Assumption: one high-value assumption.\n"
-            "2) Audit: why it happened, with strongest evidence references.\n"
-            "3) Train: what memory fragments should be distilled next to improve confidence.\n"
-            "4) What-if: realistic scenario and causal impact.\n"
-            "5) Value: likely gain in money, time, and team happiness (simple estimate).\n"
-            "6) Action: one immediate step.\n\n"
+            "Return structured foresight with predictions, growth hypotheses, risks, opportunities, "
+            "validation steps, and proposal candidates. Predictions must be testable and evidence-grounded.\n\n"
             f"Value focus weights: money={value_focus.get('money', 1.0)}, "
             f"time={value_focus.get('time', 1.0)}, happiness={value_focus.get('happiness', 1.0)}.\n"
+            f"Dream experience mode: {dream_experience}.\n"
             f"Tone: {tone}. {layman_clause}\n"
-            "Keep total output short, practical, and directly consumable by non-technical teams.\n\n"
-            f"Context:\n{source_block}"
+            f"Prediction horizon policy: {settings.get('prediction_horizon', 'mixed')}.\n"
+            f"Promotion gate: {settings.get('promotion_gate', 'human_review')}.\n\n"
+            f"Bank maturity: {maturity_tier}\n"
+            f"Validation history: confirmation_rate={float(history['validation_rate']):.2f}, calibration_score={float(history['calibration_score']):.2f}\n"
+            f"Unresolved prediction backlog: {int(history['unresolved_prediction_backlog'])}\n"
+            f"Recurring entities: {', '.join(evidence_basis.recurring_entities) or 'none'}\n"
+            f"Recurring themes: {', '.join(evidence_basis.recurring_themes) or 'none'}\n"
+            f"Contradictions: {', '.join(evidence_basis.contradictions) or 'none'}\n"
+            f"Graph signals: {', '.join(evidence_basis.graph_signals) or 'none'}\n"
+            f"Recency distribution: {json.dumps(evidence_basis.recency_distribution)}\n\n"
+            f"Evidence:\n{source_block}"
         )
 
-        generated_text = ""
+        llm_output: DreamLLMOutput
         usage_in = 0
         usage_out = 0
         try:
             llm = self._reflect_llm_config.with_config(resolved)
             llm_result, usage = await llm.call(
                 messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                max_tokens=int(settings["max_output_tokens"]),
+                response_format=DreamLLMOutput,
+                max_completion_tokens=int(settings["max_output_tokens"]),
                 return_usage=True,
+                scope="dream",
             )
-            generated_text = str(llm_result or "").strip()
+            llm_output = self._coerce_dream_output(llm_result)
             usage_in = usage.input_tokens
             usage_out = usage.output_tokens
-        except Exception:
-            generated_text = (
-                "Assumption: a stable preference trend is forming.\n"
-                "Audit: repeated memory signals point to the same decision direction.\n"
-                "Train: capture one distilled fragment from the latest high-signal interaction.\n"
-                "What-if: if contradictory evidence appears, confidence should be reduced quickly.\n"
-                "Value: likely time savings from faster decisions and reduced rework; potential cost savings from fewer wrong turns; improved team happiness through clarity.\n"
-                "Action: run one focused validation question before irreversible decisions."
+        except Exception as e:
+            summary = "Dream generation failed before a trustworthy foresight run could be produced."
+            signals = DreamSignals(
+                risks=["The LLM call failed, so no structured dream should be promoted or trusted."],
+                recommended_validations=["Resolve the underlying model/runtime issue and rerun the dream engine."],
             )
+            confidence = summarize_confidence(
+                evidence_count=len(top_results),
+                contradiction_count=len(contradictions),
+                novelty_score=0.0,
+                calibration_score=float(history["calibration_score"]),
+                predictions=[],
+                summary=summary,
+            )
+            run = await self._insert_dream_run_record(
+                bank_id=bank_id,
+                run_type=run_type,
+                trigger_source=trigger_source,
+                status="failed_llm",
+                summary=summary,
+                narrative_html=None,
+                evidence_basis=evidence_basis,
+                signals=signals,
+                predictions=[],
+                growth_hypotheses=[],
+                promotion_proposals=[],
+                validation_outcomes=[],
+                confidence=confidence,
+                novelty_score=0.0,
+                maturity_tier=maturity_tier,
+                quality_score=0.0,
+                validation_rate=float(history["validation_rate"]),
+                calibration_score=float(history["calibration_score"]),
+                failure_reason=str(e),
+                result_metadata={
+                    "top_k_used": len(top_results),
+                    "input_refs": input_refs,
+                    "llm_error": str(e)[:1000],
+                    "prompt_template_version": settings.get("prompt_template_version", "v3-evidence-foresight"),
+                },
+                source_artifact_id=None,
+            )
+            return {"run_id": run.run_id, "status": run.status, "quality_score": 0.0, "top_k_used": len(top_results)}
 
-        quality_score = score_dream_quality(generated_text, top_k=top_k)
-        html_blob = build_dream_html(
+        novelty_score = compute_novelty_score(llm_output.summary, history["recent_summaries"])
+        predictions = [item.model_copy(update={"status": "pending"}) for item in llm_output.predicted_next_events]
+        predictions = self._apply_prediction_horizon_policy(
+            predictions,
+            prediction_horizon=str(settings.get("prediction_horizon", "mixed")),
+            unresolved_backlog=int(history["unresolved_prediction_backlog"]),
+            max_pending_predictions=int(settings.get("max_pending_predictions", 24)),
+        )
+        signals = DreamSignals(
+            hypotheses=llm_output.hypotheses,
+            risks=llm_output.risks,
+            opportunities=llm_output.opportunities,
+            recommended_validations=llm_output.recommended_validations,
+            candidate_state_changes=llm_output.predicted_state_changes,
+        )
+        if int(history["unresolved_prediction_backlog"]) >= int(settings.get("max_pending_predictions", 24)):
+            signals.recommended_validations.append(
+                "Resolve or review existing pending dream predictions before generating more."
+            )
+        confidence = summarize_confidence(
+            evidence_count=len(top_results),
+            contradiction_count=len(contradictions),
+            novelty_score=novelty_score,
+            calibration_score=float(history["calibration_score"]),
+            predictions=predictions,
+            summary=llm_output.summary,
+        )
+        quality_score = score_dream_quality(llm_output.narrative or llm_output.summary, top_k=top_k)
+        quality_score = round(max(quality_score, confidence.overall), 3)
+        quality_threshold = float(settings.get("quality_threshold", 0.65))
+        status = "success"
+        if quality_score < quality_threshold:
+            status = "failed_validation"
+        elif novelty_score < float(settings.get("novelty_threshold", 0.58)):
+            status = "duplicate_low_novelty"
+        promotion_proposals = llm_output.promotion_proposals
+        if status == "failed_validation":
+            promotion_proposals = []
+            signals.recommended_validations.append(
+                f"Raise the dream quality above {quality_threshold:.2f} before promoting any proposal."
+            )
+        narrative_html = render_dream_narrative_html(
             bank_id=bank_id,
-            run_type=str(task_dict.get("run_type", "dream")),
-            generated_text=generated_text,
+            run_type=run_type,
+            summary=llm_output.summary,
+            maturity_tier=maturity_tier,
+            hypotheses=llm_output.hypotheses,
+            predictions=predictions,
+            growth_hypotheses=llm_output.growth_hypotheses,
+            risks=llm_output.risks,
+            opportunities=llm_output.opportunities,
+            recommended_validations=signals.recommended_validations,
             quality_score=quality_score,
             max_bytes=int(settings.get("max_artifact_bytes", 24_000)),
         )
-
-        distilled_written = False
-        should_distill = settings.get("write_distilled_summary") or settings.get("distillation_mode", "off") != "off"
-        if should_distill and quality_score >= float(settings["quality_threshold"]):
-            try:
-                distill_mode = str(settings.get("distillation_mode", "off"))
-                distill_contents: list[dict[str, str]] = []
-                if distill_mode == "fragments":
-                    # Keep only short, high-value lines as distilled fragments.
-                    lines = [ln.strip() for ln in generated_text.splitlines() if ln.strip()]
-                    fragments = [ln for ln in lines if ":" in ln][: int(settings.get("distillation_max_fragments", 3))]
-                    distill_contents = [{"content": f, "context": "dream_distillation_fragment"} for f in fragments]
-                else:
-                    distill_contents = [{"content": generated_text, "context": "dream_distillation"}]
-                if distill_contents:
-                    await self.retain_batch_async(
-                        bank_id=bank_id,
-                        contents=distill_contents,
-                        request_context=internal_context,
-                        fact_type_override="observation",
-                        confidence_score=0.6,
-                    )
-                distilled_written = True
-            except Exception as e:
-                logger.warning(f"Failed to write dream distillation for bank={bank_id}: {e}")
-
-        artifact_id = await self._insert_dream_artifact(
+        artifact_id = None
+        if status != "failed_validation":
+            artifact_id = await self._insert_dream_artifact(
+                bank_id=bank_id,
+                run_type=run_type,
+                trigger_source=trigger_source,
+                html_blob=narrative_html,
+                input_refs=input_refs,
+                stats={
+                    "top_k_used": len(top_results),
+                    "input_tokens": usage_in,
+                    "output_tokens": usage_out,
+                    "status": status,
+                    "novelty_score": novelty_score,
+                    "prompt_template_version": settings.get("prompt_template_version", "v3-evidence-foresight"),
+                },
+                quality_score=quality_score,
+                distilled_written=False,
+            )
+        run = await self._insert_dream_run_record(
             bank_id=bank_id,
-            run_type=str(task_dict.get("run_type", "dream")),
+            run_type=run_type,
             trigger_source=trigger_source,
-            html_blob=html_blob,
-            input_refs=input_refs,
-            stats={
+            status=status,
+            summary=llm_output.summary,
+            narrative_html=narrative_html,
+            evidence_basis=evidence_basis,
+            signals=signals,
+            predictions=predictions,
+            growth_hypotheses=llm_output.growth_hypotheses,
+            promotion_proposals=promotion_proposals,
+            validation_outcomes=[],
+            confidence=confidence,
+            novelty_score=novelty_score,
+            maturity_tier=maturity_tier,
+            quality_score=quality_score,
+            validation_rate=float(history["validation_rate"]),
+            calibration_score=float(history["calibration_score"]),
+            failure_reason=None,
+            result_metadata={
                 "top_k_used": len(top_results),
+                "input_refs": input_refs,
                 "input_tokens": usage_in,
                 "output_tokens": usage_out,
-                "distillation_mode": settings.get("distillation_mode", "off"),
-                "prompt_template_version": settings.get("prompt_template_version", "v2-causal-chain"),
+                "status": status,
+                "prompt_template_version": settings.get("prompt_template_version", "v3-evidence-foresight"),
+                "dream_experience": dream_experience,
+                "quality_threshold": quality_threshold,
+                "auto_write_posture": settings.get("auto_write_posture", "aggressive_proposals"),
+                "promotion_gate": settings.get("promotion_gate", "human_review"),
             },
-            quality_score=quality_score,
-            distilled_written=distilled_written,
+            source_artifact_id=artifact_id,
         )
         return {
+            "run_id": run.run_id,
             "artifact_id": artifact_id,
+            "status": run.status,
             "quality_score": quality_score,
-            "distilled_written": distilled_written,
             "top_k_used": len(top_results),
         }
 
@@ -9239,6 +9766,128 @@ class MemoryEngine(MemoryEngineInterface):
             dedupe_key=dedupe_key,
         )
 
+    async def _assemble_dream_runs(
+        self,
+        run_rows: list[Any],
+    ) -> list[dict[str, Any]]:
+        if not run_rows:
+            return []
+        run_ids = [str(row["id"]) for row in run_rows]
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            prediction_rows = await conn.fetch(
+                f"""
+                SELECT id, run_id, title, description, target_ref, target_kind, horizon, confidence,
+                       success_criteria, expiration_window_days, status, supporting_evidence_ids,
+                       validation_notes, created_at, updated_at
+                FROM {fq_table("dream_predictions")}
+                WHERE run_id = ANY($1::uuid[])
+                ORDER BY created_at ASC
+                """,
+                [uuid.UUID(item) for item in run_ids],
+            )
+            proposal_rows = await conn.fetch(
+                f"""
+                SELECT id, run_id, proposal_type, title, content, confidence, tags,
+                       supporting_evidence_ids, review_status, rationale, reviewed_at, created_at
+                FROM {fq_table("dream_proposals")}
+                WHERE run_id = ANY($1::uuid[])
+                ORDER BY created_at ASC
+                """,
+                [uuid.UUID(item) for item in run_ids],
+            )
+        prediction_ids = [str(row["id"]) for row in prediction_rows]
+        outcomes_by_prediction = await self._list_dream_validation_outcomes_by_prediction(prediction_ids)
+
+        predictions_by_run: dict[str, list[DreamPrediction]] = {}
+        outcomes_by_run: dict[str, list[DreamValidationOutcome]] = {}
+        for row in prediction_rows:
+            prediction = DreamPrediction(
+                prediction_id=str(row["id"]),
+                title=row["title"],
+                description=row["description"],
+                target_ref=row["target_ref"],
+                target_kind=row["target_kind"],
+                horizon=row["horizon"],
+                confidence=float(row["confidence"] or 0.0),
+                success_criteria=decode_jsonb(row["success_criteria"], []),
+                expiration_window_days=int(row["expiration_window_days"] or 14),
+                status=row["status"],
+                supporting_evidence_ids=decode_jsonb(row["supporting_evidence_ids"], []),
+                validation_notes=row["validation_notes"],
+            )
+            run_id = str(row["run_id"])
+            predictions_by_run.setdefault(run_id, []).append(prediction)
+            outcomes_by_run.setdefault(run_id, []).extend(outcomes_by_prediction.get(str(row["id"]), []))
+
+        proposals_by_run: dict[str, list[DreamPromotionProposal]] = {}
+        for row in proposal_rows:
+            run_id = str(row["run_id"])
+            proposals_by_run.setdefault(run_id, []).append(
+                DreamPromotionProposal(
+                    proposal_id=str(row["id"]),
+                    proposal_type=row["proposal_type"],
+                    title=row["title"],
+                    content=row["content"],
+                    confidence=float(row["confidence"] or 0.0),
+                    tags=decode_jsonb(row["tags"], []),
+                    supporting_evidence_ids=decode_jsonb(row["supporting_evidence_ids"], []),
+                    review_status=row["review_status"],
+                    rationale=row["rationale"],
+                )
+            )
+
+        items: list[dict[str, Any]] = []
+        for row in run_rows:
+            run_id = str(row["id"])
+            record = DreamRunRecord(
+                run_id=run_id,
+                bank_id=row["bank_id"],
+                status=row["status"],
+                run_type=row["run_type"],
+                trigger_source=row["trigger_source"],
+                created_at=row["created_at"].isoformat() if row["created_at"] else datetime.now(UTC).isoformat(),
+                updated_at=row["updated_at"].isoformat() if row["updated_at"] else None,
+                narrative_html=row["narrative_html"],
+                summary=row["summary"],
+                evidence_basis=DreamEvidenceBasis.model_validate(decode_jsonb(row["evidence_basis"], {})),
+                signals=DreamSignals.model_validate(decode_jsonb(row["signals"], {})),
+                predictions=predictions_by_run.get(run_id, []),
+                growth_hypotheses=[
+                    DreamGrowthHypothesis.model_validate(item)
+                    for item in decode_jsonb(row["result_metadata"], {}).get("growth_hypotheses", [])
+                ],
+                promotion_proposals=proposals_by_run.get(run_id, []),
+                validation_outcomes=outcomes_by_run.get(run_id, []),
+                confidence=DreamConfidenceModel.model_validate(decode_jsonb(row["confidence"], {})),
+                novelty_score=float(row["novelty_score"] or 0.0),
+                maturity_tier=row["maturity_tier"],
+                failure_reason=row["failure_reason"],
+                quality_score=float(row["quality_score"] or 0.0),
+                source_artifact_id=str(row["source_artifact_id"]) if row["source_artifact_id"] else None,
+            )
+            items.append(record.model_dump(mode="json"))
+        return items
+
+    def _legacy_artifact_to_dream_run(self, row: dict[str, Any]) -> dict[str, Any]:
+        quality_score = float(row.get("quality_score") or 0.0)
+        return DreamRunRecord(
+            run_id=f"legacy:{row['id']}",
+            bank_id=row["bank_id"],
+            status="success",
+            run_type=row["run_type"],
+            trigger_source=row["trigger_source"],
+            created_at=row["created_at"].isoformat() if row.get("created_at") else datetime.now(UTC).isoformat(),
+            narrative_html=row["html_blob"],
+            summary="Legacy narrative-only dream run.",
+            confidence=DreamConfidenceModel(overall=quality_score, novelty_score=0.0),
+            novelty_score=0.0,
+            maturity_tier="sparse",
+            quality_score=quality_score,
+            legacy_run=True,
+            source_artifact_id=str(row["id"]),
+        ).model_dump(mode="json")
+
     async def list_dream_artifacts(
         self,
         bank_id: str,
@@ -9247,12 +9896,20 @@ class MemoryEngine(MemoryEngineInterface):
         request_context: "RequestContext",
     ) -> list[dict[str, Any]]:
         await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="list_dream_artifacts", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
-            rows = await conn.fetch(
+            run_rows = await conn.fetch(
                 f"""
-                SELECT id, bank_id, run_type, trigger_source, html_blob, input_refs, stats, quality_score, distilled_written, created_at
-                FROM {fq_table("dream_artifacts")}
+                SELECT id, bank_id, run_type, trigger_source, status, summary, narrative_html,
+                       evidence_basis, signals, confidence, novelty_score, maturity_tier,
+                       quality_score, result_metadata, failure_reason, source_artifact_id,
+                       created_at, updated_at
+                FROM {fq_table("dream_runs")}
                 WHERE bank_id = $1
                 ORDER BY created_at DESC
                 LIMIT $2
@@ -9260,10 +9917,35 @@ class MemoryEngine(MemoryEngineInterface):
                 bank_id,
                 max(1, min(limit, 100)),
             )
-        return [dict(r) for r in rows]
+            artifact_rows = await conn.fetch(
+                f"""
+                SELECT id, bank_id, run_type, trigger_source, html_blob, input_refs, stats, quality_score, distilled_written, created_at
+                FROM {fq_table("dream_artifacts")}
+                WHERE bank_id = $1
+                  AND id NOT IN (
+                      SELECT source_artifact_id
+                      FROM {fq_table("dream_runs")}
+                      WHERE bank_id = $1 AND source_artifact_id IS NOT NULL
+                  )
+                ORDER BY created_at DESC
+                LIMIT $2
+                """,
+                bank_id,
+                max(1, min(limit, 100)),
+            )
+        items = await self._assemble_dream_runs(list(run_rows))
+        for row in artifact_rows:
+            items.append(self._legacy_artifact_to_dream_run(dict(row)))
+        items.sort(key=lambda item: item["created_at"], reverse=True)
+        return items[: max(1, min(limit, 100))]
 
     async def get_dream_stats(self, bank_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
         await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="get_dream_stats", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
             row = await conn.fetchrow(
@@ -9272,16 +9954,33 @@ class MemoryEngine(MemoryEngineInterface):
                   COUNT(*) AS total_runs,
                   MAX(created_at) AS last_run_at,
                   AVG(quality_score) AS avg_quality,
-                  AVG(COALESCE((stats->>'input_tokens')::float, 0) + COALESCE((stats->>'output_tokens')::float, 0)) AS avg_tokens,
-                  AVG(COALESCE((stats->>'output_tokens')::float, 0)) AS avg_output_tokens,
-                  SUM(CASE WHEN distilled_written THEN 1 ELSE 0 END) AS distilled_count
-                FROM {fq_table("dream_artifacts")}
+                  AVG(COALESCE((result_metadata->>'input_tokens')::float, 0) + COALESCE((result_metadata->>'output_tokens')::float, 0)) AS avg_tokens,
+                  AVG(COALESCE((result_metadata->>'output_tokens')::float, 0)) AS avg_output_tokens,
+                  AVG(novelty_score) AS avg_novelty,
+                  COUNT(*) FILTER (WHERE status IN ('failed_llm', 'failed_validation')) AS failed_run_count,
+                  COUNT(*) FILTER (WHERE status = 'duplicate_low_novelty') AS duplicate_suppression_count
+                FROM {fq_table("dream_runs")}
+                WHERE bank_id = $1
+                """,
+                bank_id,
+            )
+            prediction_row = await conn.fetchrow(
+                f"""
+                SELECT
+                  COUNT(*) FILTER (WHERE status = 'confirmed') AS confirmed_count,
+                  COUNT(*) FILTER (WHERE status = 'contradicted') AS contradicted_count,
+                  COUNT(*) FILTER (WHERE status IN ('pending', 'unresolved')) AS unresolved_backlog
+                FROM {fq_table("dream_predictions")}
                 WHERE bank_id = $1
                 """,
                 bank_id,
             )
         total = int(row["total_runs"] or 0)
-        distilled = int(row["distilled_count"] or 0)
+        confirmed = int(prediction_row["confirmed_count"] or 0) if prediction_row else 0
+        contradicted = int(prediction_row["contradicted_count"] or 0) if prediction_row else 0
+        unresolved = int(prediction_row["unresolved_backlog"] or 0) if prediction_row else 0
+        validation_denominator = confirmed + contradicted
+        confirmation_rate = confirmed / validation_denominator if validation_denominator else 0.0
         return {
             "bank_id": bank_id,
             "total_runs": total,
@@ -9289,8 +9988,186 @@ class MemoryEngine(MemoryEngineInterface):
             "avg_quality": float(row["avg_quality"] or 0.0),
             "avg_tokens": float(row["avg_tokens"] or 0.0),
             "avg_output_tokens": float(row["avg_output_tokens"] or 0.0),
-            "distillation_pass_rate": (distilled / total) if total else 0.0,
-            "distilled_count": distilled,
+            "distillation_pass_rate": 0.0,
+            "distilled_count": 0,
+            "validation_rate": confirmation_rate,
+            "avg_novelty": float(row["avg_novelty"] or 0.0),
+            "failed_run_count": int(row["failed_run_count"] or 0),
+            "duplicate_suppression_count": int(row["duplicate_suppression_count"] or 0),
+            "prediction_confirmation_rate": confirmation_rate,
+            "unresolved_prediction_backlog": unresolved,
+        }
+
+    async def review_dream_proposal(
+        self,
+        bank_id: str,
+        proposal_id: str,
+        *,
+        action: str,
+        note: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(bank_id=bank_id, operation="review_dream_proposal", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT id, run_id, proposal_type, title, content, confidence, tags, supporting_evidence_ids, review_status
+                FROM {fq_table("dream_proposals")}
+                WHERE bank_id = $1 AND id = $2
+                """,
+                bank_id,
+                uuid.UUID(proposal_id),
+            )
+            if row is None:
+                raise ValueError("Dream proposal not found")
+            if row["review_status"] == "approved" and action == "approve":
+                raise ValueError("Dream proposal already approved")
+
+        review_status = {
+            "approve": "approved",
+            "reject": "rejected",
+            "request_more_evidence": "needs_more_evidence",
+        }.get(action)
+        if review_status is None:
+            raise ValueError("Unsupported dream proposal action")
+
+        approval_metadata: dict[str, Any] = {"note": note, "action": action}
+        if action == "approve":
+            if row["proposal_type"] == "mental_model":
+                created = await self.create_mental_model(
+                    bank_id=bank_id,
+                    name=row["title"],
+                    source_query="dream_proposal",
+                    content=row["content"],
+                    tags=decode_jsonb(row["tags"], []),
+                    request_context=request_context,
+                )
+                approval_metadata["created_mental_model_id"] = created.get("id")
+            else:
+                retained = await self.retain_batch_async(
+                    bank_id=bank_id,
+                    contents=[{"content": row["content"], "context": f"dream_proposal:{row['proposal_type']}"}],
+                    request_context=request_context,
+                    fact_type_override="observation",
+                    confidence_score=float(row["confidence"] or 0.6),
+                )
+                approval_metadata["retained"] = retained
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            updated = await conn.fetchrow(
+                f"""
+                UPDATE {fq_table("dream_proposals")}
+                SET review_status = $3,
+                    rationale = COALESCE($4, rationale),
+                    approval_metadata = $5::jsonb,
+                    reviewed_at = NOW(),
+                    updated_at = NOW()
+                WHERE bank_id = $1 AND id = $2
+                RETURNING id, proposal_type, title, content, confidence, tags, supporting_evidence_ids, review_status, rationale
+                """,
+                bank_id,
+                uuid.UUID(proposal_id),
+                review_status,
+                note,
+                json.dumps(approval_metadata),
+            )
+        return DreamPromotionProposal(
+            proposal_id=str(updated["id"]),
+            proposal_type=updated["proposal_type"],
+            title=updated["title"],
+            content=updated["content"],
+            confidence=float(updated["confidence"] or 0.0),
+            tags=decode_jsonb(updated["tags"], []),
+            supporting_evidence_ids=decode_jsonb(updated["supporting_evidence_ids"], []),
+            review_status=updated["review_status"],
+            rationale=updated["rationale"],
+        ).model_dump(mode="json")
+
+    async def update_dream_prediction_outcome(
+        self,
+        bank_id: str,
+        prediction_id: str,
+        *,
+        status: str,
+        note: str | None,
+        evidence_ids: list[str] | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(
+                bank_id=bank_id, operation="update_dream_prediction_outcome", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        if status not in {"confirmed", "contradicted", "request_more_evidence"}:
+            raise ValueError("Unsupported dream prediction outcome status")
+        prediction_status = "unresolved" if status == "request_more_evidence" else status
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            prediction = await conn.fetchrow(
+                f"""
+                UPDATE {fq_table("dream_predictions")}
+                SET status = $3,
+                    validation_notes = COALESCE($4, validation_notes),
+                    updated_at = NOW()
+                WHERE bank_id = $1 AND id = $2
+                RETURNING id, title, description, target_ref, target_kind, horizon, confidence,
+                          success_criteria, expiration_window_days, status, supporting_evidence_ids, validation_notes
+                """,
+                bank_id,
+                uuid.UUID(prediction_id),
+                prediction_status,
+                note,
+            )
+            if prediction is None:
+                raise ValueError("Dream prediction not found")
+            outcome_id = uuid.uuid4()
+            await conn.execute(
+                f"""
+                INSERT INTO {fq_table("dream_prediction_outcomes")}
+                    (id, prediction_id, bank_id, outcome_status, note, evidence_ids, created_at)
+                VALUES
+                    ($1, $2, $3, $4, $5, $6::jsonb, NOW())
+                """,
+                outcome_id,
+                uuid.UUID(prediction_id),
+                bank_id,
+                status,
+                note,
+                json.dumps(evidence_ids or []),
+            )
+        return {
+            "prediction": DreamPrediction(
+                prediction_id=str(prediction["id"]),
+                title=prediction["title"],
+                description=prediction["description"],
+                target_ref=prediction["target_ref"],
+                target_kind=prediction["target_kind"],
+                horizon=prediction["horizon"],
+                confidence=float(prediction["confidence"] or 0.0),
+                success_criteria=decode_jsonb(prediction["success_criteria"], []),
+                expiration_window_days=int(prediction["expiration_window_days"] or 14),
+                status=prediction["status"],
+                supporting_evidence_ids=decode_jsonb(prediction["supporting_evidence_ids"], []),
+                validation_notes=prediction["validation_notes"],
+            ).model_dump(mode="json"),
+            "outcome": DreamValidationOutcome(
+                outcome_id=str(outcome_id),
+                prediction_id=prediction_id,
+                status=status,
+                note=note,
+                evidence_ids=evidence_ids or [],
+                created_at=datetime.now(UTC).isoformat(),
+            ).model_dump(mode="json"),
         }
 
     async def get_brain_runtime_status(self, bank_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
@@ -9406,7 +10283,7 @@ class MemoryEngine(MemoryEngineInterface):
             dream_rows = await conn.fetch(
                 f"""
                 SELECT id, quality_score, created_at
-                FROM {fq_table("dream_artifacts")}
+                FROM {fq_table("dream_runs")}
                 WHERE bank_id = $1
                   AND created_at >= NOW() - ($2::text || ' days')::interval
                 ORDER BY created_at DESC
@@ -9431,7 +10308,7 @@ class MemoryEngine(MemoryEngineInterface):
                     WHERE bank_id = $1
                     UNION ALL
                     SELECT created_at AS ts
-                    FROM {fq_table("dream_artifacts")}
+                    FROM {fq_table("dream_runs")}
                     WHERE bank_id = $1
                 ) combined
                 WHERE ts >= NOW() - ($2::text || ' days')::interval

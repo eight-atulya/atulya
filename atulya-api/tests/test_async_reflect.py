@@ -9,12 +9,96 @@ import pytest
 import pytest_asyncio
 
 from atulya_api.api import create_app
+from atulya_api.engine.memory_engine import MemoryEngine
+from atulya_api.engine.response_models import MemoryFact, ReflectResult, TokenUsage
+from atulya_api.engine.task_backend import SyncTaskBackend
+
+
+class _FakeEmbeddings:
+    def __init__(self, dimension: int = 384):
+        self._dimension = dimension
+
+    @property
+    def provider_name(self) -> str:
+        return "test"
+
+    @property
+    def dimension(self) -> int:
+        return self._dimension
+
+    async def initialize(self) -> None:
+        return None
+
+    def encode(self, texts: list[str]) -> list[list[float]]:
+        rows: list[list[float]] = []
+        for text in texts:
+            seed = sum(ord(ch) for ch in (text or ""))
+            rows.append([float((seed + i) % 17) / 17.0 for i in range(self._dimension)])
+        return rows
+
+
+class _FakeCrossEncoder:
+    @property
+    def provider_name(self) -> str:
+        return "test"
+
+    async def initialize(self) -> None:
+        return None
+
+    async def predict(self, pairs: list[tuple[str, str]]) -> list[float]:
+        return [0.5 for _ in pairs]
 
 
 @pytest_asyncio.fixture
-async def api_client(memory):
+async def reflect_memory(pg0_db_url, query_analyzer):
+    mem = MemoryEngine(
+        db_url=pg0_db_url,
+        memory_llm_provider="mock",
+        memory_llm_api_key="",
+        memory_llm_model="mock",
+        embeddings=_FakeEmbeddings(),
+        cross_encoder=_FakeCrossEncoder(),
+        query_analyzer=query_analyzer,
+        pool_min_size=1,
+        pool_max_size=5,
+        run_migrations=False,
+        task_backend=SyncTaskBackend(),
+        skip_llm_verification=True,
+    )
+    await mem.initialize()
+    yield mem
+    try:
+        if mem._pool and not mem._pool._closing:
+            await mem.close()
+    except Exception:
+        pass
+
+
+@pytest_asyncio.fixture
+async def api_client(reflect_memory, monkeypatch):
     """Create an async test client for the FastAPI app."""
-    app = create_app(memory, initialize_memory=False)
+    async def fake_reflect_async(*args, **kwargs):
+        return ReflectResult(
+            text="Alice prefers API-first releases with clear rollout plans.",
+            based_on={
+                "world": [
+                    MemoryFact(
+                        id="mem-1",
+                        text="Alice prefers API-first releases with clear rollout plans.",
+                        fact_type="world",
+                        context="team preference",
+                        occurred_start=None,
+                        occurred_end=None,
+                    )
+                ]
+            },
+            tool_trace=[],
+            llm_trace=[],
+            usage=TokenUsage(input_tokens=12, output_tokens=8, total_tokens=20),
+        )
+
+    monkeypatch.setattr(reflect_memory, "reflect_async", fake_reflect_async)
+    app = create_app(reflect_memory, initialize_memory=False)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
@@ -85,9 +169,9 @@ async def test_submit_async_reflect_returns_completed_result(api_client):
 
 
 @pytest.mark.asyncio
-async def test_get_operation_result_pending_returns_null(api_client, memory):
+async def test_get_operation_result_pending_returns_null(api_client, reflect_memory):
     """Pending operations should report stage but not expose a result payload yet."""
-    pool = await memory._get_pool()
+    pool = await reflect_memory._get_pool()
     operation_id = uuid.uuid4()
     bank_id = f"async_reflect_pending_{uuid.uuid4().hex[:8]}"
 
@@ -115,9 +199,9 @@ async def test_get_operation_result_pending_returns_null(api_client, memory):
 
 
 @pytest.mark.asyncio
-async def test_cancel_operation_rejects_processing_state(memory, request_context):
+async def test_cancel_operation_rejects_processing_state(reflect_memory, request_context):
     """Processing operations should no longer be cancellable."""
-    pool = await memory._get_pool()
+    pool = await reflect_memory._get_pool()
     operation_id = uuid.uuid4()
     bank_id = f"async_reflect_processing_{uuid.uuid4().hex[:8]}"
 
@@ -133,7 +217,7 @@ async def test_cancel_operation_rejects_processing_state(memory, request_context
     )
 
     with pytest.raises(ValueError, match="can no longer be cancelled"):
-        await memory.cancel_operation(
+        await reflect_memory.cancel_operation(
             bank_id=bank_id,
             operation_id=str(operation_id),
             request_context=request_context,

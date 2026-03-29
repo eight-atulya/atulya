@@ -1,21 +1,87 @@
-"""
-Test reflect endpoint with empty based_on (no memories scenario).
-
-This test verifies that the API returns the correct based_on format:
-- v0.3.0 (old): returned based_on as list []
-- v0.4.0+ (current): returns based_on as object {"memories": [], "mental_models": [], "directives": []}
-"""
-
+import httpx
 import pytest
 import pytest_asyncio
-import httpx
+
 from atulya_api.api import create_app
+from atulya_api.engine.memory_engine import MemoryEngine
+from atulya_api.engine.response_models import ReflectResult, TokenUsage
+from atulya_api.engine.task_backend import SyncTaskBackend
+
+
+class _FakeEmbeddings:
+    def __init__(self, dimension: int = 384):
+        self._dimension = dimension
+
+    @property
+    def provider_name(self) -> str:
+        return "test"
+
+    @property
+    def dimension(self) -> int:
+        return self._dimension
+
+    async def initialize(self) -> None:
+        return None
+
+    def encode(self, texts: list[str]) -> list[list[float]]:
+        rows: list[list[float]] = []
+        for text in texts:
+            seed = sum(ord(ch) for ch in (text or ""))
+            rows.append([float((seed + i) % 17) / 17.0 for i in range(self._dimension)])
+        return rows
+
+
+class _FakeCrossEncoder:
+    @property
+    def provider_name(self) -> str:
+        return "test"
+
+    async def initialize(self) -> None:
+        return None
+
+    async def predict(self, pairs: list[tuple[str, str]]) -> list[float]:
+        return [0.5 for _ in pairs]
 
 
 @pytest_asyncio.fixture
-async def api_client(memory):
+async def reflect_memory(pg0_db_url, query_analyzer):
+    mem = MemoryEngine(
+        db_url=pg0_db_url,
+        memory_llm_provider="mock",
+        memory_llm_api_key="",
+        memory_llm_model="mock",
+        embeddings=_FakeEmbeddings(),
+        cross_encoder=_FakeCrossEncoder(),
+        query_analyzer=query_analyzer,
+        pool_min_size=1,
+        pool_max_size=5,
+        run_migrations=False,
+        task_backend=SyncTaskBackend(),
+        skip_llm_verification=True,
+    )
+    await mem.initialize()
+    yield mem
+    try:
+        if mem._pool and not mem._pool._closing:
+            await mem.close()
+    except Exception:
+        pass
+
+
+@pytest_asyncio.fixture
+async def api_client(reflect_memory, monkeypatch):
     """Create an async test client for the FastAPI app."""
-    app = create_app(memory, initialize_memory=False)
+    async def fake_reflect_async(*args, **kwargs):
+        return ReflectResult(
+            text="No memories available yet.",
+            based_on={},
+            tool_trace=[],
+            llm_trace=[],
+            usage=TokenUsage(input_tokens=3, output_tokens=4, total_tokens=7),
+        )
+
+    monkeypatch.setattr(reflect_memory, "reflect_async", fake_reflect_async)
+    app = create_app(reflect_memory, initialize_memory=False)
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
