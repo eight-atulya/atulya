@@ -27,6 +27,18 @@ Make sure you've completed the [Quick Start](./quickstart) to install the client
 
 ## Basic Usage
 
+:::tip Production Recommendation
+For interactive demos and short responses, the synchronous `POST /reflect` endpoint remains available for backward compatibility.
+
+For production workloads where reflect can take minutes, prefer the async flow:
+
+1. `POST /v1/default/banks/{bank_id}/reflect/submit`
+2. Poll `GET /v1/default/banks/{bank_id}/operations/{operation_id}`
+3. Fetch the final payload from `GET /v1/default/banks/{bank_id}/operations/{operation_id}/result`
+
+This avoids long-lived browser or proxy connections while still preserving the exact reflect response payload.
+:::
+
 <Tabs>
 <TabItem value="python" label="Python">
 <CodeSnippet code={reflectPy} section="reflect-basic" language="python" />
@@ -138,3 +150,13 @@ The full execution log of the agentic loop. Only present when `include.tool_call
 
 - `tool_calls` — each tool invocation with `tool` name (`lookup`, `recall`, `learn`, `expand`), `input`, `output` (if `output: true`), `duration_ms`, and `iteration` number.
 - `llm_calls` — each LLM call with `scope` (e.g., `"agent_1"`, `"final"`) and `duration_ms`.
+
+## Async Reflect
+
+Use async reflect when you want production-safe handling for long LLM generations.
+
+- `POST /v1/default/banks/{bank_id}/reflect/submit` accepts the same request body as sync reflect and returns an `operation_id`.
+- `GET /v1/default/banks/{bank_id}/operations/{operation_id}` returns lifecycle status plus a `stage` field such as `queued`, `reflecting`, or `persisting_result`.
+- `GET /v1/default/banks/{bank_id}/operations/{operation_id}/result` returns the final reflect payload when the operation reaches `completed`.
+
+The async result payload matches the synchronous reflect response shape exactly, so clients can switch transports without changing their answer rendering code.

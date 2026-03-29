@@ -116,6 +116,8 @@ class MemoryEngineInterface(ABC):
         max_tokens: int = 4096,
         response_schema: dict | None = None,
         request_context: "RequestContext",
+        tags: list[str] | None = None,
+        tags_match: "TagsMatch" = "any",
     ) -> "ReflectResult":
         """
         Reflect on a query and generate a thoughtful response.
@@ -128,9 +130,35 @@ class MemoryEngineInterface(ABC):
             max_tokens: Maximum tokens for the response.
             response_schema: Optional JSON Schema for structured output.
             request_context: Request context for authentication.
+            tags: Optional tags to filter memories by.
+            tags_match: Tag matching mode.
 
         Returns:
             ReflectResult with generated response and supporting facts.
+        """
+        ...
+
+    @abstractmethod
+    async def submit_async_reflect(
+        self,
+        bank_id: str,
+        *,
+        query: str,
+        budget: "Budget | None" = None,
+        max_tokens: int = 4096,
+        include_facts: bool = False,
+        include_tool_calls: bool = False,
+        include_tool_call_output: bool = True,
+        response_schema: dict | None = None,
+        tags: list[str] | None = None,
+        tags_match: "TagsMatch" = "any",
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """
+        Submit a reflect operation to run asynchronously.
+
+        Returns:
+            Dict with operation_id and optional deduplication flags.
         """
         ...
 
@@ -585,6 +613,22 @@ class MemoryEngineInterface(ABC):
 
         Raises:
             ValueError: If operation not found.
+        """
+        ...
+
+    @abstractmethod
+    async def get_operation_result(
+        self,
+        bank_id: str,
+        operation_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """
+        Get the final result payload for an async operation.
+
+        Returns:
+            Dict containing operation status, stage, and result payload when available.
         """
         ...
 

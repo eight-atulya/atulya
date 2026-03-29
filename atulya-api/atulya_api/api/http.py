@@ -78,6 +78,7 @@ from atulya_api.engine.search.tags import TagsMatch
 from atulya_api.extensions import HttpExtension, OperationValidationError, load_extension
 from atulya_api.metrics import create_metrics_collector, get_metrics_collector, initialize_metrics
 from atulya_api.models import RequestContext
+from atulya_api.reflect_serialization import compose_reflect_query, serialize_reflect_response
 
 logger = logging.getLogger(__name__)
 
@@ -1742,6 +1743,10 @@ class OperationStatusResponse(BaseModel):
     updated_at: str | None = None
     completed_at: str | None = None
     error_message: str | None = None
+    stage: str | None = Field(
+        default=None,
+        description="High-level progress stage for pending async work, derived from result_metadata.operation_stage.",
+    )
     result_metadata: dict[str, Any] | None = Field(
         default=None,
         description="Internal metadata for debugging. Structure may change without notice. Not for production use.",
@@ -1765,6 +1770,36 @@ class AsyncOperationSubmitResponse(BaseModel):
 
     operation_id: str
     status: str
+
+
+class OperationResultResponse(BaseModel):
+    """Response model for retrieving the final result of an async operation."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "operation_id": "550e8400-e29b-41d4-a716-446655440000",
+                "status": "completed",
+                "operation_type": "reflect",
+                "created_at": "2024-01-15T10:30:00Z",
+                "updated_at": "2024-01-15T10:31:30Z",
+                "completed_at": "2024-01-15T10:31:30Z",
+                "error_message": None,
+                "stage": "persisting_result",
+                "result": {"text": "Final answer"},
+            }
+        }
+    )
+
+    operation_id: str
+    status: Literal["pending", "completed", "failed", "not_found"]
+    operation_type: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    completed_at: str | None = None
+    error_message: str | None = None
+    stage: str | None = None
+    result: ReflectResponse | None = None
 
 
 class FeaturesInfo(BaseModel):
@@ -2899,10 +2934,7 @@ def _register_routes(app: FastAPI):
         metrics = get_metrics_collector()
 
         try:
-            # Handle deprecated context field by concatenating with query
-            query = request.query
-            if request.context:
-                query = f"{request.query}\n\nAdditional context: {request.context}"
+            query = compose_reflect_query(request.query, request.context)
 
             # Use the memory system's reflect_async method (record metrics)
             with metrics.record_operation("reflect", bank_id=bank_id, source="api", budget=request.budget.value):
@@ -2918,73 +2950,13 @@ def _register_routes(app: FastAPI):
                     tags_match=request.tags_match,
                 )
 
-            # Build based_on (memories + mental_models + directives) if facts are requested
-            based_on_result: ReflectBasedOn | None = None
-            if request.include.facts is not None:
-                memories = []
-                mental_models = []
-                directives = []
-                for fact_type, facts in core_result.based_on.items():
-                    if fact_type == "directives":
-                        # Directives are dicts with id, name, content (not MemoryFact objects)
-                        for directive in facts:
-                            directives.append(
-                                ReflectDirective(
-                                    id=directive["id"],
-                                    name=directive["name"],
-                                    content=directive["content"],
-                                )
-                            )
-                    elif fact_type == "mental-models":
-                        # Mental models are MemoryFact with type "mental-models" (note: hyphen, not underscore)
-                        for fact in facts:
-                            mental_models.append(
-                                ReflectMentalModel(
-                                    id=fact.id,
-                                    text=fact.text,
-                                    context=fact.context,
-                                )
-                            )
-                    else:
-                        for fact in facts:
-                            memories.append(
-                                ReflectFact(
-                                    id=fact.id,
-                                    text=fact.text,
-                                    type=fact.fact_type,
-                                    context=fact.context,
-                                    occurred_start=fact.occurred_start,
-                                    occurred_end=fact.occurred_end,
-                                )
-                            )
-                based_on_result = ReflectBasedOn(memories=memories, mental_models=mental_models, directives=directives)
-
-            # Build trace (tool_calls + llm_calls + observations) if tool_calls is requested
-            trace_result: ReflectTrace | None = None
-            if request.include.tool_calls is not None:
-                include_output = request.include.tool_calls.output
-                tool_calls = [
-                    ReflectToolCall(
-                        tool=tc.tool,
-                        input=tc.input,
-                        output=tc.output if include_output else None,
-                        duration_ms=tc.duration_ms,
-                        iteration=tc.iteration,
-                    )
-                    for tc in core_result.tool_trace
-                ]
-                llm_calls = [ReflectLLMCall(scope=lc.scope, duration_ms=lc.duration_ms) for lc in core_result.llm_trace]
-                trace_result = ReflectTrace(
-                    tool_calls=tool_calls,
-                    llm_calls=llm_calls,
-                )
-
-            return ReflectResponse(
-                text=core_result.text,
-                based_on=based_on_result,
-                structured_output=core_result.structured_output,
-                usage=core_result.usage,
-                trace=trace_result,
+            return serialize_reflect_response(
+                core_result,
+                include_facts=request.include.facts is not None,
+                include_tool_calls=request.include.tool_calls is not None,
+                include_tool_call_output=request.include.tool_calls.output
+                if request.include.tool_calls is not None
+                else True,
             )
 
         except OperationValidationError as e:
@@ -2996,6 +2968,52 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/reflect: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/reflect/submit",
+        response_model=AsyncOperationSubmitResponse,
+        summary="Submit async reflect",
+        description="Queue a reflect operation for background execution and retrieve the result via the operations API.",
+        operation_id="submit_async_reflect",
+        tags=["Memory"],
+    )
+    async def api_submit_async_reflect(
+        bank_id: str, request: ReflectRequest, request_context: RequestContext = Depends(get_request_context)
+    ):
+        if not get_config().worker_enabled:
+            raise HTTPException(
+                status_code=503,
+                detail="Async reflect requires the background worker to be enabled.",
+            )
+
+        try:
+            query = compose_reflect_query(request.query, request.context)
+            result = await app.state.memory.submit_async_reflect(
+                bank_id=bank_id,
+                query=query,
+                budget=request.budget,
+                max_tokens=request.max_tokens,
+                include_facts=request.include.facts is not None,
+                include_tool_calls=request.include.tool_calls is not None,
+                include_tool_call_output=request.include.tool_calls.output
+                if request.include.tool_calls is not None
+                else True,
+                response_schema=request.response_schema,
+                tags=request.tags,
+                tags_match=request.tags_match,
+                request_context=request_context,
+            )
+            return AsyncOperationSubmitResponse(operation_id=result["operation_id"], status="queued")
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/reflect/submit: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(
@@ -3862,7 +3880,7 @@ def _register_routes(app: FastAPI):
         operation_type: str | None = Query(
             default=None,
             alias="type",
-            description="Filter by operation type: retain, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery",
+            description="Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery",
         ),
         limit: int = Query(default=20, ge=1, le=100, description="Maximum number of operations to return"),
         offset: int = Query(default=0, ge=0, description="Number of operations to skip"),
@@ -3927,6 +3945,37 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in GET /v1/default/banks/{bank_id}/operations/{operation_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/operations/{operation_id}/result",
+        response_model=OperationResultResponse,
+        summary="Get operation result",
+        description="Get the final user-facing result payload for an async operation.",
+        operation_id="get_operation_result",
+        tags=["Operations"],
+    )
+    async def api_get_operation_result(
+        bank_id: str, operation_id: str, request_context: RequestContext = Depends(get_request_context)
+    ):
+        """Get the final result payload for an async operation."""
+        try:
+            try:
+                uuid.UUID(operation_id)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid operation_id format: {operation_id}")
+
+            result = await app.state.memory.get_operation_result(bank_id, operation_id, request_context=request_context)
+            return OperationResultResponse(**result)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/banks/{bank_id}/operations/{operation_id}/result: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.delete(

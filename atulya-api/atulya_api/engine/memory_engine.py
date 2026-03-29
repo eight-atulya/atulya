@@ -35,6 +35,7 @@ from ..brain.intelligence import (
 )
 from ..config import get_config
 from ..metrics import get_metrics_collector
+from ..reflect_serialization import serialize_reflect_response
 from ..tracing import create_operation_span
 from ..utils import mask_network_location
 from ..worker.exceptions import RetryTaskAt
@@ -69,6 +70,20 @@ _tiktoken_encoder = tiktoken.get_encoding("cl100k_base")  # GPT-4/GPT-3.5-turbo 
 def count_tokens(text: str) -> int:
     """Count tokens in text using tiktoken (cl100k_base encoding for GPT-4/3.5)."""
     return len(_tiktoken_encoder.encode(text))
+
+
+def decode_jsonb(raw_value: Any, default: Any) -> Any:
+    """Decode asyncpg JSONB values that may already be deserialized."""
+    if raw_value is None:
+        return default
+    if isinstance(raw_value, (dict, list)):
+        return raw_value
+    if isinstance(raw_value, str):
+        try:
+            return json.loads(raw_value)
+        except json.JSONDecodeError:
+            return default
+    return default
 
 
 def fq_table(table_name: str) -> str:
@@ -1116,6 +1131,51 @@ class MemoryEngine(MemoryEngineInterface):
             "top_k_used": len(top_results),
         }
 
+    async def _handle_reflect(self, task_dict: dict[str, Any]) -> None:
+        """Execute a queued reflect operation and persist the final response payload."""
+        bank_id = task_dict.get("bank_id")
+        query = task_dict.get("query")
+        operation_id = task_dict.get("operation_id")
+
+        if not bank_id or not query or not operation_id:
+            raise ValueError("bank_id, query, and operation_id are required for reflect task")
+
+        from atulya_api.models import RequestContext
+
+        internal_context = RequestContext(
+            internal=True,
+            tenant_id=task_dict.get("_tenant_id"),
+            api_key_id=task_dict.get("_api_key_id"),
+        )
+
+        await self._set_operation_stage(operation_id, "reflecting")
+
+        budget_value = task_dict.get("budget")
+        budget = Budget(budget_value) if budget_value else None
+        include_facts = bool(task_dict.get("include_facts", False))
+        include_tool_calls = bool(task_dict.get("include_tool_calls", False))
+        include_tool_call_output = bool(task_dict.get("include_tool_call_output", True))
+
+        reflect_result = await self.reflect_async(
+            bank_id=bank_id,
+            query=query,
+            budget=budget,
+            max_tokens=int(task_dict.get("max_tokens", 4096)),
+            response_schema=task_dict.get("response_schema"),
+            request_context=internal_context,
+            tags=task_dict.get("tags"),
+            tags_match=task_dict.get("tags_match", "any"),
+        )
+
+        await self._set_operation_stage(operation_id, "persisting_result")
+        reflect_payload = serialize_reflect_response(
+            reflect_result,
+            include_facts=include_facts,
+            include_tool_calls=include_tool_calls,
+            include_tool_call_output=include_tool_call_output,
+        )
+        await self._mark_operation_completed(operation_id, result_payload=reflect_payload)
+
     async def _handle_refresh_mental_model(self, task_dict: dict[str, Any]):
         """
         Handler for refresh_mental_model tasks.
@@ -1704,6 +1764,8 @@ class MemoryEngine(MemoryEngineInterface):
                 await self._handle_file_convert_retain(task_dict)
             elif task_type == "consolidation":
                 consolidation_result = await self._handle_consolidation(task_dict)
+            elif task_type == "reflect":
+                await self._handle_reflect(task_dict)
             elif task_type == "refresh_mental_model":
                 await self._handle_refresh_mental_model(task_dict)
             elif task_type == "sub_routine":
@@ -1723,7 +1785,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             # Task succeeded - mark operation as completed
             # file_convert_retain marks itself as completed in a transaction, skip double-marking
-            if operation_id and task_type not in ("file_convert_retain",):
+            if operation_id and task_type not in ("file_convert_retain", "reflect"):
                 if task_type == "consolidation":
                     # Atomically mark completed AND queue webhook delivery in one transaction
                     await self._mark_operation_completed_and_fire_webhook(
@@ -2014,7 +2076,7 @@ class MemoryEngine(MemoryEngineInterface):
         except Exception as e:
             logger.error(f"Failed to mark operation as failed {operation_id}: {e}")
 
-    async def _mark_operation_completed(self, operation_id: str):
+    async def _mark_operation_completed(self, operation_id: str, result_payload: dict[str, Any] | None = None) -> None:
         """Helper to mark an operation as completed in the database.
 
         Also checks if this is a child operation and updates the parent if all siblings are done.
@@ -2025,14 +2087,28 @@ class MemoryEngine(MemoryEngineInterface):
             async with acquire_with_retry(pool) as conn:
                 async with conn.transaction():
                     # Mark this operation as completed
-                    await conn.execute(
-                        f"""
-                        UPDATE {fq_table("async_operations")}
-                        SET status = 'completed', updated_at = NOW(), completed_at = NOW()
-                        WHERE operation_id = $1
-                        """,
-                        uuid.UUID(operation_id),
-                    )
+                    if result_payload is None:
+                        await conn.execute(
+                            f"""
+                            UPDATE {fq_table("async_operations")}
+                            SET status = 'completed', updated_at = NOW(), completed_at = NOW()
+                            WHERE operation_id = $1
+                            """,
+                            uuid.UUID(operation_id),
+                        )
+                    else:
+                        await conn.execute(
+                            f"""
+                            UPDATE {fq_table("async_operations")}
+                            SET status = 'completed',
+                                updated_at = NOW(),
+                                completed_at = NOW(),
+                                result_payload = $2::jsonb
+                            WHERE operation_id = $1
+                            """,
+                            uuid.UUID(operation_id),
+                            json.dumps(result_payload),
+                        )
                     logger.info(f"Marked async operation as completed: {operation_id}")
 
                     # Check if this is a child operation and update parent if all siblings are done
@@ -8319,8 +8395,9 @@ class MemoryEngine(MemoryEngineInterface):
 
             if row:
                 # Check if this is a parent operation
-                result_metadata = json.loads(row["result_metadata"]) if row["result_metadata"] else {}
+                result_metadata = decode_jsonb(row["result_metadata"], {})
                 is_parent = result_metadata.get("is_parent", False)
+                stage = result_metadata.get("operation_stage")
 
                 # Use status from database (parent status is updated when all children complete/fail)
                 db_status = row["status"]
@@ -8348,9 +8425,7 @@ class MemoryEngine(MemoryEngineInterface):
                     all_completed = True
 
                     for child_row in child_rows:
-                        child_metadata = (
-                            json.loads(child_row["result_metadata"]) if child_row["result_metadata"] else {}
-                        )
+                        child_metadata = decode_jsonb(child_row["result_metadata"], {})
                         child_status = child_row["status"]
 
                         child_statuses.append(
@@ -8395,6 +8470,7 @@ class MemoryEngine(MemoryEngineInterface):
                         "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
                         "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
                         "error_message": row["error_message"],
+                        "stage": stage,
                         "result_metadata": result_metadata,
                         "child_operations": child_statuses,
                     }
@@ -8408,6 +8484,7 @@ class MemoryEngine(MemoryEngineInterface):
                         "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
                         "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
                         "error_message": row["error_message"],
+                        "stage": stage,
                         "result_metadata": result_metadata,
                     }
             else:
@@ -8420,7 +8497,68 @@ class MemoryEngine(MemoryEngineInterface):
                     "updated_at": None,
                     "completed_at": None,
                     "error_message": None,
+                    "stage": None,
                 }
+
+    async def get_operation_result(
+        self,
+        bank_id: str,
+        operation_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Get the current result payload for an async operation."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="get_operation_result", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+
+        op_uuid = uuid.UUID(operation_id)
+
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT operation_id, operation_type, created_at, updated_at, completed_at,
+                       status, error_message, result_metadata, result_payload
+                FROM {fq_table("async_operations")}
+                WHERE operation_id = $1 AND bank_id = $2
+                """,
+                op_uuid,
+                bank_id,
+            )
+
+            if not row:
+                return {
+                    "operation_id": operation_id,
+                    "status": "not_found",
+                    "operation_type": None,
+                    "created_at": None,
+                    "updated_at": None,
+                    "completed_at": None,
+                    "error_message": None,
+                    "stage": None,
+                    "result": None,
+                }
+
+            result_metadata = decode_jsonb(row["result_metadata"], {})
+            result_payload = decode_jsonb(row["result_payload"], None)
+            db_status = row["status"]
+            api_status = "pending" if db_status in ("pending", "processing") else db_status
+
+            return {
+                "operation_id": operation_id,
+                "status": api_status,
+                "operation_type": row["operation_type"],
+                "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+                "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+                "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
+                "error_message": row["error_message"],
+                "stage": result_metadata.get("operation_stage"),
+                "result": result_payload if api_status == "completed" else None,
+            }
 
     async def cancel_operation(
         self,
@@ -8443,13 +8581,16 @@ class MemoryEngine(MemoryEngineInterface):
         async with acquire_with_retry(pool) as conn:
             # Check if operation exists and belongs to this memory bank
             result = await conn.fetchrow(
-                f"SELECT bank_id FROM {fq_table('async_operations')} WHERE operation_id = $1 AND bank_id = $2",
+                f"SELECT bank_id, status FROM {fq_table('async_operations')} WHERE operation_id = $1 AND bank_id = $2",
                 op_uuid,
                 bank_id,
             )
 
             if not result:
                 raise ValueError(f"Operation {operation_id} not found for bank {bank_id}")
+
+            if result["status"] == "processing":
+                raise ValueError(f"Operation {operation_id} is already processing and can no longer be cancelled")
 
             # Delete the operation
             await conn.execute(f"DELETE FROM {fq_table('async_operations')} WHERE operation_id = $1", op_uuid)
@@ -8901,6 +9042,68 @@ class MemoryEngine(MemoryEngineInterface):
             task_type="consolidation",
             task_payload=task_payload,
             dedupe_by_bank=True,
+        )
+
+    async def submit_async_reflect(
+        self,
+        bank_id: str,
+        *,
+        query: str,
+        budget: Budget | None = None,
+        max_tokens: int = 4096,
+        include_facts: bool = False,
+        include_tool_calls: bool = False,
+        include_tool_call_output: bool = True,
+        response_schema: dict[str, Any] | None = None,
+        tags: list[str] | None = None,
+        tags_match: str = "any",
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Submit a reflect operation to run asynchronously."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import ReflectContext
+
+            ctx = ReflectContext(
+                bank_id=bank_id,
+                query=query,
+                request_context=request_context,
+                budget=budget,
+                context=None,
+            )
+            await self._validate_operation(self._operation_validator.validate_reflect(ctx))
+
+        task_payload: dict[str, Any] = {
+            "query": query,
+            "budget": budget.value if budget else None,
+            "max_tokens": max_tokens,
+            "include_facts": include_facts,
+            "include_tool_calls": include_tool_calls,
+            "include_tool_call_output": include_tool_call_output,
+            "response_schema": response_schema,
+            "tags": tags,
+            "tags_match": tags_match,
+        }
+        if request_context.tenant_id:
+            task_payload["_tenant_id"] = request_context.tenant_id
+        if request_context.api_key_id:
+            task_payload["_api_key_id"] = request_context.api_key_id
+
+        return await self._submit_async_operation(
+            bank_id=bank_id,
+            operation_type="reflect",
+            task_type="reflect",
+            task_payload=task_payload,
+            result_metadata={
+                "query_preview": f"{query[:117]}..." if len(query) > 120 else query,
+                "budget": budget.value if budget else None,
+                "max_tokens": max_tokens,
+                "include_facts": include_facts,
+                "include_tool_calls": include_tool_calls,
+                "tags": tags,
+                "tags_match": tags_match,
+            },
+            dedupe_by_bank=False,
         )
 
     async def submit_async_refresh_mental_model(

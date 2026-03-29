@@ -176,6 +176,55 @@ class TestWorkerPoller:
             assert row["worker_id"] == "test-worker-1"
 
     @pytest.mark.asyncio
+    async def test_claim_batch_claims_reflect_tasks(self, pool, clean_operations):
+        """Reflect tasks should be claimed like other standard async operations."""
+        from atulya_api.worker import WorkerPoller
+
+        bank_id = f"test-worker-{uuid.uuid4().hex[:8]}"
+        operation_id = uuid.uuid4()
+        payload = json.dumps(
+            {
+                "type": "reflect",
+                "operation_id": str(operation_id),
+                "operation_type": "reflect",
+                "bank_id": bank_id,
+                "query": "What changed?",
+            }
+        )
+        await pool.execute(
+            """
+            INSERT INTO async_operations (operation_id, bank_id, operation_type, status, task_payload)
+            VALUES ($1, $2, 'reflect', 'pending', $3::jsonb)
+            """,
+            operation_id,
+            bank_id,
+            payload,
+        )
+
+        claimed_payloads = []
+
+        async def mock_executor(task_dict):
+            claimed_payloads.append(task_dict)
+
+        poller = WorkerPoller(
+            pool=pool,
+            worker_id="test-worker-reflect",
+            executor=mock_executor,
+        )
+
+        claimed = await poller.claim_batch()
+        assert len(claimed) == 1
+        assert claimed[0].task_dict["type"] == "reflect"
+        assert claimed[0].task_dict["query"] == "What changed?"
+
+        row = await pool.fetchrow(
+            "SELECT status, worker_id FROM async_operations WHERE operation_id = $1",
+            operation_id,
+        )
+        assert row["status"] == "processing"
+        assert row["worker_id"] == "test-worker-reflect"
+
+    @pytest.mark.asyncio
     async def test_claim_batch_respects_max_slots(self, pool, clean_operations):
         """Test that claim_batch respects the max_slots limit."""
         from atulya_api.worker import WorkerPoller

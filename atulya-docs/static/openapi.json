@@ -205,6 +205,681 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/graph/intelligence": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get graph intelligence state graph",
+        "description": "Retrieve a state/topic graph with high-confidence changes, contradictions, and stale signals.",
+        "operationId": "get_graph_intelligence",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 18,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "tags_match",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "any",
+                "all",
+                "any_strict",
+                "all_strict"
+              ],
+              "type": "string",
+              "default": "all_strict",
+              "title": "Tags Match"
+            }
+          },
+          {
+            "name": "confidence_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "default": 0.55,
+              "title": "Confidence Min"
+            }
+          },
+          {
+            "name": "node_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "entity",
+                "topic"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Node Kind"
+            }
+          },
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": 90,
+              "title": "Window Days"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphIntelligenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/graph/investigate": {
+      "post": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Investigate graph intelligence",
+        "description": "Ask a focused question over the state graph and return the relevant change events, evidence path, and checks.",
+        "operationId": "investigate_graph",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GraphInvestigationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphInvestigationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/graph/summary": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get scalable graph summary",
+        "description": "Retrieve a clustered graph summary and top-use nodes for scalable graph exploration.",
+        "operationId": "get_graph_summary",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "surface",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "state",
+                "evidence"
+              ],
+              "type": "string",
+              "default": "state",
+              "title": "Surface"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "tags_match",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "any",
+                "all",
+                "any_strict",
+                "all_strict"
+              ],
+              "type": "string",
+              "default": "all_strict",
+              "title": "Tags Match"
+            }
+          },
+          {
+            "name": "confidence_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "default": 0.55,
+              "title": "Confidence Min"
+            }
+          },
+          {
+            "name": "node_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "entity",
+                "topic"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Node Kind"
+            }
+          },
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": 90,
+              "title": "Window Days"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/graph/neighborhood": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get focused graph neighborhood",
+        "description": "Retrieve a bounded neighborhood for focused graph exploration and detail rendering.",
+        "operationId": "get_graph_neighborhood",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "surface",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "state",
+                "evidence"
+              ],
+              "type": "string",
+              "default": "state",
+              "title": "Surface"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "tags_match",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "any",
+                "all",
+                "any_strict",
+                "all_strict"
+              ],
+              "type": "string",
+              "default": "all_strict",
+              "title": "Tags Match"
+            }
+          },
+          {
+            "name": "confidence_min",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "default": 0.55,
+              "title": "Confidence Min"
+            }
+          },
+          {
+            "name": "node_kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "all",
+                "entity",
+                "topic"
+              ],
+              "type": "string",
+              "default": "all",
+              "title": "Node Kind"
+            }
+          },
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": 90,
+              "title": "Window Days"
+            }
+          },
+          {
+            "name": "focus_ids",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Focus Ids"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 3,
+              "minimum": 1,
+              "default": 1,
+              "title": "Depth"
+            }
+          },
+          {
+            "name": "limit_nodes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 120,
+              "minimum": 1,
+              "default": 60,
+              "title": "Limit Nodes"
+            }
+          },
+          {
+            "name": "limit_edges",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 300,
+              "minimum": 1,
+              "default": 140,
+              "title": "Limit Edges"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphNeighborhoodResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/memories/list": {
       "get": {
         "tags": [
@@ -569,6 +1244,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReflectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/reflect/submit": {
+      "post": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Submit async reflect",
+        "description": "Queue a reflect operation for background execution and retrieve the result via the operations API.",
+        "operationId": "submit_async_reflect",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReflectRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AsyncOperationSubmitResponse"
                 }
               }
             }
@@ -2324,10 +3068,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by operation type: retain, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery",
+              "description": "Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery",
               "title": "Type"
             },
-            "description": "Filter by operation type: retain, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery"
+            "description": "Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery"
           },
           {
             "name": "limit",
@@ -2514,6 +3258,74 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CancelOperationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/operations/{operation_id}/result": {
+      "get": {
+        "tags": [
+          "Operations"
+        ],
+        "summary": "Get operation result",
+        "description": "Get the final user-facing result payload for an async operation.",
+        "operationId": "get_operation_result",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationResultResponse"
                 }
               }
             }
@@ -3274,6 +4086,814 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ConsolidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/sub-routine": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Trigger sub_routine",
+        "description": "Queue a sub_routine operation for atulya-brain cache refresh and activity-time learning.",
+        "operationId": "trigger_sub_routine",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubRoutineSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsolidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/dreams/trigger": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Trigger Dream/Trance generation",
+        "operationId": "trigger_dream_generation",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DreamSubmitRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConsolidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/dreams": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "List dream artifacts",
+        "operationId": "list_dream_artifacts",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/dreams/stats": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Get dream generation stats",
+        "operationId": "get_dream_stats",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DreamStatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/brain/status": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Get brain runtime status",
+        "description": "Return current brain cache state for the bank.",
+        "operationId": "get_brain_runtime_status",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrainRuntimeStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/sub-routine/predictions": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Get activity-time predictions",
+        "description": "Return model predictions for likely active hours for this bank.",
+        "operationId": "get_sub_routine_predictions",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "horizon_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 168,
+              "minimum": 1,
+              "default": 24,
+              "title": "Horizon Hours"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubRoutinePredictionResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/sub-routine/histogram": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Get full activity histogram",
+        "description": "Return all 24 hourly activity probabilities from the current sub_routine model.",
+        "operationId": "get_sub_routine_histogram",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubRoutineHistogramResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/brain/influence": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Get brain influence analytics",
+        "operationId": "get_brain_influence",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "window_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 90,
+              "minimum": 1,
+              "default": 14,
+              "title": "Window Days"
+            }
+          },
+          {
+            "name": "top_k",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 5,
+              "default": 12,
+              "title": "Top K"
+            }
+          },
+          {
+            "name": "entity_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "all",
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrainInfluenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/brain/export": {
+      "get": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Export current .brain snapshot",
+        "description": "Export validated brain snapshot for this bank.",
+        "operationId": "export_brain_snapshot",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/brain/import/validate": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Validate .brain import payload",
+        "description": "Validate schema/version/checksum compatibility before importing.",
+        "operationId": "validate_brain_import",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_validate_brain_import"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrainImportValidationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/brain/import": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Import .brain snapshot",
+        "description": "Import a validated brain snapshot into this bank cache path.",
+        "operationId": "import_brain_snapshot",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_brain_snapshot"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrainImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/brain/learn": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Learn from a remote brain",
+        "description": "Connect to another Atulya instance and distill its knowledge into this bank's brain.",
+        "operationId": "brain_learn_from_remote",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrainLearnRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrainLearnResponse"
                 }
               }
             }
@@ -4328,6 +5948,359 @@
         ],
         "title": "Body_file_retain"
       },
+      "Body_import_brain_snapshot": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Brain snapshot payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_brain_snapshot"
+      },
+      "Body_validate_brain_import": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Brain snapshot payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_validate_brain_import"
+      },
+      "BrainImportResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "file_path": {
+            "type": "string",
+            "title": "File Path"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "format_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "file_path",
+          "size_bytes"
+        ],
+        "title": "BrainImportResponse"
+      },
+      "BrainImportValidationResponse": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid"
+        ],
+        "title": "BrainImportValidationResponse"
+      },
+      "BrainInfluenceResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "window_days": {
+            "type": "integer",
+            "title": "Window Days"
+          },
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "leaderboard": {
+            "items": {
+              "$ref": "#/components/schemas/InfluenceRow"
+            },
+            "type": "array",
+            "title": "Leaderboard"
+          },
+          "heatmap": {
+            "items": {
+              "$ref": "#/components/schemas/InfluenceHeatmapPoint"
+            },
+            "type": "array",
+            "title": "Heatmap"
+          },
+          "trend": {
+            "items": {
+              "$ref": "#/components/schemas/InfluenceTrendPoint"
+            },
+            "type": "array",
+            "title": "Trend"
+          },
+          "anomalies": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Anomalies"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "window_days",
+          "entity_type",
+          "leaderboard",
+          "heatmap",
+          "trend",
+          "anomalies",
+          "summary"
+        ],
+        "title": "BrainInfluenceResponse"
+      },
+      "BrainLearnRequest": {
+        "properties": {
+          "remote_endpoint": {
+            "type": "string",
+            "title": "Remote Endpoint",
+            "description": "URL of the remote Atulya API (e.g. http://host:8888)"
+          },
+          "remote_bank_id": {
+            "type": "string",
+            "title": "Remote Bank Id",
+            "description": "Bank ID on the remote instance to learn from"
+          },
+          "remote_api_key": {
+            "type": "string",
+            "title": "Remote Api Key",
+            "description": "Optional API key for the remote instance",
+            "default": ""
+          },
+          "learning_type": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "distilled",
+              "structured",
+              "raw_mirror"
+            ],
+            "title": "Learning Type",
+            "default": "auto"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "incremental",
+              "full_copy"
+            ],
+            "title": "Mode",
+            "default": "incremental"
+          },
+          "horizon_hours": {
+            "type": "integer",
+            "maximum": 168.0,
+            "minimum": 1.0,
+            "title": "Horizon Hours",
+            "default": 24
+          }
+        },
+        "type": "object",
+        "required": [
+          "remote_endpoint",
+          "remote_bank_id"
+        ],
+        "title": "BrainLearnRequest"
+      },
+      "BrainLearnResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "deduplicated": {
+            "type": "boolean",
+            "title": "Deduplicated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id"
+        ],
+        "title": "BrainLearnResponse"
+      },
+      "BrainRuntimeStatusResponse": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled"
+          },
+          "circuit_open": {
+            "type": "boolean",
+            "title": "Circuit Open"
+          },
+          "failure_count": {
+            "type": "integer",
+            "title": "Failure Count"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "file_path": {
+            "type": "string",
+            "title": "File Path"
+          },
+          "exists": {
+            "type": "boolean",
+            "title": "Exists"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "last_modified_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Modified At"
+          },
+          "source_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Snapshot Id"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "native_library_loaded": {
+            "type": "boolean",
+            "title": "Native Library Loaded"
+          },
+          "format_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Format Version"
+          },
+          "model_signature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Signature"
+          },
+          "compatibility_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compatibility Reason"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "enabled",
+          "circuit_open",
+          "failure_count",
+          "bank_id",
+          "file_path",
+          "exists",
+          "size_bytes",
+          "native_library_loaded"
+        ],
+        "title": "BrainRuntimeStatusResponse"
+      },
       "Budget": {
         "type": "string",
         "enum": [
@@ -5188,6 +7161,79 @@
           "updated_at": "2024-01-15T10:30:00Z"
         }
       },
+      "DreamStatsResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "total_runs": {
+            "type": "integer",
+            "title": "Total Runs"
+          },
+          "last_run_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Run At"
+          },
+          "avg_quality": {
+            "type": "number",
+            "title": "Avg Quality"
+          },
+          "avg_tokens": {
+            "type": "number",
+            "title": "Avg Tokens"
+          },
+          "avg_output_tokens": {
+            "type": "number",
+            "title": "Avg Output Tokens"
+          },
+          "distillation_pass_rate": {
+            "type": "number",
+            "title": "Distillation Pass Rate"
+          },
+          "distilled_count": {
+            "type": "integer",
+            "title": "Distilled Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "total_runs",
+          "last_run_at",
+          "avg_quality",
+          "avg_tokens",
+          "avg_output_tokens",
+          "distillation_pass_rate",
+          "distilled_count"
+        ],
+        "title": "DreamStatsResponse"
+      },
+      "DreamSubmitRequest": {
+        "properties": {
+          "trigger_source": {
+            "type": "string",
+            "title": "Trigger Source",
+            "description": "manual | event | cron",
+            "default": "manual"
+          },
+          "run_type": {
+            "type": "string",
+            "title": "Run Type",
+            "description": "dream | trance",
+            "default": "dream"
+          }
+        },
+        "type": "object",
+        "title": "DreamSubmitRequest"
+      },
       "EntityDetailResponse": {
         "properties": {
           "id": {
@@ -5502,6 +7548,21 @@
             "type": "boolean",
             "title": "File Upload Api",
             "description": "Whether file upload/conversion API is enabled"
+          },
+          "brain_runtime": {
+            "type": "boolean",
+            "title": "Brain Runtime",
+            "description": "Whether atulya-brain runtime is enabled"
+          },
+          "sub_routine": {
+            "type": "boolean",
+            "title": "Sub Routine",
+            "description": "Whether sub_routine operations are enabled"
+          },
+          "brain_import_export": {
+            "type": "boolean",
+            "title": "Brain Import Export",
+            "description": "Whether .brain import/export APIs are enabled"
           }
         },
         "type": "object",
@@ -5510,7 +7571,10 @@
           "mcp",
           "worker",
           "bank_config_api",
-          "file_upload_api"
+          "file_upload_api",
+          "brain_runtime",
+          "sub_routine",
+          "brain_import_export"
         ],
         "title": "FeaturesInfo",
         "description": "Feature flags indicating which capabilities are enabled."
@@ -5539,6 +7603,78 @@
             "550e8400-e29b-41d4-a716-446655440002"
           ]
         }
+      },
+      "GraphChangeEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "node_id": {
+            "type": "string",
+            "title": "Node Id"
+          },
+          "change_type": {
+            "type": "string",
+            "enum": [
+              "change",
+              "contradiction",
+              "stale"
+            ],
+            "title": "Change Type"
+          },
+          "before_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Before State"
+          },
+          "after_state": {
+            "type": "string",
+            "title": "After State"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "time_window": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Window"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "node_id",
+          "change_type",
+          "after_state",
+          "confidence",
+          "summary"
+        ],
+        "title": "GraphChangeEventResponse"
       },
       "GraphDataResponse": {
         "properties": {
@@ -5619,6 +7755,923 @@
           "total_units": 2
         }
       },
+      "GraphEvidencePathStepResponse": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "node",
+              "event",
+              "memory"
+            ],
+            "title": "Kind"
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "id",
+          "label"
+        ],
+        "title": "GraphEvidencePathStepResponse"
+      },
+      "GraphIntelligenceResponse": {
+        "properties": {
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphStateNodeResponse"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphRelationEdgeResponse"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "change_events": {
+            "items": {
+              "$ref": "#/components/schemas/GraphChangeEventResponse"
+            },
+            "type": "array",
+            "title": "Change Events"
+          },
+          "total_nodes": {
+            "type": "integer",
+            "title": "Total Nodes"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "nodes",
+          "edges",
+          "change_events",
+          "total_nodes",
+          "generated_at"
+        ],
+        "title": "GraphIntelligenceResponse"
+      },
+      "GraphInvestigationRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Type"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "tags_match": {
+            "type": "string",
+            "enum": [
+              "any",
+              "all",
+              "any_strict",
+              "all_strict"
+            ],
+            "title": "Tags Match",
+            "default": "all_strict"
+          },
+          "confidence_min": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence Min",
+            "default": 0.55
+          },
+          "node_kind": {
+            "type": "string",
+            "enum": [
+              "all",
+              "entity",
+              "topic"
+            ],
+            "title": "Node Kind",
+            "default": "all"
+          },
+          "window_days": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Window Days",
+            "default": 90
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 18
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "GraphInvestigationRequest"
+      },
+      "GraphInvestigationResponse": {
+        "properties": {
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "focal_node_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focal Node Ids"
+          },
+          "focal_edge_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focal Edge Ids"
+          },
+          "change_events": {
+            "items": {
+              "$ref": "#/components/schemas/GraphChangeEventResponse"
+            },
+            "type": "array",
+            "title": "Change Events"
+          },
+          "evidence_path": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEvidencePathStepResponse"
+            },
+            "type": "array",
+            "title": "Evidence Path"
+          },
+          "recommended_checks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommended Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answer"
+        ],
+        "title": "GraphInvestigationResponse"
+      },
+      "GraphNeighborhoodEdgeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "relation",
+              "event",
+              "evidence"
+            ],
+            "title": "Kind",
+            "default": "relation"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "stroke": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stroke"
+          },
+          "dashed": {
+            "type": "boolean",
+            "title": "Dashed",
+            "default": false
+          },
+          "width": {
+            "type": "number",
+            "title": "Width",
+            "default": 1.6
+          },
+          "animated": {
+            "type": "boolean",
+            "title": "Animated",
+            "default": true
+          },
+          "priority": {
+            "type": "number",
+            "title": "Priority",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source",
+          "target"
+        ],
+        "title": "GraphNeighborhoodEdgeResponse"
+      },
+      "GraphNeighborhoodNodeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "node_type": {
+            "type": "string",
+            "enum": [
+              "state",
+              "event",
+              "evidence"
+            ],
+            "title": "Node Type"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview"
+          },
+          "status_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Label"
+          },
+          "status_tone": {
+            "type": "string",
+            "enum": [
+              "stable",
+              "changed",
+              "contradictory",
+              "stale",
+              "neutral"
+            ],
+            "title": "Status Tone",
+            "default": "neutral"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evidence Count"
+          },
+          "kind_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kind Label"
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Meta"
+          },
+          "timestamp_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp Label"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "accent_color": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Accent Color"
+          },
+          "display_priority": {
+            "type": "number",
+            "title": "Display Priority",
+            "default": 0.0
+          },
+          "node_density_hint": {
+            "type": "number",
+            "title": "Node Density Hint",
+            "default": 0.0
+          },
+          "cluster_membership": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Membership"
+          },
+          "render_mode_hint": {
+            "type": "string",
+            "enum": [
+              "detail",
+              "compact",
+              "overview"
+            ],
+            "title": "Render Mode Hint",
+            "default": "detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "node_type",
+          "title"
+        ],
+        "title": "GraphNeighborhoodNodeResponse"
+      },
+      "GraphNeighborhoodResponse": {
+        "properties": {
+          "surface": {
+            "type": "string",
+            "enum": [
+              "state",
+              "evidence"
+            ],
+            "title": "Surface"
+          },
+          "mode_hint": {
+            "type": "string",
+            "enum": [
+              "detail",
+              "compact",
+              "overview"
+            ],
+            "title": "Mode Hint"
+          },
+          "focus_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Focus Ids"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNeighborhoodNodeResponse"
+            },
+            "type": "array",
+            "title": "Nodes"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNeighborhoodEdgeResponse"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "total_nodes": {
+            "type": "integer",
+            "title": "Total Nodes"
+          },
+          "total_edges": {
+            "type": "integer",
+            "title": "Total Edges"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "surface",
+          "mode_hint",
+          "total_nodes",
+          "total_edges",
+          "generated_at"
+        ],
+        "title": "GraphNeighborhoodResponse"
+      },
+      "GraphRelationEdgeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "target_id": {
+            "type": "string",
+            "title": "Target Id"
+          },
+          "relation_type": {
+            "type": "string",
+            "title": "Relation Type"
+          },
+          "strength": {
+            "type": "number",
+            "title": "Strength"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_id",
+          "target_id",
+          "relation_type",
+          "strength",
+          "evidence_count"
+        ],
+        "title": "GraphRelationEdgeResponse"
+      },
+      "GraphStateNodeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "entity",
+              "topic"
+            ],
+            "title": "Kind"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "current_state": {
+            "type": "string",
+            "title": "Current State"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "stable",
+              "changed",
+              "contradictory",
+              "stale"
+            ],
+            "title": "Status"
+          },
+          "status_reason": {
+            "type": "string",
+            "title": "Status Reason"
+          },
+          "confidence": {
+            "type": "number",
+            "title": "Confidence"
+          },
+          "change_score": {
+            "type": "number",
+            "title": "Change Score"
+          },
+          "last_changed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Changed At"
+          },
+          "primary_timestamp": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Timestamp"
+          },
+          "evidence_count": {
+            "type": "integer",
+            "title": "Evidence Count"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "current_state",
+          "status",
+          "status_reason",
+          "confidence",
+          "change_score",
+          "evidence_count"
+        ],
+        "title": "GraphStateNodeResponse"
+      },
+      "GraphSummaryEdgeResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "source_id": {
+            "type": "string",
+            "title": "Source Id"
+          },
+          "target_id": {
+            "type": "string",
+            "title": "Target Id"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "source_id",
+          "target_id",
+          "weight"
+        ],
+        "title": "GraphSummaryEdgeResponse"
+      },
+      "GraphSummaryItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "cluster",
+              "node"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "subtitle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subtitle"
+          },
+          "preview_labels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Preview Labels"
+          },
+          "member_count": {
+            "type": "integer",
+            "title": "Member Count"
+          },
+          "status_tone": {
+            "type": "string",
+            "enum": [
+              "stable",
+              "changed",
+              "contradictory",
+              "stale",
+              "neutral"
+            ],
+            "title": "Status Tone",
+            "default": "neutral"
+          },
+          "display_priority": {
+            "type": "number",
+            "title": "Display Priority"
+          },
+          "render_mode_hint": {
+            "type": "string",
+            "enum": [
+              "detail",
+              "compact",
+              "overview"
+            ],
+            "title": "Render Mode Hint"
+          },
+          "cluster_membership": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Cluster Membership"
+          },
+          "node_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Node Ref"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "member_count",
+          "display_priority",
+          "render_mode_hint"
+        ],
+        "title": "GraphSummaryItemResponse"
+      },
+      "GraphSummaryResponse": {
+        "properties": {
+          "surface": {
+            "type": "string",
+            "enum": [
+              "state",
+              "evidence"
+            ],
+            "title": "Surface"
+          },
+          "mode_hint": {
+            "type": "string",
+            "enum": [
+              "detail",
+              "compact",
+              "overview"
+            ],
+            "title": "Mode Hint"
+          },
+          "total_nodes": {
+            "type": "integer",
+            "title": "Total Nodes"
+          },
+          "total_edges": {
+            "type": "integer",
+            "title": "Total Edges"
+          },
+          "clusters": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSummaryItemResponse"
+            },
+            "type": "array",
+            "title": "Clusters"
+          },
+          "top_nodes": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSummaryItemResponse"
+            },
+            "type": "array",
+            "title": "Top Nodes"
+          },
+          "bundled_edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSummaryEdgeResponse"
+            },
+            "type": "array",
+            "title": "Bundled Edges"
+          },
+          "initial_focus_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Initial Focus Ids"
+          },
+          "generated_at": {
+            "type": "string",
+            "title": "Generated At"
+          },
+          "cached": {
+            "type": "boolean",
+            "title": "Cached",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "surface",
+          "mode_hint",
+          "total_nodes",
+          "total_edges",
+          "generated_at"
+        ],
+        "title": "GraphSummaryResponse"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -5674,6 +8727,148 @@
         "type": "object",
         "title": "IncludeOptions",
         "description": "Options for including additional data in recall results."
+      },
+      "InfluenceContribution": {
+        "properties": {
+          "recency": {
+            "type": "number",
+            "title": "Recency"
+          },
+          "freq": {
+            "type": "number",
+            "title": "Freq"
+          },
+          "graph": {
+            "type": "number",
+            "title": "Graph"
+          },
+          "rerank": {
+            "type": "number",
+            "title": "Rerank"
+          },
+          "dream": {
+            "type": "number",
+            "title": "Dream"
+          }
+        },
+        "type": "object",
+        "required": [
+          "recency",
+          "freq",
+          "graph",
+          "rerank",
+          "dream"
+        ],
+        "title": "InfluenceContribution"
+      },
+      "InfluenceHeatmapPoint": {
+        "properties": {
+          "weekday": {
+            "type": "integer",
+            "title": "Weekday"
+          },
+          "hour_utc": {
+            "type": "integer",
+            "title": "Hour Utc"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weekday",
+          "hour_utc",
+          "count",
+          "score"
+        ],
+        "title": "InfluenceHeatmapPoint"
+      },
+      "InfluenceRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "access_count": {
+            "type": "integer",
+            "title": "Access Count"
+          },
+          "influence_score": {
+            "type": "number",
+            "title": "Influence Score"
+          },
+          "contribution": {
+            "$ref": "#/components/schemas/InfluenceContribution"
+          },
+          "last_accessed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Accessed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "text",
+          "access_count",
+          "influence_score",
+          "contribution"
+        ],
+        "title": "InfluenceRow"
+      },
+      "InfluenceTrendPoint": {
+        "properties": {
+          "index": {
+            "type": "integer",
+            "title": "Index"
+          },
+          "raw": {
+            "type": "number",
+            "title": "Raw"
+          },
+          "ewma": {
+            "type": "number",
+            "title": "Ewma"
+          },
+          "lower": {
+            "type": "number",
+            "title": "Lower"
+          },
+          "upper": {
+            "type": "number",
+            "title": "Upper"
+          }
+        },
+        "type": "object",
+        "required": [
+          "index",
+          "raw",
+          "ewma",
+          "lower",
+          "upper"
+        ],
+        "title": "InfluenceTrendPoint"
       },
       "ListDocumentsResponse": {
         "properties": {
@@ -6154,6 +9349,119 @@
           "task_type": "retain"
         }
       },
+      "OperationResultResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "completed",
+              "failed",
+              "not_found"
+            ],
+            "title": "Status"
+          },
+          "operation_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Type"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "error_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Message"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReflectResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id",
+          "status"
+        ],
+        "title": "OperationResultResponse",
+        "description": "Response model for retrieving the final result of an async operation.",
+        "example": {
+          "completed_at": "2024-01-15T10:31:30Z",
+          "created_at": "2024-01-15T10:30:00Z",
+          "operation_id": "550e8400-e29b-41d4-a716-446655440000",
+          "operation_type": "reflect",
+          "result": {
+            "text": "Final answer"
+          },
+          "stage": "persisting_result",
+          "status": "completed",
+          "updated_at": "2024-01-15T10:31:30Z"
+        }
+      },
       "OperationStatusResponse": {
         "properties": {
           "operation_id": {
@@ -6224,6 +9532,18 @@
               }
             ],
             "title": "Error Message"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage",
+            "description": "High-level progress stage for pending async work, derived from result_metadata.operation_stage."
           },
           "result_metadata": {
             "anyOf": [
@@ -6320,6 +9640,24 @@
           ],
           "total": 150
         }
+      },
+      "PredictionPoint": {
+        "properties": {
+          "hour_utc": {
+            "type": "integer",
+            "title": "Hour Utc"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hour_utc",
+          "score"
+        ],
+        "title": "PredictionPoint"
       },
       "RecallRequest": {
         "properties": {
@@ -7374,6 +10712,135 @@
         "title": "SourceFactsIncludeOptions",
         "description": "Options for including source facts for observation-type results."
       },
+      "SubRoutineHistogramResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "histogram": {
+            "items": {
+              "$ref": "#/components/schemas/PredictionPoint"
+            },
+            "type": "array",
+            "title": "Histogram"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count",
+            "default": 0
+          },
+          "source_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Snapshot Id"
+          },
+          "model_signature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Signature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "histogram"
+        ],
+        "title": "SubRoutineHistogramResponse"
+      },
+      "SubRoutinePredictionResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "horizon_hours": {
+            "type": "integer",
+            "title": "Horizon Hours"
+          },
+          "predictions": {
+            "items": {
+              "$ref": "#/components/schemas/PredictionPoint"
+            },
+            "type": "array",
+            "title": "Predictions"
+          },
+          "sample_count": {
+            "type": "integer",
+            "title": "Sample Count",
+            "default": 0
+          },
+          "source_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Snapshot Id"
+          },
+          "model_signature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Signature"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "horizon_hours",
+          "predictions"
+        ],
+        "title": "SubRoutinePredictionResponse"
+      },
+      "SubRoutineSubmitRequest": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "warmup",
+              "incremental",
+              "full_copy"
+            ],
+            "title": "Mode",
+            "default": "incremental"
+          },
+          "horizon_hours": {
+            "type": "integer",
+            "maximum": 168.0,
+            "minimum": 1.0,
+            "title": "Horizon Hours",
+            "default": 24
+          },
+          "force_rebuild": {
+            "type": "boolean",
+            "title": "Force Rebuild",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "SubRoutineSubmitRequest"
+      },
       "TagItem": {
         "properties": {
           "tag": {
@@ -7729,9 +11196,12 @@
           "api_version": "0.4.0",
           "features": {
             "bank_config_api": false,
+            "brain_import_export": false,
+            "brain_runtime": true,
             "file_upload_api": true,
             "mcp": true,
             "observations": false,
+            "sub_routine": true,
             "worker": true
           }
         }

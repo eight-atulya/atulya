@@ -87,6 +87,7 @@ def upgrade() -> None:
             completed_at timestamp with time zone,
             error_message text,
             result_metadata jsonb DEFAULT '{}'::jsonb NOT NULL,
+            result_payload jsonb,
             worker_id text,
             claimed_at timestamp with time zone,
             retry_count integer DEFAULT 0 NOT NULL,
