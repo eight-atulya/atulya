@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import "@xyflow/react/dist/style.css";
 @import "tailwindcss";
 :root {
   --background: oklch(0.9911 0 0);
@@ -54,6 +55,19 @@
   --shadow-2xl: 0px 1px 3px 0px hsl(0 0% 0% / 0.43);
   --tracking-normal: 0.025em;
   --spacing: 0.25rem;
+  --graph-surface-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.98));
+  --graph-surface-accent: rgba(220, 38, 38, 0.05);
+  --graph-overview-accent: rgba(220, 38, 38, 0.04);
+  --graph-dot: rgba(148, 163, 184, 0.25);
+  --graph-edge-neutral: rgba(100, 116, 139, 0.45);
+  --graph-edge-overview: rgba(100, 116, 139, 0.32);
+  --graph-panel-bg: rgba(255, 255, 255, 0.92);
+  --graph-panel-border: rgba(255, 255, 255, 0.8);
+  --graph-panel-foreground: oklch(0.4386 0 0);
+  --graph-chip-bg: oklch(0.9731 0 0);
+  --graph-chip-border: oklch(0.9037 0 0);
+  --graph-chip-foreground: oklch(0.4386 0 0);
+  --graph-overlay-bg: rgba(255, 255, 255, 0.45);
 }
 
 .dark {
@@ -90,6 +104,19 @@
   --sidebar-accent-foreground: oklch(0.9851 0 0);
   --sidebar-border: oklch(0.2809 0 0);
   --sidebar-ring: oklch(0.58 0.20 25);
+  --graph-surface-bg: linear-gradient(180deg, rgba(24, 24, 27, 0.96), rgba(15, 23, 42, 0.98));
+  --graph-surface-accent: rgba(239, 68, 68, 0.08);
+  --graph-overview-accent: rgba(239, 68, 68, 0.07);
+  --graph-dot: rgba(148, 163, 184, 0.16);
+  --graph-edge-neutral: rgba(148, 163, 184, 0.4);
+  --graph-edge-overview: rgba(148, 163, 184, 0.24);
+  --graph-panel-bg: rgba(24, 24, 27, 0.9);
+  --graph-panel-border: rgba(255, 255, 255, 0.08);
+  --graph-panel-foreground: oklch(0.82 0 0);
+  --graph-chip-bg: rgba(255, 255, 255, 0.06);
+  --graph-chip-border: rgba(255, 255, 255, 0.08);
+  --graph-chip-foreground: oklch(0.82 0 0);
+  --graph-overlay-bg: rgba(9, 9, 11, 0.4);
 }
 
 @theme inline {
@@ -238,6 +265,57 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .dark .prose table {
   color: hsl(var(--foreground));
   border: 2px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.atulya-flow-edge {
+  stroke-linecap: round;
+  animation: atulya-flow-dash 1.3s linear infinite;
+  vector-effect: non-scaling-stroke;
+}
+
+.react-flow__node {
+  border-radius: 1.5rem;
+}
+
+.react-flow__node:focus,
+.react-flow__node:focus-visible {
+  outline: none;
+}
+
+.react-flow__panel {
+  z-index: 5;
+}
+
+.react-flow__controls {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.react-flow__controls-button {
+  border-radius: 9999px !important;
+}
+
+.graph-surface {
+  background-image:
+    radial-gradient(circle at top, var(--graph-surface-accent), transparent 32%),
+    var(--graph-surface-bg);
+}
+
+.graph-overview-surface {
+  background-image:
+    radial-gradient(circle at top, var(--graph-overview-accent), transparent 28%),
+    var(--graph-surface-bg);
+}
+
+@keyframes atulya-flow-dash {
+  from {
+    stroke-dashoffset: 0;
+  }
+
+  to {
+    stroke-dashoffset: -28;
+  }
 }
 
 .dark .prose thead {
