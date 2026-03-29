@@ -256,6 +256,65 @@ export interface GraphNeighborhoodResponse {
   cached: boolean;
 }
 
+export interface ReflectResponse {
+  text: string;
+  based_on: {
+    memories: Array<{
+      id: string | null;
+      text: string;
+      type: string | null;
+      context: string | null;
+      occurred_start: string | null;
+      occurred_end: string | null;
+    }>;
+    mental_models: Array<{
+      id: string;
+      text: string;
+      context: string | null;
+    }>;
+    directives: Array<{
+      id: string;
+      name: string;
+      content: string;
+    }>;
+  } | null;
+  structured_output: Record<string, any> | null;
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+  } | null;
+  trace: {
+    tool_calls: Array<{
+      tool: string;
+      input: Record<string, any>;
+      output: Record<string, any> | null;
+      duration_ms: number;
+      iteration: number;
+    }>;
+    llm_calls: Array<{
+      scope: string;
+      duration_ms: number;
+    }>;
+  } | null;
+}
+
+export interface OperationStatus {
+  operation_id: string;
+  status: "pending" | "completed" | "failed" | "not_found";
+  operation_type: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  completed_at: string | null;
+  error_message: string | null;
+  stage: string | null;
+  result_metadata?: Record<string, any> | null;
+}
+
+export interface OperationResult extends OperationStatus {
+  result: ReflectResponse | null;
+}
+
 export class ControlPlaneClient {
   private async fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
     try {
@@ -387,7 +446,27 @@ export class ControlPlaneClient {
     tags?: string[];
     tags_match?: "any" | "all" | "any_strict" | "all_strict";
   }) {
-    return this.fetchApi("/api/reflect", {
+    return this.fetchApi<ReflectResponse>("/api/reflect", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async submitReflect(params: {
+    query: string;
+    bank_id: string;
+    budget?: string;
+    max_tokens?: number;
+    include_facts?: boolean;
+    include_tool_calls?: boolean;
+    response_schema?: Record<string, any>;
+    tags?: string[];
+    tags_match?: "any" | "all" | "any_strict" | "all_strict";
+  }) {
+    return this.fetchApi<{
+      operation_id: string;
+      status: string;
+    }>("/api/reflect/submit", {
       method: "POST",
       body: JSON.stringify(params),
     });
@@ -946,15 +1025,14 @@ export class ControlPlaneClient {
    * Get operation status
    */
   async getOperationStatus(bankId: string, operationId: string) {
-    return this.fetchApi<{
-      operation_id: string;
-      status: "pending" | "completed" | "failed" | "not_found";
-      operation_type: string | null;
-      created_at: string | null;
-      updated_at: string | null;
-      completed_at: string | null;
-      error_message: string | null;
-    }>(`/api/banks/${bankId}/operations/${operationId}`);
+    return this.fetchApi<OperationStatus>(`/api/banks/${bankId}/operations/${operationId}`);
+  }
+
+  /**
+   * Get the final result for an async operation
+   */
+  async getOperationResult(bankId: string, operationId: string) {
+    return this.fetchApi<OperationResult>(`/api/banks/${bankId}/operations/${operationId}/result`);
   }
 
   /**

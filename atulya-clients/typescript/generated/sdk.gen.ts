@@ -92,6 +92,9 @@ import type {
   GetOperationStatusData,
   GetOperationStatusErrors,
   GetOperationStatusResponses,
+  GetOperationResultData,
+  GetOperationResultErrors,
+  GetOperationResultResponses,
   GetVersionData,
   GetVersionResponses,
   HealthEndpointHealthGetData,
@@ -134,6 +137,9 @@ import type {
   ReflectData,
   ReflectErrors,
   ReflectResponses,
+  SubmitAsyncReflectData,
+  SubmitAsyncReflectErrors,
+  SubmitAsyncReflectResponses,
   RefreshMentalModelData,
   RefreshMentalModelErrors,
   RefreshMentalModelResponses,
@@ -332,6 +338,27 @@ export const reflect = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: "/v1/default/banks/{bank_id}/reflect",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+
+/**
+ * Submit async reflect
+ *
+ * Queue a reflect operation for background execution and retrieve the result via the operations API.
+ */
+export const submitAsyncReflect = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitAsyncReflectData, ThrowOnError>,
+) =>
+  (options.client ?? client).post<
+    SubmitAsyncReflectResponses,
+    SubmitAsyncReflectErrors,
+    ThrowOnError
+  >({
+    url: "/v1/default/banks/{bank_id}/reflect/submit",
     ...options,
     headers: {
       "Content-Type": "application/json",
@@ -752,6 +779,23 @@ export const getOperationStatus = <ThrowOnError extends boolean = false>(
     ThrowOnError
   >({
     url: "/v1/default/banks/{bank_id}/operations/{operation_id}",
+    ...options,
+  });
+
+/**
+ * Get operation result
+ *
+ * Get the final user-facing result payload for an async operation.
+ */
+export const getOperationResult = <ThrowOnError extends boolean = false>(
+  options: Options<GetOperationResultData, ThrowOnError>,
+) =>
+  (options.client ?? client).get<
+    GetOperationResultResponses,
+    GetOperationResultErrors,
+    ThrowOnError
+  >({
+    url: "/v1/default/banks/{bank_id}/operations/{operation_id}/result",
     ...options,
   });
 

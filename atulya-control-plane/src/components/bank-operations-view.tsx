@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useBank } from "@/lib/bank-context";
-import { client } from "@/lib/api";
+import { client, type ReflectResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   Table,
   TableBody,
@@ -26,6 +27,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { RefreshCw, Clock, AlertCircle, CheckCircle, Loader2, X } from "lucide-react";
 
 interface Operation {
@@ -55,14 +58,15 @@ type OperationDetails =
       updated_at: string | null;
       completed_at: string | null;
       error_message: string | null;
+      stage?: string | null;
       result_metadata?: {
         items_count?: number;
         total_tokens?: number;
         num_sub_batches?: number;
         is_parent?: boolean;
         [key: string]: any;
-      };
-      child_operations?: ChildOperationStatus[];
+      } | null;
+      child_operations?: ChildOperationStatus[] | null;
       error?: never; // Not present in success case
     }
   | {
@@ -74,6 +78,7 @@ type OperationDetails =
       updated_at?: never;
       completed_at?: never;
       error_message?: never;
+      stage?: never;
       result_metadata?: never;
       child_operations?: never;
     };
@@ -81,6 +86,7 @@ type OperationDetails =
 const OPERATION_TYPE_OPTIONS = [
   { value: "all", label: "All types" },
   { value: "retain", label: "Retain" },
+  { value: "reflect", label: "Reflect" },
   { value: "consolidation", label: "Consolidation" },
   { value: "refresh_mental_model", label: "Mental Model Refresh" },
   { value: "file_convert_retain", label: "File Convert & Retain" },
@@ -100,6 +106,9 @@ export function BankOperationsView() {
   const [cancellingOpId, setCancellingOpId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedOperation, setSelectedOperation] = useState<OperationDetails | null>(null);
+  const [selectedOperationResult, setSelectedOperationResult] = useState<ReflectResponse | null>(
+    null
+  );
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -166,9 +175,14 @@ export function BankOperationsView() {
 
     setLoadingDetails(true);
     setDialogOpen(true);
+    setSelectedOperationResult(null);
     try {
       const details = await client.getOperationStatus(currentBank, operationId);
       setSelectedOperation(details);
+      if (details.operation_type === "reflect" && details.status === "completed") {
+        const result = await client.getOperationResult(currentBank, operationId);
+        setSelectedOperationResult(result.result);
+      }
     } catch (error) {
       console.error("Error loading operation details:", error);
       setSelectedOperation({ error: "Failed to load operation details" });
@@ -277,7 +291,7 @@ export function BankOperationsView() {
                       onClick={() => handleOperationClick(op.id)}
                     >
                       <TableCell className="font-mono text-xs text-muted-foreground">
-                        {op.id.substring(0, 8)}
+                        <span title={op.id}>#{op.id.slice(-8)}</span>
                       </TableCell>
                       <TableCell className="font-medium">
                         {op.task_type === "sub_routine" ? (
@@ -429,6 +443,10 @@ export function BankOperationsView() {
                       </div>
                     </div>
                     <div>
+                      <div className="text-sm font-medium text-muted-foreground">Stage</div>
+                      <div className="mt-1 text-sm">{selectedOperation.stage || "N/A"}</div>
+                    </div>
+                    <div>
                       <div className="text-sm font-medium text-muted-foreground">Created</div>
                       <div className="mt-1 text-sm">
                         {selectedOperation.created_at
@@ -461,6 +479,48 @@ export function BankOperationsView() {
                       </div>
                     )}
                   </div>
+
+                  {selectedOperation.operation_type === "reflect" &&
+                    selectedOperation.status === "completed" && (
+                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                              Result available
+                            </div>
+                            <div className="text-sm text-emerald-700/80 dark:text-emerald-300/80">
+                              This reflect operation finished successfully and has a stored result
+                              payload.
+                            </div>
+                          </div>
+                          {selectedOperationResult?.text && (
+                            <CopyButton
+                              text={selectedOperationResult.text}
+                              toastLabel="Stored reflect result copied"
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {selectedOperationResult?.text && (
+                    <div className="rounded-lg border p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="text-sm font-medium text-foreground">
+                          Stored Reflect Result
+                        </div>
+                        <CopyButton
+                          text={selectedOperationResult.text}
+                          toastLabel="Stored reflect result copied"
+                        />
+                      </div>
+                      <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {selectedOperationResult.text}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Error Message */}
                   {selectedOperation.error_message && (

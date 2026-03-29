@@ -29,11 +29,14 @@ import { createClient, createConfig } from '../generated/client';
 import type { Client } from '../generated/client';
 import * as sdk from '../generated/sdk.gen';
 import type {
+    AsyncOperationSubmitResponse,
     RetainRequest,
     RetainResponse,
     RecallRequest,
     RecallResponse,
     RecallResult,
+    OperationResultResponse,
+    OperationStatusResponse,
     ReflectRequest,
     ReflectResponse,
     FileRetainResponse,
@@ -326,6 +329,68 @@ export class AtulyaClient {
         });
 
         return this.validateResponse(response, 'reflect');
+    }
+
+    /**
+     * Queue a reflect request for background execution.
+     */
+    async submitReflect(
+        bankId: string,
+        query: string,
+        options?: {
+            context?: string;
+            budget?: Budget;
+            maxTokens?: number;
+            includeFacts?: boolean;
+            includeToolCalls?: boolean;
+            responseSchema?: Record<string, unknown>;
+            tags?: string[];
+            tagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
+        }
+    ): Promise<AsyncOperationSubmitResponse> {
+        const response = await sdk.submitAsyncReflect({
+            client: this.client,
+            path: { bank_id: bankId },
+            body: {
+                query,
+                context: options?.context,
+                budget: options?.budget || 'low',
+                max_tokens: options?.maxTokens,
+                include: {
+                    ...(options?.includeFacts ? { facts: {} } : {}),
+                    ...(options?.includeToolCalls ? { tool_calls: {} } : {}),
+                },
+                response_schema: options?.responseSchema,
+                tags: options?.tags,
+                tags_match: options?.tagsMatch,
+            },
+        });
+
+        return this.validateResponse(response, 'submitReflect');
+    }
+
+    /**
+     * Get the current status for an async operation.
+     */
+    async getOperationStatus(bankId: string, operationId: string): Promise<OperationStatusResponse> {
+        const response = await sdk.getOperationStatus({
+            client: this.client,
+            path: { bank_id: bankId, operation_id: operationId },
+        });
+
+        return this.validateResponse(response, 'getOperationStatus');
+    }
+
+    /**
+     * Get the final result payload for an async operation.
+     */
+    async getOperationResult(bankId: string, operationId: string): Promise<OperationResultResponse> {
+        const response = await sdk.getOperationResult({
+            client: this.client,
+            path: { bank_id: bankId, operation_id: operationId },
+        });
+
+        return this.validateResponse(response, 'getOperationResult');
     }
 
     /**

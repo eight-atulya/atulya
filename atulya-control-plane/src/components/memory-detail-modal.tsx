@@ -9,6 +9,7 @@ import { Loader2, Calendar, Users, FileText, Layers, Tag, History } from "lucide
 import { TagList } from "@/components/ui/tag-list";
 import { Button } from "@/components/ui/button";
 import { ObservationHistoryView, type HistoryEntry } from "@/components/observation-history-view";
+import { CopyButton } from "@/components/ui/copy-button";
 
 interface SourceMemory {
   id: string;
@@ -555,8 +556,11 @@ export function MemoryDetailModal({ memoryId, onClose, initialTab }: MemoryDetai
 
                         {chunk.chunk_text && (
                           <div>
-                            <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
-                              Chunk Text
+                            <div className="mb-2 flex items-center justify-between gap-3">
+                              <div className="text-xs font-bold text-muted-foreground uppercase">
+                                Chunk Text
+                              </div>
+                              <CopyButton text={chunk.chunk_text} toastLabel="Chunk text copied" />
                             </div>
                             <div className="p-4 bg-muted rounded-lg border border-border max-h-[300px] overflow-y-auto">
                               <pre className="text-sm whitespace-pre-wrap font-mono text-foreground">

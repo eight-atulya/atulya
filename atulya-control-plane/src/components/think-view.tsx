@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { client } from "@/lib/api";
 import { useBank } from "@/lib/bank-context";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ import {
   Play,
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { CopyButton } from "@/components/ui/copy-button";
 import JsonView from "react18-json-view";
 import "react18-json-view/src/style.css";
 import { MemoryDetailModal } from "./memory-detail-modal";
@@ -63,8 +64,16 @@ export function ThinkView() {
   const [loadingObservation, setLoadingObservation] = useState(false);
   const [selectedMentalModelId, setSelectedMentalModelId] = useState<string | null>(null);
   const [activeBasedOnTab, setActiveBasedOnTab] = useState<BasedOnTab>("world");
+  const [currentOperationId, setCurrentOperationId] = useState<string | null>(null);
+  const [operationStatus, setOperationStatus] = useState<
+    "pending" | "completed" | "failed" | "not_found" | null
+  >(null);
+  const [operationStage, setOperationStage] = useState<string | null>(null);
+  const [operationError, setOperationError] = useState<string | null>(null);
+  const [operationStartedAt, setOperationStartedAt] = useState<number | null>(null);
 
   const FEEDBACK_DIRECTIVE_NAME = "General Feedback";
+  const activeReflectStorageKey = currentBank ? `reflect:active:${currentBank}` : null;
 
   // Load full directive data when one is selected
   const handleSelectDirective = async (directive: any) => {
@@ -139,11 +148,158 @@ export function ThinkView() {
     }
   };
 
+  const persistActiveReflectOperation = (operationId: string, startedAt: number) => {
+    if (!activeReflectStorageKey || typeof window === "undefined") return;
+    window.sessionStorage.setItem(
+      activeReflectStorageKey,
+      JSON.stringify({ operationId, startedAt })
+    );
+  };
+
+  const clearActiveReflectOperation = () => {
+    if (!activeReflectStorageKey || typeof window === "undefined") return;
+    window.sessionStorage.removeItem(activeReflectStorageKey);
+  };
+
+  const formatElapsed = (startedAt: number | null) => {
+    if (!startedAt) return "0s";
+    const totalSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+  };
+
+  const compactOperationId = currentOperationId ? currentOperationId.slice(-8) : null;
+
+  useEffect(() => {
+    setResult(null);
+    setLoading(false);
+    setCurrentOperationId(null);
+    setOperationStatus(null);
+    setOperationStage(null);
+    setOperationError(null);
+    setOperationStartedAt(null);
+  }, [currentBank]);
+
+  useEffect(() => {
+    if (!currentBank || !activeReflectStorageKey || typeof window === "undefined") return;
+
+    const stored = window.sessionStorage.getItem(activeReflectStorageKey);
+    if (!stored) return;
+
+    try {
+      const parsed = JSON.parse(stored) as {
+        operationId?: string;
+        startedAt?: number;
+      };
+      if (!parsed.operationId) return;
+
+      setCurrentOperationId(parsed.operationId);
+      setOperationStartedAt(parsed.startedAt ?? Date.now());
+      setOperationStatus("pending");
+      setOperationStage("queued");
+      setOperationError(null);
+      setLoading(true);
+      setViewMode("answer");
+    } catch {
+      window.sessionStorage.removeItem(activeReflectStorageKey);
+    }
+  }, [activeReflectStorageKey, currentBank]);
+
+  useEffect(() => {
+    if (!currentBank || !currentOperationId) return;
+
+    let cancelled = false;
+    let timeoutId: number | undefined;
+
+    const pollOperation = async () => {
+      try {
+        const status = await client.getOperationStatus(currentBank, currentOperationId);
+        if (cancelled) return;
+
+        setOperationStatus(status.status);
+        setOperationStage(status.stage ?? null);
+        setOperationError(status.error_message ?? null);
+
+        if (status.status === "completed") {
+          const resultResponse = await client.getOperationResult(currentBank, currentOperationId);
+          if (cancelled) return;
+
+          setResult(resultResponse.result);
+          setOperationStatus(resultResponse.status);
+          setOperationStage(resultResponse.stage ?? null);
+          setOperationError(resultResponse.error_message ?? null);
+          setLoading(false);
+          if (activeReflectStorageKey && typeof window !== "undefined") {
+            window.sessionStorage.removeItem(activeReflectStorageKey);
+          }
+          return;
+        }
+
+        if (status.status === "failed" || status.status === "not_found") {
+          setLoading(false);
+          setResult(null);
+          setOperationError(
+            status.error_message ||
+              (status.status === "not_found"
+                ? "The reflect operation could not be found."
+                : "Reflect failed.")
+          );
+          if (activeReflectStorageKey && typeof window !== "undefined") {
+            window.sessionStorage.removeItem(activeReflectStorageKey);
+          }
+          return;
+        }
+
+        setLoading(true);
+        const elapsedMs = operationStartedAt ? Date.now() - operationStartedAt : 0;
+        timeoutId = window.setTimeout(pollOperation, elapsedMs < 15_000 ? 1000 : 2000);
+      } catch (error) {
+        if (cancelled) return;
+        setLoading(false);
+        setOperationError(error instanceof Error ? error.message : "Failed to poll reflect status");
+      }
+    };
+
+    void pollOperation();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [activeReflectStorageKey, currentBank, currentOperationId, operationStartedAt]);
+
+  const cancelReflect = async () => {
+    if (!currentBank || !currentOperationId) return;
+
+    try {
+      await client.cancelOperation(currentBank, currentOperationId);
+      clearActiveReflectOperation();
+      setLoading(false);
+      setCurrentOperationId(null);
+      setOperationStatus(null);
+      setOperationStage(null);
+      setOperationStartedAt(null);
+      setOperationError("Reflect cancelled before execution started.");
+    } catch (error) {
+      setOperationError(error instanceof Error ? error.message : "Failed to cancel reflect");
+    }
+  };
+
   const runReflect = async () => {
     if (!currentBank || !query) return;
 
     setLoading(true);
     setViewMode("answer");
+    setResult(null);
+    setOperationError(null);
+    setOperationStatus("pending");
+    setOperationStage("queued");
+    setCurrentOperationId(null);
+    setOperationStartedAt(null);
+    clearActiveReflectOperation();
     try {
       // Parse tags from comma-separated string
       const parsedTags = tags
@@ -151,7 +307,8 @@ export function ThinkView() {
         .map((t) => t.trim())
         .filter((t) => t.length > 0);
 
-      const data: any = await client.reflect({
+      const startedAt = Date.now();
+      const data = await client.submitReflect({
         bank_id: currentBank,
         query,
         budget,
@@ -160,11 +317,18 @@ export function ThinkView() {
         include_tool_calls: includeToolCalls,
         ...(parsedTags.length > 0 && { tags: parsedTags, tags_match: tagsMatch }),
       });
-      setResult(data);
+      setCurrentOperationId(data.operation_id);
+      setOperationStartedAt(startedAt);
+      persistActiveReflectOperation(data.operation_id, startedAt);
     } catch (error) {
-      // Error toast is shown automatically by the API client interceptor
-    } finally {
+      setOperationStatus(null);
+      setOperationStage(null);
+      setCurrentOperationId(null);
+      setOperationStartedAt(null);
+      setOperationError(error instanceof Error ? error.message : "Failed to submit reflect");
       setLoading(false);
+    } finally {
+      // Polling effect owns loading state after submission succeeds
     }
   };
 
@@ -198,7 +362,7 @@ export function ThinkView() {
               />
             </div>
             <Button onClick={runReflect} disabled={loading || !query} className="h-12 px-8">
-              {loading ? "Reflecting..." : "Reflect"}
+              {loading ? "Running..." : "Reflect"}
             </Button>
           </div>
 
@@ -281,9 +445,70 @@ export function ThinkView() {
       {/* Loading State */}
       {loading && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4" />
-            <p className="text-muted-foreground">Reflecting on memories...</p>
+            <div className="space-y-2">
+              <p className="text-foreground font-medium">
+                {operationStage === "queued" ? "Reflect queued" : "Reflect running"}
+              </p>
+              <p className="text-muted-foreground">
+                {operationStage === "queued"
+                  ? "Waiting for a worker to pick up the job."
+                  : "The reflect worker is generating the answer in the background."}
+              </p>
+            </div>
+            {currentOperationId && (
+              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-left text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-muted-foreground">Operation</span>
+                  <code className="font-mono text-xs" title={currentOperationId}>
+                    #{compactOperationId}
+                  </code>
+                </div>
+                <div className="mt-2 flex items-center gap-4">
+                  <span className="text-muted-foreground">
+                    Stage: <span className="text-foreground">{operationStage ?? "queued"}</span>
+                  </span>
+                  <span className="text-muted-foreground">
+                    Elapsed:{" "}
+                    <span className="text-foreground">{formatElapsed(operationStartedAt)}</span>
+                  </span>
+                </div>
+              </div>
+            )}
+            {currentOperationId && (
+              <Button
+                variant="outline"
+                onClick={cancelReflect}
+                disabled={operationStage !== "queued"}
+              >
+                Cancel
+              </Button>
+            )}
+            {currentOperationId && operationStage !== "queued" && (
+              <p className="text-xs text-muted-foreground">
+                Cancellation is only available while the job is still queued.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {!loading && operationError && !result && (
+        <Card className="border-destructive/40">
+          <CardHeader>
+            <CardTitle className="text-base">Reflect Failed</CardTitle>
+            <CardDescription>
+              The request was submitted, but the background operation did not complete successfully.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-foreground">{operationError}</p>
+            {currentOperationId && (
+              <p className="text-xs text-muted-foreground">
+                Operation ID: <code className="font-mono">{currentOperationId}</code>
+              </p>
+            )}
           </CardContent>
         </Card>
       )}
@@ -361,7 +586,10 @@ export function ThinkView() {
               {/* Main Answer */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Answer</CardTitle>
+                  <div className="flex items-center justify-between gap-3">
+                    <CardTitle>Answer</CardTitle>
+                    <CopyButton text={result.text} toastLabel="Reflected answer copied" />
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="prose prose-sm max-w-none dark:prose-invert">
@@ -848,7 +1076,7 @@ export function ThinkView() {
       )}
 
       {/* Empty State */}
-      {!loading && !result && (
+      {!loading && !result && !operationError && (
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-16">
             <Sparkles className="h-12 w-12 text-muted-foreground mb-4" />

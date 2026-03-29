@@ -60,6 +60,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { CopyButton } from "@/components/ui/copy-button";
 import { MemoryDetailModal } from "./memory-detail-modal";
 import { DirectiveDetailModal } from "./directive-detail-modal";
 import { MentalModelDetailModal } from "./mental-model-detail-modal";
@@ -1157,8 +1158,11 @@ function MentalModelDetailPanel({
           </div>
 
           <div className="border-t border-border pt-5">
-            <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-              Content
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Content
+              </div>
+              <CopyButton text={mentalModel.content} toastLabel="Mental model copied" />
             </div>
             <div className="prose prose-base dark:prose-invert max-w-none">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{mentalModel.content}</ReactMarkdown>

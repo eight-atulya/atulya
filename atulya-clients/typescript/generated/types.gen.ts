@@ -1398,6 +1398,12 @@ export type OperationStatusResponse = {
    */
   error_message?: string | null;
   /**
+   * Stage
+   *
+   * High-level progress stage for pending async work, derived from result_metadata.operation_stage.
+   */
+  stage?: string | null;
+  /**
    * Result Metadata
    *
    * Internal metadata for debugging. Structure may change without notice. Not for production use.
@@ -1411,6 +1417,50 @@ export type OperationStatusResponse = {
    * Child operations for batch operations (if applicable)
    */
   child_operations?: Array<ChildOperationStatus> | null;
+};
+
+/**
+ * OperationResultResponse
+ *
+ * Response model for retrieving the final result of an async operation.
+ */
+export type OperationResultResponse = {
+  /**
+   * Operation Id
+   */
+  operation_id: string;
+  /**
+   * Status
+   */
+  status: "pending" | "completed" | "failed" | "not_found";
+  /**
+   * Operation Type
+   */
+  operation_type?: string | null;
+  /**
+   * Created At
+   */
+  created_at?: string | null;
+  /**
+   * Updated At
+   */
+  updated_at?: string | null;
+  /**
+   * Completed At
+   */
+  completed_at?: string | null;
+  /**
+   * Error Message
+   */
+  error_message?: string | null;
+  /**
+   * Stage
+   */
+  stage?: string | null;
+  /**
+   * Result
+   */
+  result?: ReflectResponse | null;
 };
 
 /**
@@ -2662,6 +2712,44 @@ export type ReflectResponses = {
 
 export type ReflectResponse2 = ReflectResponses[keyof ReflectResponses];
 
+export type SubmitAsyncReflectData = {
+  body: ReflectRequest;
+  headers?: {
+    /**
+     * Authorization
+     */
+    authorization?: string | null;
+  };
+  path: {
+    /**
+     * Bank Id
+     */
+    bank_id: string;
+  };
+  query?: never;
+  url: "/v1/default/banks/{bank_id}/reflect/submit";
+};
+
+export type SubmitAsyncReflectErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type SubmitAsyncReflectError =
+  SubmitAsyncReflectErrors[keyof SubmitAsyncReflectErrors];
+
+export type SubmitAsyncReflectResponses = {
+  /**
+   * Successful Response
+   */
+  200: AsyncOperationSubmitResponse;
+};
+
+export type SubmitAsyncReflectResponse =
+  SubmitAsyncReflectResponses[keyof SubmitAsyncReflectResponses];
+
 export type ListBanksData = {
   body?: never;
   headers?: {
@@ -3772,6 +3860,48 @@ export type GetOperationStatusResponses = {
 
 export type GetOperationStatusResponse =
   GetOperationStatusResponses[keyof GetOperationStatusResponses];
+
+export type GetOperationResultData = {
+  body?: never;
+  headers?: {
+    /**
+     * Authorization
+     */
+    authorization?: string | null;
+  };
+  path: {
+    /**
+     * Bank Id
+     */
+    bank_id: string;
+    /**
+     * Operation Id
+     */
+    operation_id: string;
+  };
+  query?: never;
+  url: "/v1/default/banks/{bank_id}/operations/{operation_id}/result";
+};
+
+export type GetOperationResultErrors = {
+  /**
+   * Validation Error
+   */
+  422: HttpValidationError;
+};
+
+export type GetOperationResultError =
+  GetOperationResultErrors[keyof GetOperationResultErrors];
+
+export type GetOperationResultResponses = {
+  /**
+   * Successful Response
+   */
+  200: OperationResultResponse;
+};
+
+export type GetOperationResultResponse =
+  GetOperationResultResponses[keyof GetOperationResultResponses];
 
 export type GetBankProfileData = {
   body?: never;
