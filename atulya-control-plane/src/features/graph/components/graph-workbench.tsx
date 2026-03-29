@@ -23,9 +23,11 @@ import {
 } from "@xyflow/react";
 import { Expand, Minimize2, Radar } from "lucide-react";
 import {
+  Dispatch,
   Fragment,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  SetStateAction,
   type TouchEvent as ReactTouchEvent,
   memo,
   useCallback,
@@ -117,9 +119,15 @@ interface WorkbenchGraphProps {
   resetLayoutVersion?: number;
   height?: number;
   layoutMode?: GraphLayoutMode;
+  fullscreenAccessory?: ReactNode;
   onNodeSelect?: (nodeId: string) => void;
   onNodeHover?: (nodeId: string | null) => void;
   onBackgroundClick?: () => void;
+}
+
+interface GraphWorkbenchInnerProps extends WorkbenchGraphProps {
+  isFullscreen: boolean;
+  setIsFullscreen: Dispatch<SetStateAction<boolean>>;
 }
 
 type MeasuredNodeSize = {
@@ -880,13 +888,19 @@ function GraphWorkbenchInner({
   resetLayoutVersion = 0,
   height = DEFAULT_HEIGHT,
   layoutMode = "signal-first",
+  fullscreenAccessory,
   onNodeSelect,
   onNodeHover,
   onBackgroundClick,
-}: WorkbenchGraphProps) {
+  isFullscreen,
+  setIsFullscreen,
+}: GraphWorkbenchInnerProps) {
   const pinsKey = storageKey ? `${storageKey}:${surfaceMode}:pins:${STORAGE_VERSION}` : null;
-  const viewportKey = storageKey
-    ? `${storageKey}:${surfaceMode}:viewport:${STORAGE_VERSION}`
+  const inlineViewportKey = storageKey
+    ? `${storageKey}:${surfaceMode}:viewport:inline:${STORAGE_VERSION}`
+    : null;
+  const fullscreenViewportKey = storageKey
+    ? `${storageKey}:${surfaceMode}:viewport:fullscreen:${STORAGE_VERSION}`
     : null;
   const reactFlow = useReactFlow<Node<WorkbenchNodeData>, Edge<WorkbenchEdgeData>>();
   const initializedViewportRef = useRef(false);
@@ -903,26 +917,38 @@ function GraphWorkbenchInner({
   const highlightedNodeKey = useMemo(() => highlightedNodeIds.join("|"), [highlightedNodeIds]);
   const highlightedEdgeKey = useMemo(() => highlightedEdgeIds.join("|"), [highlightedEdgeIds]);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoomLabel, setZoomLabel] = useState(100);
   const [measuredNodeSizes, setMeasuredNodeSizes] = useState<Record<string, MeasuredNodeSize>>({});
   const [layoutSettled, setLayoutSettled] = useState(false);
+  const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const emptyPinsFallback = useMemo(() => ({}), []);
   const emptyViewportFallback = useMemo(() => ({ x: 0, y: 0, zoom: 1 }), []);
+  const canvasRef = useRef<HTMLDivElement | null>(null);
   const {
     value: pinnedNodes,
     setValue: setPinnedNodes,
     hydrated: pinsHydrated,
   } = useLocalStorageState<Record<string, XYPosition>>(pinsKey, emptyPinsFallback);
   const {
-    value: savedViewport,
-    setValue: setSavedViewport,
-    hydrated: viewportHydrated,
-  } = useLocalStorageState<XYPosition & { zoom: number }>(viewportKey, emptyViewportFallback);
+    value: inlineViewport,
+    setValue: setInlineViewport,
+    hydrated: inlineViewportHydrated,
+  } = useLocalStorageState<XYPosition & { zoom: number }>(inlineViewportKey, emptyViewportFallback);
+  const {
+    value: fullscreenViewport,
+    setValue: setFullscreenViewport,
+    hydrated: fullscreenViewportHydrated,
+  } = useLocalStorageState<XYPosition & { zoom: number }>(
+    fullscreenViewportKey,
+    emptyViewportFallback
+  );
   const [flowNodes, setFlowNodes] = useState<Node<WorkbenchNodeData>[]>([]);
   const [flowEdges, setFlowEdges] = useState<Edge<WorkbenchEdgeData>[]>([]);
   const [overviewZoom, setOverviewZoom] = useState(100);
   const [overviewFitVersion, setOverviewFitVersion] = useState(0);
+  const savedViewport = isFullscreen ? fullscreenViewport : inlineViewport;
+  const setSavedViewport = isFullscreen ? setFullscreenViewport : setInlineViewport;
+  const viewportHydrated = isFullscreen ? fullscreenViewportHydrated : inlineViewportHydrated;
 
   useEffect(() => {
     return () => {
@@ -931,6 +957,25 @@ function GraphWorkbenchInner({
       }
     };
   }, []);
+
+  useLayoutEffect(() => {
+    const element = canvasRef.current;
+    if (!element) return;
+
+    const updateSize = () => {
+      const rect = element.getBoundingClientRect();
+      setCanvasSize({
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(() => updateSize());
+    observer.observe(element);
+
+    return () => observer.disconnect();
+  }, [isFullscreen, height, renderMode]);
 
   const handleNodeMeasured = useCallback((nodeId: string, size: MeasuredNodeSize) => {
     pendingMeasurementsRef.current[nodeId] = size;
@@ -963,7 +1008,7 @@ function GraphWorkbenchInner({
 
   useEffect(() => {
     initializedViewportRef.current = false;
-  }, [storageKey, surfaceMode]);
+  }, [storageKey, surfaceMode, isFullscreen]);
 
   useEffect(() => {
     const activeNodeIds = new Set(nodes.map((node) => node.id));
@@ -982,11 +1027,24 @@ function GraphWorkbenchInner({
     lastResetVersionRef.current = resetLayoutVersion;
     if (!storageKey || typeof window === "undefined") return;
     window.localStorage.removeItem(`${storageKey}:${surfaceMode}:pins:${STORAGE_VERSION}`);
-    window.localStorage.removeItem(`${storageKey}:${surfaceMode}:viewport:${STORAGE_VERSION}`);
+    window.localStorage.removeItem(
+      `${storageKey}:${surfaceMode}:viewport:inline:${STORAGE_VERSION}`
+    );
+    window.localStorage.removeItem(
+      `${storageKey}:${surfaceMode}:viewport:fullscreen:${STORAGE_VERSION}`
+    );
     initializedViewportRef.current = false;
     setPinnedNodes({});
-    setSavedViewport({ x: 0, y: 0, zoom: 1 });
-  }, [resetLayoutVersion, setPinnedNodes, setSavedViewport, storageKey, surfaceMode]);
+    setInlineViewport({ x: 0, y: 0, zoom: 1 });
+    setFullscreenViewport({ x: 0, y: 0, zoom: 1 });
+  }, [
+    resetLayoutVersion,
+    setFullscreenViewport,
+    setInlineViewport,
+    setPinnedNodes,
+    storageKey,
+    surfaceMode,
+  ]);
 
   useEffect(() => {
     if (renderMode === "overview") {
@@ -1191,6 +1249,7 @@ function GraphWorkbenchInner({
   useEffect(() => {
     if (renderMode === "overview") return;
     if (!flowNodes.length) return;
+    if (canvasSize.width <= 0 || canvasSize.height <= 0) return;
 
     if (!initializedViewportRef.current) {
       initializedViewportRef.current = true;
@@ -1205,7 +1264,7 @@ function GraphWorkbenchInner({
         }
       });
     }
-  }, [flowNodes, reactFlow, savedViewport]);
+  }, [canvasSize.height, canvasSize.width, flowNodes, reactFlow, savedViewport, renderMode]);
 
   useEffect(() => {
     if (renderMode === "overview") return;
@@ -1290,144 +1349,170 @@ function GraphWorkbenchInner({
   }, [reactFlow, renderMode, setSavedViewport]);
 
   const frameClassName = isFullscreen
-    ? "fixed inset-4 z-[120] rounded-[18px] border border-border bg-card shadow-2xl"
-    : "rounded-[18px] border border-border bg-card shadow-sm";
+    ? "fixed inset-4 z-[120] flex flex-col overflow-hidden rounded-[18px] border border-border bg-card shadow-2xl"
+    : "overflow-hidden rounded-[18px] border border-border bg-card shadow-sm";
   const shouldVirtualize = initializedViewportRef.current && layoutSettled;
   const showLayoutOverlay =
     renderMode !== "overview" && nodes.length > 0 && (!layoutSettled || flowNodes.length === 0);
 
   return (
-    <div className={frameClassName}>
-      <div className="flex flex-col gap-3 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              {badgeLabel}
-            </div>
-            <div className="text-sm text-muted-foreground lg:truncate">
-              Drag cards, scroll to zoom, click empty space to clear.
-            </div>
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground lg:justify-end">
-          <div className="rounded-full border px-3 py-1.5 text-sm font-medium" style={CHIP_STYLE}>
-            {nodes.length} nodes
-          </div>
-          <div className="rounded-full border px-3 py-1.5 text-sm font-medium" style={CHIP_STYLE}>
-            {edges.length} links
-          </div>
-          <button
-            onClick={() => {
-              if (renderMode === "overview") {
-                setOverviewFitVersion((current) => current + 1);
-                return;
-              }
-              reactFlow.fitView({ padding: 0.18, duration: 240, maxZoom: 1.1 });
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-medium text-foreground/80 hover:bg-accent"
-          >
-            <Radar className="h-4 w-4" />
-            Fit
-          </button>
-          <button
-            onClick={() => setIsFullscreen((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-medium text-foreground/80 hover:bg-accent"
-          >
-            {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
-            {isFullscreen ? "Exit" : "Fullscreen"}
-          </button>
-        </div>
-      </div>
-
-      <div
-        className="relative overflow-hidden rounded-b-[18px]"
-        style={{
-          height: isFullscreen ? "calc(100vh - 11rem)" : height,
-        }}
-      >
-        {renderMode === "overview" ? (
-          <>
-            <OverviewCanvas
-              nodes={overviewNodes}
-              edges={overviewEdges}
-              selectedIds={selectedIds}
-              highlightedNodeIds={highlightedNodeIds}
-              onSelect={onNodeSelect}
-              onBackgroundClick={onBackgroundClick}
-              onZoomChange={setOverviewZoom}
-              fitVersion={overviewFitVersion}
-            />
-            <div
-              className="pointer-events-none absolute bottom-4 left-4 rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
-              style={PANEL_STYLE}
-            >
-              Scale {overviewZoom}%
-            </div>
-          </>
-        ) : (
-          <>
-            <ReactFlow<Node<WorkbenchNodeData>, Edge<WorkbenchEdgeData>>
-              nodes={flowNodes}
-              edges={flowEdges}
-              onNodesChange={onNodesChange}
-              onNodeDragStop={handleNodeDragStop}
-              onNodeClick={handleNodeClick}
-              onNodeMouseEnter={handleNodeMouseEnter}
-              onNodeMouseLeave={handleNodeMouseLeave}
-              onPaneClick={handlePaneClick}
-              onMoveEnd={handleMoveEnd}
-              nodeTypes={nodeTypesRef.current}
-              edgeTypes={edgeTypesRef.current}
-              nodesDraggable
-              nodesFocusable
-              fitView
-              minZoom={0.45}
-              maxZoom={1.7}
-              panOnDrag
-              proOptions={{ hideAttribution: true }}
-              selectionOnDrag={false}
-              onlyRenderVisibleElements={shouldVirtualize}
-              className="graph-surface"
-            >
-              <Background gap={20} size={1.1} color="var(--graph-dot)" />
-              <Controls
-                showInteractive={false}
-                className="!shadow-none [&>button]:!h-10 [&>button]:!w-10 [&>button]:!border-border [&>button]:!bg-card/90 [&>button]:!text-foreground"
-              />
-              <Panel position="bottom-left">
-                <div
-                  className="rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
-                  style={PANEL_STYLE}
-                >
-                  Scale {zoomLabel}%
-                </div>
-              </Panel>
-            </ReactFlow>
-
-            {showLayoutOverlay ? (
-              <div
-                className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-[1px]"
-                style={{ backgroundColor: "var(--graph-overlay-bg)" }}
-              >
-                <div
-                  className="rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
-                  style={PANEL_STYLE}
-                >
-                  Building graph layout...
-                </div>
+    <>
+      {isFullscreen ? (
+        <div
+          className="fixed inset-0 z-[110] bg-black/32 backdrop-blur-md"
+          onClick={() => setIsFullscreen(false)}
+          aria-hidden="true"
+        />
+      ) : null}
+      <div className={frameClassName}>
+        <div className="flex flex-col gap-3 border-b border-border px-4 py-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                {badgeLabel}
               </div>
-            ) : null}
-          </>
-        )}
+              <div className="text-sm text-muted-foreground lg:truncate">
+                Drag cards, scroll to zoom, click empty space to clear.
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground lg:justify-end">
+            <div className="rounded-full border px-3 py-1.5 text-sm font-medium" style={CHIP_STYLE}>
+              {nodes.length} nodes
+            </div>
+            <div className="rounded-full border px-3 py-1.5 text-sm font-medium" style={CHIP_STYLE}>
+              {edges.length} links
+            </div>
+            <button
+              onClick={() => {
+                if (renderMode === "overview") {
+                  setOverviewFitVersion((current) => current + 1);
+                  return;
+                }
+                reactFlow.fitView({ padding: 0.18, duration: 240, maxZoom: 1.1 });
+              }}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-medium text-foreground/80 hover:bg-accent"
+            >
+              <Radar className="h-4 w-4" />
+              Fit
+            </button>
+            <button
+              onClick={() => setIsFullscreen((current) => !current)}
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-medium text-foreground/80 hover:bg-accent"
+            >
+              {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Expand className="h-4 w-4" />}
+              {isFullscreen ? "Exit" : "Fullscreen"}
+            </button>
+          </div>
+        </div>
+
+        <div
+          ref={canvasRef}
+          className={
+            isFullscreen
+              ? "relative min-h-0 flex-1 overflow-hidden rounded-b-[18px]"
+              : "relative overflow-hidden rounded-b-[18px]"
+          }
+          style={isFullscreen ? undefined : { height }}
+        >
+          {renderMode === "overview" ? (
+            <>
+              <OverviewCanvas
+                nodes={overviewNodes}
+                edges={overviewEdges}
+                selectedIds={selectedIds}
+                highlightedNodeIds={highlightedNodeIds}
+                onSelect={onNodeSelect}
+                onBackgroundClick={onBackgroundClick}
+                onZoomChange={setOverviewZoom}
+                fitVersion={overviewFitVersion}
+              />
+              <div
+                className="pointer-events-none absolute bottom-4 left-4 rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
+                style={PANEL_STYLE}
+              >
+                Scale {overviewZoom}%
+              </div>
+            </>
+          ) : (
+            <>
+              <ReactFlow<Node<WorkbenchNodeData>, Edge<WorkbenchEdgeData>>
+                nodes={flowNodes}
+                edges={flowEdges}
+                onNodesChange={onNodesChange}
+                onNodeDragStop={handleNodeDragStop}
+                onNodeClick={handleNodeClick}
+                onNodeMouseEnter={handleNodeMouseEnter}
+                onNodeMouseLeave={handleNodeMouseLeave}
+                onPaneClick={handlePaneClick}
+                onMoveEnd={handleMoveEnd}
+                nodeTypes={nodeTypesRef.current}
+                edgeTypes={edgeTypesRef.current}
+                nodesDraggable
+                nodesFocusable
+                fitView
+                minZoom={0.45}
+                maxZoom={1.7}
+                panOnDrag
+                proOptions={{ hideAttribution: true }}
+                selectionOnDrag={false}
+                onlyRenderVisibleElements={shouldVirtualize}
+                className="graph-surface"
+              >
+                <Background gap={20} size={1.1} color="var(--graph-dot)" />
+                <Controls
+                  showInteractive={false}
+                  className="!shadow-none [&>button]:!h-10 [&>button]:!w-10 [&>button]:!border-border [&>button]:!bg-card/90 [&>button]:!text-foreground"
+                />
+                <Panel position="bottom-left">
+                  <div
+                    className="rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
+                    style={PANEL_STYLE}
+                  >
+                    Scale {zoomLabel}%
+                  </div>
+                </Panel>
+              </ReactFlow>
+
+              {showLayoutOverlay ? (
+                <div
+                  className="pointer-events-none absolute inset-0 flex items-center justify-center backdrop-blur-[1px]"
+                  style={{ backgroundColor: "var(--graph-overlay-bg)" }}
+                >
+                  <div
+                    className="rounded-full border px-4 py-2 text-sm font-medium shadow-sm"
+                    style={PANEL_STYLE}
+                  >
+                    Building graph layout...
+                  </div>
+                </div>
+              ) : null}
+
+              {isFullscreen && fullscreenAccessory ? (
+                <div className="pointer-events-none absolute bottom-4 right-4 z-20 flex w-[min(22rem,calc(100%-2rem))] justify-end">
+                  <div className="pointer-events-auto max-h-[calc(100%-2rem)] overflow-auto rounded-2xl border border-border bg-card/92 p-3 shadow-xl backdrop-blur-md">
+                    {fullscreenAccessory}
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
 export function GraphWorkbench(props: WorkbenchGraphProps) {
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   return (
-    <ReactFlowProvider>
-      <GraphWorkbenchInner {...props} />
+    <ReactFlowProvider key={isFullscreen ? "fullscreen" : "inline"}>
+      <GraphWorkbenchInner
+        {...props}
+        isFullscreen={isFullscreen}
+        setIsFullscreen={setIsFullscreen}
+      />
     </ReactFlowProvider>
   );
 }

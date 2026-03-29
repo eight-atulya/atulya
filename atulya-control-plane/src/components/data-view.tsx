@@ -767,6 +767,79 @@ export function DataView({ factType }: DataViewProps) {
     }
   }, [selectedEvidenceRows]);
 
+  const focusNeighborhood = useCallback(() => {
+    const focusId = resolvedSelectedStateNode?.id || graphIntelligence?.nodes[0]?.id;
+    if (!focusId) return;
+    void loadStateNeighborhood([focusId], 2);
+  }, [graphIntelligence?.nodes, loadStateNeighborhood, resolvedSelectedStateNode?.id]);
+
+  const stateGraphActions = [
+    {
+      key: "focus-neighbors",
+      label: "Focus Neighbors",
+      onClick: focusNeighborhood,
+      disabled: !resolvedSelectedStateNode && !graphIntelligence?.nodes?.length,
+    },
+    {
+      key: "open-evidence-graph",
+      label: "Open Evidence Graph",
+      onClick: openEvidenceGraph,
+      disabled: selectedEvidenceRows.length === 0,
+    },
+    {
+      key: "open-raw-memory",
+      label: "Open Raw Memory",
+      onClick: openRawEvidence,
+      disabled: selectedEvidenceRows.length === 0,
+    },
+    {
+      key: "reset-card-positions",
+      label: "Reset Card Positions",
+      onClick: () => setGraphLayoutResetVersion((value) => value + 1),
+      disabled: false,
+    },
+  ] as const;
+
+  const renderStateGraphActionGrid = (
+    gridClassName: string,
+    buttonClassName: string,
+    contentClassName = "text-center"
+  ) => (
+    <div className={`grid gap-2 ${gridClassName}`}>
+      {stateGraphActions.map((action) => (
+        <Button
+          key={action.key}
+          variant="outline"
+          className={buttonClassName}
+          onClick={action.onClick}
+          disabled={action.disabled}
+        >
+          <span className={contentClassName}>{action.label}</span>
+        </Button>
+      ))}
+    </div>
+  );
+
+  const stateGraphFullscreenAccessory = (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Canvas Actions
+        </div>
+        <div className="text-sm font-semibold text-foreground">
+          {resolvedSelectedStateNode?.title || "State Graph"}
+        </div>
+        <p className="text-xs leading-5 text-muted-foreground">
+          {recommendedChecks[0] || "Use graph actions without leaving fullscreen mode."}
+        </p>
+      </div>
+      {renderStateGraphActionGrid(
+        "grid-cols-2",
+        "h-auto min-h-10 min-w-0 whitespace-normal px-3 py-2 text-sm leading-tight"
+      )}
+    </div>
+  );
+
   const inspectorHeadline =
     graphInvestigation?.answer ||
     selectedChangeEvent?.summary ||
@@ -1069,6 +1142,7 @@ export function DataView({ factType }: DataViewProps) {
                       summary={stateSummary}
                       neighborhood={stateNeighborhood}
                       height={graphCanvasHeight}
+                      fullscreenAccessory={stateGraphFullscreenAccessory}
                       selectedNodeId={resolvedSelectedStateNode?.id}
                       selectedEventId={selectedChangeEvent?.id}
                       highlightedNodeIds={highlightedNodeIds}
@@ -1281,46 +1355,10 @@ export function DataView({ factType }: DataViewProps) {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2">
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => {
-                              const focusId =
-                                resolvedSelectedStateNode?.id || graphIntelligence?.nodes[0]?.id;
-                              if (!focusId) return;
-                              void loadStateNeighborhood([focusId], 2);
-                            }}
-                            disabled={
-                              !resolvedSelectedStateNode && !graphIntelligence?.nodes?.length
-                            }
-                          >
-                            Focus Neighbors
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={openEvidenceGraph}
-                            disabled={selectedEvidenceRows.length === 0}
-                          >
-                            Open Evidence Graph
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={openRawEvidence}
-                            disabled={selectedEvidenceRows.length === 0}
-                          >
-                            Open Raw Memory
-                          </Button>
-                          <Button
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => setGraphLayoutResetVersion((value) => value + 1)}
-                          >
-                            Reset Card Positions
-                          </Button>
-                        </div>
+                        {renderStateGraphActionGrid(
+                          isCompactGraphLayout ? "grid-cols-2" : "grid-cols-1",
+                          "h-auto min-h-10 w-full min-w-0 whitespace-normal px-4 py-2 text-center leading-tight"
+                        )}
                       </div>
                     ) : selectedGraphNode ? (
                       <MemoryDetailPanel

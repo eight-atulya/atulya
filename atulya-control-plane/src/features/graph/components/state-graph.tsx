@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import type { ReactNode } from "react";
 
 import {
   GraphChangeEvent,
@@ -34,6 +35,7 @@ interface StateGraphProps {
   height?: number;
   storageKey?: string;
   resetLayoutVersion?: number;
+  fullscreenAccessory?: ReactNode;
 }
 
 const STATUS_ORDER: Record<GraphStateNode["status"], number> = {
@@ -100,6 +102,7 @@ export function StateGraph({
   height = 700,
   storageKey,
   resetLayoutVersion = 0,
+  fullscreenAccessory,
 }: StateGraphProps) {
   const nodeLookup = useMemo(
     () => new Map((data?.nodes ?? []).map((node) => [node.id, node])),
@@ -305,6 +308,7 @@ export function StateGraph({
       storageKey={storageKey}
       resetLayoutVersion={resetLayoutVersion}
       height={height}
+      fullscreenAccessory={fullscreenAccessory}
       onBackgroundClick={onBackgroundClick}
       onNodeSelect={(nodeId) => {
         if (renderMode === "overview") {
