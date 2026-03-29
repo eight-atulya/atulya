@@ -1104,6 +1104,163 @@ class GraphDataResponse(BaseModel):
     limit: int
 
 
+class GraphStateNodeResponse(BaseModel):
+    id: str
+    title: str
+    kind: Literal["entity", "topic"]
+    subtitle: str | None = None
+    current_state: str
+    status: Literal["stable", "changed", "contradictory", "stale"]
+    status_reason: str
+    confidence: float
+    change_score: float
+    last_changed_at: str | None = None
+    primary_timestamp: str | None = None
+    evidence_count: int
+    tags: list[str] = Field(default_factory=list)
+    evidence_ids: list[str] = Field(default_factory=list)
+
+
+class GraphRelationEdgeResponse(BaseModel):
+    id: str
+    source_id: str
+    target_id: str
+    relation_type: str
+    strength: float
+    evidence_count: int
+
+
+class GraphChangeEventResponse(BaseModel):
+    id: str
+    node_id: str
+    change_type: Literal["change", "contradiction", "stale"]
+    before_state: str | None = None
+    after_state: str
+    confidence: float
+    time_window: str | None = None
+    evidence_ids: list[str] = Field(default_factory=list)
+    summary: str
+
+
+class GraphEvidencePathStepResponse(BaseModel):
+    kind: Literal["node", "event", "memory"]
+    id: str
+    label: str
+    timestamp: str | None = None
+
+
+class GraphIntelligenceResponse(BaseModel):
+    nodes: list[GraphStateNodeResponse]
+    edges: list[GraphRelationEdgeResponse]
+    change_events: list[GraphChangeEventResponse]
+    total_nodes: int
+    generated_at: str
+    cached: bool = False
+
+
+class GraphInvestigationRequest(BaseModel):
+    query: str
+    type: str | None = None
+    tags: list[str] | None = None
+    tags_match: TagsMatch = Field(default="all_strict")
+    confidence_min: float = Field(default=0.55, ge=0.0, le=1.0)
+    node_kind: Literal["all", "entity", "topic"] = "all"
+    window_days: int | None = Field(default=90, ge=1)
+    limit: int = Field(default=18, ge=1, le=100)
+
+
+class GraphInvestigationResponse(BaseModel):
+    answer: str
+    focal_node_ids: list[str] = Field(default_factory=list)
+    focal_edge_ids: list[str] = Field(default_factory=list)
+    change_events: list[GraphChangeEventResponse] = Field(default_factory=list)
+    evidence_path: list[GraphEvidencePathStepResponse] = Field(default_factory=list)
+    recommended_checks: list[str] = Field(default_factory=list)
+
+
+class GraphSummaryItemResponse(BaseModel):
+    id: str
+    kind: Literal["cluster", "node"]
+    title: str
+    subtitle: str | None = None
+    preview_labels: list[str] = Field(default_factory=list)
+    member_count: int
+    status_tone: Literal["stable", "changed", "contradictory", "stale", "neutral"] = "neutral"
+    display_priority: float
+    render_mode_hint: Literal["detail", "compact", "overview"]
+    cluster_membership: list[str] = Field(default_factory=list)
+    node_ref: str | None = None
+
+
+class GraphSummaryEdgeResponse(BaseModel):
+    id: str
+    source_id: str
+    target_id: str
+    weight: float
+    label: str | None = None
+
+
+class GraphSummaryResponse(BaseModel):
+    surface: Literal["state", "evidence"]
+    mode_hint: Literal["detail", "compact", "overview"]
+    total_nodes: int
+    total_edges: int
+    clusters: list[GraphSummaryItemResponse] = Field(default_factory=list)
+    top_nodes: list[GraphSummaryItemResponse] = Field(default_factory=list)
+    bundled_edges: list[GraphSummaryEdgeResponse] = Field(default_factory=list)
+    initial_focus_ids: list[str] = Field(default_factory=list)
+    generated_at: str
+    cached: bool = False
+
+
+class GraphNeighborhoodNodeResponse(BaseModel):
+    id: str
+    node_type: Literal["state", "event", "evidence"]
+    title: str
+    subtitle: str | None = None
+    preview: str | None = None
+    status_label: str | None = None
+    status_tone: Literal["stable", "changed", "contradictory", "stale", "neutral"] = "neutral"
+    confidence: float | None = None
+    evidence_count: int | None = None
+    kind_label: str | None = None
+    meta: str | None = None
+    timestamp_label: str | None = None
+    reason: str | None = None
+    accent_color: str | None = None
+    display_priority: float = 0.0
+    node_density_hint: float = 0.0
+    cluster_membership: str | None = None
+    render_mode_hint: Literal["detail", "compact", "overview"] = "detail"
+
+
+class GraphNeighborhoodEdgeResponse(BaseModel):
+    id: str
+    source: str
+    target: str
+    kind: Literal["relation", "event", "evidence"] = "relation"
+    label: str | None = None
+    stroke: str | None = None
+    dashed: bool = False
+    width: float = 1.6
+    animated: bool = True
+    priority: float = 0.0
+
+
+class GraphNeighborhoodResponse(BaseModel):
+    surface: Literal["state", "evidence"]
+    mode_hint: Literal["detail", "compact", "overview"]
+    focus_ids: list[str] = Field(default_factory=list)
+    nodes: list[GraphNeighborhoodNodeResponse] = Field(default_factory=list)
+    edges: list[GraphNeighborhoodEdgeResponse] = Field(default_factory=list)
+    total_nodes: int
+    total_edges: int
+    has_more: bool = False
+    cursor: str | None = None
+    generated_at: str
+    cached: bool = False
+
+
 class ListMemoryUnitsResponse(BaseModel):
     """Response model for list memory units endpoint."""
 
@@ -2244,6 +2401,185 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/graph: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/graph/intelligence",
+        response_model=GraphIntelligenceResponse,
+        summary="Get graph intelligence state graph",
+        description="Retrieve a state/topic graph with high-confidence changes, contradictions, and stale signals.",
+        operation_id="get_graph_intelligence",
+        tags=["Memory"],
+    )
+    async def api_graph_intelligence(
+        bank_id: str,
+        type: str | None = None,
+        limit: int = 18,
+        q: str | None = None,
+        tags: list[str] | None = Query(None),
+        tags_match: TagsMatch = "all_strict",
+        confidence_min: float = Query(0.55, ge=0.0, le=1.0),
+        node_kind: Literal["all", "entity", "topic"] = "all",
+        window_days: int | None = Query(90, ge=1),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Return the graph intelligence state graph for a bank."""
+        try:
+            return await app.state.memory.get_graph_intelligence(
+                bank_id,
+                fact_type=type,
+                limit=limit,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                confidence_min=confidence_min,
+                node_kind=node_kind,
+                window_days=window_days,
+                request_context=request_context,
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/graph/intelligence: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/graph/investigate",
+        response_model=GraphInvestigationResponse,
+        summary="Investigate graph intelligence",
+        description="Ask a focused question over the state graph and return the relevant change events, evidence path, and checks.",
+        operation_id="investigate_graph",
+        tags=["Memory"],
+    )
+    async def api_graph_investigate(
+        bank_id: str,
+        request: GraphInvestigationRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Investigate graph signals for a bank using the state graph plus recall seeds."""
+        try:
+            return await app.state.memory.investigate_graph(
+                bank_id,
+                query=request.query,
+                fact_type=request.type,
+                limit=request.limit,
+                tags=request.tags,
+                tags_match=request.tags_match,
+                confidence_min=request.confidence_min,
+                node_kind=request.node_kind,
+                window_days=request.window_days,
+                request_context=request_context,
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/graph/investigate: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/graph/summary",
+        response_model=GraphSummaryResponse,
+        summary="Get scalable graph summary",
+        description="Retrieve a clustered graph summary and top-use nodes for scalable graph exploration.",
+        operation_id="get_graph_summary",
+        tags=["Memory"],
+    )
+    async def api_graph_summary(
+        bank_id: str,
+        surface: Literal["state", "evidence"] = "state",
+        type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = Query(None),
+        tags_match: TagsMatch = "all_strict",
+        confidence_min: float = Query(0.55, ge=0.0, le=1.0),
+        node_kind: Literal["all", "entity", "topic"] = "all",
+        window_days: int | None = Query(90, ge=1),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            return await app.state.memory.get_graph_summary(
+                bank_id,
+                surface=surface,
+                fact_type=type,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                confidence_min=confidence_min,
+                node_kind=node_kind,
+                window_days=window_days,
+                request_context=request_context,
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/graph/summary: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/graph/neighborhood",
+        response_model=GraphNeighborhoodResponse,
+        summary="Get focused graph neighborhood",
+        description="Retrieve a bounded neighborhood for focused graph exploration and detail rendering.",
+        operation_id="get_graph_neighborhood",
+        tags=["Memory"],
+    )
+    async def api_graph_neighborhood(
+        bank_id: str,
+        surface: Literal["state", "evidence"] = "state",
+        type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = Query(None),
+        tags_match: TagsMatch = "all_strict",
+        confidence_min: float = Query(0.55, ge=0.0, le=1.0),
+        node_kind: Literal["all", "entity", "topic"] = "all",
+        window_days: int | None = Query(90, ge=1),
+        focus_ids: list[str] | None = Query(None),
+        depth: int = Query(1, ge=1, le=3),
+        limit_nodes: int = Query(60, ge=1, le=120),
+        limit_edges: int = Query(140, ge=1, le=300),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            return await app.state.memory.get_graph_neighborhood(
+                bank_id,
+                surface=surface,
+                fact_type=type,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                confidence_min=confidence_min,
+                node_kind=node_kind,
+                window_days=window_days,
+                focus_ids=focus_ids,
+                depth=depth,
+                limit_nodes=limit_nodes,
+                limit_edges=limit_edges,
+                request_context=request_context,
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/graph/neighborhood: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(
