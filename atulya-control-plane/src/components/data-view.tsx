@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { client } from "@/lib/api";
+import {
+  client,
+  GraphChangeEvent,
+  GraphIntelligenceResponse,
+  GraphInvestigationResponse,
+  GraphNeighborhoodNode,
+  GraphNeighborhoodResponse,
+  GraphSummaryResponse,
+  GraphStateNode as StateGraphNode,
+} from "@/lib/api";
 import { useBank } from "@/lib/bank-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,9 +22,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Settings2,
-  Eye,
-  EyeOff,
   RefreshCw,
   CheckCircle,
   Clock,
@@ -38,17 +44,44 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { MemoryDetailPanel } from "./memory-detail-panel";
 import { MemoryDetailModal } from "./memory-detail-modal";
-import { Graph2D, convertAtulyaGraphData, GraphNode } from "./graph-2d";
+import { Graph2D, convertAtulyaGraphData, GraphNode } from "../features/graph/components/graph-2d";
+import { StateGraph } from "../features/graph/components/state-graph";
 
 type FactType = "world" | "experience" | "observation";
 type ViewMode = "graph" | "table" | "timeline";
+type GraphSurfaceMode = "state" | "evidence";
 
 interface DataViewProps {
   factType: FactType;
 }
 
+function stateNodeFromNeighborhood(node: GraphNeighborhoodNode): StateGraphNode | null {
+  if (node.node_type !== "state") return null;
+
+  const kind = node.meta === "topic" ? "topic" : "entity";
+  const status = node.status_tone === "neutral" ? "stable" : node.status_tone;
+
+  return {
+    id: node.id,
+    title: node.title,
+    kind,
+    subtitle: node.subtitle ?? null,
+    current_state: node.preview ?? "",
+    status,
+    status_reason: node.reason ?? "",
+    confidence: node.confidence ?? 0,
+    change_score: node.display_priority ?? 0,
+    last_changed_at: node.timestamp_label ?? null,
+    primary_timestamp: node.timestamp_label ?? null,
+    evidence_count: node.evidence_count ?? 0,
+    tags: [],
+    evidence_ids: [],
+  };
+}
+
 export function DataView({ factType }: DataViewProps) {
   const { currentBank } = useBank();
+  const [isCompactGraphLayout, setIsCompactGraphLayout] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -57,6 +90,28 @@ export function DataView({ factType }: DataViewProps) {
   const [tagInput, setTagInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedGraphNode, setSelectedGraphNode] = useState<any>(null);
+  const [selectedStateNode, setSelectedStateNode] = useState<StateGraphNode | null>(null);
+  const [selectedChangeEvent, setSelectedChangeEvent] = useState<GraphChangeEvent | null>(null);
+  const [graphIntelligence, setGraphIntelligence] = useState<GraphIntelligenceResponse | null>(
+    null
+  );
+  const [stateSummary, setStateSummary] = useState<GraphSummaryResponse | null>(null);
+  const [evidenceSummary, setEvidenceSummary] = useState<GraphSummaryResponse | null>(null);
+  const [stateNeighborhood, setStateNeighborhood] = useState<GraphNeighborhoodResponse | null>(
+    null
+  );
+  const [evidenceNeighborhood, setEvidenceNeighborhood] =
+    useState<GraphNeighborhoodResponse | null>(null);
+  const [graphInvestigation, setGraphInvestigation] = useState<GraphInvestigationResponse | null>(
+    null
+  );
+  const [graphSurfaceMode, setGraphSurfaceMode] = useState<GraphSurfaceMode>("state");
+  const [graphLayoutResetVersion, setGraphLayoutResetVersion] = useState(0);
+  const [analystQuery, setAnalystQuery] = useState("");
+  const [investigating, setInvestigating] = useState(false);
+  const [confidenceMin, setConfidenceMin] = useState(0.55);
+  const [nodeKind, setNodeKind] = useState<"all" | "entity" | "topic">("all");
+  const [windowDays, setWindowDays] = useState<string>("90");
   const [modalMemoryId, setModalMemoryId] = useState<string | null>(null);
   const itemsPerPage = 100;
 
@@ -89,30 +144,154 @@ export function DataView({ factType }: DataViewProps) {
     });
   };
 
-  // Esc key handler to deselect graph node
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && selectedGraphNode) {
-        setSelectedGraphNode(null);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedGraphNode]);
+  const stateLayoutStorageKey = currentBank
+    ? `graph-workbench:${currentBank}:${factType}:state`
+    : undefined;
+  const evidenceLayoutStorageKey = currentBank
+    ? `graph-workbench:${currentBank}:${factType}:evidence`
+    : undefined;
+
+  const loadStateNeighborhood = useCallback(
+    async (focusIds?: string[], depth = 1) => {
+      if (!currentBank) return null;
+      const neighborhood = await client.getGraphNeighborhood({
+        bank_id: currentBank,
+        surface: "state",
+        type: factType,
+        q: searchQuery || undefined,
+        tags: tagFilters.length > 0 ? tagFilters : undefined,
+        tags_match: "all_strict",
+        confidence_min: confidenceMin,
+        node_kind: nodeKind,
+        window_days: windowDays === "all" ? undefined : Number(windowDays),
+        focus_ids: focusIds,
+        depth,
+        limit_nodes: 60,
+        limit_edges: 140,
+      });
+      setStateNeighborhood(neighborhood);
+      return neighborhood;
+    },
+    [confidenceMin, currentBank, factType, nodeKind, searchQuery, tagFilters, windowDays]
+  );
+
+  const loadEvidenceNeighborhood = useCallback(
+    async (focusIds?: string[], depth = 1) => {
+      if (!currentBank) return null;
+      const neighborhood = await client.getGraphNeighborhood({
+        bank_id: currentBank,
+        surface: "evidence",
+        type: factType,
+        q: searchQuery || undefined,
+        tags: tagFilters.length > 0 ? tagFilters : undefined,
+        tags_match: "all_strict",
+        focus_ids: focusIds,
+        depth,
+        limit_nodes: 60,
+        limit_edges: 140,
+      });
+      setEvidenceNeighborhood(neighborhood);
+      return neighborhood;
+    },
+    [currentBank, factType, searchQuery, tagFilters]
+  );
 
   const loadData = async (limit?: number, q?: string, tags?: string[]) => {
     if (!currentBank) return;
 
     setLoading(true);
     try {
-      const graphData: any = await client.getGraph({
-        bank_id: currentBank,
-        type: factType,
-        limit: limit ?? fetchLimit,
-        q,
-        tags,
-      });
+      const effectiveLimit = limit ?? fetchLimit;
+      const [graphData, intelligence, nextStateSummary, nextEvidenceSummary] = await Promise.all([
+        client.getGraph({
+          bank_id: currentBank,
+          type: factType,
+          limit: effectiveLimit,
+          q,
+          tags,
+        }),
+        client.getGraphIntelligence({
+          bank_id: currentBank,
+          type: factType,
+          limit: 18,
+          q,
+          tags,
+          tags_match: "all_strict",
+          confidence_min: confidenceMin,
+          node_kind: nodeKind,
+          window_days: windowDays === "all" ? undefined : Number(windowDays),
+        }),
+        client.getGraphSummary({
+          bank_id: currentBank,
+          surface: "state",
+          type: factType,
+          q,
+          tags,
+          tags_match: "all_strict",
+          confidence_min: confidenceMin,
+          node_kind: nodeKind,
+          window_days: windowDays === "all" ? undefined : Number(windowDays),
+        }),
+        client.getGraphSummary({
+          bank_id: currentBank,
+          surface: "evidence",
+          type: factType,
+          q,
+          tags,
+          tags_match: "all_strict",
+        }),
+      ]);
       setData(graphData);
+      setGraphIntelligence(intelligence);
+      setStateSummary(nextStateSummary);
+      setEvidenceSummary(nextEvidenceSummary);
+      if (nextStateSummary.mode_hint === "overview") {
+        setSelectedStateNode(null);
+        setSelectedChangeEvent(null);
+      } else {
+        setSelectedStateNode(
+          (prev) =>
+            intelligence.nodes.find((node) => node.id === prev?.id) ?? intelligence.nodes[0] ?? null
+        );
+        setSelectedChangeEvent(
+          (prev) =>
+            intelligence.change_events.find((event) => event.id === prev?.id) ??
+            intelligence.change_events[0] ??
+            null
+        );
+      }
+
+      const [nextStateNeighborhood, nextEvidenceNeighborhood] = await Promise.all([
+        client.getGraphNeighborhood({
+          bank_id: currentBank,
+          surface: "state",
+          type: factType,
+          q,
+          tags,
+          tags_match: "all_strict",
+          confidence_min: confidenceMin,
+          node_kind: nodeKind,
+          window_days: windowDays === "all" ? undefined : Number(windowDays),
+          focus_ids: nextStateSummary.initial_focus_ids.slice(0, 1),
+          depth: 1,
+          limit_nodes: 60,
+          limit_edges: 140,
+        }),
+        client.getGraphNeighborhood({
+          bank_id: currentBank,
+          surface: "evidence",
+          type: factType,
+          q,
+          tags,
+          tags_match: "all_strict",
+          focus_ids: nextEvidenceSummary.initial_focus_ids.slice(0, 1),
+          depth: 1,
+          limit_nodes: 60,
+          limit_edges: 140,
+        }),
+      ]);
+      setStateNeighborhood(nextStateNeighborhood);
+      setEvidenceNeighborhood(nextEvidenceNeighborhood);
 
       // Fetch consolidation status for observations
       if (factType === "observation") {
@@ -122,12 +301,56 @@ export function DataView({ factType }: DataViewProps) {
           last_consolidated_at: stats.last_consolidated_at || null,
         });
       }
-    } catch (error) {
+    } catch {
       // Error toast is shown automatically by the API client interceptor
     } finally {
       setLoading(false);
     }
   };
+
+  const runGraphInvestigation = useCallback(async () => {
+    if (!currentBank || !analystQuery.trim()) return;
+
+    setInvestigating(true);
+    try {
+      const investigation = await client.investigateGraph({
+        bank_id: currentBank,
+        query: analystQuery.trim(),
+        type: factType,
+        tags: tagFilters.length > 0 ? tagFilters : undefined,
+        tags_match: "all_strict",
+        confidence_min: confidenceMin,
+        node_kind: nodeKind,
+        window_days: windowDays === "all" ? undefined : Number(windowDays),
+        limit: 18,
+      });
+      setGraphInvestigation(investigation);
+      if (investigation.change_events[0]) {
+        setSelectedChangeEvent(investigation.change_events[0]);
+      }
+      if (graphIntelligence && investigation.focal_node_ids.length > 0) {
+        const focal = graphIntelligence.nodes.find(
+          (node) => node.id === investigation.focal_node_ids[0]
+        );
+        if (focal) setSelectedStateNode(focal);
+      }
+      if (investigation.focal_node_ids.length > 0) {
+        void loadStateNeighborhood(investigation.focal_node_ids.slice(0, 1), 1);
+      }
+    } finally {
+      setInvestigating(false);
+    }
+  }, [
+    analystQuery,
+    confidenceMin,
+    currentBank,
+    factType,
+    graphIntelligence,
+    loadStateNeighborhood,
+    nodeKind,
+    tagFilters,
+    windowDays,
+  ]);
 
   const addTagFilter = (tag: string) => {
     const trimmed = tag.trim();
@@ -196,34 +419,138 @@ export function DataView({ factType }: DataViewProps) {
     return { semantic, temporal, entity, causal, total, otherTypes };
   }, [graph2DData]);
 
+  const selectRawMemoryById = useCallback(
+    (memoryId: string) => {
+      const nodeData = data?.table_rows?.find((row: any) => row.id === memoryId);
+      if (!nodeData) return;
+
+      const accessCount = Math.max(0, Number(nodeData.access_count ?? 0));
+      const connectedLinks = graph2DData.links.filter(
+        (link) => link.source === memoryId || link.target === memoryId
+      );
+      const connectionCount = connectedLinks.length;
+      const totalLinkWeight = connectedLinks.reduce(
+        (sum, link) => sum + Number(link.weight ?? 0),
+        0
+      );
+
+      setSelectedGraphNode({
+        ...nodeData,
+        access_count: accessCount,
+        graph_stats: {
+          access_count: accessCount,
+          connection_count: connectionCount,
+          total_link_weight: totalLinkWeight,
+        },
+      });
+    },
+    [data, graph2DData.links]
+  );
+
+  const clearGraphFocus = useCallback(() => {
+    setSelectedStateNode(null);
+    setSelectedChangeEvent(null);
+    setSelectedGraphNode(null);
+    setGraphInvestigation(null);
+  }, []);
+
+  const focusStateNode = useCallback(
+    (node: StateGraphNode | null, preferredEventId?: string | null) => {
+      setSelectedStateNode(node);
+      if (!node) {
+        setSelectedChangeEvent(null);
+        return;
+      }
+
+      const nodeEvents =
+        graphIntelligence?.change_events.filter((event) => event.node_id === node.id) ?? [];
+      const preferredEvent =
+        (preferredEventId ? nodeEvents.find((event) => event.id === preferredEventId) : null) ??
+        (selectedChangeEvent && nodeEvents.some((event) => event.id === selectedChangeEvent.id)
+          ? selectedChangeEvent
+          : null);
+      setSelectedChangeEvent(preferredEvent);
+      void loadStateNeighborhood([node.id], 1);
+    },
+    [graphIntelligence, loadStateNeighborhood, selectedChangeEvent]
+  );
+
+  const focusChangeEvent = useCallback(
+    (event: GraphChangeEvent | null) => {
+      setSelectedChangeEvent(event);
+      if (!event) return;
+      const node =
+        graphIntelligence?.nodes.find((candidate) => candidate.id === event.node_id) ?? null;
+      if (node) {
+        setSelectedStateNode(node);
+      }
+      void loadStateNeighborhood([event.node_id], 1);
+    },
+    [graphIntelligence, loadStateNeighborhood]
+  );
+
+  const focusStateSummaryItem = useCallback(
+    async (itemId: string) => {
+      const item = [...(stateSummary?.top_nodes ?? []), ...(stateSummary?.clusters ?? [])].find(
+        (candidate) => candidate.id === itemId
+      );
+      if (!item) return;
+      const focusIds =
+        item.kind === "cluster" ? item.cluster_membership.slice(0, 3) : [item.node_ref || item.id];
+      const neighborhood = await loadStateNeighborhood(focusIds, 1);
+      const focalNodeId = neighborhood?.focus_ids?.[0];
+      if (!focalNodeId) return;
+      const focal = graphIntelligence?.nodes.find((node) => node.id === focalNodeId) ?? null;
+      if (focal) {
+        setSelectedStateNode(focal);
+      }
+    },
+    [graphIntelligence, loadStateNeighborhood, stateSummary]
+  );
+
+  const focusEvidenceSummaryItem = useCallback(
+    async (itemId: string) => {
+      const item = [
+        ...(evidenceSummary?.top_nodes ?? []),
+        ...(evidenceSummary?.clusters ?? []),
+      ].find((candidate) => candidate.id === itemId);
+      if (!item) return;
+      const focusIds =
+        item.kind === "cluster" ? item.cluster_membership.slice(0, 3) : [item.node_ref || item.id];
+      await loadEvidenceNeighborhood(focusIds, 1);
+      const primaryFocusId = focusIds[0];
+      if (primaryFocusId) {
+        selectRawMemoryById(primaryFocusId);
+      }
+    },
+    [evidenceSummary, loadEvidenceNeighborhood, selectRawMemoryById]
+  );
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        e.key === "Escape" &&
+        (selectedGraphNode || selectedStateNode || selectedChangeEvent || graphInvestigation)
+      ) {
+        clearGraphFocus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    clearGraphFocus,
+    graphInvestigation,
+    selectedChangeEvent,
+    selectedGraphNode,
+    selectedStateNode,
+  ]);
+
   // Handle node click in graph - show in panel
   const handleGraphNodeClick = useCallback(
     (node: GraphNode) => {
-      const nodeData = data?.table_rows?.find((row: any) => row.id === node.id);
-      if (nodeData) {
-        const accessCount = Math.max(0, Number((node.metadata as any)?.access_count ?? 0));
-
-        const connectedLinks = graph2DData.links.filter(
-          (link) => link.source === node.id || link.target === node.id
-        );
-        const connectionCount = connectedLinks.length;
-        const totalLinkWeight = connectedLinks.reduce(
-          (sum, link) => sum + Number(link.weight ?? 0),
-          0
-        );
-
-        setSelectedGraphNode({
-          ...nodeData,
-          access_count: accessCount,
-          graph_stats: {
-            access_count: accessCount,
-            connection_count: connectionCount,
-            total_link_weight: totalLinkWeight,
-          },
-        });
-      }
+      selectRawMemoryById(node.id);
     },
-    [data, graph2DData.links]
+    [selectRawMemoryById]
   );
 
   const usageStats = useMemo(() => {
@@ -309,9 +636,17 @@ export function DataView({ factType }: DataViewProps) {
     }
   }, [tagFilters]);
 
+  useEffect(() => {
+    if (currentBank) {
+      setGraphInvestigation(null);
+      loadData(undefined, searchQuery || undefined, tagFilters.length > 0 ? tagFilters : undefined);
+    }
+  }, [confidenceMin, nodeKind, windowDays]);
+
   // Auto-load data when component mounts or factType/currentBank changes
   useEffect(() => {
     if (currentBank) {
+      setGraphInvestigation(null);
       loadData();
     }
   }, [factType, currentBank]);
@@ -329,6 +664,132 @@ export function DataView({ factType }: DataViewProps) {
     }
   }, [data, graph2DData.nodes.length, maxNodes]);
 
+  const memoryById = useMemo(
+    () => new Map((data?.table_rows ?? []).map((row: any) => [row.id, row])),
+    [data]
+  );
+
+  const neighborhoodStateNodes = useMemo(() => {
+    const entries = (stateNeighborhood?.nodes ?? [])
+      .map((node) => stateNodeFromNeighborhood(node))
+      .filter((node): node is StateGraphNode => node !== null)
+      .map((node) => [node.id, node] as const);
+    return new Map(entries);
+  }, [stateNeighborhood?.nodes]);
+
+  const resolvedSelectedStateNode = useMemo(() => {
+    if (selectedStateNode) return selectedStateNode;
+    const focusId = stateNeighborhood?.focus_ids?.[0];
+    return focusId ? (neighborhoodStateNodes.get(focusId) ?? null) : null;
+  }, [neighborhoodStateNodes, selectedStateNode, stateNeighborhood?.focus_ids]);
+
+  const selectedStateEvents = useMemo(
+    () =>
+      graphIntelligence?.change_events.filter(
+        (event) => event.node_id === resolvedSelectedStateNode?.id
+      ) ?? [],
+    [graphIntelligence, resolvedSelectedStateNode]
+  );
+
+  const selectedEvidenceRows = useMemo<any[]>(() => {
+    const evidenceIds =
+      selectedChangeEvent?.evidence_ids ??
+      resolvedSelectedStateNode?.evidence_ids ??
+      graphInvestigation?.evidence_path
+        .filter((step) => step.kind === "memory")
+        .map((step) => step.id) ??
+      [];
+    return evidenceIds
+      .map((id) => memoryById.get(id))
+      .filter(Boolean)
+      .slice(0, 6);
+  }, [graphInvestigation, memoryById, resolvedSelectedStateNode, selectedChangeEvent]);
+
+  const selectedEvidenceIds = useMemo(
+    () => selectedEvidenceRows.map((row: any) => row.id as string),
+    [selectedEvidenceRows]
+  );
+
+  const highlightedNodeIds = useMemo(() => {
+    if (graphInvestigation?.focal_node_ids?.length) return graphInvestigation.focal_node_ids;
+    return resolvedSelectedStateNode ? [resolvedSelectedStateNode.id] : [];
+  }, [graphInvestigation, resolvedSelectedStateNode]);
+
+  const highlightedEdgeIds = graphInvestigation?.focal_edge_ids ?? [];
+
+  const recommendedChecks = useMemo(() => {
+    if (graphInvestigation?.recommended_checks?.length)
+      return graphInvestigation.recommended_checks;
+    if (selectedChangeEvent?.change_type === "contradiction") {
+      return ["Review conflicting evidence and confirm which source is most current."];
+    }
+    if (
+      selectedChangeEvent?.change_type === "change" ||
+      resolvedSelectedStateNode?.status === "changed"
+    ) {
+      return ["Check downstream summaries and observations that depend on this state."];
+    }
+    if (
+      selectedChangeEvent?.change_type === "stale" ||
+      resolvedSelectedStateNode?.status === "stale"
+    ) {
+      return ["Refresh this area with newer evidence before using it operationally."];
+    }
+    return ["Inspect the supporting evidence before promoting this into a durable mental model."];
+  }, [graphInvestigation, resolvedSelectedStateNode, selectedChangeEvent]);
+
+  const switchGraphSurface = useCallback(
+    (mode: GraphSurfaceMode) => {
+      setGraphSurfaceMode(mode);
+
+      if (mode === "evidence") {
+        if (selectedGraphNode) return;
+        const firstEvidence = selectedEvidenceRows[0];
+        if (firstEvidence) {
+          selectRawMemoryById(firstEvidence.id);
+        }
+      }
+    },
+    [selectRawMemoryById, selectedEvidenceRows, selectedGraphNode]
+  );
+
+  const openEvidenceGraph = useCallback(() => {
+    const firstEvidence = selectedEvidenceRows[0];
+    if (!firstEvidence) return;
+    setGraphSurfaceMode("evidence");
+    selectRawMemoryById(firstEvidence.id);
+  }, [selectRawMemoryById, selectedEvidenceRows]);
+
+  const openRawEvidence = useCallback(() => {
+    const firstEvidence = selectedEvidenceRows[0];
+    if (firstEvidence) {
+      setModalMemoryId(firstEvidence.id);
+    }
+  }, [selectedEvidenceRows]);
+
+  const inspectorHeadline =
+    graphInvestigation?.answer ||
+    selectedChangeEvent?.summary ||
+    resolvedSelectedStateNode?.status_reason ||
+    resolvedSelectedStateNode?.current_state ||
+    "Select a state card to inspect what changed, why Atulya believes it, and what to do next.";
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 1280px)");
+    const syncCompactLayout = () => {
+      setIsCompactGraphLayout(mediaQuery.matches);
+      setShowControlPanel((current) => (mediaQuery.matches ? true : current));
+    };
+
+    syncCompactLayout();
+    mediaQuery.addEventListener("change", syncCompactLayout);
+    return () => mediaQuery.removeEventListener("change", syncCompactLayout);
+  }, []);
+
+  const graphCanvasHeight = isCompactGraphLayout ? 560 : 700;
+
   return (
     <div>
       {loading && !data ? (
@@ -340,9 +801,9 @@ export function DataView({ factType }: DataViewProps) {
         <>
           {/* Always visible filters */}
           <div className="mb-4 space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
               {/* Text search */}
-              <div className="relative max-w-xs flex-1">
+              <div className="relative w-full lg:max-w-xs lg:flex-1">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   type="text"
@@ -353,7 +814,7 @@ export function DataView({ factType }: DataViewProps) {
                 />
               </div>
               {/* Tag input */}
-              <div className="relative max-w-xs flex-1">
+              <div className="relative w-full lg:max-w-xs lg:flex-1">
                 <Tag className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
                 <Input
                   type="text"
@@ -395,8 +856,8 @@ export function DataView({ factType }: DataViewProps) {
             )}
           </div>
 
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-4">
+          <div className="mb-6 flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
               <div className="text-sm text-muted-foreground">
                 {searchQuery || tagFilters.length > 0 ? (
                   `${filteredTableRows.length} matching memories`
@@ -461,7 +922,7 @@ export function DataView({ factType }: DataViewProps) {
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
+            <div className="flex w-full items-center gap-2 overflow-x-auto rounded-lg bg-muted p-1 xl:w-auto">
               <button
                 onClick={() => setViewMode("graph")}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
@@ -499,231 +960,541 @@ export function DataView({ factType }: DataViewProps) {
           </div>
 
           {viewMode === "graph" && (
-            <div className="flex gap-0">
-              {/* Graph */}
-              <div className="flex-1 min-w-0">
-                <Graph2D
-                  data={graph2DData}
-                  height={700}
-                  showLabels={showLabels}
-                  onNodeClick={handleGraphNodeClick}
-                  maxNodes={maxNodes}
-                  nodeColorFn={nodeColorFn}
-                  nodeSizeFn={nodeSizeFn}
-                  linkColorFn={linkColorFn}
-                />
-              </div>
-
-              {/* Right Toggle Button */}
-              <button
-                onClick={() => setShowControlPanel(!showControlPanel)}
-                className="flex-shrink-0 w-5 h-[700px] bg-transparent hover:bg-muted/50 flex items-center justify-center transition-colors"
-                title={showControlPanel ? "Hide panel" : "Show panel"}
-              >
-                {showControlPanel ? (
-                  <ChevronRight className="w-3 h-3 text-muted-foreground/60" />
-                ) : (
-                  <ChevronLeft className="w-3 h-3 text-muted-foreground/60" />
-                )}
-              </button>
-
-              {/* Right Panel - Legend/Controls OR Memory Details */}
-              <div
-                className={`${showControlPanel ? "w-80" : "w-0"} transition-all duration-300 overflow-hidden flex-shrink-0`}
-              >
-                <div className="w-80 h-[700px] bg-card border-l border-border overflow-y-auto">
-                  {selectedGraphNode ? (
-                    /* Memory Detail View */
-                    <MemoryDetailPanel
-                      memory={selectedGraphNode}
-                      onClose={() => setSelectedGraphNode(null)}
-                      inPanel
-                      bankId={currentBank || undefined}
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+                <div className="flex flex-col gap-2 xl:flex-row xl:items-center">
+                  <div className="flex items-center gap-2 bg-muted rounded-lg p-1">
+                    <button
+                      onClick={() => switchGraphSurface("state")}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        graphSurfaceMode === "state"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      State Graph
+                    </button>
+                    <button
+                      onClick={() => switchGraphSurface("evidence")}
+                      className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                        graphSurfaceMode === "evidence"
+                          ? "bg-background text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Evidence Graph
+                    </button>
+                  </div>
+                  <div className="relative min-w-0 flex-1 xl:min-w-[260px]">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      value={analystQuery}
+                      onChange={(e) => setAnalystQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          e.preventDefault();
+                          runGraphInvestigation();
+                        }
+                      }}
+                      placeholder="Ask the graph analyst what changed..."
+                      className="pl-8"
                     />
-                  ) : (
-                    /* Legend & Controls View */
-                    <div className="p-4 space-y-5">
-                      {/* Legend & Stats */}
-                      <div>
-                        <h3 className="text-sm font-semibold mb-3 text-foreground">Graph</h3>
-                        <div className="space-y-2">
-                          {/* Nodes */}
-                          <div className="flex items-center justify-between text-sm">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-3 h-3 rounded-full"
-                                style={{ backgroundColor: "#dc2626" }}
-                              />
-                              <span className="text-foreground">Nodes</span>
-                            </div>
-                            <span className="font-mono text-foreground">
-                              {Math.min(
-                                maxNodes ?? graph2DData.nodes.length,
-                                graph2DData.nodes.length
-                              )}
-                              /{graph2DData.nodes.length}
-                            </span>
-                          </div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 xl:flex-nowrap">
+                    <Button
+                      onClick={runGraphInvestigation}
+                      disabled={investigating || !analystQuery.trim()}
+                    >
+                      {investigating ? "Analyzing..." : "Investigate"}
+                    </Button>
+                    <Button variant="outline" onClick={clearGraphFocus}>
+                      Clear Focus
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setGraphLayoutResetVersion((value) => value + 1)}
+                    >
+                      Reset Layout
+                    </Button>
+                  </div>
+                </div>
 
-                          <div className="text-xs font-medium text-muted-foreground mt-2 mb-1">
-                            Links ({linkStats.total}){" "}
-                            <span className="text-muted-foreground/60">· click to filter</span>
-                          </div>
-                          <button
-                            onClick={() => toggleLinkType("semantic")}
-                            className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
-                              visibleLinkTypes.has("semantic")
-                                ? "hover:bg-muted"
-                                : "opacity-40 hover:opacity-60"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-0.5 bg-[#dc2626]" />
-                              <span className="text-foreground">Semantic</span>
-                            </div>
-                            <span
-                              className={`font-mono ${linkStats.semantic === 0 ? "text-destructive" : "text-foreground"}`}
-                            >
-                              {linkStats.semantic}
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => toggleLinkType("temporal")}
-                            className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
-                              visibleLinkTypes.has("temporal")
-                                ? "hover:bg-muted"
-                                : "opacity-40 hover:opacity-60"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-0.5 bg-[#991b1b]" />
-                              <span className="text-foreground">Temporal</span>
-                            </div>
-                            <span
-                              className={`font-mono ${linkStats.temporal === 0 ? "text-destructive" : "text-foreground"}`}
-                            >
-                              {linkStats.temporal}
-                            </span>
-                          </button>
-                          <button
-                            onClick={() => toggleLinkType("entity")}
-                            className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
-                              visibleLinkTypes.has("entity")
-                                ? "hover:bg-muted"
-                                : "opacity-40 hover:opacity-60"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-0.5 bg-[#f59e0b]" />
-                              <span className="text-foreground">Entity</span>
-                            </div>
-                            <span className="font-mono text-foreground">{linkStats.entity}</span>
-                          </button>
-                          <button
-                            onClick={() => toggleLinkType("causal")}
-                            className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
-                              visibleLinkTypes.has("causal")
-                                ? "hover:bg-muted"
-                                : "opacity-40 hover:opacity-60"
-                            }`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div className="w-4 h-0.5 bg-[#8b5cf6]" />
-                              <span className="text-foreground">Causal</span>
-                            </div>
-                            <span
-                              className={`font-mono ${linkStats.causal === 0 ? "text-muted-foreground" : "text-foreground"}`}
-                            >
-                              {linkStats.causal}
-                            </span>
-                          </button>
-                          {Object.entries(linkStats.otherTypes || {}).map(([type, count]) => (
-                            <div key={type} className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground capitalize ml-6">{type}</span>
-                              <span className="font-mono text-muted-foreground">
-                                {count as number}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className="border-t border-border" />
-
-                      {/* Controls Section */}
-                      <div>
-                        <h3 className="text-sm font-semibold mb-3 text-foreground">Display</h3>
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <Label htmlFor="show-labels" className="text-sm text-foreground">
-                              Show labels
-                            </Label>
-                            <Switch
-                              id="show-labels"
-                              checked={showLabels}
-                              onCheckedChange={setShowLabels}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-border" />
-
-                      {/* Limits Section */}
-                      <div>
-                        <h3 className="text-sm font-semibold mb-3 text-foreground">Performance</h3>
-                        <div className="space-y-4">
-                          <div>
-                            <div className="flex items-center justify-between mb-2">
-                              <Label className="text-sm text-foreground">Max nodes</Label>
-                              <span className="text-xs text-muted-foreground">
-                                {graph2DData.nodes.length > 50
-                                  ? `${maxNodes ?? 50} / ${graph2DData.nodes.length}`
-                                  : `${maxNodes ?? "All"} / ${graph2DData.nodes.length}`}
-                              </span>
-                            </div>
-                            <Slider
-                              value={[
-                                graph2DData.nodes.length > 50
-                                  ? maxNodes || 20
-                                  : maxNodes || Math.min(graph2DData.nodes.length, 20),
-                              ]}
-                              min={10}
-                              max={Math.min(Math.max(graph2DData.nodes.length, 10), 50)}
-                              step={10}
-                              onValueChange={([v]) => {
-                                const effectiveMax = Math.min(graph2DData.nodes.length, 50);
-                                // If we have >50 nodes, never allow "All" (undefined), cap at 50
-                                if (graph2DData.nodes.length > 50) {
-                                  setMaxNodes(v);
-                                } else {
-                                  // Original behavior for ≤50 nodes: allow "All" when slider reaches max
-                                  setMaxNodes(v >= effectiveMax ? undefined : v);
-                                }
-                              }}
-                              className="w-full"
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            All links between visible nodes are shown.
-                            {graph2DData.nodes.length > 50 && (
-                              <span className="block text-amber-600 dark:text-amber-400 mt-1">
-                                ⚠️ Limited to 50 nodes for performance. Total:{" "}
-                                {graph2DData.nodes.length}
-                              </span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="border-t border-border" />
-
-                      {/* Hint */}
-                      <div className="text-xs text-muted-foreground/60 text-center pt-2">
-                        Click a node to see details
-                      </div>
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <label className="text-muted-foreground">Time window</label>
+                  <select
+                    value={windowDays}
+                    onChange={(e) => setWindowDays(e.target.value)}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="30">30 days</option>
+                    <option value="90">90 days</option>
+                    <option value="180">180 days</option>
+                    <option value="all">All time</option>
+                  </select>
+                  <label className="text-muted-foreground">Confidence</label>
+                  <select
+                    value={String(confidenceMin)}
+                    onChange={(e) => setConfidenceMin(Number(e.target.value))}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="0.4">40%+</option>
+                    <option value="0.55">55%+</option>
+                    <option value="0.7">70%+</option>
+                  </select>
+                  <label className="text-muted-foreground">Node kind</label>
+                  <select
+                    value={nodeKind}
+                    onChange={(e) => setNodeKind(e.target.value as "all" | "entity" | "topic")}
+                    className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="all">All</option>
+                    <option value="entity">Entities</option>
+                    <option value="topic">Topics</option>
+                  </select>
+                  {(graphSurfaceMode === "state" ? stateSummary : evidenceSummary) && (
+                    <div className="w-full text-xs text-muted-foreground xl:ml-auto xl:w-auto">
+                      {graphSurfaceMode === "state"
+                        ? `${stateNeighborhood?.nodes.length ?? graphIntelligence?.nodes.length ?? 0} visible of ${stateSummary?.total_nodes ?? graphIntelligence?.total_nodes ?? 0} state nodes`
+                        : `${evidenceNeighborhood?.nodes.length ?? graph2DData.nodes.length} visible of ${evidenceSummary?.total_nodes ?? graph2DData.nodes.length} evidence memories`}
                     </div>
                   )}
+                </div>
+              </div>
+
+              <div className={`flex gap-0 ${isCompactGraphLayout ? "flex-col" : "flex-row"}`}>
+                <div className="flex-1 min-w-0">
+                  {graphSurfaceMode === "state" ? (
+                    <StateGraph
+                      data={graphIntelligence}
+                      summary={stateSummary}
+                      neighborhood={stateNeighborhood}
+                      height={graphCanvasHeight}
+                      selectedNodeId={resolvedSelectedStateNode?.id}
+                      selectedEventId={selectedChangeEvent?.id}
+                      highlightedNodeIds={highlightedNodeIds}
+                      highlightedEdgeIds={highlightedEdgeIds}
+                      storageKey={stateLayoutStorageKey}
+                      resetLayoutVersion={graphLayoutResetVersion}
+                      onBackgroundClick={clearGraphFocus}
+                      onNodeClick={(node) => focusStateNode(node)}
+                      onEventClick={(event) => focusChangeEvent(event)}
+                      onSummaryClick={focusStateSummaryItem}
+                    />
+                  ) : (
+                    <Graph2D
+                      data={graph2DData}
+                      summary={evidenceSummary}
+                      neighborhood={evidenceNeighborhood}
+                      height={graphCanvasHeight}
+                      showLabels={showLabels}
+                      selectedNodeId={selectedGraphNode?.id ?? null}
+                      highlightedNodeIds={selectedEvidenceIds}
+                      onNodeClick={handleGraphNodeClick}
+                      onBackgroundClick={() => setSelectedGraphNode(null)}
+                      maxNodes={maxNodes}
+                      nodeColorFn={nodeColorFn}
+                      nodeSizeFn={nodeSizeFn}
+                      linkColorFn={linkColorFn}
+                      storageKey={evidenceLayoutStorageKey}
+                      resetLayoutVersion={graphLayoutResetVersion}
+                      onSummaryClick={focusEvidenceSummaryItem}
+                    />
+                  )}
+                </div>
+
+                {!isCompactGraphLayout && (
+                  <button
+                    onClick={() => setShowControlPanel(!showControlPanel)}
+                    className={`flex-shrink-0 w-5 bg-transparent hover:bg-muted/50 flex items-center justify-center transition-colors`}
+                    style={{ height: graphCanvasHeight }}
+                    title={showControlPanel ? "Hide panel" : "Show panel"}
+                  >
+                    {showControlPanel ? (
+                      <ChevronRight className="w-3 h-3 text-muted-foreground/60" />
+                    ) : (
+                      <ChevronLeft className="w-3 h-3 text-muted-foreground/60" />
+                    )}
+                  </button>
+                )}
+
+                <div
+                  className={
+                    isCompactGraphLayout
+                      ? "mt-4 w-full overflow-hidden rounded-xl border border-border bg-card"
+                      : `${showControlPanel ? "w-80" : "w-0"} transition-all duration-300 overflow-hidden flex-shrink-0`
+                  }
+                >
+                  <div
+                    className={`${isCompactGraphLayout ? "w-full border-t" : "w-80 border-l"} bg-card border-border overflow-y-auto`}
+                    style={{ height: graphCanvasHeight }}
+                  >
+                    {graphSurfaceMode === "state" ? (
+                      <div className="p-4 space-y-5">
+                        <div>
+                          <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
+                            Graph Intelligence
+                          </div>
+                          <h3 className="text-lg font-semibold text-foreground">
+                            {resolvedSelectedStateNode?.title || "Top graph signals"}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mt-1">{inspectorHeadline}</p>
+                        </div>
+
+                        {resolvedSelectedStateNode && (
+                          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+                            <div className="text-xs font-bold text-muted-foreground uppercase">
+                              What This Is
+                            </div>
+                            <div className="text-sm font-medium text-foreground">
+                              {resolvedSelectedStateNode.subtitle ||
+                                `${resolvedSelectedStateNode.kind} state`}
+                            </div>
+                            <div className="text-sm text-muted-foreground leading-relaxed">
+                              {resolvedSelectedStateNode.status_reason}
+                            </div>
+                          </div>
+                        )}
+
+                        {resolvedSelectedStateNode && (
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="p-2 rounded bg-muted/40 border border-border">
+                              <div className="text-[11px] text-muted-foreground">Status</div>
+                              <div className="font-semibold text-foreground capitalize">
+                                {resolvedSelectedStateNode.status}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded bg-muted/40 border border-border">
+                              <div className="text-[11px] text-muted-foreground">Confidence</div>
+                              <div className="font-semibold text-foreground">
+                                {Math.round(resolvedSelectedStateNode.confidence * 100)}%
+                              </div>
+                            </div>
+                            <div className="p-2 rounded bg-muted/40 border border-border">
+                              <div className="text-[11px] text-muted-foreground">Evidence</div>
+                              <div className="font-semibold text-foreground">
+                                {resolvedSelectedStateNode.evidence_count}
+                              </div>
+                            </div>
+                            <div className="p-2 rounded bg-muted/40 border border-border">
+                              <div className="text-[11px] text-muted-foreground">Kind</div>
+                              <div className="font-semibold text-foreground capitalize">
+                                {resolvedSelectedStateNode.kind}
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {resolvedSelectedStateNode && (
+                          <div>
+                            <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
+                              Current State
+                            </div>
+                            <div className="text-sm text-foreground leading-relaxed">
+                              {resolvedSelectedStateNode.current_state}
+                            </div>
+                            {resolvedSelectedStateNode.primary_timestamp && (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                Primary evidence from{" "}
+                                {new Date(
+                                  resolvedSelectedStateNode.primary_timestamp
+                                ).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div>
+                          <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
+                            What Changed
+                          </div>
+                          <div className="space-y-2">
+                            {(selectedStateEvents.length > 0
+                              ? selectedStateEvents
+                              : (graphIntelligence?.change_events.slice(0, 3) ?? [])
+                            ).map((event) => (
+                              <button
+                                key={event.id}
+                                onClick={() => focusChangeEvent(event)}
+                                className={`w-full text-left p-3 rounded-lg border transition-colors ${
+                                  selectedChangeEvent?.id === event.id
+                                    ? "border-primary bg-primary/5"
+                                    : "border-border hover:bg-muted/40"
+                                }`}
+                              >
+                                <div className="text-sm font-medium text-foreground capitalize">
+                                  {event.change_type}
+                                </div>
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  {event.summary}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
+                            Why Atulya Thinks This
+                          </div>
+                          <div className="space-y-2">
+                            {selectedEvidenceRows.length > 0 ? (
+                              selectedEvidenceRows.map((row: any) => (
+                                <button
+                                  key={row.id}
+                                  onClick={() => setModalMemoryId(row.id)}
+                                  className="w-full text-left p-3 rounded-lg border border-border hover:bg-muted/40 transition-colors"
+                                >
+                                  <div className="text-sm text-foreground line-clamp-2">
+                                    {row.text}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-1">
+                                    {row.mentioned_at
+                                      ? new Date(row.mentioned_at).toLocaleString()
+                                      : row.occurred_start
+                                        ? new Date(row.occurred_start).toLocaleString()
+                                        : "No timestamp"}
+                                  </div>
+                                </button>
+                              ))
+                            ) : (
+                              <div className="text-sm text-muted-foreground">
+                                Ask the graph analyst a question or select a state node to surface
+                                supporting proof.
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div>
+                          <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
+                            Recommended Checks
+                          </div>
+                          <div className="space-y-2">
+                            {recommendedChecks.map((check) => (
+                              <div
+                                key={check}
+                                className="text-sm text-foreground p-3 rounded-lg bg-muted/40 border border-border"
+                              >
+                                {check}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => {
+                              const focusId =
+                                resolvedSelectedStateNode?.id || graphIntelligence?.nodes[0]?.id;
+                              if (!focusId) return;
+                              void loadStateNeighborhood([focusId], 2);
+                            }}
+                            disabled={
+                              !resolvedSelectedStateNode && !graphIntelligence?.nodes?.length
+                            }
+                          >
+                            Focus Neighbors
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={openEvidenceGraph}
+                            disabled={selectedEvidenceRows.length === 0}
+                          >
+                            Open Evidence Graph
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={openRawEvidence}
+                            disabled={selectedEvidenceRows.length === 0}
+                          >
+                            Open Raw Memory
+                          </Button>
+                          <Button
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setGraphLayoutResetVersion((value) => value + 1)}
+                          >
+                            Reset Card Positions
+                          </Button>
+                        </div>
+                      </div>
+                    ) : selectedGraphNode ? (
+                      <MemoryDetailPanel
+                        memory={selectedGraphNode}
+                        onClose={() => setSelectedGraphNode(null)}
+                        inPanel
+                        bankId={currentBank || undefined}
+                      />
+                    ) : (
+                      <div className="p-4 space-y-5">
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3 text-foreground">
+                            Evidence Graph
+                          </h3>
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: "#dc2626" }}
+                                />
+                                <span className="text-foreground">Nodes</span>
+                              </div>
+                              <span className="font-mono text-foreground">
+                                {Math.min(
+                                  maxNodes ?? graph2DData.nodes.length,
+                                  graph2DData.nodes.length
+                                )}
+                                /{graph2DData.nodes.length}
+                              </span>
+                            </div>
+
+                            <div className="text-xs font-medium text-muted-foreground mt-2 mb-1">
+                              Links ({linkStats.total}){" "}
+                              <span className="text-muted-foreground/60">· click to filter</span>
+                            </div>
+                            <button
+                              onClick={() => toggleLinkType("semantic")}
+                              className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
+                                visibleLinkTypes.has("semantic")
+                                  ? "hover:bg-muted"
+                                  : "opacity-40 hover:opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-0.5 bg-[#dc2626]" />
+                                <span className="text-foreground">Semantic</span>
+                              </div>
+                              <span
+                                className={`font-mono ${linkStats.semantic === 0 ? "text-destructive" : "text-foreground"}`}
+                              >
+                                {linkStats.semantic}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => toggleLinkType("temporal")}
+                              className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
+                                visibleLinkTypes.has("temporal")
+                                  ? "hover:bg-muted"
+                                  : "opacity-40 hover:opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-0.5 bg-[#991b1b]" />
+                                <span className="text-foreground">Temporal</span>
+                              </div>
+                              <span
+                                className={`font-mono ${linkStats.temporal === 0 ? "text-destructive" : "text-foreground"}`}
+                              >
+                                {linkStats.temporal}
+                              </span>
+                            </button>
+                            <button
+                              onClick={() => toggleLinkType("entity")}
+                              className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
+                                visibleLinkTypes.has("entity")
+                                  ? "hover:bg-muted"
+                                  : "opacity-40 hover:opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-0.5 bg-[#f59e0b]" />
+                                <span className="text-foreground">Entity</span>
+                              </div>
+                              <span className="font-mono text-foreground">{linkStats.entity}</span>
+                            </button>
+                            <button
+                              onClick={() => toggleLinkType("causal")}
+                              className={`w-full flex items-center justify-between text-sm px-2 py-1 rounded transition-all ${
+                                visibleLinkTypes.has("causal")
+                                  ? "hover:bg-muted"
+                                  : "opacity-40 hover:opacity-60"
+                              }`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="w-4 h-0.5 bg-[#8b5cf6]" />
+                                <span className="text-foreground">Causal</span>
+                              </div>
+                              <span
+                                className={`font-mono ${linkStats.causal === 0 ? "text-muted-foreground" : "text-foreground"}`}
+                              >
+                                {linkStats.causal}
+                              </span>
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border" />
+
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3 text-foreground">Display</h3>
+                          <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="show-labels" className="text-sm text-foreground">
+                                Show labels
+                              </Label>
+                              <Switch
+                                id="show-labels"
+                                checked={showLabels}
+                                onCheckedChange={setShowLabels}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border" />
+
+                        <div>
+                          <h3 className="text-sm font-semibold mb-3 text-foreground">
+                            Performance
+                          </h3>
+                          <div className="space-y-4">
+                            <div>
+                              <div className="flex items-center justify-between mb-2">
+                                <Label className="text-sm text-foreground">Max nodes</Label>
+                                <span className="text-xs text-muted-foreground">
+                                  {graph2DData.nodes.length > 50
+                                    ? `${maxNodes ?? 50} / ${graph2DData.nodes.length}`
+                                    : `${maxNodes ?? "All"} / ${graph2DData.nodes.length}`}
+                                </span>
+                              </div>
+                              <Slider
+                                value={[
+                                  graph2DData.nodes.length > 50
+                                    ? maxNodes || 20
+                                    : maxNodes || Math.min(graph2DData.nodes.length, 20),
+                                ]}
+                                min={10}
+                                max={Math.min(Math.max(graph2DData.nodes.length, 10), 50)}
+                                step={10}
+                                onValueChange={([v]) => {
+                                  const effectiveMax = Math.min(graph2DData.nodes.length, 50);
+                                  if (graph2DData.nodes.length > 50) {
+                                    setMaxNodes(v);
+                                  } else {
+                                    setMaxNodes(v >= effectiveMax ? undefined : v);
+                                  }
+                                }}
+                                className="w-full"
+                              />
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              All links between visible nodes are shown.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="border-t border-border" />
+                        <div className="text-xs text-muted-foreground/60 text-center pt-2">
+                          Click a node to inspect the raw memory proof
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

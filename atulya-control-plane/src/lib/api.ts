@@ -108,6 +108,154 @@ export interface BenchmarkResponse {
   stderr?: string;
 }
 
+export interface GraphStateNode {
+  id: string;
+  title: string;
+  kind: "entity" | "topic";
+  subtitle: string | null;
+  current_state: string;
+  status: "stable" | "changed" | "contradictory" | "stale";
+  status_reason: string;
+  confidence: number;
+  change_score: number;
+  last_changed_at: string | null;
+  primary_timestamp: string | null;
+  evidence_count: number;
+  tags: string[];
+  evidence_ids: string[];
+}
+
+export interface GraphRelationEdge {
+  id: string;
+  source_id: string;
+  target_id: string;
+  relation_type: string;
+  strength: number;
+  evidence_count: number;
+}
+
+export interface GraphChangeEvent {
+  id: string;
+  node_id: string;
+  change_type: "change" | "contradiction" | "stale";
+  before_state: string | null;
+  after_state: string;
+  confidence: number;
+  time_window: string | null;
+  evidence_ids: string[];
+  summary: string;
+}
+
+export interface GraphEvidencePathStep {
+  kind: "node" | "event" | "memory";
+  id: string;
+  label: string;
+  timestamp: string | null;
+}
+
+export interface GraphIntelligenceResponse {
+  nodes: GraphStateNode[];
+  edges: GraphRelationEdge[];
+  change_events: GraphChangeEvent[];
+  total_nodes: number;
+  generated_at: string;
+  cached: boolean;
+}
+
+export interface GraphInvestigationResponse {
+  answer: string;
+  focal_node_ids: string[];
+  focal_edge_ids: string[];
+  change_events: GraphChangeEvent[];
+  evidence_path: GraphEvidencePathStep[];
+  recommended_checks: string[];
+}
+
+export type GraphRenderMode = "overview" | "compact" | "detail";
+
+export interface GraphSummaryItem {
+  id: string;
+  kind: "cluster" | "node";
+  title: string;
+  subtitle: string | null;
+  preview_labels: string[];
+  member_count: number;
+  status_tone: "stable" | "changed" | "contradictory" | "stale" | "neutral";
+  display_priority: number;
+  render_mode_hint: GraphRenderMode;
+  cluster_membership: string[];
+  node_ref: string | null;
+}
+
+export interface GraphSummaryEdge {
+  id: string;
+  source_id: string;
+  target_id: string;
+  weight: number;
+  label: string | null;
+}
+
+export interface GraphSummaryResponse {
+  surface: "state" | "evidence";
+  mode_hint: GraphRenderMode;
+  total_nodes: number;
+  total_edges: number;
+  clusters: GraphSummaryItem[];
+  top_nodes: GraphSummaryItem[];
+  bundled_edges: GraphSummaryEdge[];
+  initial_focus_ids: string[];
+  generated_at: string;
+  cached: boolean;
+}
+
+export interface GraphNeighborhoodNode {
+  id: string;
+  node_type: "state" | "event" | "evidence";
+  title: string;
+  subtitle: string | null;
+  preview: string | null;
+  status_label: string | null;
+  status_tone: "stable" | "changed" | "contradictory" | "stale" | "neutral";
+  confidence: number | null;
+  evidence_count: number | null;
+  kind_label: string | null;
+  meta: string | null;
+  timestamp_label: string | null;
+  reason: string | null;
+  accent_color: string | null;
+  display_priority: number;
+  node_density_hint: number;
+  cluster_membership: string | null;
+  render_mode_hint: GraphRenderMode;
+}
+
+export interface GraphNeighborhoodEdge {
+  id: string;
+  source: string;
+  target: string;
+  kind: "relation" | "event" | "evidence";
+  label: string | null;
+  stroke: string | null;
+  dashed: boolean;
+  width: number;
+  animated: boolean;
+  priority: number;
+}
+
+export interface GraphNeighborhoodResponse {
+  surface: "state" | "evidence";
+  mode_hint: GraphRenderMode;
+  focus_ids: string[];
+  nodes: GraphNeighborhoodNode[];
+  edges: GraphNeighborhoodEdge[];
+  total_nodes: number;
+  total_edges: number;
+  has_more: boolean;
+  cursor: string | null;
+  generated_at: string;
+  cached: boolean;
+}
+
 export class ControlPlaneClient {
   private async fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
     try {
@@ -309,6 +457,122 @@ export class ControlPlaneClient {
       params.tags.forEach((tag) => queryParams.append("tags", tag));
     }
     return this.fetchApi(`/api/graph?${queryParams}`);
+  }
+
+  async getGraphIntelligence(params: {
+    bank_id: string;
+    type?: string;
+    limit?: number;
+    q?: string;
+    tags?: string[];
+    tags_match?: "any" | "all" | "any_strict" | "all_strict";
+    confidence_min?: number;
+    node_kind?: "all" | "entity" | "topic";
+    window_days?: number;
+  }) {
+    const queryParams = new URLSearchParams();
+    queryParams.append("bank_id", params.bank_id);
+    if (params.type) queryParams.append("type", params.type);
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.q) queryParams.append("q", params.q);
+    if (params.tags_match) queryParams.append("tags_match", params.tags_match);
+    if (params.confidence_min !== undefined) {
+      queryParams.append("confidence_min", String(params.confidence_min));
+    }
+    if (params.node_kind) queryParams.append("node_kind", params.node_kind);
+    if (params.window_days !== undefined)
+      queryParams.append("window_days", String(params.window_days));
+    if (params.tags && params.tags.length > 0) {
+      params.tags.forEach((tag) => queryParams.append("tags", tag));
+    }
+    return this.fetchApi<GraphIntelligenceResponse>(`/api/graph/intelligence?${queryParams}`);
+  }
+
+  async investigateGraph(params: {
+    bank_id: string;
+    query: string;
+    type?: string;
+    tags?: string[];
+    tags_match?: "any" | "all" | "any_strict" | "all_strict";
+    confidence_min?: number;
+    node_kind?: "all" | "entity" | "topic";
+    window_days?: number;
+    limit?: number;
+  }) {
+    return this.fetchApi<GraphInvestigationResponse>("/api/graph/investigate", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
+  }
+
+  async getGraphSummary(params: {
+    bank_id: string;
+    surface: "state" | "evidence";
+    type?: string;
+    q?: string;
+    tags?: string[];
+    tags_match?: "any" | "all" | "any_strict" | "all_strict";
+    confidence_min?: number;
+    node_kind?: "all" | "entity" | "topic";
+    window_days?: number;
+  }) {
+    const queryParams = new URLSearchParams();
+    queryParams.append("bank_id", params.bank_id);
+    queryParams.append("surface", params.surface);
+    if (params.type) queryParams.append("type", params.type);
+    if (params.q) queryParams.append("q", params.q);
+    if (params.tags_match) queryParams.append("tags_match", params.tags_match);
+    if (params.confidence_min !== undefined)
+      queryParams.append("confidence_min", String(params.confidence_min));
+    if (params.node_kind) queryParams.append("node_kind", params.node_kind);
+    if (params.window_days !== undefined)
+      queryParams.append("window_days", String(params.window_days));
+    if (params.tags?.length) {
+      params.tags.forEach((tag) => queryParams.append("tags", tag));
+    }
+    return this.fetchApi<GraphSummaryResponse>(`/api/graph/summary?${queryParams.toString()}`);
+  }
+
+  async getGraphNeighborhood(params: {
+    bank_id: string;
+    surface: "state" | "evidence";
+    type?: string;
+    q?: string;
+    tags?: string[];
+    tags_match?: "any" | "all" | "any_strict" | "all_strict";
+    confidence_min?: number;
+    node_kind?: "all" | "entity" | "topic";
+    window_days?: number;
+    focus_ids?: string[];
+    depth?: number;
+    limit_nodes?: number;
+    limit_edges?: number;
+  }) {
+    const queryParams = new URLSearchParams();
+    queryParams.append("bank_id", params.bank_id);
+    queryParams.append("surface", params.surface);
+    if (params.type) queryParams.append("type", params.type);
+    if (params.q) queryParams.append("q", params.q);
+    if (params.tags_match) queryParams.append("tags_match", params.tags_match);
+    if (params.confidence_min !== undefined)
+      queryParams.append("confidence_min", String(params.confidence_min));
+    if (params.node_kind) queryParams.append("node_kind", params.node_kind);
+    if (params.window_days !== undefined)
+      queryParams.append("window_days", String(params.window_days));
+    if (params.depth !== undefined) queryParams.append("depth", String(params.depth));
+    if (params.limit_nodes !== undefined)
+      queryParams.append("limit_nodes", String(params.limit_nodes));
+    if (params.limit_edges !== undefined)
+      queryParams.append("limit_edges", String(params.limit_edges));
+    if (params.tags?.length) {
+      params.tags.forEach((tag) => queryParams.append("tags", tag));
+    }
+    if (params.focus_ids?.length) {
+      params.focus_ids.forEach((id) => queryParams.append("focus_ids", id));
+    }
+    return this.fetchApi<GraphNeighborhoodResponse>(
+      `/api/graph/neighborhood?${queryParams.toString()}`
+    );
   }
 
   /**

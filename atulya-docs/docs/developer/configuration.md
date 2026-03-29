@@ -1023,6 +1023,14 @@ Metrics are always enabled and available at `http://localhost:8888/metrics`.
 
 The Control Plane is the web UI for managing memory banks.
 
+It now includes Graph Intelligence for:
+
+- seeing what changed in a bank
+- investigating why Atulya believes something
+- drilling from state into raw supporting memories
+
+See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the product workflow.
+
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ATULYA_CP_DATAPLANE_API_URL` | URL of the API service | `http://localhost:8888` |

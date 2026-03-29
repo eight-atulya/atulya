@@ -516,6 +516,9 @@ class MemoryEngine(MemoryEngineInterface):
 
             tenant_extension = DefaultTenantExtension(config={})
         self._tenant_extension = tenant_extension
+        self._graph_intelligence_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._graph_summary_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        self._graph_neighborhood_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
 
     @property
     def tenant_extension(self) -> "TenantExtension | None":
@@ -5109,6 +5112,500 @@ class MemoryEngine(MemoryEngineInterface):
             )
 
         return {"nodes": nodes, "edges": edges, "table_rows": table_rows, "total_units": total_count, "limit": limit}
+
+    def _graph_intelligence_cache_key(
+        self,
+        *,
+        bank_id: str,
+        fact_type: str | None,
+        limit: int,
+        q: str | None,
+        tags: list[str] | None,
+        tags_match: str,
+        confidence_min: float,
+        node_kind: str,
+        window_days: int | None,
+    ) -> str:
+        return json.dumps(
+            {
+                "bank_id": bank_id,
+                "fact_type": fact_type,
+                "limit": limit,
+                "q": q,
+                "tags": sorted(tags or []),
+                "tags_match": tags_match,
+                "confidence_min": round(confidence_min, 3),
+                "node_kind": node_kind,
+                "window_days": window_days,
+                "schema": get_current_schema(),
+            },
+            sort_keys=True,
+        )
+
+    def _graph_surface_cache_key(
+        self,
+        *,
+        endpoint: str,
+        bank_id: str,
+        surface: str,
+        fact_type: str | None,
+        q: str | None,
+        tags: list[str] | None,
+        tags_match: str,
+        confidence_min: float,
+        node_kind: str,
+        window_days: int | None,
+        focus_ids: list[str] | None = None,
+        depth: int | None = None,
+        limit_nodes: int | None = None,
+        limit_edges: int | None = None,
+    ) -> str:
+        return json.dumps(
+            {
+                "endpoint": endpoint,
+                "bank_id": bank_id,
+                "surface": surface,
+                "fact_type": fact_type,
+                "q": q,
+                "tags": sorted(tags or []),
+                "tags_match": tags_match,
+                "confidence_min": round(confidence_min, 3),
+                "node_kind": node_kind,
+                "window_days": window_days,
+                "focus_ids": sorted(focus_ids or []),
+                "depth": depth,
+                "limit_nodes": limit_nodes,
+                "limit_edges": limit_edges,
+                "schema": get_current_schema(),
+            },
+            sort_keys=True,
+        )
+
+    @staticmethod
+    def _parse_optional_datetime(value: str | datetime | None) -> datetime | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            return value if value.tzinfo else value.replace(tzinfo=UTC)
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+    async def _load_graph_intelligence_units(
+        self,
+        conn,
+        *,
+        bank_id: str,
+        fact_type: str | None,
+        limit: int,
+        q: str | None,
+        tags: list[str] | None,
+        tags_match: str,
+        window_days: int | None,
+    ) -> list["GraphEvidenceUnit"]:
+        from .graph_intelligence import GraphEvidenceUnit
+        from .search.tags import build_tags_where_clause_simple
+
+        query_conditions = ["bank_id = $1"]
+        query_params: list[Any] = [bank_id]
+        param_count = 1
+
+        if fact_type:
+            param_count += 1
+            query_conditions.append(f"fact_type = ${param_count}")
+            query_params.append(fact_type)
+
+        if q:
+            param_count += 1
+            query_conditions.append(f"(text ILIKE ${param_count} OR context ILIKE ${param_count})")
+            query_params.append(f"%{q}%")
+
+        if tags:
+            tag_clause = build_tags_where_clause_simple(tags, param_count + 1, match=cast(Any, tags_match))
+            if tag_clause:
+                query_conditions.append(tag_clause.removeprefix("AND "))
+                param_count += 1
+                query_params.append(tags)
+
+        if window_days is not None:
+            cutoff = datetime.now(UTC) - timedelta(days=window_days)
+            param_count += 1
+            query_conditions.append(f"COALESCE(occurred_start, mentioned_at, created_at) >= ${param_count}")
+            query_params.append(cutoff)
+
+        where_clause = "WHERE " + " AND ".join(query_conditions)
+        fetch_limit = min(max(limit * 25, 250), 2000)
+        param_count += 1
+        query_params.append(fetch_limit)
+
+        rows = await conn.fetch(
+            f"""
+            SELECT id, text, fact_type, context, occurred_start, mentioned_at, created_at,
+                   proof_count, access_count, tags, source_memory_ids
+            FROM {fq_table("memory_units")}
+            {where_clause}
+            ORDER BY COALESCE(occurred_start, mentioned_at, created_at) DESC NULLS LAST, created_at DESC
+            LIMIT ${param_count}
+        """,
+            *query_params,
+        )
+
+        if not rows:
+            return []
+
+        unit_ids = [row["id"] for row in rows]
+        unit_entities = await conn.fetch(
+            f"""
+            SELECT ue.unit_id, e.canonical_name
+            FROM {fq_table("unit_entities")} ue
+            JOIN {fq_table("entities")} e ON ue.entity_id = e.id
+            WHERE ue.unit_id = ANY($1::uuid[])
+            ORDER BY ue.unit_id, e.canonical_name
+        """,
+            unit_ids,
+        )
+
+        entity_map: dict[Any, list[str]] = {}
+        for row in unit_entities:
+            entity_map.setdefault(row["unit_id"], []).append(row["canonical_name"])
+
+        units: list[GraphEvidenceUnit] = []
+        for row in rows:
+            units.append(
+                GraphEvidenceUnit(
+                    id=str(row["id"]),
+                    text=row["text"],
+                    fact_type=row["fact_type"],
+                    context=row["context"],
+                    occurred_start=row["occurred_start"],
+                    mentioned_at=row["mentioned_at"],
+                    created_at=row["created_at"],
+                    proof_count=int(row["proof_count"] or 0),
+                    access_count=int(row["access_count"] or 0),
+                    tags=list(row["tags"] or []),
+                    entities=entity_map.get(row["id"], []),
+                    source_memory_ids=[str(source_id) for source_id in (row["source_memory_ids"] or [])],
+                )
+            )
+
+        return units
+
+    async def get_graph_intelligence(
+        self,
+        bank_id: str,
+        *,
+        fact_type: str | None = None,
+        limit: int = 18,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: str = "all_strict",
+        confidence_min: float = 0.55,
+        node_kind: str = "all",
+        window_days: int | None = 90,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.extensions import BankReadContext
+
+        from .graph_intelligence import GraphBuildOptions, build_graph_intelligence
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="get_graph_intelligence", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        cache_key = self._graph_intelligence_cache_key(
+            bank_id=bank_id,
+            fact_type=fact_type,
+            limit=limit,
+            q=q,
+            tags=tags,
+            tags_match=tags_match,
+            confidence_min=confidence_min,
+            node_kind=node_kind,
+            window_days=window_days,
+        )
+        cached = self._graph_intelligence_cache.get(cache_key)
+        now = datetime.now(UTC)
+        if cached and now - cached[0] < timedelta(seconds=60):
+            response = dict(cached[1])
+            response["cached"] = True
+            return response
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            units = await self._load_graph_intelligence_units(
+                conn,
+                bank_id=bank_id,
+                fact_type=fact_type,
+                limit=limit,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                window_days=window_days,
+            )
+
+        intelligence = build_graph_intelligence(
+            units,
+            GraphBuildOptions(
+                limit=limit,
+                confidence_min=confidence_min,
+                node_kind=cast(Any, node_kind),
+                window_days=window_days,
+                now=now,
+            ),
+        ).model_dump(mode="json")
+        self._graph_intelligence_cache[cache_key] = (now, intelligence)
+        return intelligence
+
+    async def get_graph_summary(
+        self,
+        bank_id: str,
+        *,
+        surface: str = "state",
+        fact_type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: str = "all_strict",
+        confidence_min: float = 0.55,
+        node_kind: str = "all",
+        window_days: int | None = 90,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.extensions import BankReadContext
+
+        from .graph_intelligence import GraphIntelligenceResponse
+        from .graph_scaling import (
+            EVIDENCE_SUMMARY_BUILD_LIMIT,
+            STATE_SUMMARY_BUILD_LIMIT,
+            build_evidence_graph_summary,
+            build_state_graph_from_units,
+            build_state_graph_summary,
+        )
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="get_graph_summary", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        cache_key = self._graph_surface_cache_key(
+            endpoint="summary",
+            bank_id=bank_id,
+            surface=surface,
+            fact_type=fact_type,
+            q=q,
+            tags=tags,
+            tags_match=tags_match,
+            confidence_min=confidence_min,
+            node_kind=node_kind,
+            window_days=window_days,
+        )
+        now = datetime.now(UTC)
+        cached = self._graph_summary_cache.get(cache_key)
+        if cached and now - cached[0] < timedelta(seconds=60):
+            response = dict(cached[1])
+            response["cached"] = True
+            return response
+
+        if surface == "state":
+            pool = await self._get_pool()
+            async with acquire_with_retry(pool) as conn:
+                units = await self._load_graph_intelligence_units(
+                    conn,
+                    bank_id=bank_id,
+                    fact_type=fact_type,
+                    limit=STATE_SUMMARY_BUILD_LIMIT,
+                    q=q,
+                    tags=tags,
+                    tags_match=tags_match,
+                    window_days=window_days,
+                )
+            graph = build_state_graph_from_units(
+                units,
+                limit=STATE_SUMMARY_BUILD_LIMIT,
+                confidence_min=confidence_min,
+                node_kind=cast(Any, node_kind),
+                window_days=window_days,
+                now=now,
+            )
+            summary = build_state_graph_summary(GraphIntelligenceResponse.model_validate(graph.model_dump(mode="json")))
+        else:
+            graph_data = await self.get_graph_data(
+                bank_id,
+                fact_type=fact_type,
+                limit=EVIDENCE_SUMMARY_BUILD_LIMIT,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                request_context=request_context,
+            )
+            summary = build_evidence_graph_summary(graph_data)
+
+        payload = summary.model_dump(mode="json")
+        self._graph_summary_cache[cache_key] = (now, payload)
+        return payload
+
+    async def get_graph_neighborhood(
+        self,
+        bank_id: str,
+        *,
+        surface: str = "state",
+        fact_type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: str = "all_strict",
+        confidence_min: float = 0.55,
+        node_kind: str = "all",
+        window_days: int | None = 90,
+        focus_ids: list[str] | None = None,
+        depth: int = 1,
+        limit_nodes: int = 60,
+        limit_edges: int = 140,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.extensions import BankReadContext
+
+        from .graph_intelligence import GraphIntelligenceResponse
+        from .graph_scaling import (
+            EVIDENCE_SUMMARY_BUILD_LIMIT,
+            STATE_SUMMARY_BUILD_LIMIT,
+            build_evidence_graph_neighborhood,
+            build_state_graph_from_units,
+            build_state_graph_neighborhood,
+        )
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="get_graph_neighborhood", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        cache_key = self._graph_surface_cache_key(
+            endpoint="neighborhood",
+            bank_id=bank_id,
+            surface=surface,
+            fact_type=fact_type,
+            q=q,
+            tags=tags,
+            tags_match=tags_match,
+            confidence_min=confidence_min,
+            node_kind=node_kind,
+            window_days=window_days,
+            focus_ids=focus_ids,
+            depth=depth,
+            limit_nodes=limit_nodes,
+            limit_edges=limit_edges,
+        )
+        now = datetime.now(UTC)
+        cached = self._graph_neighborhood_cache.get(cache_key)
+        if cached and now - cached[0] < timedelta(seconds=60):
+            response = dict(cached[1])
+            response["cached"] = True
+            return response
+
+        if surface == "state":
+            pool = await self._get_pool()
+            async with acquire_with_retry(pool) as conn:
+                units = await self._load_graph_intelligence_units(
+                    conn,
+                    bank_id=bank_id,
+                    fact_type=fact_type,
+                    limit=STATE_SUMMARY_BUILD_LIMIT,
+                    q=q,
+                    tags=tags,
+                    tags_match=tags_match,
+                    window_days=window_days,
+                )
+            graph = build_state_graph_from_units(
+                units,
+                limit=STATE_SUMMARY_BUILD_LIMIT,
+                confidence_min=confidence_min,
+                node_kind=cast(Any, node_kind),
+                window_days=window_days,
+                now=now,
+            )
+            neighborhood = build_state_graph_neighborhood(
+                GraphIntelligenceResponse.model_validate(graph.model_dump(mode="json")),
+                focus_ids=focus_ids,
+                depth=depth,
+                limit_nodes=limit_nodes,
+                limit_edges=limit_edges,
+            )
+        else:
+            graph_data = await self.get_graph_data(
+                bank_id,
+                fact_type=fact_type,
+                limit=EVIDENCE_SUMMARY_BUILD_LIMIT,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                request_context=request_context,
+            )
+            neighborhood = build_evidence_graph_neighborhood(
+                graph_data,
+                focus_ids=focus_ids,
+                depth=depth,
+                limit_nodes=limit_nodes,
+                limit_edges=limit_edges,
+            )
+
+        payload = neighborhood.model_dump(mode="json")
+        self._graph_neighborhood_cache[cache_key] = (now, payload)
+        return payload
+
+    async def investigate_graph(
+        self,
+        bank_id: str,
+        *,
+        query: str,
+        fact_type: str | None = None,
+        limit: int = 18,
+        tags: list[str] | None = None,
+        tags_match: str = "all_strict",
+        confidence_min: float = 0.55,
+        node_kind: str = "all",
+        window_days: int | None = 90,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.extensions import BankReadContext
+
+        from .graph_intelligence import (
+            GraphEvidenceUnit,
+            GraphIntelligenceResponse,
+        )
+        from .graph_intelligence import (
+            investigate_graph as build_investigation,
+        )
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="investigate_graph", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        graph = GraphIntelligenceResponse.model_validate(
+            await self.get_graph_intelligence(
+                bank_id,
+                fact_type=fact_type,
+                limit=limit,
+                q=None,
+                tags=tags,
+                tags_match=tags_match,
+                confidence_min=confidence_min,
+                node_kind=node_kind,
+                window_days=window_days,
+                request_context=request_context,
+            )
+        )
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            recall_units = await self._load_graph_intelligence_units(
+                conn,
+                bank_id=bank_id,
+                fact_type=fact_type,
+                limit=max(limit, 12),
+                q=None,
+                tags=tags,
+                tags_match=tags_match,
+                window_days=window_days,
+            )
+        investigation = build_investigation(query, graph, recall_units)
+        return investigation.model_dump(mode="json")
 
     async def list_memory_units(
         self,

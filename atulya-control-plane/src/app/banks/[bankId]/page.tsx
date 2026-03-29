@@ -383,9 +383,12 @@ export default function BankPage() {
             {/* Data/Memories Tab */}
             {view === "data" && (
               <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Memories</h1>
+                <h1 className="text-3xl font-bold mb-2 text-foreground">
+                  Explore Memory Intelligence
+                </h1>
                 <p className="text-muted-foreground mb-6">
-                  View and explore different types of memories stored in this memory bank.
+                  Explore facts, observations, and mental models. Use State Graph to see what
+                  changed and Evidence Graph to inspect the supporting memories.
                 </p>
 
                 <div className="mb-6 border-b border-border">

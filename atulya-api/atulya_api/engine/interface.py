@@ -7,7 +7,7 @@ authentication when a TenantExtension is configured.
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from atulya_api.engine.memory_engine import Budget
@@ -325,6 +325,56 @@ class MemoryEngineInterface(ABC):
 
         Returns:
             Dict with nodes, edges, table_rows, total_units, limit.
+        """
+        ...
+
+    @abstractmethod
+    async def get_graph_summary(
+        self,
+        bank_id: str,
+        *,
+        surface: Literal["state", "evidence"] = "state",
+        fact_type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: "TagsMatch" = "all_strict",
+        confidence_min: float = 0.55,
+        node_kind: Literal["all", "entity", "topic"] = "all",
+        window_days: int | None = 90,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """
+        Get a scalable graph summary for the requested surface.
+
+        Returns:
+            Dict with summary clusters, top nodes, bundled edges, and initial focus ids.
+        """
+        ...
+
+    @abstractmethod
+    async def get_graph_neighborhood(
+        self,
+        bank_id: str,
+        *,
+        surface: Literal["state", "evidence"] = "state",
+        fact_type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: "TagsMatch" = "all_strict",
+        confidence_min: float = 0.55,
+        node_kind: Literal["all", "entity", "topic"] = "all",
+        window_days: int | None = 90,
+        focus_ids: list[str] | None = None,
+        depth: int = 1,
+        limit_nodes: int = 60,
+        limit_edges: int = 140,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """
+        Get a bounded, focused graph neighborhood suitable for interactive rendering.
+
+        Returns:
+            Dict with focused nodes, edges, limits, and continuation metadata.
         """
         ...
 
