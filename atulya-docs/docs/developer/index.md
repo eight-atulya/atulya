@@ -32,6 +32,26 @@ This is exactly the direction behind the broader **BRAIN** thesis: memory must e
 
 Atulya solves these problems with a memory system designed specifically for AI agents, and it points toward a future where agents operate with stronger integrity, better organizational memory, and more durable reasoning over time.
 
+## Featured: Graph Intelligence
+
+One of Atulya's most useful Control Plane features is **Graph Intelligence**.
+
+It helps humans understand a memory bank in the same way they naturally review knowledge:
+
+- start with what changed
+- see why Atulya believes it
+- open the supporting evidence only when needed
+
+Instead of starting from a primitive raw graph, Graph Intelligence starts from meaning.
+
+Use it when you want to:
+
+- review how a customer, repo, incident, or workflow changed
+- spot stale assumptions and conflicting evidence
+- move from a short answer to the exact proof path
+
+See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the full walkthrough.
+
 ## Why This Matters For Enterprise Agentic Organizations
 
 Enterprise agentic organizations do not just need assistants that can answer questions. They need systems that can:

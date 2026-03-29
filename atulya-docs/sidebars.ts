@@ -14,6 +14,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'developer/control-plane-graph-intelligence',
+          label: 'Graph Intelligence',
+        },
+        {
+          type: 'doc',
           id: 'developer/retain',
           label: 'Retain',
         },
@@ -125,11 +130,6 @@ const sidebars: SidebarsConfig = {
           type: 'doc',
           id: 'developer/services',
           label: 'Services',
-        },
-        {
-          type: 'doc',
-          id: 'developer/control-plane-graph-intelligence',
-          label: 'Graph Intelligence',
         },
         {
           type: 'doc',
