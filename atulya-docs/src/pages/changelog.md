@@ -8,6 +8,12 @@ This changelog highlights user-facing changes only. Internal maintenance, CI/CD,
 
 For full release details, see [GitHub Releases](https://github.com/eight-atulya/atulya/releases).
 
+## Upcoming
+
+**Features**
+
+- Added Graph Intelligence to the Control Plane: a state-first graph for seeing what changed, an evidence graph for raw proof, analyst-driven investigation, and scalable overview/neighborhood graph exploration.
+
 ## [0.8.0](https://github.com/eight-atulya/atulya/releases/tag/v0.8.0)
 
 **Features**

@@ -128,6 +128,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'developer/control-plane-graph-intelligence',
+          label: 'Graph Intelligence',
+        },
+        {
+          type: 'doc',
           id: 'developer/configuration',
           label: 'Configuration',
         },
