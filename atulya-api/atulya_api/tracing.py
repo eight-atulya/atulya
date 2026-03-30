@@ -125,6 +125,7 @@ class GenAIAttributes:
 PROVIDER_NAME_MAPPING = {
     "openai": "openai",
     "anthropic": "anthropic",
+    "anthropic-foundry": "anthropic",
     "gemini": "google",
     "vertexai": "google",
     "groq": "groq",

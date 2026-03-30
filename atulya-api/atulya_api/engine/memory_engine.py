@@ -1303,9 +1303,15 @@ class MemoryEngine(MemoryEngineInterface):
             rid = getattr(r, "id", None)
             input_refs.append({"id": str(rid) if rid is not None else "", "type": str(fact_type)})
             recall_lines.append(f"- ({fact_type}) {text}")
-            timestamps.append(
+            raw_timestamp = (
                 getattr(r, "occurred_start", None) or getattr(r, "mentioned_at", None) or getattr(r, "created_at", None)
             )
+            if isinstance(raw_timestamp, str):
+                try:
+                    raw_timestamp = datetime.fromisoformat(raw_timestamp.replace("Z", "+00:00"))
+                except (TypeError, ValueError):
+                    raw_timestamp = None
+            timestamps.append(raw_timestamp)
             for entity_name in list(getattr(r, "entities", []) or []):
                 key = str(entity_name).strip()
                 if key:

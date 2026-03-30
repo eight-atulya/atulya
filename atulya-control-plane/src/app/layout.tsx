@@ -4,6 +4,7 @@ import { BankProvider } from "@/lib/bank-context";
 import { FeaturesProvider } from "@/lib/features-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Atulya Control Plane",
@@ -23,7 +24,9 @@ export default function RootLayout({
       <body className="bg-background text-foreground">
         <ThemeProvider>
           <FeaturesProvider>
-            <BankProvider>{children}</BankProvider>
+            <TooltipProvider delayDuration={300}>
+              <BankProvider>{children}</BankProvider>
+            </TooltipProvider>
           </FeaturesProvider>
         </ThemeProvider>
         <Toaster />

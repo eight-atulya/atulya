@@ -36,6 +36,8 @@ import {
   Lock,
   ChevronDown,
   ChevronRight,
+  Mic,
+  MicOff,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import Image from "next/image";
@@ -50,6 +52,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 function BankSelectorInner() {
   const router = useRouter();
@@ -208,6 +212,27 @@ function BankSelectorInner() {
     metadata: "",
     expanded: false,
   });
+
+  const handleFinalTranscript = React.useCallback((text: string) => {
+    setDocContent((prev) => {
+      const separator = prev && !prev.endsWith(" ") && !prev.endsWith("\n") ? " " : "";
+      return prev + separator + text;
+    });
+  }, []);
+
+  const speech = useSpeechRecognition({ onFinalTranscript: handleFinalTranscript });
+
+  React.useEffect(() => {
+    if (!docDialogOpen && speech.isListening) {
+      speech.stop();
+    }
+  }, [docDialogOpen, speech]);
+
+  const formatElapsed = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds % 60;
+    return `${minutes}:${remainder.toString().padStart(2, "0")}`;
+  };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
@@ -563,14 +588,111 @@ function BankSelectorInner() {
                 </TabsList>
 
                 <TabsContent value="text" className="mt-3">
-                  <label className="font-bold block mb-1 text-sm text-foreground">Content *</label>
-                  <Textarea
-                    value={docContent}
-                    onChange={(e) => setDocContent(e.target.value)}
-                    placeholder="Enter the document content..."
-                    className="min-h-[150px] resize-y"
-                    autoFocus
-                  />
+                  <div className="mb-1.5 flex items-center justify-between">
+                    <label className="font-bold text-sm text-foreground">Content *</label>
+                    {speech.isSupported ? (
+                      <div className="flex items-center gap-2">
+                        {speech.isListening ? (
+                          <div className="flex items-center gap-1.5 text-destructive">
+                            <div className="flex h-4 items-center gap-0.5" aria-hidden="true">
+                              <span className="speech-waveform-bar" />
+                              <span className="speech-waveform-bar" />
+                              <span className="speech-waveform-bar" />
+                              <span className="speech-waveform-bar" />
+                            </div>
+                            <span className="font-mono text-xs tabular-nums opacity-80">
+                              {formatElapsed(speech.elapsedSeconds)}
+                            </span>
+                          </div>
+                        ) : null}
+
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              type="button"
+                              variant={speech.isListening ? "destructive" : "outline"}
+                              size="sm"
+                              onClick={speech.toggle}
+                              aria-label={speech.isListening ? "Stop dictation" : "Start dictation"}
+                              aria-pressed={speech.isListening}
+                              className={cn(
+                                "relative h-7 gap-1.5 text-xs font-medium transition-all",
+                                speech.isListening ? "pr-2.5" : ""
+                              )}
+                            >
+                              {speech.isListening ? (
+                                <span
+                                  className="speech-pulse-ring pointer-events-none absolute inset-0 rounded-md border-2 border-destructive"
+                                  aria-hidden="true"
+                                />
+                              ) : null}
+                              {speech.isListening ? (
+                                <>
+                                  <MicOff className="h-3.5 w-3.5" />
+                                  Stop
+                                </>
+                              ) : (
+                                <>
+                                  <Mic className="speech-glow h-3.5 w-3.5" />
+                                  Dictate
+                                </>
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent side="top">
+                            {speech.isListening
+                              ? "Click to stop recording"
+                              : "Dictate using your microphone"}
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="relative">
+                    <Textarea
+                      value={docContent}
+                      onChange={(e) => setDocContent(e.target.value)}
+                      placeholder={
+                        speech.isListening
+                          ? "Listening - speak now..."
+                          : "Enter the document content..."
+                      }
+                      className={cn(
+                        "min-h-[150px] resize-y transition-all duration-200",
+                        speech.isListening
+                          ? "border-destructive/40 bg-destructive/[0.03] ring-2 ring-destructive/40"
+                          : ""
+                      )}
+                      autoFocus
+                    />
+
+                    {speech.isListening && speech.interimTranscript ? (
+                      <div className="pointer-events-none absolute right-2 bottom-2 left-2">
+                        <p className="truncate rounded border border-border/50 bg-background/80 px-2 py-1 text-xs italic text-muted-foreground/70 backdrop-blur-sm">
+                          {speech.interimTranscript}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  {speech.isListening ? (
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-destructive opacity-75" />
+                        <span className="relative inline-flex h-2 w-2 rounded-full bg-destructive" />
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        Recording - click Stop or press the button again to finish
+                      </span>
+                    </div>
+                  ) : null}
+
+                  {speech.error && !speech.isListening ? (
+                    <p className="mt-1.5 text-xs text-destructive">
+                      Microphone error: {speech.error}. Check browser permissions.
+                    </p>
+                  ) : null}
                 </TabsContent>
 
                 <TabsContent value="upload" className="mt-3">

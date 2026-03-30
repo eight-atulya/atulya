@@ -213,7 +213,7 @@ def create_llm_provider(
             gemini_safety_settings=gemini_safety_settings,
         )
 
-    elif provider_lower == "anthropic":
+    elif provider_lower in ("anthropic", "anthropic-foundry"):
         return AnthropicLLM(
             provider=provider,
             api_key=api_key,
@@ -286,6 +286,7 @@ class LLMProvider:
             "ollama",
             "gemini",
             "anthropic",
+            "anthropic-foundry",
             "lmstudio",
             "vertexai",
             "openai-codex",

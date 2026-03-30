@@ -361,6 +361,7 @@ DEFAULT_LLM_PROVIDER = "openai"
 PROVIDER_DEFAULT_MODELS = {
     "openai": "gpt-4o-mini",
     "anthropic": "claude-haiku-4-5-20251001",
+    "anthropic-foundry": "claude-sonnet-4-6",
     "gemini": "gemini-2.5-flash",
     "groq": "openai/gpt-oss-120b",
     "ollama": "gemma3:12b",

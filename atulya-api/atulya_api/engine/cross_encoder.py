@@ -457,7 +457,11 @@ class CohereCrossEncoder(CrossEncoderModel):
     """
     Cohere cross-encoder implementation using the Cohere Rerank API.
 
-    Supports rerank-english-v3.0 and rerank-multilingual-v3.0 models.
+    Supports rerank-english-v3.0, rerank-multilingual-v3.0, and Cohere-rerank-v4.0-fast models.
+
+    When base_url is configured, requests are posted directly with httpx instead
+    of the Cohere SDK so custom deployments can expose a fixed rerank endpoint
+    without the SDK appending `/v1/rerank` or `/v2/rerank`.
     """
 
     def __init__(
@@ -473,7 +477,7 @@ class CohereCrossEncoder(CrossEncoderModel):
         Args:
             api_key: Cohere API key
             model: Cohere rerank model name (default: rerank-english-v3.0)
-            base_url: Custom base URL for Cohere-compatible API (e.g., Azure-hosted endpoint)
+            base_url: Complete rerank endpoint for custom deployments.
             timeout: Request timeout in seconds (default: 60.0)
         """
         self.api_key = api_key
@@ -481,6 +485,7 @@ class CohereCrossEncoder(CrossEncoderModel):
         self.base_url = base_url
         self.timeout = timeout
         self._client = None
+        self._httpx_client: httpx.AsyncClient | None = None
 
     @property
     def provider_name(self) -> str:
@@ -488,6 +493,14 @@ class CohereCrossEncoder(CrossEncoderModel):
 
     async def initialize(self) -> None:
         """Initialize the Cohere client."""
+        if self.base_url:
+            if self._httpx_client is not None:
+                return
+            self._httpx_client = httpx.AsyncClient(timeout=self.timeout)
+            logger.info(f"Reranker: initializing Cohere provider with model {self.model} at {self.base_url}")
+            logger.info("Reranker: Cohere provider initialized")
+            return
+
         if self._client is not None:
             return
 
@@ -496,14 +509,8 @@ class CohereCrossEncoder(CrossEncoderModel):
         except ImportError:
             raise ImportError("cohere is required for CohereCrossEncoder. Install it with: pip install cohere")
 
-        base_url_msg = f" at {self.base_url}" if self.base_url else ""
-        logger.info(f"Reranker: initializing Cohere provider with model {self.model}{base_url_msg}")
-
-        # Build client kwargs, only including base_url if set (for Azure or custom endpoints)
-        client_kwargs = {"api_key": self.api_key, "timeout": self.timeout}
-        if self.base_url:
-            client_kwargs["base_url"] = self.base_url
-        self._client = cohere.Client(**client_kwargs)
+        logger.info(f"Reranker: initializing Cohere provider with model {self.model}")
+        self._client = cohere.Client(api_key=self.api_key, timeout=self.timeout)
         logger.info("Reranker: Cohere provider initialized")
 
     async def predict(self, pairs: list[tuple[str, str]]) -> list[float]:
@@ -516,18 +523,57 @@ class CohereCrossEncoder(CrossEncoderModel):
         Returns:
             List of relevance scores
         """
-        if self._client is None:
-            raise RuntimeError("Reranker not initialized. Call initialize() first.")
-
         if not pairs:
             return []
 
-        # Run sync Cohere API calls in thread pool
+        if self.base_url:
+            return await self._predict_httpx(pairs)
+
+        if self._client is None:
+            raise RuntimeError("Reranker not initialized. Call initialize() first.")
+
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, self._predict_sync, pairs)
 
+    async def _predict_httpx(self, pairs: list[tuple[str, str]]) -> list[float]:
+        """Score query-document pairs using a direct HTTP Cohere-compatible rerank endpoint."""
+        if self._httpx_client is None:
+            raise RuntimeError("Reranker not initialized. Call initialize() first.")
+
+        query_groups: dict[str, list[tuple[int, str]]] = {}
+        for idx, (query, text) in enumerate(pairs):
+            query_groups.setdefault(query, []).append((idx, text))
+
+        all_scores = [0.0] * len(pairs)
+
+        for query, indexed_texts in query_groups.items():
+            texts = [text for _, text in indexed_texts]
+            indices = [idx for idx, _ in indexed_texts]
+
+            response = await self._httpx_client.post(
+                self.base_url,
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "model": self.model,
+                    "query": query,
+                    "documents": texts,
+                },
+            )
+            response.raise_for_status()
+            data = response.json()
+
+            for result in data.get("results", []):
+                original_idx = result["index"]
+                score = result["relevance_score"]
+                all_scores[indices[original_idx]] = score
+
+        return all_scores
+
     def _predict_sync(self, pairs: list[tuple[str, str]]) -> list[float]:
-        """Synchronous predict implementation for Cohere API."""
+        """Synchronous predict implementation for the native Cohere SDK."""
         # Group pairs by query for efficient batching
         # Cohere rerank expects one query with multiple documents
         query_groups: dict[str, list[tuple[int, str]]] = {}

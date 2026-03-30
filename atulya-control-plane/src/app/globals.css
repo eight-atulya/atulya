@@ -339,3 +339,86 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 .dark .prose tbody tr:hover {
   background-color: rgba(255, 255, 255, 0.05);
 }
+
+@keyframes speech-pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+@keyframes speech-glow {
+  0%,
+  100% {
+    opacity: 1;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    opacity: 0.7;
+    filter: drop-shadow(0 0 6px currentColor);
+  }
+}
+
+@keyframes speech-bar-1 {
+  0%,
+  100% {
+    height: 4px;
+  }
+  50% {
+    height: 12px;
+  }
+}
+
+@keyframes speech-bar-2 {
+  0%,
+  100% {
+    height: 8px;
+  }
+  50% {
+    height: 16px;
+  }
+}
+
+@keyframes speech-bar-3 {
+  0%,
+  100% {
+    height: 6px;
+  }
+  50% {
+    height: 14px;
+  }
+}
+
+.speech-waveform-bar {
+  width: 2px;
+  border-radius: 9999px;
+  background-color: currentColor;
+}
+
+.speech-waveform-bar:nth-child(1) {
+  animation: speech-bar-1 0.8s ease-in-out infinite;
+}
+
+.speech-waveform-bar:nth-child(2) {
+  animation: speech-bar-2 0.8s ease-in-out infinite 0.15s;
+}
+
+.speech-waveform-bar:nth-child(3) {
+  animation: speech-bar-3 0.8s ease-in-out infinite 0.3s;
+}
+
+.speech-waveform-bar:nth-child(4) {
+  animation: speech-bar-1 0.8s ease-in-out infinite 0.45s;
+}
+
+.speech-pulse-ring {
+  animation: speech-pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.speech-glow {
+  animation: speech-glow 1.6s ease-in-out infinite;
+}
