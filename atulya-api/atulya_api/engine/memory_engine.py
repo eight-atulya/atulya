@@ -5748,9 +5748,7 @@ class MemoryEngine(MemoryEngineInterface):
                 "window_days": window_days,
                 "graph_contradiction_cosine_min": round(get_config().graph_contradiction_cosine_min, 3),
                 "graph_contradiction_cosine_max": round(get_config().graph_contradiction_cosine_max, 3),
-                "graph_contradiction_confidence_penalty": round(
-                    get_config().graph_contradiction_confidence_penalty, 3
-                ),
+                "graph_contradiction_confidence_penalty": round(get_config().graph_contradiction_confidence_penalty, 3),
                 "schema": get_current_schema(),
             },
             sort_keys=True,
@@ -5788,9 +5786,7 @@ class MemoryEngine(MemoryEngineInterface):
                 "window_days": window_days,
                 "graph_contradiction_cosine_min": round(get_config().graph_contradiction_cosine_min, 3),
                 "graph_contradiction_cosine_max": round(get_config().graph_contradiction_cosine_max, 3),
-                "graph_contradiction_confidence_penalty": round(
-                    get_config().graph_contradiction_confidence_penalty, 3
-                ),
+                "graph_contradiction_confidence_penalty": round(get_config().graph_contradiction_confidence_penalty, 3),
                 "focus_ids": sorted(focus_ids or []),
                 "depth": depth,
                 "limit_nodes": limit_nodes,

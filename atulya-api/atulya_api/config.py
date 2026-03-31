@@ -1060,10 +1060,7 @@ class AtulyaConfig:
         if self.brain_max_file_size_mb <= 0:
             raise ValueError("brain_max_file_size_mb must be > 0")
         if not 0.0 <= self.graph_contradiction_cosine_min <= self.graph_contradiction_cosine_max <= 1.0:
-            raise ValueError(
-                "graph contradiction cosine thresholds must satisfy "
-                "0.0 <= min <= max <= 1.0"
-            )
+            raise ValueError("graph contradiction cosine thresholds must satisfy 0.0 <= min <= max <= 1.0")
         if self.graph_contradiction_confidence_penalty < 0.0 or self.graph_contradiction_confidence_penalty > 1.0:
             raise ValueError("graph_contradiction_confidence_penalty must be in [0.0, 1.0]")
         if self.consolidation_duplicate_cosine_threshold < 0.0 or self.consolidation_duplicate_cosine_threshold > 1.0:

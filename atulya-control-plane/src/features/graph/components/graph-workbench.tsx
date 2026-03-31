@@ -423,9 +423,7 @@ const StateNodeCard = memo(function StateNodeCard({ data }: NodeProps<Node<Workb
             {data.payload.reason ? (
               <div className="min-w-0 break-words">{truncate(data.payload.reason, 140)}</div>
             ) : null}
-            {data.payload.timestampLabel ? (
-              <div>{data.payload.timestampLabel}</div>
-            ) : null}
+            {data.payload.timestampLabel ? <div>{data.payload.timestampLabel}</div> : null}
           </div>
         )}
       </div>
@@ -505,7 +503,8 @@ const EvidenceNodeCard = memo(function EvidenceNodeCard({
               className="rounded-full border px-2 py-1 text-xs font-semibold"
               style={CHIP_STYLE}
             >
-              {formatMetric("Support", data.payload.confidence) ?? formatPercent(data.payload.confidence)}
+              {formatMetric("Support", data.payload.confidence) ??
+                formatPercent(data.payload.confidence)}
             </span>
           ) : null}
         </div>

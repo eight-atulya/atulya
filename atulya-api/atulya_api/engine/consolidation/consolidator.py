@@ -446,7 +446,9 @@ async def run_consolidation_job(
             batch_created = stats["observations_created"] - snap_stats["observations_created"]
             batch_updated = stats["observations_updated"] - snap_stats["observations_updated"]
             batch_skipped = stats["skipped"] - snap_stats["skipped"]
-            batch_duplicate_candidates = stats["duplicate_cosine_candidates"] - snap_stats["duplicate_cosine_candidates"]
+            batch_duplicate_candidates = (
+                stats["duplicate_cosine_candidates"] - snap_stats["duplicate_cosine_candidates"]
+            )
             batch_duplicate_confirmed = stats["duplicate_ce_confirmed"] - snap_stats["duplicate_ce_confirmed"]
             llm_calls_made = perf.llm_calls - snap_llm_calls
             logger.info(
@@ -489,9 +491,7 @@ async def run_consolidation_job(
         perf.log(f"[4] Timing breakdown: {', '.join(timing_parts)}")
     if stats["duplicate_cosine_candidates"] > 0:
         precision = (
-            stats["duplicate_ce_confirmed"] / stats["duplicate_ce_scored"]
-            if stats["duplicate_ce_scored"] > 0
-            else 0.0
+            stats["duplicate_ce_confirmed"] / stats["duplicate_ce_scored"] if stats["duplicate_ce_scored"] > 0 else 0.0
         )
         perf.log(
             "[4b] Duplicate telemetry: "
@@ -837,7 +837,10 @@ async def _collect_duplicate_telemetry(
     try:
         await reranker.ensure_initialized()
         scores = await reranker.cross_encoder.predict(
-            [(_duplicate_memory_text(memory), _duplicate_observation_text(observation)) for memory, observation in candidate_pairs]
+            [
+                (_duplicate_memory_text(memory), _duplicate_observation_text(observation))
+                for memory, observation in candidate_pairs
+            ]
         )
     except Exception as exc:
         logger.warning(f"[CONSOLIDATION] Duplicate CE telemetry skipped after reranker failure: {exc}")

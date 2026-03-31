@@ -312,7 +312,9 @@ def _is_contradictory(
     return contradiction_cosine_min <= similarity <= contradiction_cosine_max
 
 
-def _build_change_events(summary: _GroupSummary, confidence: float, options: GraphBuildOptions) -> list[GraphChangeEvent]:
+def _build_change_events(
+    summary: _GroupSummary, confidence: float, options: GraphBuildOptions
+) -> list[GraphChangeEvent]:
     distinct_units = _sorted_distinct_units(summary.units)
     if len(distinct_units) < 2:
         return []

@@ -86,7 +86,9 @@ def apply_combined_scoring(
         temporal_boost = 1.0 + temporal_alpha * (sr.temporal - 0.5)
         type_boost = _type_boost(sr.retrieval.fact_type)
         proof_boost = _proof_boost(sr.retrieval.fact_type, sr.retrieval.proof_count)
-        sr.combined_score = sr.cross_encoder_score_normalized * recency_boost * temporal_boost * type_boost * proof_boost
+        sr.combined_score = (
+            sr.cross_encoder_score_normalized * recency_boost * temporal_boost * type_boost * proof_boost
+        )
         sr.weight = sr.combined_score
 
 
