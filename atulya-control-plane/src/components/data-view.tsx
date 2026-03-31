@@ -222,45 +222,45 @@ export function DataView({ factType }: DataViewProps) {
         : Promise.resolve(null);
       const [graphData, timelinePayload, intelligence, nextStateSummary, nextEvidenceSummary] =
         await Promise.all([
-        client.getGraph({
-          bank_id: currentBank,
-          type: factType,
-          limit: effectiveLimit,
-          q,
-          tags,
-        }),
-        timelinePromise,
-        client.getGraphIntelligence({
-          bank_id: currentBank,
-          type: factType,
-          limit: 18,
-          q,
-          tags,
-          tags_match: "all_strict",
-          confidence_min: confidenceMin,
-          node_kind: nodeKind,
-          window_days: windowDays === "all" ? undefined : Number(windowDays),
-        }),
-        client.getGraphSummary({
-          bank_id: currentBank,
-          surface: "state",
-          type: factType,
-          q,
-          tags,
-          tags_match: "all_strict",
-          confidence_min: confidenceMin,
-          node_kind: nodeKind,
-          window_days: windowDays === "all" ? undefined : Number(windowDays),
-        }),
-        client.getGraphSummary({
-          bank_id: currentBank,
-          surface: "evidence",
-          type: factType,
-          q,
-          tags,
-          tags_match: "all_strict",
-        }),
-      ]);
+          client.getGraph({
+            bank_id: currentBank,
+            type: factType,
+            limit: effectiveLimit,
+            q,
+            tags,
+          }),
+          timelinePromise,
+          client.getGraphIntelligence({
+            bank_id: currentBank,
+            type: factType,
+            limit: 18,
+            q,
+            tags,
+            tags_match: "all_strict",
+            confidence_min: confidenceMin,
+            node_kind: nodeKind,
+            window_days: windowDays === "all" ? undefined : Number(windowDays),
+          }),
+          client.getGraphSummary({
+            bank_id: currentBank,
+            surface: "state",
+            type: factType,
+            q,
+            tags,
+            tags_match: "all_strict",
+            confidence_min: confidenceMin,
+            node_kind: nodeKind,
+            window_days: windowDays === "all" ? undefined : Number(windowDays),
+          }),
+          client.getGraphSummary({
+            bank_id: currentBank,
+            surface: "evidence",
+            type: factType,
+            q,
+            tags,
+            tags_match: "all_strict",
+          }),
+        ]);
       setData(graphData);
       setTimelineData(timelinePayload);
       setGraphIntelligence(intelligence);

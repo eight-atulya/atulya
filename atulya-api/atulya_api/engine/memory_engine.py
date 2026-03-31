@@ -5746,9 +5746,7 @@ class MemoryEngine(MemoryEngineInterface):
                     "occurred_start": row["occurred_start"].isoformat() if row["occurred_start"] else None,
                     "occurred_end": row["occurred_end"].isoformat() if row["occurred_end"] else None,
                     "mentioned_at": row["mentioned_at"].isoformat() if row["mentioned_at"] else None,
-                    "timeline_anchor_at": row["timeline_anchor_at"].isoformat()
-                    if row["timeline_anchor_at"]
-                    else None,
+                    "timeline_anchor_at": row["timeline_anchor_at"].isoformat() if row["timeline_anchor_at"] else None,
                     "timeline_anchor_kind": row["timeline_anchor_kind"],
                     "temporal_direction": row["temporal_direction"],
                     "temporal_confidence": row["temporal_confidence"],

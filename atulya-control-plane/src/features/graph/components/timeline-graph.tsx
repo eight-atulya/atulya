@@ -1,14 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  Activity,
-  Brain,
-  Clock3,
-  GitBranch,
-  Link2,
-  Sparkles,
-} from "lucide-react";
+import { Activity, Brain, Clock3, GitBranch, Link2, Sparkles } from "lucide-react";
 
 import { TimelineEdge, TimelineItem, TimelineResponse } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -76,7 +69,8 @@ function sortItems(items: TimelineItem[]) {
     const aTime = itemTimestamp(a) || "";
     const bTime = itemTimestamp(b) || "";
     if (aTime !== bTime) return aTime.localeCompare(bTime);
-    if (kindPriority[a.kind] !== kindPriority[b.kind]) return kindPriority[a.kind] - kindPriority[b.kind];
+    if (kindPriority[a.kind] !== kindPriority[b.kind])
+      return kindPriority[a.kind] - kindPriority[b.kind];
     return a.id.localeCompare(b.id);
   });
 }
@@ -123,7 +117,9 @@ function formatTimestampLabel(value: string | null) {
 }
 
 function formatDateSpan(items: TimelineItem[]) {
-  const datedItems = items.map((item) => itemTimestamp(item)).filter((value): value is string => Boolean(value));
+  const datedItems = items
+    .map((item) => itemTimestamp(item))
+    .filter((value): value is string => Boolean(value));
   if (datedItems.length === 0) return "Recorded without temporal anchors";
 
   const first = new Date(datedItems[0]);
@@ -294,7 +290,8 @@ function buildLayout(timeline: TimelineResponse): TimelineLayout | null {
     if (edge.edge_kind === "chronological") return;
     const sourceIndex = itemIndex.get(edge.source);
     const targetIndex = itemIndex.get(edge.target);
-    if (sourceIndex === undefined || targetIndex === undefined || sourceIndex >= targetIndex) return;
+    if (sourceIndex === undefined || targetIndex === undefined || sourceIndex >= targetIndex)
+      return;
     const existing = incomingParents.get(edge.target) || [];
     existing.push(edge.source);
     incomingParents.set(edge.target, existing);
@@ -405,7 +402,8 @@ function edgePath(
   target: TimelinePosition,
   railX: number
 ) {
-  const branchX = edge.edge_kind === "chronological" ? railX : source.side === "right" ? railX + 10 : railX - 10;
+  const branchX =
+    edge.edge_kind === "chronological" ? railX : source.side === "right" ? railX + 10 : railX - 10;
   const targetBranchX =
     edge.edge_kind === "chronological" ? railX : target.side === "right" ? railX + 10 : railX - 10;
   const midpointY = source.anchorY + (target.anchorY - source.anchorY) / 2;
@@ -462,7 +460,10 @@ function DesktopTimeline({
   return (
     <div className="hidden lg:block">
       <div className="overflow-x-auto rounded-[28px] border border-border bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(248,250,252,0.96))]">
-        <div className="relative" style={{ width: `${layout.width}px`, height: `${layout.height}px` }}>
+        <div
+          className="relative"
+          style={{ width: `${layout.width}px`, height: `${layout.height}px` }}
+        >
           <div
             className="absolute top-0 bottom-0 w-px bg-gradient-to-b from-border via-slate-300 to-border"
             style={{ left: `${layout.railX}px` }}
@@ -474,7 +475,9 @@ function DesktopTimeline({
                 className="absolute left-5 rounded-2xl border border-border bg-background/95 px-4 py-3 shadow-sm"
                 style={{ top: `${section.startY}px`, width: `${LABEL_WIDTH - 22}px` }}
               >
-                <div className="text-lg font-semibold tracking-tight text-foreground">{section.label}</div>
+                <div className="text-lg font-semibold tracking-tight text-foreground">
+                  {section.label}
+                </div>
                 <div className="mt-0.5 text-xs uppercase tracking-[0.14em] text-muted-foreground">
                   {section.sublabel}
                 </div>
@@ -497,7 +500,11 @@ function DesktopTimeline({
             </div>
           ))}
 
-          <svg className="absolute inset-0 pointer-events-none" width={layout.width} height={layout.height}>
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            width={layout.width}
+            height={layout.height}
+          >
             {timeline.edges.map((edge, index) => {
               const source = layout.positions.get(edge.source);
               const target = layout.positions.get(edge.target);
@@ -509,7 +516,9 @@ function DesktopTimeline({
                   fill="none"
                   stroke={edgeColor(edge.edge_kind)}
                   strokeWidth={edge.edge_kind === "chronological" ? 1.8 : 1.4}
-                  strokeDasharray={edge.edge_kind === "source" || edge.edge_kind === "derived" ? "6 5" : undefined}
+                  strokeDasharray={
+                    edge.edge_kind === "source" || edge.edge_kind === "derived" ? "6 5" : undefined
+                  }
                   opacity={edgeOpacity(edge.edge_kind)}
                 />
               );
@@ -538,7 +547,9 @@ function DesktopTimeline({
                 <button
                   type="button"
                   onClick={() =>
-                    item.kind === "mental_model" ? onMentalModelClick(item.id) : onMemoryClick(item.id)
+                    item.kind === "mental_model"
+                      ? onMentalModelClick(item.id)
+                      : onMemoryClick(item.id)
                   }
                   disabled={!clickable}
                   className={cn(
@@ -650,7 +661,11 @@ function DesktopTimeline({
 
                   <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground">
                     <span>{formatTimestampLabel(timeValue)}</span>
-                    {item.temporal.reference_text ? <span>{item.temporal.reference_text}</span> : <span /> }
+                    {item.temporal.reference_text ? (
+                      <span>{item.temporal.reference_text}</span>
+                    ) : (
+                      <span />
+                    )}
                   </div>
                 </button>
               </div>
@@ -684,7 +699,10 @@ function MobileTimeline({
       {Object.entries(groupedItems).map(([sectionKey, items]) => {
         const section = sectionMap.get(sectionKey);
         return (
-          <section key={sectionKey} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
+          <section
+            key={sectionKey}
+            className="rounded-3xl border border-border bg-card p-4 shadow-sm"
+          >
             <div className="mb-4 flex items-end justify-between gap-4">
               <div>
                 <div className="text-lg font-semibold tracking-tight text-foreground">
@@ -703,7 +721,9 @@ function MobileTimeline({
                   key={item.id}
                   type="button"
                   onClick={() =>
-                    item.kind === "mental_model" ? onMentalModelClick(item.id) : onMemoryClick(item.id)
+                    item.kind === "mental_model"
+                      ? onMentalModelClick(item.id)
+                      : onMemoryClick(item.id)
                   }
                   className={cn(
                     "w-full rounded-2xl border p-4 text-left shadow-sm transition-colors",
@@ -726,7 +746,9 @@ function MobileTimeline({
                   <div className="mt-3 text-base font-semibold leading-tight text-foreground line-clamp-2">
                     {shortLabel(item)}
                   </div>
-                  <div className="mt-1 text-sm text-muted-foreground line-clamp-2">{cardSummary(item)}</div>
+                  <div className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                    {cardSummary(item)}
+                  </div>
                 </button>
               ))}
             </div>
@@ -743,11 +765,7 @@ interface TimelineGraphProps {
   onMentalModelClick: (mentalModelId: string) => void;
 }
 
-export function TimelineGraph({
-  timeline,
-  onMemoryClick,
-  onMentalModelClick,
-}: TimelineGraphProps) {
+export function TimelineGraph({ timeline, onMemoryClick, onMentalModelClick }: TimelineGraphProps) {
   const layout = useMemo(() => (timeline ? buildLayout(timeline) : null), [timeline]);
 
   if (!timeline || timeline.items.length === 0 || !layout) {
@@ -758,8 +776,8 @@ export function TimelineGraph({
         </div>
         <div className="mt-4 text-lg font-semibold text-foreground">No Timeline Data</div>
         <div className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted-foreground">
-          No timeline-ready memories matched the current filters. When semantic dates are missing, recorded time is
-          used automatically.
+          No timeline-ready memories matched the current filters. When semantic dates are missing,
+          recorded time is used automatically.
         </div>
       </div>
     );
@@ -777,8 +795,9 @@ export function TimelineGraph({
               Memory flow across recorded and semantic time
             </div>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Exact events, inferred events, ongoing states, future plans, and derived mental models are rendered on
-              one chronological rail so you can follow how knowledge forms and branches.
+              Exact events, inferred events, ongoing states, future plans, and derived mental models
+              are rendered on one chronological rail so you can follow how knowledge forms and
+              branches.
             </p>
           </div>
 
@@ -860,11 +879,13 @@ export function TimelineGraph({
       <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Link2 className="h-3.5 w-3.5" />
-          Chronological rails keep sequence stable while branch lines show semantic or causal connections.
+          Chronological rails keep sequence stable while branch lines show semantic or causal
+          connections.
         </span>
         <span className="inline-flex items-center gap-1.5">
           <Activity className="h-3.5 w-3.5" />
-          Cards favor the clearest label, then context, then proof and link density so important memory state reads fast.
+          Cards favor the clearest label, then context, then proof and link density so important
+          memory state reads fast.
         </span>
       </div>
     </div>
