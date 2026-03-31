@@ -17,6 +17,7 @@ NOTE: Observations are distinct from mental models (pinned reflections).
 
 import json
 import logging
+import math
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -27,6 +28,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, field_validator
 
 from ...config import get_config
+from ..embedding_similarity import cosine_similarity, parse_embedding_text
 from ..llm_wrapper import sanitize_llm_output
 from ..memory_engine import fq_table
 from ..retain import embedding_utils
@@ -91,6 +93,20 @@ class _SourceAggregation:
     occurred_end: datetime | None
     mentioned_at: datetime | None
     tags: list[str]
+
+
+@dataclass
+class _DuplicateTelemetry:
+    cosine_candidates: int = 0
+    ce_scored: int = 0
+    ce_confirmed: int = 0
+
+
+@dataclass
+class _ProcessMemoryBatchResult:
+    results: list[dict[str, Any]] = field(default_factory=list)
+    deleted_count: int = 0
+    duplicate_telemetry: _DuplicateTelemetry = field(default_factory=_DuplicateTelemetry)
 
 
 def _aggregate_source_fields(source_mems: list[dict[str, Any]], tags: list[str] | None = None) -> _SourceAggregation:
@@ -239,6 +255,9 @@ async def run_consolidation_job(
         "observations_deleted": 0,
         "actions_executed": 0,
         "skipped": 0,
+        "duplicate_cosine_candidates": 0,
+        "duplicate_ce_scored": 0,
+        "duplicate_ce_confirmed": 0,
     }
 
     # Track all unique tags from consolidated memories for mental model refresh filtering
@@ -252,7 +271,7 @@ async def run_consolidation_job(
             memories = await conn.fetch(
                 f"""
                 SELECT id, text, fact_type, occurred_start, occurred_end, event_date, tags, mentioned_at,
-                       observation_scopes
+                       observation_scopes, embedding::text AS embedding_text
                 FROM {fq_table("memory_units")}
                 WHERE bank_id = $1
                   AND consolidated_at IS NULL
@@ -326,11 +345,12 @@ async def run_consolidation_job(
                     obs_tags_list = _obs_parsed
 
                 batch_deleted: int = 0
+                batch_duplicate_telemetry = _DuplicateTelemetry()
                 if obs_tags_list:
                     # Multi-pass: run one observation consolidation pass per tag set
                     results = []
                     for obs_tags in obs_tags_list:
-                        pass_results, pass_deleted = await _process_memory_batch(
+                        pass_result = await _process_memory_batch(
                             conn=conn,
                             memory_engine=memory_engine,
                             llm_config=llm_config,
@@ -341,12 +361,15 @@ async def run_consolidation_job(
                             config=config,
                             obs_tags_override=obs_tags,
                         )
-                        batch_deleted += pass_deleted
+                        batch_deleted += pass_result.deleted_count
+                        batch_duplicate_telemetry.cosine_candidates += pass_result.duplicate_telemetry.cosine_candidates
+                        batch_duplicate_telemetry.ce_scored += pass_result.duplicate_telemetry.ce_scored
+                        batch_duplicate_telemetry.ce_confirmed += pass_result.duplicate_telemetry.ce_confirmed
                         # Merge results: prefer non-skipped actions
                         if not results:
-                            results = pass_results
+                            results = pass_result.results
                         else:
-                            for i, (existing, new) in enumerate(zip(results, pass_results)):
+                            for i, (existing, new) in enumerate(zip(results, pass_result.results)):
                                 if existing.get("action") == "skipped" and new.get("action") != "skipped":
                                     results[i] = new
                                 elif existing.get("action") != "skipped" and new.get("action") != "skipped":
@@ -369,7 +392,7 @@ async def run_consolidation_job(
                                     }
                 else:
                     # Normal single pass using the memory's own tags
-                    results, batch_deleted = await _process_memory_batch(
+                    batch_result = await _process_memory_batch(
                         conn=conn,
                         memory_engine=memory_engine,
                         llm_config=llm_config,
@@ -379,7 +402,13 @@ async def run_consolidation_job(
                         perf=perf,
                         config=config,
                     )
+                    results = batch_result.results
+                    batch_deleted = batch_result.deleted_count
+                    batch_duplicate_telemetry = batch_result.duplicate_telemetry
                 stats["observations_deleted"] += batch_deleted
+                stats["duplicate_cosine_candidates"] += batch_duplicate_telemetry.cosine_candidates
+                stats["duplicate_ce_scored"] += batch_duplicate_telemetry.ce_scored
+                stats["duplicate_ce_confirmed"] += batch_duplicate_telemetry.ce_confirmed
 
                 await conn.executemany(
                     f"UPDATE {fq_table('memory_units')} SET consolidated_at = NOW() WHERE id = $1",
@@ -417,6 +446,8 @@ async def run_consolidation_job(
             batch_created = stats["observations_created"] - snap_stats["observations_created"]
             batch_updated = stats["observations_updated"] - snap_stats["observations_updated"]
             batch_skipped = stats["skipped"] - snap_stats["skipped"]
+            batch_duplicate_candidates = stats["duplicate_cosine_candidates"] - snap_stats["duplicate_cosine_candidates"]
+            batch_duplicate_confirmed = stats["duplicate_ce_confirmed"] - snap_stats["duplicate_ce_confirmed"]
             llm_calls_made = perf.llm_calls - snap_llm_calls
             logger.info(
                 f"[CONSOLIDATION] bank={bank_id} llm_batch #{llm_batch_num}"
@@ -424,6 +455,7 @@ async def run_consolidation_job(
                 f" | {stats['memories_processed']}/{total_count} processed"
                 f" | {', '.join(timing_parts)}"
                 f" | created={batch_created} updated={batch_updated} skipped={batch_skipped}"
+                f" | dup_candidates={batch_duplicate_candidates} dup_confirmed={batch_duplicate_confirmed}"
                 f" | input_tokens=~{input_tokens}"
                 f" | avg={llm_batch_time / len(llm_batch):.3f}s/memory"
             )
@@ -455,6 +487,19 @@ async def run_consolidation_job(
 
     if timing_parts:
         perf.log(f"[4] Timing breakdown: {', '.join(timing_parts)}")
+    if stats["duplicate_cosine_candidates"] > 0:
+        precision = (
+            stats["duplicate_ce_confirmed"] / stats["duplicate_ce_scored"]
+            if stats["duplicate_ce_scored"] > 0
+            else 0.0
+        )
+        perf.log(
+            "[4b] Duplicate telemetry: "
+            f"cosine_candidates={stats['duplicate_cosine_candidates']}, "
+            f"ce_scored={stats['duplicate_ce_scored']}, "
+            f"ce_confirmed={stats['duplicate_ce_confirmed']}, "
+            f"precision={precision:.3f}"
+        )
 
     # Trigger mental model refreshes for models with refresh_after_consolidation=true
     # SECURITY: Only refresh mental models with matching tags (or all if no tags were consolidated)
@@ -576,7 +621,7 @@ async def _process_memory_batch(
     perf: ConsolidationPerfLog | None = None,
     config: Any = None,
     obs_tags_override: list[str] | None = None,
-) -> tuple[list[dict[str, Any]], int]:
+) -> _ProcessMemoryBatchResult:
     """
     Process a batch of memories in a single LLM call.
 
@@ -634,6 +679,15 @@ async def _process_memory_batch(
                 union_observations.append(obs)
         if recall_result.source_facts:
             union_source_facts.update(recall_result.source_facts)
+
+    duplicate_telemetry = await _collect_duplicate_telemetry(
+        conn=conn,
+        memory_engine=memory_engine,
+        bank_id=bank_id,
+        memories=memories,
+        observations=union_observations,
+        config=config,
+    )
 
     # 3. Single LLM call
     t0 = time.time()
@@ -739,7 +793,103 @@ async def _process_memory_batch(
         else:
             results.append({"action": "skipped", "reason": "no_durable_knowledge"})
 
-    return results, deleted_count
+    return _ProcessMemoryBatchResult(
+        results=results,
+        deleted_count=deleted_count,
+        duplicate_telemetry=duplicate_telemetry,
+    )
+
+
+async def _collect_duplicate_telemetry(
+    conn: "Connection",
+    memory_engine: "MemoryEngine",
+    bank_id: str,
+    memories: list[dict[str, Any]],
+    observations: list["MemoryFact"],
+    config: Any,
+) -> _DuplicateTelemetry:
+    if not config or not config.consolidation_duplicate_detection_enabled or not observations:
+        return _DuplicateTelemetry()
+
+    observation_embeddings = await _load_observation_embedding_map(
+        conn=conn,
+        bank_id=bank_id,
+        observation_ids=[str(observation.id) for observation in observations],
+    )
+
+    candidate_pairs: list[tuple[dict[str, Any], "MemoryFact"]] = []
+    for memory in memories:
+        memory_embedding = parse_embedding_text(memory.get("embedding_text"))
+        if memory_embedding is None:
+            continue
+        for observation in observations:
+            observation_embedding = observation_embeddings.get(str(observation.id))
+            similarity = cosine_similarity(memory_embedding, observation_embedding)
+            if similarity is None or similarity < config.consolidation_duplicate_cosine_threshold:
+                continue
+            candidate_pairs.append((memory, observation))
+
+    telemetry = _DuplicateTelemetry(cosine_candidates=len(candidate_pairs))
+    if not config.consolidation_duplicate_ce_enabled or not candidate_pairs:
+        return telemetry
+
+    reranker = memory_engine._cross_encoder_reranker
+    try:
+        await reranker.ensure_initialized()
+        scores = await reranker.cross_encoder.predict(
+            [(_duplicate_memory_text(memory), _duplicate_observation_text(observation)) for memory, observation in candidate_pairs]
+        )
+    except Exception as exc:
+        logger.warning(f"[CONSOLIDATION] Duplicate CE telemetry skipped after reranker failure: {exc}")
+        return telemetry
+
+    telemetry.ce_scored = len(scores)
+    telemetry.ce_confirmed = sum(
+        1 for score in scores if _sigmoid(score) >= config.consolidation_duplicate_ce_threshold
+    )
+    return telemetry
+
+
+async def _load_observation_embedding_map(
+    conn: "Connection",
+    bank_id: str,
+    observation_ids: list[str],
+) -> dict[str, list[float]]:
+    if not observation_ids:
+        return {}
+
+    observation_uuids = [uuid.UUID(observation_id) for observation_id in observation_ids]
+
+    rows = await conn.fetch(
+        f"""
+        SELECT id, embedding::text AS embedding_text
+        FROM {fq_table("memory_units")}
+        WHERE bank_id = $1
+          AND fact_type = 'observation'
+          AND id = ANY($2::uuid[])
+        """,
+        bank_id,
+        observation_uuids,
+    )
+    return {
+        str(row["id"]): embedding
+        for row in rows
+        if (embedding := parse_embedding_text(row["embedding_text"])) is not None
+    }
+
+
+def _duplicate_memory_text(memory: dict[str, Any]) -> str:
+    return memory["text"]
+
+
+def _duplicate_observation_text(observation: "MemoryFact") -> str:
+    if observation.context:
+        return f"{observation.context}: {observation.text}"
+    return observation.text
+
+
+def _sigmoid(value: float) -> float:
+    return 1.0 / (1.0 + math.exp(-value))
 
 
 def _min_date(dates: "Any") -> "datetime | None":

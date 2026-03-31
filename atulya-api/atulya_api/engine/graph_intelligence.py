@@ -17,6 +17,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from .embedding_similarity import cosine_similarity
+
 NodeKind = Literal["entity", "topic"]
 NodeStatus = Literal["stable", "changed", "contradictory", "stale"]
 ChangeType = Literal["change", "contradiction", "stale"]
@@ -59,6 +61,7 @@ class GraphEvidenceUnit(BaseModel):
     id: str
     text: str
     fact_type: str
+    embedding: list[float] | None = None
     context: str | None = None
     occurred_start: datetime | None = None
     mentioned_at: datetime | None = None
@@ -141,6 +144,9 @@ class GraphBuildOptions(BaseModel):
     confidence_min: float = 0.55
     node_kind: Literal["all", "entity", "topic"] = "all"
     window_days: int | None = 90
+    contradiction_cosine_min: float = 0.7
+    contradiction_cosine_max: float = 0.85
+    contradiction_confidence_penalty: float = 0.6
     now: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
 
@@ -248,6 +254,17 @@ def _confidence_for_units(units: list[GraphEvidenceUnit], now: datetime) -> floa
     return round(_clamp(0.2 + evidence_component + proof_component + access_component + recency_component), 3)
 
 
+def _contradiction_severity(events: list[GraphChangeEvent]) -> float:
+    return max((event.confidence for event in events if event.change_type == "contradiction"), default=0.0)
+
+
+def _surface_confidence(base_confidence: float, events: list[GraphChangeEvent], penalty_weight: float) -> float:
+    severity = _contradiction_severity(events)
+    if severity <= 0.0:
+        return base_confidence
+    return round(_clamp(base_confidence * (1.0 - severity * penalty_weight)), 3)
+
+
 def _importance_for_units(units: list[GraphEvidenceUnit], centrality: float) -> float:
     evidence_component = min(1.0, math.log1p(len(units)) / 2.5)
     support_component = min(
@@ -272,18 +289,30 @@ def _sorted_distinct_units(units: list[GraphEvidenceUnit]) -> list[GraphEvidence
     return distinct
 
 
-def _is_contradictory(left: str, right: str) -> bool:
-    left_tokens = _token_set(left)
-    right_tokens = _token_set(right)
+def _is_contradictory(
+    left: GraphEvidenceUnit,
+    right: GraphEvidenceUnit,
+    *,
+    contradiction_cosine_min: float,
+    contradiction_cosine_max: float,
+) -> bool:
+    left_tokens = _token_set(left.text)
+    right_tokens = _token_set(right.text)
     overlap = left_tokens & right_tokens
     if len(overlap) < 2:
         return False
     left_negated = bool(left_tokens & _NEGATION_MARKERS)
     right_negated = bool(right_tokens & _NEGATION_MARKERS)
-    return left_negated != right_negated
+    if left_negated == right_negated:
+        return False
+
+    similarity = cosine_similarity(left.embedding, right.embedding)
+    if similarity is None:
+        return False
+    return contradiction_cosine_min <= similarity <= contradiction_cosine_max
 
 
-def _build_change_events(summary: _GroupSummary, confidence: float, now: datetime) -> list[GraphChangeEvent]:
+def _build_change_events(summary: _GroupSummary, confidence: float, options: GraphBuildOptions) -> list[GraphChangeEvent]:
     distinct_units = _sorted_distinct_units(summary.units)
     if len(distinct_units) < 2:
         return []
@@ -311,7 +340,12 @@ def _build_change_events(summary: _GroupSummary, confidence: float, now: datetim
             )
         )
 
-    if _is_contradictory(previous.text, current.text):
+    if _is_contradictory(
+        previous,
+        current,
+        contradiction_cosine_min=options.contradiction_cosine_min,
+        contradiction_cosine_max=options.contradiction_cosine_max,
+    ):
         events.append(
             GraphChangeEvent(
                 id=f"event:{summary.kind}:{_slugify(summary.title)}:contradiction",
@@ -373,7 +407,8 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
         if confidence < options.confidence_min:
             continue
 
-        events = _build_change_events(summary, confidence, options.now)
+        events = _build_change_events(summary, confidence, options)
+        surface_confidence = _surface_confidence(confidence, events, options.contradiction_confidence_penalty)
         latest_unit = max(
             summary.units,
             key=lambda unit: (unit.effective_timestamp() or datetime.min.replace(tzinfo=UTC), unit.id),
@@ -526,9 +561,10 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
 
         event_boost = 0.25 if any(event.change_type != "stale" for event in node_events) else 0.0
         stale_boost = 0.1 if any(event.change_type == "stale" for event in node_events) else 0.0
+        surface_confidence = _surface_confidence(node.confidence, node_events, options.contradiction_confidence_penalty)
         node.change_score = round(
             _clamp(
-                0.35 * node.confidence
+                0.35 * surface_confidence
                 + 0.25 * recency
                 + 0.2 * centrality
                 + 0.2 * importance
@@ -562,7 +598,7 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
 
     status_priority = {"contradictory": 0, "changed": 1, "stale": 2, "stable": 3}
     sorted_nodes = sorted(
-        raw_nodes, key=lambda node: (status_priority[node.status], -node.change_score, node.title.lower())
+        raw_nodes, key=lambda node: (-node.change_score, status_priority[node.status], node.title.lower())
     )
     limited_nodes = sorted_nodes[: options.limit]
     selected_ids = {node.id for node in limited_nodes}

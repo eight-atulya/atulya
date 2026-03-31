@@ -5746,6 +5746,11 @@ class MemoryEngine(MemoryEngineInterface):
                 "confidence_min": round(confidence_min, 3),
                 "node_kind": node_kind,
                 "window_days": window_days,
+                "graph_contradiction_cosine_min": round(get_config().graph_contradiction_cosine_min, 3),
+                "graph_contradiction_cosine_max": round(get_config().graph_contradiction_cosine_max, 3),
+                "graph_contradiction_confidence_penalty": round(
+                    get_config().graph_contradiction_confidence_penalty, 3
+                ),
                 "schema": get_current_schema(),
             },
             sort_keys=True,
@@ -5781,6 +5786,11 @@ class MemoryEngine(MemoryEngineInterface):
                 "confidence_min": round(confidence_min, 3),
                 "node_kind": node_kind,
                 "window_days": window_days,
+                "graph_contradiction_cosine_min": round(get_config().graph_contradiction_cosine_min, 3),
+                "graph_contradiction_cosine_max": round(get_config().graph_contradiction_cosine_max, 3),
+                "graph_contradiction_confidence_penalty": round(
+                    get_config().graph_contradiction_confidence_penalty, 3
+                ),
                 "focus_ids": sorted(focus_ids or []),
                 "depth": depth,
                 "limit_nodes": limit_nodes,
@@ -5810,6 +5820,7 @@ class MemoryEngine(MemoryEngineInterface):
         tags_match: str,
         window_days: int | None,
     ) -> list["GraphEvidenceUnit"]:
+        from .embedding_similarity import parse_embedding_text
         from .graph_intelligence import GraphEvidenceUnit
         from .search.tags import build_tags_where_clause_simple
 
@@ -5848,7 +5859,7 @@ class MemoryEngine(MemoryEngineInterface):
         rows = await conn.fetch(
             f"""
             SELECT id, text, fact_type, context, occurred_start, mentioned_at, created_at,
-                   proof_count, access_count, tags, source_memory_ids
+                   proof_count, access_count, tags, source_memory_ids, embedding::text AS embedding_text
             FROM {fq_table("memory_units")}
             {where_clause}
             ORDER BY COALESCE(occurred_start, mentioned_at, created_at) DESC NULLS LAST, created_at DESC
@@ -5883,6 +5894,7 @@ class MemoryEngine(MemoryEngineInterface):
                     id=str(row["id"]),
                     text=row["text"],
                     fact_type=row["fact_type"],
+                    embedding=parse_embedding_text(row["embedding_text"]),
                     context=row["context"],
                     occurred_start=row["occurred_start"],
                     mentioned_at=row["mentioned_at"],
@@ -5958,6 +5970,9 @@ class MemoryEngine(MemoryEngineInterface):
                 confidence_min=confidence_min,
                 node_kind=cast(Any, node_kind),
                 window_days=window_days,
+                contradiction_cosine_min=get_config().graph_contradiction_cosine_min,
+                contradiction_cosine_max=get_config().graph_contradiction_cosine_max,
+                contradiction_confidence_penalty=get_config().graph_contradiction_confidence_penalty,
                 now=now,
             ),
         ).model_dump(mode="json")

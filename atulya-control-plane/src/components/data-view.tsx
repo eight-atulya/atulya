@@ -721,7 +721,9 @@ export function DataView({ factType }: DataViewProps) {
     if (graphInvestigation?.recommended_checks?.length)
       return graphInvestigation.recommended_checks;
     if (selectedChangeEvent?.change_type === "contradiction") {
-      return ["Review conflicting evidence and confirm which source is most current."];
+      return [
+        "Review the conflicting evidence with the strongest semantic overlap and confirm which source is most current.",
+      ];
     }
     if (
       selectedChangeEvent?.change_type === "change" ||
@@ -846,6 +848,12 @@ export function DataView({ factType }: DataViewProps) {
     resolvedSelectedStateNode?.status_reason ||
     resolvedSelectedStateNode?.current_state ||
     "Select a state card to inspect what changed, why Atulya believes it, and what to do next.";
+  const selectedStateSupportPercent = resolvedSelectedStateNode
+    ? Math.round(resolvedSelectedStateNode.confidence * 100)
+    : null;
+  const selectedStateSignalPercent = resolvedSelectedStateNode
+    ? Math.round(resolvedSelectedStateNode.change_score * 100)
+    : null;
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1104,7 +1112,7 @@ export function DataView({ factType }: DataViewProps) {
                     <option value="180">180 days</option>
                     <option value="all">All time</option>
                   </select>
-                  <label className="text-muted-foreground">Confidence</label>
+                  <label className="text-muted-foreground">Support</label>
                   <select
                     value={String(confidenceMin)}
                     onChange={(e) => setConfidenceMin(Number(e.target.value))}
@@ -1212,6 +1220,11 @@ export function DataView({ factType }: DataViewProps) {
                             {resolvedSelectedStateNode?.title || "Top graph signals"}
                           </h3>
                           <p className="text-sm text-muted-foreground mt-1">{inspectorHeadline}</p>
+                          <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                            Support measures how well the current state is backed by evidence.
+                            Signal measures how strongly Atulya is surfacing it after consistency
+                            checks like conflict and staleness.
+                          </p>
                         </div>
 
                         {resolvedSelectedStateNode && (
@@ -1226,6 +1239,13 @@ export function DataView({ factType }: DataViewProps) {
                             <div className="text-sm text-muted-foreground leading-relaxed">
                               {resolvedSelectedStateNode.status_reason}
                             </div>
+                            {resolvedSelectedStateNode.status === "contradictory" ? (
+                              <div className="text-xs leading-5 text-muted-foreground">
+                                Conflict only appears when Atulya sees competing statements with
+                                meaningful semantic overlap. Missing embeddings no longer trigger a
+                                conflict by fallback.
+                              </div>
+                            ) : null}
                           </div>
                         )}
 
@@ -1234,13 +1254,21 @@ export function DataView({ factType }: DataViewProps) {
                             <div className="p-2 rounded bg-muted/40 border border-border">
                               <div className="text-[11px] text-muted-foreground">Status</div>
                               <div className="font-semibold text-foreground capitalize">
-                                {resolvedSelectedStateNode.status}
+                                {resolvedSelectedStateNode.status === "contradictory"
+                                  ? "conflict"
+                                  : resolvedSelectedStateNode.status}
                               </div>
                             </div>
                             <div className="p-2 rounded bg-muted/40 border border-border">
-                              <div className="text-[11px] text-muted-foreground">Confidence</div>
+                              <div className="text-[11px] text-muted-foreground">Support</div>
                               <div className="font-semibold text-foreground">
-                                {Math.round(resolvedSelectedStateNode.confidence * 100)}%
+                                {selectedStateSupportPercent}%
+                              </div>
+                            </div>
+                            <div className="p-2 rounded bg-muted/40 border border-border">
+                              <div className="text-[11px] text-muted-foreground">Signal</div>
+                              <div className="font-semibold text-foreground">
+                                {selectedStateSignalPercent}%
                               </div>
                             </div>
                             <div className="p-2 rounded bg-muted/40 border border-border">
@@ -1249,7 +1277,7 @@ export function DataView({ factType }: DataViewProps) {
                                 {resolvedSelectedStateNode.evidence_count}
                               </div>
                             </div>
-                            <div className="p-2 rounded bg-muted/40 border border-border">
+                            <div className="p-2 rounded bg-muted/40 border border-border col-span-2">
                               <div className="text-[11px] text-muted-foreground">Kind</div>
                               <div className="font-semibold text-foreground capitalize">
                                 {resolvedSelectedStateNode.kind}
@@ -1261,7 +1289,7 @@ export function DataView({ factType }: DataViewProps) {
                         {resolvedSelectedStateNode && (
                           <div>
                             <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
-                              Current State
+                              Supported State
                             </div>
                             <div className="text-sm text-foreground leading-relaxed">
                               {resolvedSelectedStateNode.current_state}
@@ -1296,11 +1324,21 @@ export function DataView({ factType }: DataViewProps) {
                                 }`}
                               >
                                 <div className="text-sm font-medium text-foreground capitalize">
-                                  {event.change_type}
+                                  {event.change_type === "contradiction"
+                                    ? "Conflict"
+                                    : event.change_type}
                                 </div>
                                 <div className="text-xs text-muted-foreground mt-1">
                                   {event.summary}
                                 </div>
+                                <div className="mt-2 text-[11px] font-medium text-muted-foreground">
+                                  Signal {Math.round(event.confidence * 100)}%
+                                </div>
+                                {event.change_type === "contradiction" ? (
+                                  <div className="mt-1 text-[11px] leading-5 text-muted-foreground">
+                                    Semantic overlap verified before Atulya surfaced this conflict.
+                                  </div>
+                                ) : null}
                               </button>
                             ))}
                           </div>

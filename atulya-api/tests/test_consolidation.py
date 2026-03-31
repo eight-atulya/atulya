@@ -6,6 +6,7 @@ Note: Consolidation runs automatically after retain via SyncTaskBackend in tests
 
 import uuid
 from datetime import datetime, timezone
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, call, patch
 
 import pytest
@@ -13,15 +14,20 @@ import pytest
 from atulya_api.config import _get_raw_config
 from atulya_api.engine.consolidation.consolidator import (
     _aggregate_source_fields,
+    _collect_duplicate_telemetry,
     _find_related_observations,
     run_consolidation_job,
 )
-from atulya_api.engine.memory_engine import MemoryEngine
-from atulya_api.engine.reflect.tools import (
-    tool_recall,
-    tool_search_mental_models,
-    tool_search_observations,
-)
+from atulya_api.engine.memory_engine import MemoryEngine, fq_table
+from atulya_api.engine.reflect.tools import tool_recall, tool_search_mental_models, tool_search_observations
+from atulya_api.engine.response_models import MemoryFact
+
+
+def _embedding_string(first: float, second: float, dimension: int = 384) -> str:
+    values = [0.0] * dimension
+    values[0] = first
+    values[1] = second
+    return "[" + ",".join(str(value) for value in values) + "]"
 
 
 @pytest.fixture(autouse=True)
@@ -2465,6 +2471,190 @@ class TestConsolidationSourceFactsConfig:
                 assert kwargs.get("max_source_facts_tokens_per_observation") == -1
         finally:
             await memory.delete_bank(bank_id, request_context=request_context)
+
+
+class TestDuplicateTelemetry:
+    @staticmethod
+    def _fake_config(**overrides):
+        raw = _get_raw_config()
+        return type(raw)(**{
+            **{field: getattr(raw, field) for field in raw.__dataclass_fields__},
+            **overrides,
+        })
+
+    @pytest.mark.asyncio
+    async def test_collect_duplicate_telemetry_reports_cosine_candidates(self):
+        fake_config = self._fake_config(
+            consolidation_duplicate_detection_enabled=True,
+            consolidation_duplicate_cosine_threshold=0.85,
+            consolidation_duplicate_ce_enabled=False,
+        )
+
+        conn = AsyncMock()
+        observation_id = uuid.uuid4()
+        conn.fetch = AsyncMock(
+            return_value=[{"id": observation_id, "embedding_text": _embedding_string(0.95, 0.05)}]
+        )
+        memory = SimpleNamespace(
+            _cross_encoder_reranker=SimpleNamespace(
+                ensure_initialized=AsyncMock(),
+                cross_encoder=SimpleNamespace(predict=AsyncMock()),
+            )
+        )
+
+        telemetry = await _collect_duplicate_telemetry(
+            conn=conn,
+            memory_engine=memory,
+            bank_id="bank-1",
+            memories=[{"id": uuid.uuid4(), "text": "Alice uses a release checklist.", "embedding_text": _embedding_string(1.0, 0.0)}],
+            observations=[
+                MemoryFact(
+                    id=str(observation_id),
+                    text="Alice uses a release checklist.",
+                    fact_type="observation",
+                    tags=["team:platform"],
+                )
+            ],
+            config=fake_config,
+        )
+
+        assert telemetry.cosine_candidates == 1
+        assert telemetry.ce_scored == 0
+        assert telemetry.ce_confirmed == 0
+
+    @pytest.mark.asyncio
+    async def test_collect_duplicate_telemetry_skips_missing_embeddings(self):
+        fake_config = self._fake_config(
+            consolidation_duplicate_detection_enabled=True,
+            consolidation_duplicate_cosine_threshold=0.85,
+            consolidation_duplicate_ce_enabled=False,
+        )
+
+        conn = AsyncMock()
+        observation_id = uuid.uuid4()
+        conn.fetch = AsyncMock(return_value=[{"id": observation_id, "embedding_text": None}])
+        memory = SimpleNamespace(
+            _cross_encoder_reranker=SimpleNamespace(
+                ensure_initialized=AsyncMock(),
+                cross_encoder=SimpleNamespace(predict=AsyncMock()),
+            )
+        )
+
+        telemetry = await _collect_duplicate_telemetry(
+            conn=conn,
+            memory_engine=memory,
+            bank_id="bank-1",
+            memories=[{"id": uuid.uuid4(), "text": "Alice uses a release checklist.", "embedding_text": _embedding_string(1.0, 0.0)}],
+            observations=[
+                MemoryFact(
+                    id=str(observation_id),
+                    text="Alice uses a release checklist.",
+                    fact_type="observation",
+                    tags=["team:platform"],
+                )
+            ],
+            config=fake_config,
+        )
+
+        assert telemetry.cosine_candidates == 0
+        assert telemetry.ce_scored == 0
+        assert telemetry.ce_confirmed == 0
+
+    @pytest.mark.asyncio
+    async def test_collect_duplicate_telemetry_falls_back_when_reranker_fails(self):
+        fake_config = self._fake_config(
+            consolidation_duplicate_detection_enabled=True,
+            consolidation_duplicate_cosine_threshold=0.85,
+            consolidation_duplicate_ce_enabled=True,
+            consolidation_duplicate_ce_threshold=0.5,
+        )
+
+        conn = AsyncMock()
+        observation_id = uuid.uuid4()
+        conn.fetch = AsyncMock(
+            return_value=[{"id": observation_id, "embedding_text": _embedding_string(0.95, 0.05)}]
+        )
+        memory = SimpleNamespace(
+            _cross_encoder_reranker=SimpleNamespace(
+                ensure_initialized=AsyncMock(),
+                cross_encoder=SimpleNamespace(predict=AsyncMock(side_effect=RuntimeError("reranker down"))),
+            )
+        )
+
+        telemetry = await _collect_duplicate_telemetry(
+            conn=conn,
+            memory_engine=memory,
+            bank_id="bank-1",
+            memories=[
+                {
+                    "id": uuid.uuid4(),
+                    "text": "Alice uses a release checklist.",
+                    "embedding_text": _embedding_string(1.0, 0.0),
+                }
+            ],
+            observations=[
+                MemoryFact(
+                    id=str(observation_id),
+                    text="Alice uses a release checklist.",
+                    fact_type="observation",
+                    tags=["team:platform"],
+                )
+            ],
+            config=fake_config,
+        )
+
+        assert telemetry.cosine_candidates == 1
+        assert telemetry.ce_scored == 0
+        assert telemetry.ce_confirmed == 0
+
+    @pytest.mark.asyncio
+    async def test_collect_duplicate_telemetry_counts_ce_confirmations(self):
+        fake_config = self._fake_config(
+            consolidation_duplicate_detection_enabled=True,
+            consolidation_duplicate_cosine_threshold=0.85,
+            consolidation_duplicate_ce_enabled=True,
+            consolidation_duplicate_ce_threshold=0.8,
+        )
+
+        conn = AsyncMock()
+        observation_id = uuid.uuid4()
+        conn.fetch = AsyncMock(
+            return_value=[{"id": observation_id, "embedding_text": _embedding_string(0.95, 0.05)}]
+        )
+        predict = AsyncMock(return_value=[2.0])
+        memory = SimpleNamespace(
+            _cross_encoder_reranker=SimpleNamespace(
+                ensure_initialized=AsyncMock(),
+                cross_encoder=SimpleNamespace(predict=predict),
+            )
+        )
+
+        telemetry = await _collect_duplicate_telemetry(
+            conn=conn,
+            memory_engine=memory,
+            bank_id="bank-1",
+            memories=[
+                {
+                    "id": uuid.uuid4(),
+                    "text": "Alice uses a release checklist.",
+                    "embedding_text": _embedding_string(1.0, 0.0),
+                }
+            ],
+            observations=[
+                MemoryFact(
+                    id=str(observation_id),
+                    text="Alice uses a release checklist.",
+                    fact_type="observation",
+                    tags=["team:platform"],
+                )
+            ],
+            config=fake_config,
+        )
+
+        assert telemetry.cosine_candidates == 1
+        assert telemetry.ce_scored == 1
+        assert telemetry.ce_confirmed == 1
+        predict.assert_awaited_once()
 
     @pytest.mark.asyncio
     async def test_consolidation_passes_source_facts_per_obs_tokens_to_recall(

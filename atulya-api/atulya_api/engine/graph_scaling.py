@@ -6,6 +6,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
+from ..config import get_config
 from .graph_intelligence import (
     GraphBuildOptions,
     GraphChangeEvent,
@@ -136,6 +137,34 @@ def _status_to_tone(value: str | None) -> GraphStatusTone:
     return "neutral"
 
 
+def _status_display_label(value: str | None) -> str:
+    if value == "contradictory":
+        return "Conflict"
+    if value == "changed":
+        return "Changed"
+    if value == "stale":
+        return "Stale"
+    if value == "stable":
+        return "Stable"
+    return "Unknown"
+
+
+def _event_display_label(change_type: str) -> str:
+    if change_type == "contradiction":
+        return "Conflict"
+    if change_type == "stale":
+        return "Stale"
+    return "Change"
+
+
+def _kind_display_label(kind: str) -> str:
+    if kind == "entity":
+        return "Entities"
+    if kind == "topic":
+        return "Topics"
+    return "Nodes"
+
+
 def _weight_to_width(weight: float, minimum: float = 1.25, maximum: float = 3.25) -> float:
     return max(minimum, min(maximum, round(weight, 3)))
 
@@ -161,7 +190,7 @@ def build_state_graph_summary(graph: GraphIntelligenceResponse) -> GraphSummaryR
     mode_hint = select_graph_render_mode(graph.total_nodes)
     top_nodes = sorted(
         graph.nodes,
-        key=lambda node: (-_status_priority(_status_to_tone(node.status)), -node.change_score, node.title.lower()),
+        key=lambda node: (-node.change_score, -_status_priority(_status_to_tone(node.status)), node.title.lower()),
     )[:8]
     top_ids = {node.id for node in top_nodes}
     grouped: dict[tuple[str, str], list[GraphStateNode]] = defaultdict(list)
@@ -184,7 +213,7 @@ def build_state_graph_summary(graph: GraphIntelligenceResponse) -> GraphSummaryR
             GraphSummaryItem(
                 id=cluster_id,
                 kind="cluster",
-                title=f"{status.title()} {kind.title()}s",
+                title=f"{_status_display_label(status)} {_kind_display_label(kind)}",
                 subtitle=f"{len(members)} nodes",
                 preview_labels=preview_labels,
                 member_count=len(members),
@@ -462,7 +491,7 @@ def build_state_graph_neighborhood(
                     title=node.title,
                     subtitle=node.subtitle,
                     preview=node.current_state,
-                    status_label=node.status.title(),
+                    status_label=_status_display_label(node.status),
                     status_tone=_status_to_tone(node.status),
                     confidence=node.confidence,
                     evidence_count=node.evidence_count,
@@ -481,9 +510,9 @@ def build_state_graph_neighborhood(
                 GraphNeighborhoodNode(
                     id=node_id,
                     node_type="event",
-                    title=event.change_type.title(),
+                    title=_event_display_label(event.change_type),
                     preview=event.summary,
-                    status_label=event.change_type.title(),
+                    status_label=_event_display_label(event.change_type),
                     status_tone=_status_to_tone(
                         "contradictory"
                         if event.change_type == "contradiction"
@@ -647,6 +676,7 @@ def build_state_graph_from_units(
     window_days: int | None,
     now: datetime,
 ) -> GraphIntelligenceResponse:
+    config = get_config()
     return build_graph_intelligence(
         units,
         GraphBuildOptions(
@@ -654,6 +684,9 @@ def build_state_graph_from_units(
             confidence_min=confidence_min,
             node_kind=node_kind,
             window_days=window_days,
+            contradiction_cosine_min=config.graph_contradiction_cosine_min,
+            contradiction_cosine_max=config.graph_contradiction_cosine_max,
+            contradiction_confidence_penalty=config.graph_contradiction_confidence_penalty,
             now=now,
         ),
     )

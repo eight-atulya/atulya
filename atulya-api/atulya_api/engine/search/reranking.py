@@ -4,6 +4,7 @@ Cross-encoder neural reranking for search results.
 
 from datetime import datetime, timezone
 
+from ...config import get_config
 from .types import MergedCandidate, ScoredResult
 
 UTC = timezone.utc
@@ -13,6 +14,24 @@ UTC = timezone.utc
 # so the max combined boost is (1 + alpha/2)^2 ≈ +21% and min is (1 - alpha/2)^2 ≈ -19%.
 _RECENCY_ALPHA: float = 0.2
 _TEMPORAL_ALPHA: float = 0.2
+
+
+def _type_boost(fact_type: str | None) -> float:
+    config = get_config()
+    if fact_type == "observation":
+        return config.reranker_observation_type_boost
+    if fact_type == "experience":
+        return config.reranker_experience_type_boost
+    return 1.0
+
+
+def _proof_boost(fact_type: str | None, proof_count: int | None) -> float:
+    if fact_type != "observation":
+        return 1.0
+
+    config = get_config()
+    effective_count = min(max(proof_count or 0, 0), config.reranker_proof_boost_max_count)
+    return 1.0 + (effective_count * config.reranker_proof_boost_per_count)
 
 
 def apply_combined_scoring(
@@ -32,7 +51,7 @@ def apply_combined_scoring(
 
         recency_boost  = 1 + recency_alpha  * (recency  - 0.5)   # in [1-α/2, 1+α/2]
         temporal_boost = 1 + temporal_alpha * (temporal - 0.5)   # in [1-α/2, 1+α/2]
-        combined_score = cross_encoder_score_normalized * recency_boost * temporal_boost
+        combined_score = cross_encoder_score_normalized * recency_boost * temporal_boost * type_boost * proof_boost
 
     Temporal proximity is treated as neutral (0.5) when not set by temporal retrieval,
     so temporal_boost collapses to 1.0 for non-temporal queries.
@@ -65,7 +84,9 @@ def apply_combined_scoring(
 
         recency_boost = 1.0 + recency_alpha * (sr.recency - 0.5)
         temporal_boost = 1.0 + temporal_alpha * (sr.temporal - 0.5)
-        sr.combined_score = sr.cross_encoder_score_normalized * recency_boost * temporal_boost
+        type_boost = _type_boost(sr.retrieval.fact_type)
+        proof_boost = _proof_boost(sr.retrieval.fact_type, sr.retrieval.proof_count)
+        sr.combined_score = sr.cross_encoder_score_normalized * recency_boost * temporal_boost * type_boost * proof_boost
         sr.weight = sr.combined_score
 
 

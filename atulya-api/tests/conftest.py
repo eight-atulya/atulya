@@ -1,15 +1,16 @@
 """
 Pytest configuration and shared fixtures.
 """
-import pytest
-import pytest_asyncio
 import asyncio
 import os
-import filelock
 from pathlib import Path
-from dotenv import load_dotenv
-from atulya_api import MemoryEngine, LLMConfig, LocalSTEmbeddings, RequestContext
 
+import filelock
+import pytest
+import pytest_asyncio
+from dotenv import load_dotenv
+
+from atulya_api import LLMConfig, LocalSTEmbeddings, MemoryEngine, RequestContext
 from atulya_api.engine.cross_encoder import LocalSTCrossEncoder
 from atulya_api.engine.query_analyzer import DateparserQueryAnalyzer
 from atulya_api.engine.task_backend import SyncTaskBackend
@@ -17,7 +18,29 @@ from atulya_api.pg0 import EmbeddedPostgres
 
 # Default pg0 instance configuration for tests
 DEFAULT_PG0_INSTANCE_NAME = "atulya-test"
+DEFAULT_PG0_INSTANCE_NAME_ENV = "ATULYA_TEST_PG0_INSTANCE_NAME"
+DEFAULT_PG0_PORT_ENV = "ATULYA_TEST_PG0_PORT"
 DEFAULT_PG0_PORT = 5556
+
+
+def _resolve_test_pg0_port() -> int | None:
+    raw = os.getenv(DEFAULT_PG0_PORT_ENV)
+    if raw is None or raw == "":
+        return DEFAULT_PG0_PORT
+    if raw.lower() == "auto":
+        return None
+    return int(raw)
+
+
+def _resolve_test_pg0_instance_name(port: int | None) -> str:
+    explicit_name = os.getenv(DEFAULT_PG0_INSTANCE_NAME_ENV)
+    if explicit_name:
+        return explicit_name
+    if port == DEFAULT_PG0_PORT:
+        return DEFAULT_PG0_INSTANCE_NAME
+    if port is None:
+        return f"{DEFAULT_PG0_INSTANCE_NAME}-auto"
+    return f"{DEFAULT_PG0_INSTANCE_NAME}-{port}"
 
 
 # Load environment variables from .env at the start of test session
@@ -70,9 +93,14 @@ def pg0_db_url(db_url, tmp_path_factory, worker_id):
         # Running with xdist - use parent dir shared by all workers
         root_tmp_dir = tmp_path_factory.getbasetemp().parent
 
-    # Use a lock file to ensure only one worker starts pg0
-    lock_file = root_tmp_dir / "pg0_setup.lock"
-    url_file = root_tmp_dir / "pg0_url.txt"
+    resolved_port = _resolve_test_pg0_port()
+    resolved_instance_name = _resolve_test_pg0_instance_name(resolved_port)
+    port_token = "auto" if resolved_port is None else str(resolved_port)
+
+    # Use port- and instance-scoped coordination files so concurrent sessions with
+    # different pg0 settings do not accidentally reuse a stale URL.
+    lock_file = root_tmp_dir / f"pg0_setup_{resolved_instance_name}_{port_token}.lock"
+    url_file = root_tmp_dir / f"pg0_url_{resolved_instance_name}_{port_token}.txt"
 
     with filelock.FileLock(str(lock_file)):
         if url_file.exists():
@@ -80,7 +108,7 @@ def pg0_db_url(db_url, tmp_path_factory, worker_id):
             url = url_file.read_text().strip()
         else:
             # First worker - start pg0
-            pg0 = EmbeddedPostgres(name=DEFAULT_PG0_INSTANCE_NAME, port=DEFAULT_PG0_PORT)
+            pg0 = EmbeddedPostgres(name=resolved_instance_name, port=resolved_port)
 
             # Run ensure_running in a new event loop
             loop = asyncio.new_event_loop()

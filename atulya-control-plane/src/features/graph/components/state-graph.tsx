@@ -48,7 +48,7 @@ const STATUS_ORDER: Record<GraphStateNode["status"], number> = {
 const STATUS_LABEL: Record<GraphStateNode["status"], string> = {
   stable: "Stable",
   changed: "Changed",
-  contradictory: "Contradiction",
+  contradictory: "Conflict",
   stale: "Stale",
 };
 
@@ -124,6 +124,7 @@ export function StateGraph({
         statusLabel: safeText(node.status_label),
         statusTone: node.status_tone,
         confidence: node.confidence,
+        signalScore: node.display_priority,
         evidenceCount: node.evidence_count,
         kindLabel: safeText(node.kind_label),
         meta: safeText(node.meta),
@@ -146,6 +147,7 @@ export function StateGraph({
       statusLabel: STATUS_LABEL[node.status],
       statusTone: node.status,
       confidence: node.confidence,
+      signalScore: node.change_score,
       evidenceCount: node.evidence_count,
       kindLabel: node.kind === "entity" ? "Entity State" : "Topic State",
       meta: node.kind,
@@ -163,9 +165,19 @@ export function StateGraph({
     const eventNodes: WorkbenchGraphNode[] = data.change_events.map((event) => ({
       id: `event:${event.id}`,
       kind: "event",
-      title: event.change_type,
+      title:
+        event.change_type === "contradiction"
+          ? "Conflict"
+          : event.change_type === "stale"
+            ? "Stale"
+            : "Change",
       preview: safeText(event.summary, "Atulya surfaced a graph signal."),
-      statusLabel: event.change_type,
+      statusLabel:
+        event.change_type === "contradiction"
+          ? "Conflict"
+          : event.change_type === "stale"
+            ? "Stale"
+            : "Change",
       statusTone:
         event.change_type === "contradiction"
           ? "contradictory"
@@ -173,6 +185,7 @@ export function StateGraph({
             ? "stale"
             : "changed",
       confidence: event.confidence,
+      signalScore: event.confidence,
       timestampLabel: safeText(event.time_window, formatShortDate(event.time_window) ?? ""),
       width: 320,
       height: estimateEventHeight(event),

@@ -11,7 +11,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from atulya_api.engine.search.reranking import apply_combined_scoring, _RECENCY_ALPHA, _TEMPORAL_ALPHA
+from atulya_api.engine.search.reranking import _RECENCY_ALPHA, _TEMPORAL_ALPHA, apply_combined_scoring
 from atulya_api.engine.search.types import MergedCandidate, RetrievalResult, ScoredResult
 
 UTC = timezone.utc
@@ -22,10 +22,14 @@ def _make_result(
     ce_norm: float,
     occurred_start: datetime | None = None,
     temporal_proximity: float | None = None,
+    fact_type: str = "world",
+    proof_count: int | None = 0,
 ) -> ScoredResult:
     retrieval = MagicMock(spec=RetrievalResult)
     retrieval.occurred_start = occurred_start
     retrieval.temporal_proximity = temporal_proximity
+    retrieval.fact_type = fact_type
+    retrieval.proof_count = proof_count
 
     candidate = MagicMock(spec=MergedCandidate)
     candidate.retrieval = retrieval
@@ -169,3 +173,21 @@ class TestBoostFormula:
 
     def test_empty_list_is_noop(self):
         apply_combined_scoring([], now=NOW)  # must not raise
+
+    def test_observation_type_and_proof_boost_apply_multiplicatively(self):
+        sr = _make_result(ce_norm=0.5, fact_type="observation", proof_count=2)
+        apply_combined_scoring([sr], now=NOW)
+        expected = 0.5 * 1.03 * 1.04
+        assert abs(sr.weight - expected) < 1e-6
+
+    def test_experience_type_boost_applies_without_proof_boost(self):
+        sr = _make_result(ce_norm=0.5, fact_type="experience", proof_count=3)
+        apply_combined_scoring([sr], now=NOW)
+        expected = 0.5 * 1.02
+        assert abs(sr.weight - expected) < 1e-6
+
+    def test_observation_proof_boost_is_capped(self):
+        sr = _make_result(ce_norm=0.5, fact_type="observation", proof_count=10)
+        apply_combined_scoring([sr], now=NOW)
+        expected = 0.5 * 1.03 * 1.06
+        assert abs(sr.weight - expected) < 1e-6

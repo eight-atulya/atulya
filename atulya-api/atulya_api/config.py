@@ -215,6 +215,10 @@ ENV_RERANKER_TEI_URL = "ATULYA_API_RERANKER_TEI_URL"
 ENV_RERANKER_TEI_BATCH_SIZE = "ATULYA_API_RERANKER_TEI_BATCH_SIZE"
 ENV_RERANKER_TEI_MAX_CONCURRENT = "ATULYA_API_RERANKER_TEI_MAX_CONCURRENT"
 ENV_RERANKER_MAX_CANDIDATES = "ATULYA_API_RERANKER_MAX_CANDIDATES"
+ENV_RERANKER_OBSERVATION_TYPE_BOOST = "ATULYA_API_RERANKER_OBSERVATION_TYPE_BOOST"
+ENV_RERANKER_EXPERIENCE_TYPE_BOOST = "ATULYA_API_RERANKER_EXPERIENCE_TYPE_BOOST"
+ENV_RERANKER_PROOF_BOOST_PER_COUNT = "ATULYA_API_RERANKER_PROOF_BOOST_PER_COUNT"
+ENV_RERANKER_PROOF_BOOST_MAX_COUNT = "ATULYA_API_RERANKER_PROOF_BOOST_MAX_COUNT"
 ENV_RERANKER_FLASHRANK_MODEL = "ATULYA_API_RERANKER_FLASHRANK_MODEL"
 ENV_RERANKER_FLASHRANK_CACHE_DIR = "ATULYA_API_RERANKER_FLASHRANK_CACHE_DIR"
 
@@ -297,9 +301,16 @@ ENV_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS = "ATULYA_API_CONSOLIDATION_SOURCE_FAC
 ENV_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION = (
     "ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION"
 )
+ENV_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED = "ATULYA_API_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED"
+ENV_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD = "ATULYA_API_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD"
+ENV_CONSOLIDATION_DUPLICATE_CE_ENABLED = "ATULYA_API_CONSOLIDATION_DUPLICATE_CE_ENABLED"
+ENV_CONSOLIDATION_DUPLICATE_CE_THRESHOLD = "ATULYA_API_CONSOLIDATION_DUPLICATE_CE_THRESHOLD"
 ENV_OBSERVATIONS_MISSION = "ATULYA_API_OBSERVATIONS_MISSION"
 ENV_ENABLE_OBSERVATION_HISTORY = "ATULYA_API_ENABLE_OBSERVATION_HISTORY"
 ENV_ENABLE_MENTAL_MODEL_HISTORY = "ATULYA_API_ENABLE_MENTAL_MODEL_HISTORY"
+ENV_GRAPH_CONTRADICTION_COSINE_MIN = "ATULYA_API_GRAPH_CONTRADICTION_COSINE_MIN"
+ENV_GRAPH_CONTRADICTION_COSINE_MAX = "ATULYA_API_GRAPH_CONTRADICTION_COSINE_MAX"
+ENV_GRAPH_CONTRADICTION_CONFIDENCE_PENALTY = "ATULYA_API_GRAPH_CONTRADICTION_CONFIDENCE_PENALTY"
 
 # Webhook configuration (global, static - server-level only)
 ENV_WEBHOOK_URL = "ATULYA_API_WEBHOOK_URL"
@@ -403,6 +414,10 @@ DEFAULT_RERANKER_LOCAL_TRUST_REMOTE_CODE = (
 DEFAULT_RERANKER_TEI_BATCH_SIZE = 128
 DEFAULT_RERANKER_TEI_MAX_CONCURRENT = 8
 DEFAULT_RERANKER_MAX_CANDIDATES = 300
+DEFAULT_RERANKER_OBSERVATION_TYPE_BOOST = 1.03
+DEFAULT_RERANKER_EXPERIENCE_TYPE_BOOST = 1.02
+DEFAULT_RERANKER_PROOF_BOOST_PER_COUNT = 0.02
+DEFAULT_RERANKER_PROOF_BOOST_MAX_COUNT = 3
 DEFAULT_RERANKER_FLASHRANK_MODEL = "ms-marco-MiniLM-L-12-v2"  # Best balance of speed and quality
 DEFAULT_RERANKER_FLASHRANK_CACHE_DIR = None  # Use default cache directory
 
@@ -476,7 +491,14 @@ DEFAULT_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS = (
 DEFAULT_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION = (
     256  # Max tokens of source facts per observation in consolidation prompt (-1 = unlimited)
 )
+DEFAULT_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED = False
+DEFAULT_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD = 0.85
+DEFAULT_CONSOLIDATION_DUPLICATE_CE_ENABLED = False
+DEFAULT_CONSOLIDATION_DUPLICATE_CE_THRESHOLD = 0.5
 DEFAULT_OBSERVATIONS_MISSION = None  # Declarative spec of what observations are for this bank
+DEFAULT_GRAPH_CONTRADICTION_COSINE_MIN = 0.7
+DEFAULT_GRAPH_CONTRADICTION_COSINE_MAX = 0.85
+DEFAULT_GRAPH_CONTRADICTION_CONFIDENCE_PENALTY = 0.6
 
 # Database migrations
 DEFAULT_RUN_MIGRATIONS_ON_STARTUP = True
@@ -723,6 +745,10 @@ class AtulyaConfig:
     reranker_tei_batch_size: int
     reranker_tei_max_concurrent: int
     reranker_max_candidates: int
+    reranker_observation_type_boost: float
+    reranker_experience_type_boost: float
+    reranker_proof_boost_per_count: float
+    reranker_proof_boost_max_count: int
     reranker_cohere_api_key: str | None
     reranker_cohere_model: str
     reranker_cohere_base_url: str | None
@@ -794,6 +820,13 @@ class AtulyaConfig:
     consolidation_max_tokens: int
     consolidation_source_facts_max_tokens: int
     consolidation_source_facts_max_tokens_per_observation: int
+    consolidation_duplicate_detection_enabled: bool
+    consolidation_duplicate_cosine_threshold: float
+    consolidation_duplicate_ce_enabled: bool
+    consolidation_duplicate_ce_threshold: float
+    graph_contradiction_cosine_min: float
+    graph_contradiction_cosine_max: float
+    graph_contradiction_confidence_penalty: float
     observations_mission: str | None
 
     # Entity labels (controlled vocabulary of key:value classification labels extracted at retain time)
@@ -1026,6 +1059,19 @@ class AtulyaConfig:
             )
         if self.brain_max_file_size_mb <= 0:
             raise ValueError("brain_max_file_size_mb must be > 0")
+        if not 0.0 <= self.graph_contradiction_cosine_min <= self.graph_contradiction_cosine_max <= 1.0:
+            raise ValueError(
+                "graph contradiction cosine thresholds must satisfy "
+                "0.0 <= min <= max <= 1.0"
+            )
+        if self.graph_contradiction_confidence_penalty < 0.0 or self.graph_contradiction_confidence_penalty > 1.0:
+            raise ValueError("graph_contradiction_confidence_penalty must be in [0.0, 1.0]")
+        if self.consolidation_duplicate_cosine_threshold < 0.0 or self.consolidation_duplicate_cosine_threshold > 1.0:
+            raise ValueError("consolidation_duplicate_cosine_threshold must be in [0.0, 1.0]")
+        if self.consolidation_duplicate_ce_threshold < 0.0 or self.consolidation_duplicate_ce_threshold > 1.0:
+            raise ValueError("consolidation_duplicate_ce_threshold must be in [0.0, 1.0]")
+        if self.reranker_proof_boost_max_count < 0:
+            raise ValueError("reranker_proof_boost_max_count must be >= 0")
 
     @classmethod
     def from_env(cls) -> "AtulyaConfig":
@@ -1178,6 +1224,18 @@ class AtulyaConfig:
                 os.getenv(ENV_RERANKER_TEI_MAX_CONCURRENT, str(DEFAULT_RERANKER_TEI_MAX_CONCURRENT))
             ),
             reranker_max_candidates=int(os.getenv(ENV_RERANKER_MAX_CANDIDATES, str(DEFAULT_RERANKER_MAX_CANDIDATES))),
+            reranker_observation_type_boost=float(
+                os.getenv(ENV_RERANKER_OBSERVATION_TYPE_BOOST, str(DEFAULT_RERANKER_OBSERVATION_TYPE_BOOST))
+            ),
+            reranker_experience_type_boost=float(
+                os.getenv(ENV_RERANKER_EXPERIENCE_TYPE_BOOST, str(DEFAULT_RERANKER_EXPERIENCE_TYPE_BOOST))
+            ),
+            reranker_proof_boost_per_count=float(
+                os.getenv(ENV_RERANKER_PROOF_BOOST_PER_COUNT, str(DEFAULT_RERANKER_PROOF_BOOST_PER_COUNT))
+            ),
+            reranker_proof_boost_max_count=int(
+                os.getenv(ENV_RERANKER_PROOF_BOOST_MAX_COUNT, str(DEFAULT_RERANKER_PROOF_BOOST_MAX_COUNT))
+            ),
             # Cohere reranker (with backward-compatible fallback to shared API key)
             reranker_cohere_api_key=os.getenv(ENV_RERANKER_COHERE_API_KEY) or os.getenv(ENV_COHERE_API_KEY),
             reranker_cohere_model=os.getenv(ENV_RERANKER_COHERE_MODEL, DEFAULT_RERANKER_COHERE_MODEL),
@@ -1296,6 +1354,46 @@ class AtulyaConfig:
                 os.getenv(
                     ENV_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION,
                     str(DEFAULT_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION),
+                )
+            ),
+            consolidation_duplicate_detection_enabled=os.getenv(
+                ENV_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED,
+                str(DEFAULT_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED),
+            ).lower()
+            == "true",
+            consolidation_duplicate_cosine_threshold=float(
+                os.getenv(
+                    ENV_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD,
+                    str(DEFAULT_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD),
+                )
+            ),
+            consolidation_duplicate_ce_enabled=os.getenv(
+                ENV_CONSOLIDATION_DUPLICATE_CE_ENABLED,
+                str(DEFAULT_CONSOLIDATION_DUPLICATE_CE_ENABLED),
+            ).lower()
+            == "true",
+            consolidation_duplicate_ce_threshold=float(
+                os.getenv(
+                    ENV_CONSOLIDATION_DUPLICATE_CE_THRESHOLD,
+                    str(DEFAULT_CONSOLIDATION_DUPLICATE_CE_THRESHOLD),
+                )
+            ),
+            graph_contradiction_cosine_min=float(
+                os.getenv(
+                    ENV_GRAPH_CONTRADICTION_COSINE_MIN,
+                    str(DEFAULT_GRAPH_CONTRADICTION_COSINE_MIN),
+                )
+            ),
+            graph_contradiction_cosine_max=float(
+                os.getenv(
+                    ENV_GRAPH_CONTRADICTION_COSINE_MAX,
+                    str(DEFAULT_GRAPH_CONTRADICTION_COSINE_MAX),
+                )
+            ),
+            graph_contradiction_confidence_penalty=float(
+                os.getenv(
+                    ENV_GRAPH_CONTRADICTION_CONFIDENCE_PENALTY,
+                    str(DEFAULT_GRAPH_CONTRADICTION_CONFIDENCE_PENALTY),
                 )
             ),
             observations_mission=os.getenv(ENV_OBSERVATIONS_MISSION) or DEFAULT_OBSERVATIONS_MISSION,

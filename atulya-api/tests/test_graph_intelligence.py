@@ -12,7 +12,11 @@ from atulya_api.engine.graph_intelligence import (
     build_graph_intelligence,
     investigate_graph,
 )
-from atulya_api.engine.graph_scaling import build_evidence_graph_summary
+from atulya_api.engine.graph_scaling import (
+    build_evidence_graph_summary,
+    build_state_graph_neighborhood,
+    build_state_graph_summary,
+)
 from atulya_api.engine.memory_engine import fq_table
 
 
@@ -24,12 +28,14 @@ def _unit(
     entities: list[str] | None = None,
     tags: list[str] | None = None,
     days_ago: int = 0,
+    embedding: list[float] | None = None,
 ) -> GraphEvidenceUnit:
     timestamp = datetime.now(UTC) - timedelta(days=days_ago)
     return GraphEvidenceUnit(
         id=unit_id,
         text=text,
         fact_type="world",
+        embedding=embedding,
         occurred_start=timestamp,
         mentioned_at=timestamp,
         created_at=timestamp,
@@ -74,8 +80,20 @@ def test_change_detection_emits_temporal_state_change():
 def test_contradiction_detection_requires_conflicting_supported_states():
     graph = build_graph_intelligence(
         [
-            _unit("u1", "Bob is remote for work.", entity="Bob", days_ago=5),
-            _unit("u2", "Bob is not remote for work.", entity="Bob", days_ago=1),
+            _unit(
+                "u1",
+                "Bob is remote for work.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "Bob is not remote for work.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
         ],
         GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
     )
@@ -83,6 +101,298 @@ def test_contradiction_detection_requires_conflicting_supported_states():
     bob = next(node for node in graph.nodes if node.title == "Bob")
     assert bob.status == "contradictory"
     assert any(event.change_type == "contradiction" for event in graph.change_events if event.node_id == bob.id)
+
+
+def test_contradiction_detection_blocks_low_cosine_topic_drift():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "GitHub release policy has no force pushes.",
+                entity="GitHub",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "GitHub deployment policy is not mature.",
+                entity="GitHub",
+                days_ago=1,
+                embedding=[0.4, 0.916515],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    github = next(node for node in graph.nodes if node.title == "GitHub")
+    assert github.status == "changed"
+    assert not any(event.change_type == "contradiction" for event in graph.change_events if event.node_id == github.id)
+
+
+def test_contradiction_detection_blocks_high_cosine_paraphrase():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "Bob works remote without office travel.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "Bob works remote.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.95, 0.05],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    bob = next(node for node in graph.nodes if node.title == "Bob")
+    assert bob.status != "contradictory"
+    assert not any(event.change_type == "contradiction" for event in graph.change_events if event.node_id == bob.id)
+
+
+def test_contradiction_detection_accepts_in_band_similarity():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "Bob supports remote work policy.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "Bob does not support remote work policy.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    bob = next(node for node in graph.nodes if node.title == "Bob")
+    assert bob.status == "contradictory"
+
+
+def test_contradiction_detection_skips_missing_embeddings():
+    graph = build_graph_intelligence(
+        [
+            _unit("u1", "GitHub release policy has no force pushes.", entity="GitHub", days_ago=5),
+            _unit("u2", "GitHub deployment policy is not mature.", entity="GitHub", days_ago=1),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    github = next(node for node in graph.nodes if node.title == "GitHub")
+    assert github.status == "changed"
+    assert not any(event.change_type == "contradiction" for event in graph.change_events if event.node_id == github.id)
+
+
+def test_contradiction_detection_skips_one_sided_missing_embeddings():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "GitHub release policy has no force pushes.",
+                entity="GitHub",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit("u2", "GitHub deployment policy is not mature.", entity="GitHub", days_ago=1),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    github = next(node for node in graph.nodes if node.title == "GitHub")
+    assert github.status == "changed"
+    assert not any(event.change_type == "contradiction" for event in graph.change_events if event.node_id == github.id)
+
+
+def test_contradictory_nodes_remain_visible_at_default_confidence_threshold():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "Bob is remote for work.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "Bob is not remote for work.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
+        ],
+        GraphBuildOptions(limit=10, node_kind="entity"),
+    )
+
+    bob = next(node for node in graph.nodes if node.title == "Bob")
+    assert bob.status == "contradictory"
+
+
+def test_contradiction_penalty_changes_surfacing_not_support_confidence():
+    units = [
+        _unit(
+            "u1",
+            "Bob supports remote work policy.",
+            entity="Bob",
+            days_ago=5,
+            embedding=[1.0, 0.0],
+        ),
+        _unit(
+            "u2",
+            "Bob does not support remote work policy.",
+            entity="Bob",
+            days_ago=1,
+            embedding=[0.8, 0.6],
+        ),
+    ]
+
+    without_penalty = build_graph_intelligence(
+        units,
+        GraphBuildOptions(
+            limit=10,
+            confidence_min=0.0,
+            node_kind="entity",
+            contradiction_confidence_penalty=0.0,
+        ),
+    )
+    with_penalty = build_graph_intelligence(
+        units,
+        GraphBuildOptions(
+            limit=10,
+            confidence_min=0.0,
+            node_kind="entity",
+            contradiction_confidence_penalty=0.6,
+        ),
+    )
+
+    bob_without_penalty = next(node for node in without_penalty.nodes if node.title == "Bob")
+    bob_with_penalty = next(node for node in with_penalty.nodes if node.title == "Bob")
+    assert bob_with_penalty.confidence == bob_without_penalty.confidence
+    assert bob_with_penalty.change_score < bob_without_penalty.change_score
+
+
+def test_clean_change_can_outrank_contradiction_after_penalty():
+    graph = build_graph_intelligence(
+        [
+            _unit("a1", "Alice worked at Google.", entity="Alice", days_ago=30),
+            _unit("a2", "Alice now works at OpenAI.", entity="Alice", days_ago=1),
+            _unit(
+                "b1",
+                "Bob supports remote work policy.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "b2",
+                "Bob does not support remote work policy.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    assert [node.title for node in graph.nodes[:2]] == ["Alice", "Bob"]
+
+
+def test_state_summary_uses_penalized_ordering_for_top_nodes():
+    graph = build_graph_intelligence(
+        [
+            _unit("a1", "Alice worked at Google.", entity="Alice", days_ago=30),
+            _unit("a2", "Alice now works at OpenAI.", entity="Alice", days_ago=1),
+            _unit(
+                "b1",
+                "Bob supports remote work policy.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "b2",
+                "Bob does not support remote work policy.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    summary = build_state_graph_summary(graph)
+    assert [node.title for node in summary.top_nodes[:2]] == ["Alice", "Bob"]
+
+
+def test_state_summary_uses_conflict_label_for_contradictory_clusters():
+    units: list[GraphEvidenceUnit] = []
+    for index, name in enumerate(["Bob", "Carol", "Dave", "Eve", "Frank", "Grace", "Heidi", "Ivan", "Judy"]):
+        units.extend(
+            [
+                _unit(
+                    f"{name}-1",
+                    f"{name} supports remote work policy.",
+                    entity=name,
+                    days_ago=5 + index,
+                    embedding=[1.0, 0.0],
+                ),
+                _unit(
+                    f"{name}-2",
+                    f"{name} does not support remote work policy.",
+                    entity=name,
+                    days_ago=1,
+                    embedding=[0.8, 0.6],
+                ),
+            ]
+        )
+
+    graph = build_graph_intelligence(units, GraphBuildOptions(limit=20, confidence_min=0.0, node_kind="entity"))
+
+    summary = build_state_graph_summary(graph)
+    contradictory_cluster = next(cluster for cluster in summary.clusters if cluster.status_tone == "contradictory")
+    assert contradictory_cluster.title == "Conflict Entities"
+
+
+def test_state_neighborhood_uses_conflict_labels_for_states_and_events():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "Bob supports remote work policy.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "Bob does not support remote work policy.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    neighborhood = build_state_graph_neighborhood(graph, focus_ids=["entity:bob"], depth=1)
+    state_node = next(node for node in neighborhood.nodes if node.node_type == "state")
+    event_node = next(
+        node for node in neighborhood.nodes if node.node_type == "event" and node.status_tone == "contradictory"
+    )
+    assert state_node.status_label == "Conflict"
+    assert event_node.title == "Conflict"
+    assert event_node.status_label == "Conflict"
 
 
 def test_stale_detection_marks_old_state_when_neighbor_moves():
@@ -277,3 +587,68 @@ async def test_graph_intelligence_and_investigation_endpoints(api_client, memory
     evidence_neighborhood = evidence_neighborhood_response.json()
     assert evidence_neighborhood["surface"] == "evidence"
     assert evidence_neighborhood["nodes"]
+
+
+@pytest.mark.asyncio
+async def test_graph_intelligence_endpoint_skips_contradiction_when_embeddings_missing(
+    api_client, memory, request_context
+):
+    bank_id = f"graph_intelligence_missing_embed_{datetime.now(UTC).timestamp()}"
+    await memory._authenticate_tenant(request_context)
+    pool = await memory._get_pool()
+    async with acquire_with_retry(pool) as conn:
+        entity_id = await conn.fetchval(
+            f"""
+            INSERT INTO {fq_table("entities")} (bank_id, canonical_name, first_seen, last_seen, mention_count)
+            VALUES ($1, $2, $3, $4, 2)
+            RETURNING id
+            """,
+            bank_id,
+            "GitHub",
+            datetime.now(UTC) - timedelta(days=20),
+            datetime.now(UTC) - timedelta(days=1),
+        )
+        before_id = await conn.fetchval(
+            f"""
+            INSERT INTO {fq_table("memory_units")} (
+                bank_id, text, event_date, occurred_start, mentioned_at, fact_type, tags, proof_count, embedding
+            )
+            VALUES ($1, $2, $3, $3, $3, 'world', $4::varchar[], 1, NULL)
+            RETURNING id
+            """,
+            bank_id,
+            "GitHub release policy has no force pushes.",
+            datetime.now(UTC) - timedelta(days=20),
+            ["policy"],
+        )
+        after_id = await conn.fetchval(
+            f"""
+            INSERT INTO {fq_table("memory_units")} (
+                bank_id, text, event_date, occurred_start, mentioned_at, fact_type, tags, proof_count, embedding
+            )
+            VALUES ($1, $2, $3, $3, $3, 'world', $4::varchar[], 1, NULL)
+            RETURNING id
+            """,
+            bank_id,
+            "GitHub deployment policy is not mature.",
+            datetime.now(UTC) - timedelta(days=1),
+            ["policy"],
+        )
+        await conn.executemany(
+            f"INSERT INTO {fq_table('unit_entities')} (unit_id, entity_id) VALUES ($1, $2)",
+            [(before_id, entity_id), (after_id, entity_id)],
+        )
+
+    intelligence_response = await api_client.get(
+        f"/v1/default/banks/{bank_id}/graph/intelligence",
+        params={"confidence_min": 0.0, "node_kind": "entity"},
+    )
+    assert intelligence_response.status_code == 200
+    intelligence = intelligence_response.json()
+    github = next(node for node in intelligence["nodes"] if node["title"] == "GitHub")
+    assert github["status"] == "changed"
+    assert not any(
+        event["change_type"] == "contradiction"
+        for event in intelligence["change_events"]
+        if event["node_id"] == github["id"]
+    )

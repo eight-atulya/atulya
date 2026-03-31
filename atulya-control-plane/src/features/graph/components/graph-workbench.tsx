@@ -80,6 +80,7 @@ export interface WorkbenchGraphNode {
   statusLabel?: string | null;
   statusTone?: "stable" | "changed" | "contradictory" | "stale" | "neutral";
   confidence?: number | null;
+  signalScore?: number | null;
   evidenceCount?: number | null;
   kindLabel?: string | null;
   meta?: string | null;
@@ -170,10 +171,10 @@ const STATUS_THEME = {
     glow: "shadow-[0_18px_45px_-28px_rgba(37,99,235,0.45)]",
   },
   changed: {
-    border: "border-red-300/90",
-    accent: "bg-red-500",
-    chip: "bg-red-50 text-red-700 border-red-200",
-    glow: "shadow-[0_18px_45px_-28px_rgba(239,68,68,0.5)]",
+    border: "border-orange-300/90",
+    accent: "bg-orange-500",
+    chip: "bg-orange-50 text-orange-700 border-orange-200",
+    glow: "shadow-[0_18px_45px_-28px_rgba(249,115,22,0.45)]",
   },
   contradictory: {
     border: "border-rose-400/90",
@@ -219,6 +220,12 @@ function truncate(value: string | null | undefined, max: number, fallback = "") 
 function formatPercent(value: number | null | undefined) {
   if (typeof value !== "number" || Number.isNaN(value)) return null;
   return `${Math.round(value * 100)}%`;
+}
+
+function formatMetric(label: string, value: number | null | undefined) {
+  const formatted = formatPercent(value);
+  if (!formatted) return null;
+  return `${label} ${formatted}`;
 }
 
 const ALL_HANDLE_SIDES: GraphHandleSide[] = ["left", "right", "top", "bottom"];
@@ -372,9 +379,14 @@ const StateNodeCard = memo(function StateNodeCard({ data }: NodeProps<Node<Workb
         </div>
 
         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {formatPercent(data.payload.confidence) ? (
+          {formatMetric("Support", data.payload.confidence) ? (
             <span className="rounded-full bg-foreground px-2.5 py-1 font-semibold text-background">
-              {formatPercent(data.payload.confidence)}
+              {formatMetric("Support", data.payload.confidence)}
+            </span>
+          ) : null}
+          {formatMetric("Signal", data.payload.signalScore) ? (
+            <span className="rounded-full border px-2.5 py-1 font-semibold" style={CHIP_STYLE}>
+              {formatMetric("Signal", data.payload.signalScore)}
             </span>
           ) : null}
           {typeof data.payload.evidenceCount === "number" ? (
@@ -392,7 +404,7 @@ const StateNodeCard = memo(function StateNodeCard({ data }: NodeProps<Node<Workb
         {data.payload.preview ? (
           <div className="rounded-xl border border-border bg-muted/50 p-3.5">
             <div className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
-              Current State
+              Supported State
             </div>
             <div
               className={
@@ -407,10 +419,12 @@ const StateNodeCard = memo(function StateNodeCard({ data }: NodeProps<Node<Workb
         ) : null}
 
         {(data.payload.reason || data.payload.timestampLabel) && (
-          <div className="flex items-start justify-between gap-3 text-xs leading-5 text-muted-foreground">
-            <div className="min-w-0 break-words">{truncate(data.payload.reason, 100)}</div>
+          <div className="space-y-1 text-xs leading-5 text-muted-foreground">
+            {data.payload.reason ? (
+              <div className="min-w-0 break-words">{truncate(data.payload.reason, 140)}</div>
+            ) : null}
             {data.payload.timestampLabel ? (
-              <div className="shrink-0">{data.payload.timestampLabel}</div>
+              <div>{data.payload.timestampLabel}</div>
             ) : null}
           </div>
         )}
@@ -439,9 +453,9 @@ const EventNodeCard = memo(function EventNodeCard({ data }: NodeProps<Node<Workb
               {truncate(data.payload.title, compact ? 34 : 52)}
             </div>
           </div>
-          {formatPercent(data.payload.confidence) ? (
+          {formatMetric("Signal", data.payload.signalScore ?? data.payload.confidence) ? (
             <span className="text-sm font-semibold text-foreground/80">
-              {formatPercent(data.payload.confidence)}
+              {formatMetric("Signal", data.payload.signalScore ?? data.payload.confidence)}
             </span>
           ) : null}
         </div>
@@ -491,7 +505,7 @@ const EvidenceNodeCard = memo(function EvidenceNodeCard({
               className="rounded-full border px-2 py-1 text-xs font-semibold"
               style={CHIP_STYLE}
             >
-              {formatPercent(data.payload.confidence)}
+              {formatMetric("Support", data.payload.confidence) ?? formatPercent(data.payload.confidence)}
             </span>
           ) : null}
         </div>
