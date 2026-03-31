@@ -17,6 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
 from ...config import get_config
 from ..llm_wrapper import LLMConfig, OutputTooLongError, sanitize_llm_output
 from ..response_models import TokenUsage
+from ..temporal import classify_fact_temporal_metadata
 from .entity_labels import (
     EntityLabelsConfig,
     build_labels_lookup,
@@ -93,6 +94,12 @@ class Fact(BaseModel):
     # Optional temporal fields
     occurred_start: str | None = None
     occurred_end: str | None = None
+    timeline_anchor_kind: str = "recorded_only"
+    temporal_direction: str = "atemporal"
+    temporal_confidence: float | None = None
+    temporal_reference_text: str | None = None
+    explicit_temporal: bool = False
+    inferred_temporal: bool = False
 
     # Optional location field
     where: str | None = Field(
@@ -1063,15 +1070,20 @@ async def _extract_facts_from_chunk(
 
                 # Add temporal fields
                 # For events: occurred_start/occurred_end (when the event happened)
+                explicit_temporal = False
+                inferred_temporal = False
                 if fact_kind == "event":
                     occurred_start = get_value("occurred_start")
                     occurred_end = get_value("occurred_end")
 
                     # If LLM didn't set temporal fields, try to extract them from the fact text
                     if not occurred_start:
-                        fact_data["occurred_start"] = _infer_temporal_date(combined_text, event_date)
+                        inferred_date = _infer_temporal_date(combined_text, event_date)
+                        fact_data["occurred_start"] = inferred_date
+                        inferred_temporal = inferred_date is not None
                     else:
                         fact_data["occurred_start"] = occurred_start
+                        explicit_temporal = True
 
                     # For point events: if occurred_end not set, default to occurred_start
                     if occurred_end:
@@ -1177,6 +1189,22 @@ async def _extract_facts_from_chunk(
                 # Set mentioned_at to the event_date (when the conversation/document occurred),
                 # or None when the caller opted into no timestamp.
                 fact_data["mentioned_at"] = event_date.isoformat() if event_date is not None else None
+                temporal = classify_fact_temporal_metadata(
+                    fact_text=combined_text,
+                    occurred_start=_parse_datetime(fact_data["occurred_start"])
+                    if fact_data.get("occurred_start")
+                    else None,
+                    mentioned_at=event_date,
+                    explicit_temporal=explicit_temporal,
+                    inferred_temporal=inferred_temporal,
+                    fact_kind=fact_kind,
+                )
+                fact_data["timeline_anchor_kind"] = temporal.anchor_kind
+                fact_data["temporal_direction"] = temporal.direction
+                fact_data["temporal_confidence"] = temporal.confidence
+                fact_data["temporal_reference_text"] = temporal.reference_text
+                fact_data["explicit_temporal"] = explicit_temporal
+                fact_data["inferred_temporal"] = inferred_temporal
 
                 # Build Fact model instance
                 try:
@@ -1717,14 +1745,19 @@ async def extract_facts_from_contents_batch_api(
             if fact_kind not in ["conversation", "event", "other"]:
                 fact_kind = "conversation"
 
+            explicit_temporal = False
+            inferred_temporal = False
             if fact_kind == "event":
                 occurred_start = get_value("occurred_start")
                 occurred_end = get_value("occurred_end")
 
                 if not occurred_start:
-                    fact_data["occurred_start"] = _infer_temporal_date(combined_text, event_date)
+                    inferred_date = _infer_temporal_date(combined_text, event_date)
+                    fact_data["occurred_start"] = inferred_date
+                    inferred_temporal = inferred_date is not None
                 else:
                     fact_data["occurred_start"] = occurred_start
+                    explicit_temporal = True
 
                 if occurred_end:
                     fact_data["occurred_end"] = occurred_end
@@ -1815,6 +1848,22 @@ async def extract_facts_from_contents_batch_api(
             # Set mentioned_at to the event_date (when the conversation/document occurred),
             # or None when the caller opted into no timestamp.
             fact_data["mentioned_at"] = event_date.isoformat() if event_date is not None else None
+            temporal = classify_fact_temporal_metadata(
+                fact_text=combined_text,
+                occurred_start=_parse_datetime(fact_data["occurred_start"])
+                if fact_data.get("occurred_start")
+                else None,
+                mentioned_at=event_date,
+                explicit_temporal=explicit_temporal,
+                inferred_temporal=inferred_temporal,
+                fact_kind=fact_kind,
+            )
+            fact_data["timeline_anchor_kind"] = temporal.anchor_kind
+            fact_data["temporal_direction"] = temporal.direction
+            fact_data["temporal_confidence"] = temporal.confidence
+            fact_data["temporal_reference_text"] = temporal.reference_text
+            fact_data["explicit_temporal"] = explicit_temporal
+            fact_data["inferred_temporal"] = inferred_temporal
 
             try:
                 fact = Fact(fact=combined_text, fact_type=fact_type, **fact_data)
@@ -1871,6 +1920,12 @@ async def extract_facts_from_contents_batch_api(
                 chunk_index=chunk_meta.chunk_index,
                 context=content.context,
                 mentioned_at=content.event_date,
+                timeline_anchor_kind=fact_from_llm.timeline_anchor_kind,
+                temporal_direction=fact_from_llm.temporal_direction,
+                temporal_confidence=fact_from_llm.temporal_confidence,
+                temporal_reference_text=fact_from_llm.temporal_reference_text,
+                explicit_temporal=fact_from_llm.explicit_temporal,
+                inferred_temporal=fact_from_llm.inferred_temporal,
                 metadata=content.metadata,
                 tags=content.tags,
                 observation_scopes=content.observation_scopes,
@@ -2005,6 +2060,12 @@ async def extract_facts_from_contents(
                         context=content.context,
                         # mentioned_at: always the event_date (when the conversation/document occurred)
                         mentioned_at=content.event_date,
+                        timeline_anchor_kind=fact_from_llm.timeline_anchor_kind,
+                        temporal_direction=fact_from_llm.temporal_direction,
+                        temporal_confidence=fact_from_llm.temporal_confidence,
+                        temporal_reference_text=fact_from_llm.temporal_reference_text,
+                        explicit_temporal=fact_from_llm.explicit_temporal,
+                        inferred_temporal=fact_from_llm.inferred_temporal,
                         metadata=content.metadata,
                         tags=content.tags,
                         observation_scopes=content.observation_scopes,

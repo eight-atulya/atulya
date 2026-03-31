@@ -32,6 +32,7 @@ from ..embedding_similarity import cosine_similarity, parse_embedding_text
 from ..llm_wrapper import sanitize_llm_output
 from ..memory_engine import fq_table
 from ..retain import embedding_utils
+from ..temporal import classify_fact_temporal_metadata
 from .prompts import build_batch_consolidation_prompt
 
 if TYPE_CHECKING:
@@ -956,6 +957,16 @@ async def _execute_update_action(
         perf.record_timing("embedding", time.time() - t0)
 
     config = get_config()
+    if config.timeline_v2:
+        temporal = classify_fact_temporal_metadata(
+            fact_text=new_text,
+            occurred_start=source_occurred_start,
+            mentioned_at=source_mentioned_at,
+            explicit_temporal=source_occurred_start is not None,
+            fact_kind="event" if source_occurred_start is not None else "conversation",
+        )
+    else:
+        temporal = None
     history_clause = (
         "history = COALESCE(history, '[]'::jsonb) || $3::jsonb," if config.enable_observation_history else ""
     )
@@ -973,7 +984,12 @@ async def _execute_update_action(
             updated_at = now(),
             occurred_start = LEAST(occurred_start, COALESCE($7, occurred_start)),
             occurred_end = GREATEST(occurred_end, COALESCE($8, occurred_end)),
-            mentioned_at = GREATEST(mentioned_at, COALESCE($9, mentioned_at))
+            mentioned_at = GREATEST(mentioned_at, COALESCE($9, mentioned_at)),
+            timeline_anchor_at = COALESCE($11, timeline_anchor_at),
+            timeline_anchor_kind = $12,
+            temporal_direction = $13,
+            temporal_confidence = $14,
+            temporal_reference_text = $15
         WHERE id = $6
         """,
         new_text,
@@ -986,6 +1002,11 @@ async def _execute_update_action(
         source_occurred_end,
         source_mentioned_at,
         merged_tags,
+        temporal.anchor_at if temporal else None,
+        temporal.anchor_kind if temporal else "recorded_only",
+        temporal.direction if temporal else "atemporal",
+        temporal.confidence if temporal else None,
+        temporal.reference_text if temporal else None,
     )
     if perf:
         perf.record_timing("db_write", time.time() - t0)
@@ -1263,14 +1284,25 @@ async def _create_observation_directly(
 
     # Query varies based on text search backend
     config = get_config()
+    if config.timeline_v2:
+        temporal = classify_fact_temporal_metadata(
+            fact_text=observation_text,
+            occurred_start=obs_occurred_start,
+            mentioned_at=obs_mentioned_at,
+            explicit_temporal=obs_occurred_start is not None,
+            fact_kind="event" if obs_occurred_start is not None else "conversation",
+        )
+    else:
+        temporal = None
     if config.text_search_extension == "vchord":
         # VectorChord: manually tokenize and insert search_vector
         query = f"""
             INSERT INTO {fq_table("memory_units")} (
                 id, bank_id, text, fact_type, embedding, proof_count, source_memory_ids, history,
-                tags, event_date, occurred_start, occurred_end, mentioned_at, search_vector
+                tags, event_date, occurred_start, occurred_end, mentioned_at, timeline_anchor_at,
+                timeline_anchor_kind, temporal_direction, temporal_confidence, temporal_reference_text, search_vector
             )
-            VALUES ($1, $2, $3, 'observation', $4::vector, 1, $5, '[]'::jsonb, $6, $7, $8, $9, $10,
+            VALUES ($1, $2, $3, 'observation', $4::vector, 1, $5, '[]'::jsonb, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
                     tokenize($3, 'llmlingua2')::bm25_catalog.bm25vector)
             RETURNING id
         """
@@ -1280,9 +1312,10 @@ async def _create_observation_directly(
         query = f"""
             INSERT INTO {fq_table("memory_units")} (
                 id, bank_id, text, fact_type, embedding, proof_count, source_memory_ids, history,
-                tags, event_date, occurred_start, occurred_end, mentioned_at
+                tags, event_date, occurred_start, occurred_end, mentioned_at, timeline_anchor_at,
+                timeline_anchor_kind, temporal_direction, temporal_confidence, temporal_reference_text
             )
-            VALUES ($1, $2, $3, 'observation', $4::vector, 1, $5, '[]'::jsonb, $6, $7, $8, $9, $10)
+            VALUES ($1, $2, $3, 'observation', $4::vector, 1, $5, '[]'::jsonb, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING id
         """
 
@@ -1298,6 +1331,11 @@ async def _create_observation_directly(
         obs_occurred_start,
         obs_occurred_end,
         obs_mentioned_at,
+        temporal.anchor_at if temporal else None,
+        temporal.anchor_kind if temporal else "recorded_only",
+        temporal.direction if temporal else "atemporal",
+        temporal.confidence if temporal else None,
+        temporal.reference_text if temporal else None,
     )
 
     if perf:

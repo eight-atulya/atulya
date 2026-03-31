@@ -10,8 +10,10 @@ import {
   GraphNeighborhoodResponse,
   GraphSummaryResponse,
   GraphStateNode as StateGraphNode,
+  TimelineResponse,
 } from "@/lib/api";
 import { useBank } from "@/lib/bank-context";
+import { useFeatures } from "@/lib/features-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -44,8 +46,10 @@ import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
 import { MemoryDetailPanel } from "./memory-detail-panel";
 import { MemoryDetailModal } from "./memory-detail-modal";
+import { MentalModelDetailModal } from "./mental-model-detail-modal";
 import { Graph2D, convertAtulyaGraphData, GraphNode } from "../features/graph/components/graph-2d";
 import { StateGraph } from "../features/graph/components/state-graph";
+import { TimelineGraph } from "../features/graph/components/timeline-graph";
 
 type FactType = "world" | "experience" | "observation";
 type ViewMode = "graph" | "table" | "timeline";
@@ -81,9 +85,11 @@ function stateNodeFromNeighborhood(node: GraphNeighborhoodNode): StateGraphNode 
 
 export function DataView({ factType }: DataViewProps) {
   const { currentBank } = useBank();
+  const { features } = useFeatures();
   const [isCompactGraphLayout, setIsCompactGraphLayout] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
   const [data, setData] = useState<any>(null);
+  const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [tagFilters, setTagFilters] = useState<string[]>([]);
@@ -113,7 +119,9 @@ export function DataView({ factType }: DataViewProps) {
   const [nodeKind, setNodeKind] = useState<"all" | "entity" | "topic">("all");
   const [windowDays, setWindowDays] = useState<string>("90");
   const [modalMemoryId, setModalMemoryId] = useState<string | null>(null);
+  const [mentalModelModalId, setMentalModelModalId] = useState<string | null>(null);
   const itemsPerPage = 100;
+  const timelineV2Enabled = Boolean(features?.timeline_v2);
 
   // Fetch limit state - how many memories to load from the API
   const [fetchLimit, setFetchLimit] = useState(1000);
@@ -202,7 +210,18 @@ export function DataView({ factType }: DataViewProps) {
     setLoading(true);
     try {
       const effectiveLimit = limit ?? fetchLimit;
-      const [graphData, intelligence, nextStateSummary, nextEvidenceSummary] = await Promise.all([
+      const timelinePromise = timelineV2Enabled
+        ? client.getTimeline({
+            bank_id: currentBank,
+            type: factType,
+            limit: effectiveLimit,
+            q,
+            tags,
+            tags_match: "all_strict",
+          })
+        : Promise.resolve(null);
+      const [graphData, timelinePayload, intelligence, nextStateSummary, nextEvidenceSummary] =
+        await Promise.all([
         client.getGraph({
           bank_id: currentBank,
           type: factType,
@@ -210,6 +229,7 @@ export function DataView({ factType }: DataViewProps) {
           q,
           tags,
         }),
+        timelinePromise,
         client.getGraphIntelligence({
           bank_id: currentBank,
           type: factType,
@@ -242,6 +262,7 @@ export function DataView({ factType }: DataViewProps) {
         }),
       ]);
       setData(graphData);
+      setTimelineData(timelinePayload);
       setGraphIntelligence(intelligence);
       setStateSummary(nextStateSummary);
       setEvidenceSummary(nextEvidenceSummary);
@@ -649,7 +670,7 @@ export function DataView({ factType }: DataViewProps) {
       setGraphInvestigation(null);
       loadData();
     }
-  }, [factType, currentBank]);
+  }, [factType, currentBank, timelineV2Enabled]);
 
   // Enforce 50 node limit to prevent UI instability, default to 20 or max whichever is smaller
   useEffect(() => {
@@ -1782,14 +1803,19 @@ export function DataView({ factType }: DataViewProps) {
             </div>
           )}
 
-          {viewMode === "timeline" && (
-            <TimelineView
-              data={data}
-              filteredRows={filteredTableRows}
-              bankId={currentBank || undefined}
-              onMemoryClick={(id) => setModalMemoryId(id)}
-            />
-          )}
+          {viewMode === "timeline" &&
+            (timelineV2Enabled ? (
+              <TimelineGraph
+                timeline={timelineData}
+                onMemoryClick={(id) => setModalMemoryId(id)}
+                onMentalModelClick={(id) => setMentalModelModalId(id)}
+              />
+            ) : (
+              <TimelineView
+                filteredRows={filteredTableRows}
+                onMemoryClick={(id) => setModalMemoryId(id)}
+              />
+            ))}
         </>
       ) : (
         <div className="flex items-center justify-center py-20">
@@ -1802,6 +1828,10 @@ export function DataView({ factType }: DataViewProps) {
 
       {/* Memory Detail Modal */}
       <MemoryDetailModal memoryId={modalMemoryId} onClose={() => setModalMemoryId(null)} />
+      <MentalModelDetailModal
+        mentalModelId={mentalModelModalId}
+        onClose={() => setMentalModelModalId(null)}
+      />
     </div>
   );
 }
@@ -1810,14 +1840,10 @@ export function DataView({ factType }: DataViewProps) {
 type Granularity = "year" | "month" | "week" | "day";
 
 function TimelineView({
-  data,
   filteredRows,
-  bankId,
   onMemoryClick,
 }: {
-  data: any;
   filteredRows: any[];
-  bankId?: string;
   onMemoryClick: (id: string) => void;
 }) {
   const [granularity, setGranularity] = useState<Granularity>("month");

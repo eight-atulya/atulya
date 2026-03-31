@@ -119,6 +119,12 @@ class ExtractedFact:
     chunk_index: int = 0  # Which chunk this fact came from
     context: str = ""
     mentioned_at: datetime | None = None
+    timeline_anchor_kind: str = "recorded_only"
+    temporal_direction: str = "atemporal"
+    temporal_confidence: float | None = None
+    temporal_reference_text: str | None = None
+    explicit_temporal: bool = False
+    inferred_temporal: bool = False
     metadata: dict[str, str] = field(default_factory=dict)
     tags: list[str] = field(default_factory=list)  # Visibility scope tags
     observation_scopes: Literal["per_tag", "combined", "all_combinations"] | list[list[str]] | None = (
@@ -143,6 +149,10 @@ class ProcessedFact:
     occurred_start: datetime | None
     occurred_end: datetime | None
     mentioned_at: datetime | None
+    timeline_anchor_kind: str
+    temporal_direction: str
+    temporal_confidence: float | None
+    temporal_reference_text: str | None
 
     # Context and metadata
     context: str
@@ -210,6 +220,10 @@ class ProcessedFact:
             occurred_start=occurred_start,
             occurred_end=occurred_end,
             mentioned_at=mentioned_at,
+            timeline_anchor_kind=extracted_fact.timeline_anchor_kind,
+            temporal_direction=extracted_fact.temporal_direction,
+            temporal_confidence=extracted_fact.temporal_confidence,
+            temporal_reference_text=extracted_fact.temporal_reference_text,
             context=extracted_fact.context,
             metadata=extracted_fact.metadata,
             entities=entities,

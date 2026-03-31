@@ -5,6 +5,7 @@ import { client } from "./api";
 
 interface Features {
   observations: boolean;
+  timeline_v2: boolean;
   mcp: boolean;
   worker: boolean;
   bank_config_api: boolean;
@@ -22,6 +23,7 @@ interface FeaturesContextType {
 
 const defaultFeatures: Features = {
   observations: false,
+  timeline_v2: false,
   mcp: false,
   worker: false,
   bank_config_api: false,

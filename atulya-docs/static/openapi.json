@@ -205,6 +205,142 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/timeline": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get normalized timeline data",
+        "description": "Retrieve git-style timeline items and edges for facts, observations, and mental models.",
+        "operationId": "get_timeline",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 500,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags"
+            }
+          },
+          {
+            "name": "tags_match",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "any",
+                "all",
+                "any_strict",
+                "all_strict"
+              ],
+              "type": "string",
+              "default": "all_strict",
+              "title": "Tags Match"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimelineResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/graph/intelligence": {
       "get": {
         "tags": [
@@ -4291,6 +4427,158 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DreamRunListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/dreams/proposals/{proposal_id}/review": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Review a dream proposal",
+        "operationId": "review_dream_proposal",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Proposal Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DreamProposalReviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/dreams/predictions/{prediction_id}/outcome": {
+      "post": {
+        "tags": [
+          "Banks"
+        ],
+        "summary": "Update dream prediction outcome",
+        "operationId": "update_dream_prediction_outcome",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "prediction_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Prediction Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DreamPredictionOutcomeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
                 "schema": {}
               }
             }
@@ -7161,6 +7449,247 @@
           "updated_at": "2024-01-15T10:30:00Z"
         }
       },
+      "DreamPredictionOutcomeRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "contradicted",
+              "request_more_evidence"
+            ],
+            "title": "Status"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Evidence Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "DreamPredictionOutcomeRequest"
+      },
+      "DreamProposalReviewRequest": {
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "approve",
+              "reject",
+              "request_more_evidence"
+            ],
+            "title": "Action"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "action"
+        ],
+        "title": "DreamProposalReviewRequest"
+      },
+      "DreamRunListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/DreamRunResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "DreamRunListResponse"
+      },
+      "DreamRunResponse": {
+        "properties": {
+          "run_id": {
+            "type": "string",
+            "title": "Run Id"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "run_type": {
+            "type": "string",
+            "title": "Run Type"
+          },
+          "trigger_source": {
+            "type": "string",
+            "title": "Trigger Source"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "narrative_html": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Narrative Html"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "evidence_basis": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Evidence Basis"
+          },
+          "signals": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Signals"
+          },
+          "predictions": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Predictions"
+          },
+          "growth_hypotheses": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Growth Hypotheses"
+          },
+          "promotion_proposals": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Promotion Proposals"
+          },
+          "validation_outcomes": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Validation Outcomes"
+          },
+          "confidence": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Confidence"
+          },
+          "novelty_score": {
+            "type": "number",
+            "title": "Novelty Score",
+            "default": 0.0
+          },
+          "maturity_tier": {
+            "type": "string",
+            "title": "Maturity Tier",
+            "default": "sparse"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "quality_score": {
+            "type": "number",
+            "title": "Quality Score",
+            "default": 0.0
+          },
+          "legacy_run": {
+            "type": "boolean",
+            "title": "Legacy Run",
+            "default": false
+          },
+          "source_artifact_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Artifact Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "run_id",
+          "bank_id",
+          "status",
+          "run_type",
+          "trigger_source",
+          "created_at"
+        ],
+        "title": "DreamRunResponse"
+      },
       "DreamStatsResponse": {
         "properties": {
           "bank_id": {
@@ -7201,6 +7730,36 @@
           "distilled_count": {
             "type": "integer",
             "title": "Distilled Count"
+          },
+          "validation_rate": {
+            "type": "number",
+            "title": "Validation Rate",
+            "default": 0.0
+          },
+          "avg_novelty": {
+            "type": "number",
+            "title": "Avg Novelty",
+            "default": 0.0
+          },
+          "failed_run_count": {
+            "type": "integer",
+            "title": "Failed Run Count",
+            "default": 0
+          },
+          "duplicate_suppression_count": {
+            "type": "integer",
+            "title": "Duplicate Suppression Count",
+            "default": 0
+          },
+          "prediction_confirmation_rate": {
+            "type": "number",
+            "title": "Prediction Confirmation Rate",
+            "default": 0.0
+          },
+          "unresolved_prediction_backlog": {
+            "type": "integer",
+            "title": "Unresolved Prediction Backlog",
+            "default": 0
           }
         },
         "type": "object",
@@ -7529,6 +8088,11 @@
             "title": "Observations",
             "description": "Whether observations (auto-consolidation) are enabled"
           },
+          "timeline_v2": {
+            "type": "boolean",
+            "title": "Timeline V2",
+            "description": "Whether the git-style timeline API/UI is enabled"
+          },
           "mcp": {
             "type": "boolean",
             "title": "Mcp",
@@ -7568,6 +8132,7 @@
         "type": "object",
         "required": [
           "observations",
+          "timeline_v2",
           "mcp",
           "worker",
           "bank_config_api",
@@ -10862,6 +11427,298 @@
         "title": "TagItem",
         "description": "Single tag with usage count."
       },
+      "TimelineEdgeResponse": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "edge_kind": {
+            "type": "string",
+            "enum": [
+              "chronological",
+              "temporal",
+              "semantic",
+              "entity",
+              "causal",
+              "source",
+              "derived"
+            ],
+            "title": "Edge Kind"
+          },
+          "weight": {
+            "type": "number",
+            "title": "Weight",
+            "default": 1.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "target",
+          "edge_kind"
+        ],
+        "title": "TimelineEdgeResponse"
+      },
+      "TimelineItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "fact",
+              "observation",
+              "mental_model"
+            ],
+            "title": "Kind"
+          },
+          "fact_type": {
+            "type": "string",
+            "title": "Fact Type"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "anchor_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchor At"
+          },
+          "anchor_kind": {
+            "type": "string",
+            "title": "Anchor Kind"
+          },
+          "recorded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorded At"
+          },
+          "occurred_start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred Start"
+          },
+          "occurred_end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Occurred End"
+          },
+          "temporal_direction": {
+            "type": "string",
+            "title": "Temporal Direction"
+          },
+          "temporal_confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporal Confidence"
+          },
+          "temporal_reference_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temporal Reference Text"
+          },
+          "temporal": {
+            "$ref": "#/components/schemas/TimelineTemporalResponse"
+          },
+          "entities": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entities"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Tags"
+          },
+          "source_memory_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Memory Ids"
+          },
+          "proof_count": {
+            "type": "integer",
+            "title": "Proof Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "fact_type",
+          "text",
+          "anchor_kind",
+          "temporal_direction",
+          "temporal"
+        ],
+        "title": "TimelineItemResponse"
+      },
+      "TimelineResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/TimelineEdgeResponse"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "total_items": {
+            "type": "integer",
+            "title": "Total Items"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_items",
+          "limit"
+        ],
+        "title": "TimelineResponse"
+      },
+      "TimelineTemporalResponse": {
+        "properties": {
+          "anchor_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchor At"
+          },
+          "anchor_kind": {
+            "type": "string",
+            "title": "Anchor Kind"
+          },
+          "recorded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recorded At"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "reference_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "anchor_kind",
+          "direction"
+        ],
+        "title": "TimelineTemporalResponse"
+      },
       "TokenUsage": {
         "properties": {
           "input_tokens": {
@@ -11202,6 +12059,7 @@
             "mcp": true,
             "observations": false,
             "sub_routine": true,
+            "timeline_v2": false,
             "worker": true
           }
         }

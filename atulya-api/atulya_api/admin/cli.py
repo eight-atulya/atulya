@@ -6,6 +6,7 @@ import asyncio
 import io
 import json
 import logging
+import uuid
 import zipfile
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,7 @@ import asyncpg
 import typer
 
 from ..config import AtulyaConfig
+from ..engine.temporal import TimelineTemporalMetadata, classify_fact_temporal_metadata, normalize_datetime
 from ..pg0 import parse_pg0_url, resolve_database_url
 
 
@@ -225,6 +227,133 @@ async def _run_migration(db_url: str, schema: str = "public") -> None:
     run_migrations(resolved_url, schema=schema)
 
 
+def _is_default_timeline_state(row: asyncpg.Record) -> bool:
+    return (
+        row["timeline_anchor_at"] is None
+        and row["timeline_anchor_kind"] == "recorded_only"
+        and row["temporal_direction"] == "atemporal"
+        and row["temporal_confidence"] is None
+        and row["temporal_reference_text"] is None
+    )
+
+
+def _derive_timeline_backfill_metadata(row: asyncpg.Record) -> TimelineTemporalMetadata:
+    return classify_fact_temporal_metadata(
+        fact_text=row["text"] or "",
+        occurred_start=row["occurred_start"],
+        mentioned_at=row["mentioned_at"],
+        created_at=row["created_at"],
+        explicit_temporal=row["occurred_start"] is not None,
+        inferred_temporal=False,
+        fact_kind="conversation",
+    )
+
+
+def _timeline_metadata_changed(row: asyncpg.Record, metadata: TimelineTemporalMetadata) -> bool:
+    return any(
+        [
+            normalize_datetime(row["timeline_anchor_at"]) != normalize_datetime(metadata.anchor_at),
+            row["timeline_anchor_kind"] != metadata.anchor_kind,
+            row["temporal_direction"] != metadata.direction,
+            row["temporal_confidence"] != metadata.confidence,
+            row["temporal_reference_text"] != metadata.reference_text,
+        ]
+    )
+
+
+async def _backfill_timeline_metadata(
+    db_url: str,
+    *,
+    schema: str = "public",
+    batch_size: int = 500,
+    bank_id: str | None = None,
+    dry_run: bool = False,
+    overwrite: bool = False,
+) -> dict[str, int]:
+    """Backfill timeline metadata in batches without touching core memory columns."""
+    is_pg0, instance_name, _ = parse_pg0_url(db_url)
+    if is_pg0:
+        typer.echo(f"Starting embedded PostgreSQL (instance: {instance_name})...")
+    resolved_url = await resolve_database_url(db_url)
+
+    conn = await asyncpg.connect(resolved_url)
+    try:
+        table = _fq_table("memory_units", schema)
+        scanned = 0
+        updated = 0
+        cursor_created_at: datetime | None = None
+        cursor_id: uuid.UUID | None = None
+
+        while True:
+            rows = await conn.fetch(
+                f"""
+                SELECT id, bank_id, text, fact_type, occurred_start, mentioned_at, created_at,
+                       timeline_anchor_at, timeline_anchor_kind, temporal_direction,
+                       temporal_confidence, temporal_reference_text
+                FROM {table}
+                WHERE ($1::text IS NULL OR bank_id = $1)
+                  AND (
+                    ($2::timestamptz IS NULL AND $3::uuid IS NULL)
+                    OR created_at > $2
+                    OR (created_at = $2 AND id > $3)
+                  )
+                ORDER BY created_at ASC, id ASC
+                LIMIT $4
+                """,
+                bank_id,
+                cursor_created_at,
+                cursor_id,
+                batch_size,
+            )
+            if not rows:
+                break
+
+            updates: list[tuple[datetime | None, str, str, float | None, str | None, uuid.UUID]] = []
+            for row in rows:
+                scanned += 1
+                if not overwrite and not _is_default_timeline_state(row):
+                    continue
+
+                metadata = _derive_timeline_backfill_metadata(row)
+                if not _timeline_metadata_changed(row, metadata):
+                    continue
+
+                updates.append(
+                    (
+                        metadata.anchor_at,
+                        metadata.anchor_kind,
+                        metadata.direction,
+                        metadata.confidence,
+                        metadata.reference_text,
+                        row["id"],
+                    )
+                )
+
+            if updates:
+                updated += len(updates)
+                if not dry_run:
+                    await conn.executemany(
+                        f"""
+                        UPDATE {table}
+                        SET timeline_anchor_at = $1,
+                            timeline_anchor_kind = $2,
+                            temporal_direction = $3,
+                            temporal_confidence = $4,
+                            temporal_reference_text = $5
+                        WHERE id = $6
+                        """,
+                        updates,
+                    )
+
+            last_row = rows[-1]
+            cursor_created_at = last_row["created_at"]
+            cursor_id = last_row["id"]
+
+        return {"scanned": scanned, "updated": updated}
+    finally:
+        await conn.close()
+
+
 @app.command(name="run-db-migration")
 def run_db_migration(
     schema: str = typer.Option("public", "--schema", "-s", help="Database schema to run migrations on"),
@@ -301,6 +430,46 @@ def decommission_worker(
         typer.echo(f"Released {count} task(s) from worker '{worker_id}'")
     else:
         typer.echo(f"No tasks found for worker '{worker_id}'")
+
+
+@app.command(name="backfill-timeline-metadata")
+def backfill_timeline_metadata(
+    schema: str = typer.Option("public", "--schema", "-s", help="Database schema"),
+    batch_size: int = typer.Option(500, "--batch-size", min=1, help="Rows to process per batch"),
+    bank_id: str | None = typer.Option(None, "--bank-id", help="Only backfill a single bank"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Calculate updates without writing"),
+    overwrite: bool = typer.Option(
+        False,
+        "--overwrite",
+        help="Recompute timeline metadata even for rows that already appear populated",
+    ),
+):
+    """Backfill timeline metadata for historical memory units."""
+    config = AtulyaConfig.from_env()
+
+    if not config.database_url:
+        typer.echo("Error: Database URL not configured.", err=True)
+        typer.echo("Set ATULYA_API_DATABASE_URL environment variable.", err=True)
+        raise typer.Exit(1)
+
+    target = f"bank '{bank_id}'" if bank_id else "all banks"
+    typer.echo(
+        f"Backfilling timeline metadata for {target} (schema: {schema}, batch_size: {batch_size}, dry_run: {dry_run})..."
+    )
+
+    result = asyncio.run(
+        _backfill_timeline_metadata(
+            config.database_url,
+            schema=schema,
+            batch_size=batch_size,
+            bank_id=bank_id,
+            dry_run=dry_run,
+            overwrite=overwrite,
+        )
+    )
+
+    typer.echo(f"Scanned {result['scanned']} memory units")
+    typer.echo(f"{'Would update' if dry_run else 'Updated'} {result['updated']} memory units")
 
 
 def main():

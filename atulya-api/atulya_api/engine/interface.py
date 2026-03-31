@@ -380,6 +380,26 @@ class MemoryEngineInterface(ABC):
         ...
 
     @abstractmethod
+    async def get_timeline(
+        self,
+        bank_id: str,
+        *,
+        fact_type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: "TagsMatch" = "all_strict",
+        limit: int = 500,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """
+        Get normalized timeline data for git-style temporal rendering.
+
+        Returns:
+            Dict with timeline items, edges, total count, and limit metadata.
+        """
+        ...
+
+    @abstractmethod
     async def get_graph_neighborhood(
         self,
         bank_id: str,

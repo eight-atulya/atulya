@@ -1151,6 +1151,51 @@ class GraphDataResponse(BaseModel):
     limit: int
 
 
+class TimelineTemporalResponse(BaseModel):
+    anchor_at: str | None = None
+    anchor_kind: str
+    recorded_at: str | None = None
+    direction: str
+    confidence: float | None = None
+    reference_text: str | None = None
+
+
+class TimelineItemResponse(BaseModel):
+    id: str
+    kind: Literal["fact", "observation", "mental_model"]
+    fact_type: str
+    text: str
+    context: str | None = None
+    title: str | None = None
+    anchor_at: str | None = None
+    anchor_kind: str
+    recorded_at: str | None = None
+    occurred_start: str | None = None
+    occurred_end: str | None = None
+    temporal_direction: str
+    temporal_confidence: float | None = None
+    temporal_reference_text: str | None = None
+    temporal: TimelineTemporalResponse
+    entities: list[str] = Field(default_factory=list)
+    tags: list[str] = Field(default_factory=list)
+    source_memory_ids: list[str] = Field(default_factory=list)
+    proof_count: int = 0
+
+
+class TimelineEdgeResponse(BaseModel):
+    source: str
+    target: str
+    edge_kind: Literal["chronological", "temporal", "semantic", "entity", "causal", "source", "derived"]
+    weight: float = 1.0
+
+
+class TimelineResponse(BaseModel):
+    items: list[TimelineItemResponse] = Field(default_factory=list)
+    edges: list[TimelineEdgeResponse] = Field(default_factory=list)
+    total_items: int
+    limit: int
+
+
 class GraphStateNodeResponse(BaseModel):
     id: str
     title: str
@@ -1852,6 +1897,7 @@ class FeaturesInfo(BaseModel):
     """Feature flags indicating which capabilities are enabled."""
 
     observations: bool = Field(description="Whether observations (auto-consolidation) are enabled")
+    timeline_v2: bool = Field(description="Whether the git-style timeline API/UI is enabled")
     mcp: bool = Field(description="Whether MCP (Model Context Protocol) server is enabled")
     worker: bool = Field(description="Whether the background worker is enabled")
     bank_config_api: bool = Field(description="Whether per-bank configuration API is enabled")
@@ -1870,6 +1916,7 @@ class VersionResponse(BaseModel):
                 "api_version": "0.4.0",
                 "features": {
                     "observations": False,
+                    "timeline_v2": False,
                     "mcp": True,
                     "worker": True,
                     "bank_config_api": False,
@@ -2426,6 +2473,7 @@ def _register_routes(app: FastAPI):
             api_version=__version__,
             features=FeaturesInfo(
                 observations=config.enable_observations,
+                timeline_v2=config.timeline_v2,
                 mcp=config.mcp_enabled,
                 worker=config.worker_enabled,
                 bank_config_api=config.enable_bank_config_api,
@@ -2482,6 +2530,45 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/graph: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/timeline",
+        response_model=TimelineResponse,
+        summary="Get normalized timeline data",
+        description="Retrieve git-style timeline items and edges for facts, observations, and mental models.",
+        operation_id="get_timeline",
+        tags=["Memory"],
+    )
+    async def api_timeline(
+        bank_id: str,
+        type: str | None = None,
+        limit: int = 500,
+        q: str | None = None,
+        tags: list[str] | None = Query(None),
+        tags_match: TagsMatch = "all_strict",
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            data = await app.state.memory.get_timeline(
+                bank_id=bank_id,
+                fact_type=type,
+                limit=limit,
+                q=q,
+                tags=tags,
+                tags_match=tags_match,
+                request_context=request_context,
+            )
+            return data
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/timeline: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(

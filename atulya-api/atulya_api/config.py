@@ -291,6 +291,7 @@ ENV_FILE_CONVERSION_MAX_BATCH_SIZE_MB = "ATULYA_API_FILE_CONVERSION_MAX_BATCH_SI
 ENV_FILE_CONVERSION_MAX_BATCH_SIZE = "ATULYA_API_FILE_CONVERSION_MAX_BATCH_SIZE"
 ENV_ENABLE_FILE_UPLOAD_API = "ATULYA_API_ENABLE_FILE_UPLOAD_API"
 ENV_FILE_DELETE_AFTER_RETAIN = "ATULYA_API_FILE_DELETE_AFTER_RETAIN"
+ENV_TIMELINE_V2 = "ATULYA_API_TIMELINE_V2"
 
 # Observations settings (consolidated knowledge from facts)
 ENV_ENABLE_OBSERVATIONS = "ATULYA_API_ENABLE_OBSERVATIONS"
@@ -477,6 +478,7 @@ DEFAULT_FILE_CONVERSION_MAX_BATCH_SIZE_MB = 100  # Max total batch size in MB (a
 DEFAULT_FILE_CONVERSION_MAX_BATCH_SIZE = 10  # Max files per batch upload
 DEFAULT_ENABLE_FILE_UPLOAD_API = True  # Enable file upload endpoint
 DEFAULT_FILE_DELETE_AFTER_RETAIN = True  # Delete file bytes after retain (saves storage)
+DEFAULT_TIMELINE_V2 = False  # Feature-flagged git-style timeline
 
 # Observations defaults (consolidated knowledge from facts)
 DEFAULT_ENABLE_OBSERVATIONS = True  # Observations enabled by default
@@ -810,6 +812,7 @@ class AtulyaConfig:
     file_conversion_max_batch_size: int  # Max files per request
     enable_file_upload_api: bool
     file_delete_after_retain: bool
+    timeline_v2: bool
 
     # Observations settings (consolidated knowledge from facts)
     enable_observations: bool
@@ -1325,6 +1328,7 @@ class AtulyaConfig:
                 ENV_FILE_DELETE_AFTER_RETAIN, str(DEFAULT_FILE_DELETE_AFTER_RETAIN)
             ).lower()
             == "true",
+            timeline_v2=os.getenv(ENV_TIMELINE_V2, str(DEFAULT_TIMELINE_V2)).lower() == "true",
             # Observations settings (consolidated knowledge from facts)
             enable_observations=os.getenv(ENV_ENABLE_OBSERVATIONS, str(DEFAULT_ENABLE_OBSERVATIONS)).lower() == "true",
             enable_observation_history=os.getenv(

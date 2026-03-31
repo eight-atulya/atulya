@@ -428,6 +428,51 @@ export interface GraphNeighborhoodResponse {
   cached: boolean;
 }
 
+export interface TimelineTemporal {
+  anchor_at: string | null;
+  anchor_kind: string;
+  recorded_at: string | null;
+  direction: string;
+  confidence: number | null;
+  reference_text: string | null;
+}
+
+export interface TimelineItem {
+  id: string;
+  kind: "fact" | "observation" | "mental_model";
+  fact_type: string;
+  text: string;
+  context: string | null;
+  title?: string | null;
+  anchor_at: string | null;
+  anchor_kind: string;
+  recorded_at: string | null;
+  occurred_start: string | null;
+  occurred_end: string | null;
+  temporal_direction: string;
+  temporal_confidence: number | null;
+  temporal_reference_text: string | null;
+  temporal: TimelineTemporal;
+  entities: string[];
+  tags: string[];
+  source_memory_ids: string[];
+  proof_count: number;
+}
+
+export interface TimelineEdge {
+  source: string;
+  target: string;
+  edge_kind: "chronological" | "temporal" | "semantic" | "entity" | "causal" | "source" | "derived";
+  weight: number;
+}
+
+export interface TimelineResponse {
+  items: TimelineItem[];
+  edges: TimelineEdge[];
+  total_items: number;
+  limit: number;
+}
+
 export interface ReflectResponse {
   text: string;
   based_on: {
@@ -708,6 +753,26 @@ export class ControlPlaneClient {
       params.tags.forEach((tag) => queryParams.append("tags", tag));
     }
     return this.fetchApi(`/api/graph?${queryParams}`);
+  }
+
+  async getTimeline(params: {
+    bank_id: string;
+    type?: string;
+    limit?: number;
+    q?: string;
+    tags?: string[];
+    tags_match?: "any" | "all" | "any_strict" | "all_strict";
+  }) {
+    const queryParams = new URLSearchParams();
+    queryParams.append("bank_id", params.bank_id);
+    if (params.type) queryParams.append("type", params.type);
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.q) queryParams.append("q", params.q);
+    if (params.tags_match) queryParams.append("tags_match", params.tags_match);
+    if (params.tags?.length) {
+      params.tags.forEach((tag) => queryParams.append("tags", tag));
+    }
+    return this.fetchApi<TimelineResponse>(`/api/timeline?${queryParams.toString()}`);
   }
 
   async getGraphIntelligence(params: {
@@ -1475,6 +1540,7 @@ export class ControlPlaneClient {
       api_version: string;
       features: {
         observations: boolean;
+        timeline_v2: boolean;
         mcp: boolean;
         worker: boolean;
         bank_config_api: boolean;

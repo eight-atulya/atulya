@@ -95,6 +95,11 @@ class MemoryUnit(Base):
     )  # When fact occurred (range start)
     occurred_end: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))  # When fact occurred (range end)
     mentioned_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))  # When fact was mentioned
+    timeline_anchor_at: Mapped[datetime | None] = mapped_column(TIMESTAMP(timezone=True))
+    timeline_anchor_kind: Mapped[str] = mapped_column(Text, nullable=False, server_default=sql_text("'recorded_only'"))
+    temporal_direction: Mapped[str] = mapped_column(Text, nullable=False, server_default=sql_text("'atemporal'"))
+    temporal_confidence: Mapped[float | None] = mapped_column(Float)
+    temporal_reference_text: Mapped[str | None] = mapped_column(Text)
     fact_type: Mapped[str] = mapped_column(Text, nullable=False, server_default="world")
     confidence_score: Mapped[float | None] = mapped_column(Float)
     unit_metadata: Mapped[dict] = mapped_column(

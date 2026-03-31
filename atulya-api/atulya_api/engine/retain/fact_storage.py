@@ -33,6 +33,8 @@ async def insert_facts_batch(
     if not facts:
         return []
 
+    config = get_config()
+
     # Prepare data for batch insert
     fact_texts = []
     embeddings = []
@@ -40,6 +42,11 @@ async def insert_facts_batch(
     occurred_starts = []
     occurred_ends = []
     mentioned_ats = []
+    timeline_anchor_ats = []
+    timeline_anchor_kinds = []
+    temporal_directions = []
+    temporal_confidences = []
+    temporal_reference_texts = []
     contexts = []
     fact_types = []
     confidence_scores = []
@@ -60,6 +67,11 @@ async def insert_facts_batch(
         occurred_starts.append(fact.occurred_start)
         occurred_ends.append(fact.occurred_end)
         mentioned_ats.append(fact.mentioned_at)
+        timeline_anchor_ats.append(fact.occurred_start if fact.occurred_start is not None else fact.mentioned_at)
+        timeline_anchor_kinds.append(fact.timeline_anchor_kind if config.timeline_v2 else "recorded_only")
+        temporal_directions.append(fact.temporal_direction if config.timeline_v2 else "atemporal")
+        temporal_confidences.append(fact.temporal_confidence if config.timeline_v2 else None)
+        temporal_reference_texts.append(fact.temporal_reference_text if config.timeline_v2 else None)
         contexts.append(_sanitize_text(fact.context))
         fact_types.append(fact.fact_type)
         # confidence_score is only for opinion facts
@@ -87,7 +99,6 @@ async def insert_facts_batch(
     # Batch insert all facts
     # Note: tags are passed as JSON strings and converted back to varchar[] via jsonb_array_elements_text + array_agg
     # Query varies based on text search backend
-    config = get_config()
     if config.text_search_extension == "vchord":
         # VectorChord: manually tokenize and insert search_vector
         # text_signals (entity names etc.) are included in the tokenize input for enriched BM25
@@ -95,17 +106,21 @@ async def insert_facts_batch(
             WITH input_data AS (
                 SELECT * FROM unnest(
                     $2::text[], $3::vector[], $4::timestamptz[], $5::timestamptz[], $6::timestamptz[], $7::timestamptz[],
-                    $8::text[], $9::text[], $10::float[], $11::jsonb[], $12::text[], $13::text[], $14::jsonb[], $15::jsonb[], $16::text[]
+                    $8::timestamptz[], $9::text[], $10::text[], $11::float[], $12::text[],
+                    $13::text[], $14::text[], $15::float[], $16::jsonb[], $17::text[], $18::text[], $19::jsonb[], $20::jsonb[], $21::text[]
                 ) AS t(text, embedding, event_date, occurred_start, occurred_end, mentioned_at,
+                       timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence, temporal_reference_text,
                        context, fact_type, confidence_score, metadata, chunk_id, document_id, tags_json,
                        observation_scopes_json, text_signals)
             )
             INSERT INTO {fq_table("memory_units")} (bank_id, text, embedding, event_date, occurred_start, occurred_end, mentioned_at,
-                                     context, fact_type, confidence_score, metadata, chunk_id, document_id, tags,
+                                     timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence,
+                                     temporal_reference_text, context, fact_type, confidence_score, metadata, chunk_id, document_id, tags,
                                      observation_scopes, text_signals, search_vector)
             SELECT
                 $1,
                 text, embedding, event_date, occurred_start, occurred_end, mentioned_at,
+                timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence, temporal_reference_text,
                 context, fact_type, confidence_score, metadata, chunk_id, document_id,
                 COALESCE(
                     (SELECT array_agg(elem) FROM jsonb_array_elements_text(tags_json) AS elem),
@@ -127,17 +142,21 @@ async def insert_facts_batch(
             WITH input_data AS (
                 SELECT * FROM unnest(
                     $2::text[], $3::vector[], $4::timestamptz[], $5::timestamptz[], $6::timestamptz[], $7::timestamptz[],
-                    $8::text[], $9::text[], $10::float[], $11::jsonb[], $12::text[], $13::text[], $14::jsonb[], $15::jsonb[], $16::text[]
+                    $8::timestamptz[], $9::text[], $10::text[], $11::float[], $12::text[],
+                    $13::text[], $14::text[], $15::float[], $16::jsonb[], $17::text[], $18::text[], $19::jsonb[], $20::jsonb[], $21::text[]
                 ) AS t(text, embedding, event_date, occurred_start, occurred_end, mentioned_at,
+                       timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence, temporal_reference_text,
                        context, fact_type, confidence_score, metadata, chunk_id, document_id, tags_json,
                        observation_scopes_json, text_signals)
             )
             INSERT INTO {fq_table("memory_units")} (bank_id, text, embedding, event_date, occurred_start, occurred_end, mentioned_at,
-                                     context, fact_type, confidence_score, metadata, chunk_id, document_id, tags,
+                                     timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence,
+                                     temporal_reference_text, context, fact_type, confidence_score, metadata, chunk_id, document_id, tags,
                                      observation_scopes, text_signals)
             SELECT
                 $1,
                 text, embedding, event_date, occurred_start, occurred_end, mentioned_at,
+                timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence, temporal_reference_text,
                 context, fact_type, confidence_score, metadata, chunk_id, document_id,
                 COALESCE(
                     (SELECT array_agg(elem) FROM jsonb_array_elements_text(tags_json) AS elem),
@@ -158,6 +177,11 @@ async def insert_facts_batch(
         occurred_starts,
         occurred_ends,
         mentioned_ats,
+        timeline_anchor_ats,
+        timeline_anchor_kinds,
+        temporal_directions,
+        temporal_confidences,
+        temporal_reference_texts,
         contexts,
         fact_types,
         confidence_scores,

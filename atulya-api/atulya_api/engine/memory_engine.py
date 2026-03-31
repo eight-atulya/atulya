@@ -104,6 +104,37 @@ def decode_jsonb(raw_value: Any, default: Any) -> Any:
     return default
 
 
+def build_temporal_block(
+    *,
+    occurred_start: datetime | str | None = None,
+    mentioned_at: datetime | str | None = None,
+    created_at: datetime | str | None = None,
+    timeline_anchor_at: datetime | str | None = None,
+    timeline_anchor_kind: str | None = None,
+    temporal_direction: str | None = None,
+    temporal_confidence: float | None = None,
+    temporal_reference_text: str | None = None,
+) -> dict[str, object | None]:
+    anchor_at = timeline_anchor_at or occurred_start or mentioned_at or created_at
+    recorded_at = mentioned_at or created_at
+    normalized_anchor_at = anchor_at if isinstance(anchor_at, datetime) else None
+    normalized_recorded_at = recorded_at if isinstance(recorded_at, datetime) else None
+    anchor_kind = timeline_anchor_kind or default_anchor_kind(
+        occurred_start=occurred_start if isinstance(occurred_start, datetime) else None,
+        mentioned_at=mentioned_at if isinstance(mentioned_at, datetime) else None,
+        created_at=created_at if isinstance(created_at, datetime) else None,
+    )
+    direction = temporal_direction or infer_direction(normalized_anchor_at, normalized_recorded_at)
+    return serialize_temporal_metadata(
+        anchor_at=anchor_at,
+        anchor_kind=anchor_kind,
+        recorded_at=recorded_at,
+        direction=direction,
+        confidence=temporal_confidence,
+        reference_text=temporal_reference_text,
+    )
+
+
 def fq_table(table_name: str) -> str:
     """
     Get fully-qualified table name with current schema.
@@ -239,6 +270,12 @@ from .search import think_utils
 from .search.reranking import CrossEncoderReranker, apply_combined_scoring
 from .search.tags import TagsMatch, build_tags_where_clause
 from .task_backend import BrokerTaskBackend, SyncTaskBackend, TaskBackend
+from .temporal import (
+    classify_snapshot_temporal_metadata,
+    default_anchor_kind,
+    infer_direction,
+    serialize_temporal_metadata,
+)
 
 
 class Budget(str, Enum):
@@ -5424,7 +5461,10 @@ class MemoryEngine(MemoryEngineInterface):
             param_count += 1
             units = await conn.fetch(
                 f"""
-                SELECT id, text, event_date, context, occurred_start, occurred_end, mentioned_at, document_id, chunk_id, fact_type, tags, created_at, proof_count, source_memory_ids, access_count
+                SELECT id, text, event_date, context, occurred_start, occurred_end, mentioned_at,
+                       timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence,
+                       temporal_reference_text, document_id, chunk_id, fact_type, tags, created_at,
+                       proof_count, source_memory_ids, access_count
                 FROM {fq_table("memory_units")}
                 {where_clause}
                 ORDER BY mentioned_at DESC NULLS LAST, event_date DESC
@@ -5706,6 +5746,23 @@ class MemoryEngine(MemoryEngineInterface):
                     "occurred_start": row["occurred_start"].isoformat() if row["occurred_start"] else None,
                     "occurred_end": row["occurred_end"].isoformat() if row["occurred_end"] else None,
                     "mentioned_at": row["mentioned_at"].isoformat() if row["mentioned_at"] else None,
+                    "timeline_anchor_at": row["timeline_anchor_at"].isoformat()
+                    if row["timeline_anchor_at"]
+                    else None,
+                    "timeline_anchor_kind": row["timeline_anchor_kind"],
+                    "temporal_direction": row["temporal_direction"],
+                    "temporal_confidence": row["temporal_confidence"],
+                    "temporal_reference_text": row["temporal_reference_text"],
+                    "temporal": build_temporal_block(
+                        occurred_start=row["occurred_start"],
+                        mentioned_at=row["mentioned_at"],
+                        created_at=row["created_at"],
+                        timeline_anchor_at=row["timeline_anchor_at"],
+                        timeline_anchor_kind=row["timeline_anchor_kind"],
+                        temporal_direction=row["temporal_direction"],
+                        temporal_confidence=row["temporal_confidence"],
+                        temporal_reference_text=row["temporal_reference_text"],
+                    ),
                     "date": row["event_date"].strftime("%Y-%m-%d %H:%M")
                     if row["event_date"]
                     else "N/A",  # Deprecated, kept for backwards compatibility
@@ -5721,6 +5778,262 @@ class MemoryEngine(MemoryEngineInterface):
             )
 
         return {"nodes": nodes, "edges": edges, "table_rows": table_rows, "total_units": total_count, "limit": limit}
+
+    async def get_timeline(
+        self,
+        bank_id: str,
+        *,
+        fact_type: str | None = None,
+        q: str | None = None,
+        tags: list[str] | None = None,
+        tags_match: str = "all_strict",
+        limit: int = 500,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="get_timeline", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        from .search.tags import build_tags_where_clause_simple
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            query_conditions: list[str] = []
+            query_params: list[Any] = []
+            param_count = 0
+
+            param_count += 1
+            query_conditions.append(f"bank_id = ${param_count}")
+            query_params.append(bank_id)
+
+            if fact_type:
+                param_count += 1
+                query_conditions.append(f"fact_type = ${param_count}")
+                query_params.append(fact_type)
+
+            if q:
+                param_count += 1
+                query_conditions.append(f"(text ILIKE ${param_count} OR context ILIKE ${param_count})")
+                query_params.append(f"%{q}%")
+
+            if tags:
+                tag_clause = build_tags_where_clause_simple(tags, param_count + 1, match=tags_match)
+                if tag_clause:
+                    query_conditions.append(tag_clause.removeprefix("AND "))
+                    param_count += 1
+                    query_params.append(tags)
+
+            where_clause = "WHERE " + " AND ".join(query_conditions)
+            param_count += 1
+            query_params.append(limit)
+
+            memory_rows = await conn.fetch(
+                f"""
+                SELECT id, text, context, fact_type, occurred_start, occurred_end, mentioned_at,
+                       timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence,
+                       temporal_reference_text, created_at, tags, proof_count, source_memory_ids
+                FROM {fq_table("memory_units")}
+                {where_clause}
+                ORDER BY COALESCE(timeline_anchor_at, occurred_start, mentioned_at, created_at) DESC NULLS LAST,
+                         created_at DESC
+                LIMIT ${param_count}
+            """,
+                *query_params,
+            )
+
+            unit_ids = [row["id"] for row in memory_rows]
+            entity_map: dict[Any, list[str]] = {}
+            if unit_ids:
+                entity_rows = await conn.fetch(
+                    f"""
+                    SELECT ue.unit_id, e.canonical_name
+                    FROM {fq_table("unit_entities")} ue
+                    JOIN {fq_table("entities")} e ON ue.entity_id = e.id
+                    WHERE ue.unit_id = ANY($1::uuid[])
+                    ORDER BY ue.unit_id, e.canonical_name
+                """,
+                    unit_ids,
+                )
+                for row in entity_rows:
+                    entity_map.setdefault(row["unit_id"], []).append(row["canonical_name"])
+
+            link_rows = []
+            if unit_ids:
+                link_rows = await conn.fetch(
+                    f"""
+                    SELECT from_unit_id, to_unit_id, link_type, weight
+                    FROM {fq_table("memory_links")}
+                    WHERE from_unit_id = ANY($1::uuid[]) AND to_unit_id = ANY($1::uuid[])
+                """,
+                    unit_ids,
+                )
+
+            model_query_params: list[Any] = [bank_id]
+            model_param_count = 1
+            model_conditions = ["bank_id = $1"]
+            if q:
+                model_param_count += 1
+                model_conditions.append(f"(name ILIKE ${model_param_count} OR content ILIKE ${model_param_count})")
+                model_query_params.append(f"%{q}%")
+            if tags:
+                tag_clause = build_tags_where_clause_simple(tags, model_param_count + 1, match=tags_match)
+                if tag_clause:
+                    model_conditions.append(tag_clause.removeprefix("AND "))
+                    model_param_count += 1
+                    model_query_params.append(tags)
+            model_param_count += 1
+            model_query_params.append(max(25, min(limit, 150)))
+            mental_model_rows = await conn.fetch(
+                f"""
+                SELECT id, name, source_query, content, tags, last_refreshed_at, created_at, reflect_response
+                FROM {fq_table("mental_models")}
+                WHERE {" AND ".join(model_conditions)}
+                ORDER BY COALESCE(last_refreshed_at, created_at) DESC NULLS LAST
+                LIMIT ${model_param_count}
+            """,
+                *model_query_params,
+            )
+
+        items: list[dict[str, Any]] = []
+        visible_ids: set[str] = set()
+        priority_order = {"fact": 0, "observation": 1, "mental_model": 2}
+
+        for row in memory_rows:
+            item_id = str(row["id"])
+            kind = "observation" if row["fact_type"] == "observation" else "fact"
+            temporal = build_temporal_block(
+                occurred_start=row["occurred_start"],
+                mentioned_at=row["mentioned_at"],
+                created_at=row["created_at"],
+                timeline_anchor_at=row["timeline_anchor_at"],
+                timeline_anchor_kind=row["timeline_anchor_kind"],
+                temporal_direction=row["temporal_direction"],
+                temporal_confidence=row["temporal_confidence"],
+                temporal_reference_text=row["temporal_reference_text"],
+            )
+            items.append(
+                {
+                    "id": item_id,
+                    "kind": kind,
+                    "fact_type": row["fact_type"],
+                    "text": row["text"],
+                    "context": row["context"] or "",
+                    "anchor_at": temporal["anchor_at"],
+                    "anchor_kind": temporal["anchor_kind"],
+                    "recorded_at": temporal["recorded_at"],
+                    "occurred_start": row["occurred_start"].isoformat() if row["occurred_start"] else None,
+                    "occurred_end": row["occurred_end"].isoformat() if row["occurred_end"] else None,
+                    "temporal_direction": temporal["direction"],
+                    "temporal_confidence": temporal["confidence"],
+                    "temporal_reference_text": temporal["reference_text"],
+                    "temporal": temporal,
+                    "entities": entity_map.get(row["id"], []),
+                    "tags": list(row["tags"] or []),
+                    "source_memory_ids": [str(source_id) for source_id in (row["source_memory_ids"] or [])],
+                    "proof_count": int(row["proof_count"] or 0),
+                }
+            )
+            visible_ids.add(item_id)
+
+        for row in mental_model_rows:
+            temporal_metadata = classify_snapshot_temporal_metadata(
+                recorded_at=row["last_refreshed_at"] or row["created_at"],
+                anchor_at=row["last_refreshed_at"] or row["created_at"],
+            )
+            supporting_memories = [
+                str(item.get("id"))
+                for item in decode_jsonb(row["reflect_response"], {}).get("based_on", {}).get("memories", [])
+                if item.get("id")
+            ]
+            temporal = serialize_temporal_metadata(
+                anchor_at=temporal_metadata.anchor_at,
+                anchor_kind=temporal_metadata.anchor_kind,
+                recorded_at=row["last_refreshed_at"] or row["created_at"],
+                direction=temporal_metadata.direction,
+                confidence=temporal_metadata.confidence,
+                reference_text=None,
+            )
+            item_id = str(row["id"])
+            items.append(
+                {
+                    "id": item_id,
+                    "kind": "mental_model",
+                    "fact_type": "mental_model",
+                    "text": row["content"],
+                    "context": row["source_query"],
+                    "title": row["name"],
+                    "anchor_at": temporal["anchor_at"],
+                    "anchor_kind": temporal["anchor_kind"],
+                    "recorded_at": temporal["recorded_at"],
+                    "occurred_start": None,
+                    "occurred_end": None,
+                    "temporal_direction": temporal["direction"],
+                    "temporal_confidence": temporal["confidence"],
+                    "temporal_reference_text": None,
+                    "temporal": temporal,
+                    "entities": [],
+                    "tags": list(row["tags"] or []),
+                    "source_memory_ids": supporting_memories,
+                    "proof_count": len(supporting_memories),
+                }
+            )
+            visible_ids.add(item_id)
+
+        def _item_sort_key(item: dict[str, Any]) -> tuple[str, int, str]:
+            anchor_value = item.get("anchor_at") or item.get("recorded_at") or ""
+            return (str(anchor_value), priority_order.get(item["kind"], 99), item["id"])
+
+        items.sort(key=_item_sort_key)
+
+        edges: list[dict[str, Any]] = []
+        for idx in range(len(items) - 1):
+            edges.append(
+                {
+                    "source": items[idx]["id"],
+                    "target": items[idx + 1]["id"],
+                    "edge_kind": "chronological",
+                    "weight": 1.0,
+                }
+            )
+
+        for row in link_rows:
+            source = str(row["from_unit_id"])
+            target = str(row["to_unit_id"])
+            if source not in visible_ids or target not in visible_ids:
+                continue
+            link_type = row["link_type"]
+            if link_type in {"semantic", "temporal", "entity"}:
+                edge_kind = link_type
+            elif link_type in {"causes", "caused_by", "enables", "prevents"}:
+                edge_kind = "causal"
+            else:
+                edge_kind = "semantic"
+            edges.append(
+                {
+                    "source": source,
+                    "target": target,
+                    "edge_kind": edge_kind,
+                    "weight": float(row["weight"] or 1.0),
+                }
+            )
+
+        for item in items:
+            edge_kind = "derived" if item["kind"] == "mental_model" else "source"
+            for source_id in item.get("source_memory_ids", []):
+                if source_id in visible_ids:
+                    edges.append(
+                        {
+                            "source": item["id"],
+                            "target": source_id,
+                            "edge_kind": edge_kind,
+                            "weight": 1.0,
+                        }
+                    )
+
+        return {"items": items, "edges": edges, "total_items": len(items), "limit": limit}
 
     def _graph_intelligence_cache_key(
         self,
@@ -6302,7 +6615,9 @@ class MemoryEngine(MemoryEngineInterface):
 
             units = await conn.fetch(
                 f"""
-                SELECT id, text, event_date, context, fact_type, mentioned_at, occurred_start, occurred_end, chunk_id, proof_count, tags
+                SELECT id, text, event_date, context, fact_type, mentioned_at, occurred_start, occurred_end,
+                       timeline_anchor_at, timeline_anchor_kind, temporal_direction, temporal_confidence,
+                       temporal_reference_text, created_at, chunk_id, proof_count, tags
                 FROM {fq_table("memory_units")}
                 {where_clause}
                 ORDER BY mentioned_at DESC NULLS LAST, created_at DESC
@@ -6352,6 +6667,23 @@ class MemoryEngine(MemoryEngineInterface):
                         "mentioned_at": row["mentioned_at"].isoformat() if row["mentioned_at"] else None,
                         "occurred_start": row["occurred_start"].isoformat() if row["occurred_start"] else None,
                         "occurred_end": row["occurred_end"].isoformat() if row["occurred_end"] else None,
+                        "timeline_anchor_at": row["timeline_anchor_at"].isoformat()
+                        if row["timeline_anchor_at"]
+                        else None,
+                        "timeline_anchor_kind": row["timeline_anchor_kind"],
+                        "temporal_direction": row["temporal_direction"],
+                        "temporal_confidence": row["temporal_confidence"],
+                        "temporal_reference_text": row["temporal_reference_text"],
+                        "temporal": build_temporal_block(
+                            occurred_start=row["occurred_start"],
+                            mentioned_at=row["mentioned_at"],
+                            created_at=row["created_at"],
+                            timeline_anchor_at=row["timeline_anchor_at"],
+                            timeline_anchor_kind=row["timeline_anchor_kind"],
+                            temporal_direction=row["temporal_direction"],
+                            temporal_confidence=row["temporal_confidence"],
+                            temporal_reference_text=row["temporal_reference_text"],
+                        ),
                         "entities": ", ".join(entities) if entities else "",
                         "chunk_id": row["chunk_id"] if row["chunk_id"] else None,
                         "proof_count": row["proof_count"] if row["proof_count"] is not None else 1,
@@ -6390,7 +6722,9 @@ class MemoryEngine(MemoryEngineInterface):
             row = await conn.fetchrow(
                 f"""
                 SELECT id, text, context, event_date, occurred_start, occurred_end,
-                       mentioned_at, fact_type, document_id, chunk_id, tags, source_memory_ids,
+                       mentioned_at, timeline_anchor_at, timeline_anchor_kind, temporal_direction,
+                       temporal_confidence, temporal_reference_text, created_at,
+                       fact_type, document_id, chunk_id, tags, source_memory_ids,
                        observation_scopes
                 FROM {fq_table("memory_units")}
                 WHERE id = $1 AND bank_id = $2
@@ -6436,6 +6770,21 @@ class MemoryEngine(MemoryEngineInterface):
                 "mentioned_at": row["mentioned_at"].isoformat() if row["mentioned_at"] else None,
                 "occurred_start": row["occurred_start"].isoformat() if row["occurred_start"] else None,
                 "occurred_end": row["occurred_end"].isoformat() if row["occurred_end"] else None,
+                "timeline_anchor_at": row["timeline_anchor_at"].isoformat() if row["timeline_anchor_at"] else None,
+                "timeline_anchor_kind": row["timeline_anchor_kind"],
+                "temporal_direction": row["temporal_direction"],
+                "temporal_confidence": row["temporal_confidence"],
+                "temporal_reference_text": row["temporal_reference_text"],
+                "temporal": build_temporal_block(
+                    occurred_start=row["occurred_start"],
+                    mentioned_at=row["mentioned_at"],
+                    created_at=row["created_at"],
+                    timeline_anchor_at=row["timeline_anchor_at"],
+                    timeline_anchor_kind=row["timeline_anchor_kind"],
+                    temporal_direction=row["temporal_direction"],
+                    temporal_confidence=row["temporal_confidence"],
+                    temporal_reference_text=row["temporal_reference_text"],
+                ),
                 "entities": entities,
                 "document_id": row["document_id"] if row["document_id"] else None,
                 "chunk_id": str(row["chunk_id"]) if row["chunk_id"] else None,
@@ -6455,7 +6804,9 @@ class MemoryEngine(MemoryEngineInterface):
                 # Fetch source memories
                 source_rows = await conn.fetch(
                     f"""
-                    SELECT id, text, fact_type, context, occurred_start, mentioned_at
+                    SELECT id, text, fact_type, context, occurred_start, mentioned_at, timeline_anchor_at,
+                           timeline_anchor_kind, temporal_direction, temporal_confidence,
+                           temporal_reference_text, created_at
                     FROM {fq_table("memory_units")}
                     WHERE id = ANY($1::uuid[])
                     ORDER BY mentioned_at DESC NULLS LAST
@@ -6470,6 +6821,16 @@ class MemoryEngine(MemoryEngineInterface):
                         "context": r["context"],
                         "occurred_start": r["occurred_start"].isoformat() if r["occurred_start"] else None,
                         "mentioned_at": r["mentioned_at"].isoformat() if r["mentioned_at"] else None,
+                        "temporal": build_temporal_block(
+                            occurred_start=r["occurred_start"],
+                            mentioned_at=r["mentioned_at"],
+                            created_at=r["created_at"],
+                            timeline_anchor_at=r["timeline_anchor_at"],
+                            timeline_anchor_kind=r["timeline_anchor_kind"],
+                            temporal_direction=r["temporal_direction"],
+                            temporal_confidence=r["temporal_confidence"],
+                            temporal_reference_text=r["temporal_reference_text"],
+                        ),
                     }
                     for r in source_rows
                 ]
