@@ -39,7 +39,9 @@ export function MentalModelDetailContent({ mentalModel }: MentalModelDetailConte
       {/* Header: Name, ID, Source Query */}
       <div className="pb-5 border-b border-border">
         <div className="flex items-center gap-2">
-          <h3 className="text-xl font-bold text-foreground">{mentalModel.name}</h3>
+          <h3 className="text-xl font-bold text-foreground break-words [overflow-wrap:anywhere]">
+            {mentalModel.name}
+          </h3>
           {mentalModel.trigger?.refresh_after_consolidation && (
             <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium">
               <Zap className="w-3 h-3" />
@@ -47,9 +49,13 @@ export function MentalModelDetailContent({ mentalModel }: MentalModelDetailConte
             </span>
           )}
         </div>
-        <code className="text-xs font-mono text-muted-foreground/70">{mentalModel.id}</code>
+        <code className="text-xs font-mono text-muted-foreground/70 break-all">
+          {mentalModel.id}
+        </code>
         {mentalModel.source_query && (
-          <p className="text-sm text-muted-foreground mt-1">{mentalModel.source_query}</p>
+          <p className="mt-1 text-sm text-muted-foreground break-words [overflow-wrap:anywhere]">
+            {mentalModel.source_query}
+          </p>
         )}
       </div>
 
@@ -79,7 +85,7 @@ export function MentalModelDetailContent({ mentalModel }: MentalModelDetailConte
           </div>
           <CopyButton text={mentalModel.content} toastLabel="Mental model copied" />
         </div>
-        <div className="prose prose-base dark:prose-invert max-w-none">
+        <div className="prose prose-base dark:prose-invert max-w-none break-words [overflow-wrap:anywhere]">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>{mentalModel.content}</ReactMarkdown>
         </div>
       </div>
@@ -188,7 +194,7 @@ function SideBySideDiff({ before, after }: { before: string; after: string }) {
         {left.map((line, idx) => (
           <div
             key={idx}
-            className={`px-3 py-0.5 whitespace-pre-wrap leading-5 min-h-[1.25rem] ${
+            className={`px-3 py-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-5 min-h-[1.25rem] ${
               line.type === "removed"
                 ? "bg-red-500/10 text-red-700 dark:text-red-400"
                 : "text-foreground"
@@ -205,7 +211,7 @@ function SideBySideDiff({ before, after }: { before: string; after: string }) {
         {right.map((line, idx) => (
           <div
             key={idx}
-            className={`px-3 py-0.5 whitespace-pre-wrap leading-5 min-h-[1.25rem] ${
+            className={`px-3 py-0.5 whitespace-pre-wrap break-words [overflow-wrap:anywhere] leading-5 min-h-[1.25rem] ${
               line.type === "added"
                 ? "bg-green-500/10 text-green-700 dark:text-green-400"
                 : "text-foreground"

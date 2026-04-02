@@ -7,6 +7,7 @@ import { client } from "@/lib/api";
 import { useBank } from "@/lib/bank-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -684,10 +685,12 @@ function CreateMentalModelDialog({
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Source Query *</label>
-            <Input
+            <Textarea
               value={form.sourceQuery}
               onChange={(e) => setForm({ ...form, sourceQuery: e.target.value })}
               placeholder="e.g., How does the team prefer to communicate?"
+              rows={3}
+              className="min-h-[88px] resize-y"
             />
             <p className="text-xs text-muted-foreground">
               This query will be run to generate the initial content, and re-run when you refresh.
@@ -847,10 +850,12 @@ function UpdateMentalModelDialog({
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">Source Query *</label>
-            <Input
+            <Textarea
               value={form.sourceQuery}
               onChange={(e) => setForm({ ...form, sourceQuery: e.target.value })}
               placeholder="e.g., How does the team prefer to communicate?"
+              rows={3}
+              className="min-h-[88px] resize-y"
             />
             <p className="text-xs text-muted-foreground">
               This query will be run to generate the initial content, and re-run when you refresh.
@@ -1037,14 +1042,18 @@ function MentalModelDetailPanel({
   const observations = mentalModel.reflect_response?.based_on?.observation || [];
 
   return (
-    <div className="fixed right-0 top-0 h-screen w-1/2 bg-card border-l shadow-2xl z-50 overflow-y-auto animate-in slide-in-from-right duration-300 ease-out">
+    <div className="fixed right-0 top-0 h-screen w-1/2 overflow-y-auto overflow-x-hidden bg-card border-l shadow-2xl z-50 animate-in slide-in-from-right duration-300 ease-out">
       <div className="p-6">
         <div className="flex justify-between items-start mb-8 pb-5 border-b border-border">
-          <div className="flex-1 mr-4">
+          <div className="min-w-0 flex-1 mr-4">
             <div className="flex items-center gap-2">
-              <h3 className="text-xl font-bold text-foreground">{mentalModel.name}</h3>
+              <h3 className="text-xl font-bold text-foreground break-words [overflow-wrap:anywhere]">
+                {mentalModel.name}
+              </h3>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">{mentalModel.source_query}</p>
+            <p className="mt-1 text-sm text-muted-foreground break-words [overflow-wrap:anywhere]">
+              {mentalModel.source_query}
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
@@ -1092,17 +1101,21 @@ function MentalModelDetailPanel({
           <div className="space-y-4">
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase mb-2">ID</div>
-              <div className="text-sm text-foreground font-mono">{mentalModel.id}</div>
+              <div className="text-sm text-foreground font-mono break-all">{mentalModel.id}</div>
             </div>
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase mb-2">Name</div>
-              <div className="text-sm text-foreground">{mentalModel.name}</div>
+              <div className="text-sm text-foreground break-words [overflow-wrap:anywhere]">
+                {mentalModel.name}
+              </div>
             </div>
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
                 Source Query
               </div>
-              <div className="text-sm text-foreground">{mentalModel.source_query}</div>
+              <div className="text-sm text-foreground break-words [overflow-wrap:anywhere]">
+                {mentalModel.source_query}
+              </div>
             </div>
             <div>
               <div className="text-xs font-bold text-muted-foreground uppercase mb-2">
@@ -1164,7 +1177,7 @@ function MentalModelDetailPanel({
               </div>
               <CopyButton text={mentalModel.content} toastLabel="Mental model copied" />
             </div>
-            <div className="prose prose-base dark:prose-invert max-w-none">
+            <div className="prose prose-base dark:prose-invert max-w-none break-words [overflow-wrap:anywhere]">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{mentalModel.content}</ReactMarkdown>
             </div>
           </div>
@@ -1204,7 +1217,9 @@ function MentalModelDetailPanel({
                           View
                         </Button>
                       </div>
-                      <p className="text-sm text-foreground leading-relaxed">{fact.text}</p>
+                      <p className="text-sm text-foreground leading-relaxed break-words [overflow-wrap:anywhere]">
+                        {fact.text}
+                      </p>
                     </div>
                   );
                 })}
@@ -1237,7 +1252,9 @@ function MentalModelDetailPanel({
                         View
                       </Button>
                     </div>
-                    <p className="text-sm text-foreground leading-relaxed">{obs.text}</p>
+                    <p className="text-sm text-foreground leading-relaxed break-words [overflow-wrap:anywhere]">
+                      {obs.text}
+                    </p>
                   </div>
                 ))}
               </div>
