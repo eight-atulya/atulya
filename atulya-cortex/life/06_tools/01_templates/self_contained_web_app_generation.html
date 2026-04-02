@@ -1,0 +1,1137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Self Contained Web App Generation</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f1ea;
+      --bg-elevated: rgba(255, 255, 255, 0.72);
+      --surface: #fffdf8;
+      --surface-strong: #ffffff;
+      --text: #1c1812;
+      --muted: #685f55;
+      --border: rgba(28, 24, 18, 0.12);
+      --shadow: 0 20px 50px rgba(29, 23, 14, 0.12);
+      --accent: #c25a1e;
+      --accent-strong: #a14413;
+      --accent-soft: rgba(194, 90, 30, 0.14);
+      --good: #1f8b4c;
+      --warn: #d39b09;
+      --danger: #d33b2c;
+      --hero-gradient: radial-gradient(circle at top left, rgba(194, 90, 30, 0.18), transparent 32%), linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 248, 240, 0.92));
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --max-width: 1240px;
+      --font-display: "Avenir Next", "Segoe UI", "Helvetica Neue", sans-serif;
+      --font-body: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    }
+
+    [data-theme="dark"] {
+      --bg: #111111;
+      --bg-elevated: rgba(24, 24, 24, 0.8);
+      --surface: #171717;
+      --surface-strong: #1d1d1d;
+      --text: #f3ede4;
+      --muted: #b7aa9b;
+      --border: rgba(255, 245, 233, 0.12);
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      --accent: #f08a49;
+      --accent-strong: #ffb07e;
+      --accent-soft: rgba(240, 138, 73, 0.15);
+      --good: #55c983;
+      --warn: #e8b326;
+      --danger: #ff6b5c;
+      --hero-gradient: radial-gradient(circle at top left, rgba(240, 138, 73, 0.16), transparent 32%), linear-gradient(145deg, rgba(24, 24, 24, 0.94), rgba(20, 20, 20, 0.96));
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: var(--font-body);
+      background:
+        radial-gradient(circle at top, rgba(194, 90, 30, 0.08), transparent 24%),
+        linear-gradient(180deg, var(--bg), color-mix(in srgb, var(--bg) 88%, #000 12%));
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.55;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button,
+    input[type="range"] {
+      font: inherit;
+    }
+
+    .app-shell {
+      width: min(calc(100% - 28px), var(--max-width));
+      margin: 0 auto;
+      padding: 18px 0 56px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #fff8f2;
+      font-family: var(--font-display);
+      font-size: 0.82rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      flex-shrink: 0;
+    }
+
+    .brand-copy {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin: 0 0 3px;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 0.98rem;
+      font-weight: 650;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill,
+    .theme-toggle {
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
+    }
+
+    .theme-toggle {
+      cursor: pointer;
+      transition: transform 180ms ease, border-color 180ms ease, background 180ms ease;
+    }
+
+    .theme-toggle:hover,
+    .theme-toggle:focus-visible {
+      transform: translateY(-1px);
+      border-color: color-mix(in srgb, var(--accent) 38%, var(--border));
+      outline: none;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 28px 22px;
+      background: var(--hero-gradient);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -8% -30% auto;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(194, 90, 30, 0.18), transparent 62%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      position: relative;
+      display: grid;
+      gap: 22px;
+    }
+
+    .hero-copy h1 {
+      margin: 0 0 12px;
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 8vw, 4.5rem);
+      line-height: 0.96;
+      letter-spacing: -0.04em;
+      max-width: 10ch;
+    }
+
+    .hero-copy p {
+      margin: 0;
+      font-size: 1rem;
+      max-width: 65ch;
+      color: color-mix(in srgb, var(--text) 86%, var(--muted));
+    }
+
+    .hero-meta {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--surface) 84%, transparent);
+    }
+
+    .stat-card strong,
+    .stat-card span {
+      display: block;
+    }
+
+    .stat-card strong {
+      font-family: var(--font-display);
+      font-size: 1.55rem;
+      margin-bottom: 4px;
+    }
+
+    .stat-card span {
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .section {
+      margin-top: 22px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-xl);
+      padding: 22px;
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      box-shadow: var(--shadow);
+    }
+
+    .section-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .section-header h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 3vw, 2.15rem);
+      letter-spacing: -0.03em;
+    }
+
+    .section-header p {
+      margin: 8px 0 0;
+      max-width: 60ch;
+      color: var(--muted);
+    }
+
+    .nav-grid,
+    .summary-grid,
+    .two-up,
+    .card-grid,
+    .flow-grid,
+    .compare-grid,
+    .action-grid,
+    .footer-grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .nav-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .nav-card,
+    .summary-card,
+    .content-card,
+    .flow-card,
+    .compare-card,
+    .action-card,
+    .reference-card {
+      border: 1px solid var(--border);
+      background: var(--surface-strong);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+    }
+
+    .nav-card {
+      min-height: 128px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .nav-card:hover,
+    .nav-card:focus-visible {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent) 34%, var(--border));
+      outline: none;
+    }
+
+    .nav-card strong,
+    .summary-card strong,
+    .content-card strong,
+    .flow-card strong,
+    .compare-card strong,
+    .action-card strong,
+    .reference-card strong {
+      font-family: var(--font-display);
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .nav-card p,
+    .summary-card p,
+    .content-card p,
+    .flow-card p,
+    .compare-card p,
+    .action-card p,
+    .reference-card p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .summary-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .summary-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 180px;
+    }
+
+    .summary-card::after {
+      content: "";
+      position: absolute;
+      inset: auto -28px -36px auto;
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--accent-soft), transparent 72%);
+      pointer-events: none;
+    }
+
+    .signal {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-family: var(--font-display);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 12px;
+    }
+
+    .two-up,
+    .compare-grid,
+    .footer-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .content-card ul,
+    .compare-card ul,
+    .action-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+    }
+
+    .content-card li,
+    .compare-card li,
+    .action-card li {
+      margin-bottom: 10px;
+    }
+
+    .score-panel {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, transparent), color-mix(in srgb, var(--surface) 96%, var(--accent-soft)));
+    }
+
+    .score-top {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .score-number {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 8vw, 4rem);
+      line-height: 0.9;
+      letter-spacing: -0.06em;
+    }
+
+    .score-label {
+      color: var(--muted);
+      max-width: 22ch;
+    }
+
+    .meter {
+      height: 14px;
+      border-radius: 999px;
+      background: color-mix(in srgb, var(--surface) 82%, #000 18%);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .meter-fill {
+      width: 72%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--warn), var(--accent), var(--good));
+      transition: width 220ms ease;
+    }
+
+    .slider-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .slider-row {
+      display: grid;
+      gap: 8px;
+    }
+
+    .slider-label {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-family: var(--font-display);
+      font-size: 0.92rem;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .readout {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .readout-chip {
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      padding: 9px 12px;
+      background: var(--surface);
+      font-size: 0.92rem;
+      color: var(--muted);
+    }
+
+    .flow-grid {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      overflow-x: auto;
+      padding-bottom: 4px;
+      scrollbar-width: thin;
+    }
+
+    .flow-card {
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .step-no {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-family: var(--font-display);
+      font-weight: 700;
+    }
+
+    .compare-card {
+      min-height: 100%;
+    }
+
+    .compare-card.good {
+      border-color: color-mix(in srgb, var(--good) 45%, var(--border));
+    }
+
+    .compare-card.bad {
+      border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      border-radius: 999px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 0.86rem;
+      color: var(--muted);
+    }
+
+    .action-card {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 5px;
+      background: linear-gradient(180deg, var(--accent), transparent);
+    }
+
+    .reference-card {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .reference-card span {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .reference-arrow {
+      font-family: var(--font-display);
+      color: var(--accent-strong);
+      flex-shrink: 0;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      margin-top: 18px;
+      font-size: 0.94rem;
+    }
+
+    @media (min-width: 720px) {
+      .hero {
+        padding: 34px 30px;
+      }
+
+      .hero-grid {
+        grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.9fr);
+        align-items: end;
+      }
+
+      .nav-grid,
+      .card-grid,
+      .action-grid,
+      .footer-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .two-up,
+      .compare-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1040px) {
+      .summary-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .card-grid,
+      .action-grid,
+      .footer-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">B</div>
+        <div class="brand-copy">
+          <p class="eyebrow">Cortex Tool Brain</p>
+          <p class="brand-title">Self Contained Web App Generation</p>
+        </div>
+      </div>
+      <div class="topbar-actions">
+        <div class="pill">Single file</div>
+        <div class="pill">Offline ready</div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme">Toggle theme</button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="overview">
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <p class="eyebrow">Protocol Mirror</p>
+            <h1>Build the calm, useful version of the idea.</h1>
+            <p>
+              This page turns the `BRAIN.md` protocol into a working local web artifact. It keeps the structure of the
+              brain, highlights the decision logic, and proves that a dense markdown file can become a polished,
+              self-contained app without external dependencies.
+            </p>
+          </div>
+          <div class="hero-meta">
+            <div class="stat-card">
+              <strong>7</strong>
+              <span>execution steps arranged into a visible workflow</span>
+            </div>
+            <div class="stat-card">
+              <strong>1</strong>
+              <span>HTML file with built-in theme handling and interaction</span>
+            </div>
+            <div class="stat-card">
+              <strong>8</strong>
+              <span>default content blocks for a decision-ready artifact</span>
+            </div>
+            <div class="stat-card">
+              <strong>0</strong>
+              <span>external libraries, fonts, or network dependencies</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="navigation">
+        <div class="section-header">
+          <div>
+            <h2>Protocol Navigation</h2>
+            <p>The markdown brain becomes a navigable surface: scan first, then jump to the section that matches the job.</p>
+          </div>
+        </div>
+        <div class="nav-grid">
+          <a class="nav-card" href="#summary">
+            <div>
+              <strong>Executive Summary</strong>
+              <p>What this protocol is for, what it avoids, and why it exists.</p>
+            </div>
+            <span class="eyebrow">Start here</span>
+          </a>
+          <a class="nav-card" href="#principles">
+            <div>
+              <strong>Core Principles</strong>
+              <p>The non-negotiables that keep the output useful instead of decorative.</p>
+            </div>
+            <span class="eyebrow">Read next</span>
+          </a>
+          <a class="nav-card" href="#simulator">
+            <div>
+              <strong>Readiness Simulator</strong>
+              <p>A small what-if tool that scores whether the artifact still feels balanced.</p>
+            </div>
+            <span class="eyebrow">Interactive</span>
+          </a>
+          <a class="nav-card" href="#flow">
+            <div>
+              <strong>Execution Flow</strong>
+              <p>The protocol steps translated into a horizontal working sequence.</p>
+            </div>
+            <span class="eyebrow">Workflow</span>
+          </a>
+        </div>
+      </section>
+
+      <section class="section" id="summary">
+        <div class="section-header">
+          <div>
+            <h2>Executive Summary</h2>
+            <p>The brain is fundamentally about turning content into a local artifact that helps somebody understand, inspect, compare, and act.</p>
+          </div>
+        </div>
+        <div class="summary-grid">
+          <article class="summary-card">
+            <span class="signal">Purpose</span>
+            <strong>Not a flashy demo</strong>
+            <p>The target is a serious product-grade HTML file that works offline and makes dense material easier to use.</p>
+          </article>
+          <article class="summary-card">
+            <span class="signal">Use when</span>
+            <strong>One file is the feature</strong>
+            <p>Choose this path when the user wants a self-contained app and the content benefits from interaction.</p>
+          </article>
+          <article class="summary-card">
+            <span class="signal">Avoid when</span>
+            <strong>Single-file is the wrong envelope</strong>
+            <p>Skip it for multi-page systems, backend-heavy products, or tiny content that does not need app treatment.</p>
+          </article>
+          <article class="summary-card">
+            <span class="signal">Outcome</span>
+            <strong>Calm and decision-ready</strong>
+            <p>The final artifact should feel clear, structured, premium, and immediately useful on first scan.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="principles">
+        <div class="section-header">
+          <div>
+            <h2>Main Analysis Blocks</h2>
+            <p>The source brain splits naturally into decisions about meaning, visual direction, language, and engineering.</p>
+          </div>
+        </div>
+        <div class="two-up">
+          <article class="content-card">
+            <strong>Core Principles</strong>
+            <ul>
+              <li>Structure meaning before styling the surface.</li>
+              <li>Make the page useful on first scan, then better with deeper inspection.</li>
+              <li>Use interaction only when it changes understanding, comparison, filtering, simulation, or navigation.</li>
+              <li>Preserve the user's real content and intent instead of inventing unsupported claims.</li>
+            </ul>
+          </article>
+          <article class="content-card">
+            <strong>Mental Model</strong>
+            <ul>
+              <li>Source meaning defines the real job.</li>
+              <li>Information architecture decides reading order and grouping.</li>
+              <li>Visual system creates clarity through hierarchy, color meaning, and spacing rhythm.</li>
+              <li>Interaction and engineering must stay simple, offline-safe, and responsive.</li>
+            </ul>
+          </article>
+          <article class="content-card">
+            <strong>Visual System Rules</strong>
+            <ul>
+              <li>Mobile-first layout, then clean expansion for tablet and laptop.</li>
+              <li>Black, white, and one accent color for a restrained visual system.</li>
+              <li>Semantic use of green, yellow, and red status colors.</li>
+              <li>Light and dark modes in the same file with a usable theme toggle.</li>
+            </ul>
+          </article>
+          <article class="content-card">
+            <strong>Content And Engineering Rules</strong>
+            <ul>
+              <li>Plain English, short sentences, direct headings, and no placeholder copy.</li>
+              <li>Vanilla HTML, CSS, and JavaScript only.</li>
+              <li>No external libraries, fonts, icons, or network dependency.</li>
+              <li>No mobile overflow, no decorative controls, and graceful behavior when JavaScript is limited.</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="simulator">
+        <div class="section-header">
+          <div>
+            <h2>What-If Readiness Simulator</h2>
+            <p>This small tool mirrors the brain’s judgment layer. Slide the inputs to see how the protocol would rate the artifact.</p>
+          </div>
+        </div>
+        <div class="two-up">
+          <div class="score-panel">
+            <div class="score-top">
+              <div>
+                <div class="score-number" id="scoreNumber">82</div>
+                <div class="score-label" id="scoreLabel">Balanced enough to feel polished without drifting into dashboard theater.</div>
+              </div>
+              <div class="signal" id="statusSignal">Strong fit</div>
+            </div>
+            <div class="meter">
+              <div class="meter-fill" id="meterFill"></div>
+            </div>
+            <div class="readout" id="readout">
+              <div class="readout-chip">Clarity leads</div>
+              <div class="readout-chip">Interaction is useful</div>
+              <div class="readout-chip">Restraint is intact</div>
+            </div>
+          </div>
+          <div class="content-card">
+            <strong>Adjust the protocol signals</strong>
+            <div class="slider-stack">
+              <label class="slider-row">
+                <span class="slider-label"><span>Information structure</span><span id="structureValue">84</span></span>
+                <input id="structure" type="range" min="0" max="100" value="84">
+              </label>
+              <label class="slider-row">
+                <span class="slider-label"><span>Clarity of language</span><span id="clarityValue">86</span></span>
+                <input id="clarity" type="range" min="0" max="100" value="86">
+              </label>
+              <label class="slider-row">
+                <span class="slider-label"><span>Interaction quality</span><span id="interactionValue">76</span></span>
+                <input id="interaction" type="range" min="0" max="100" value="76">
+              </label>
+              <label class="slider-row">
+                <span class="slider-label"><span>Visual restraint</span><span id="restraintValue">82</span></span>
+                <input id="restraint" type="range" min="0" max="100" value="82">
+              </label>
+              <label class="slider-row">
+                <span class="slider-label"><span>Mobile reliability</span><span id="mobileValue">83</span></span>
+                <input id="mobile" type="range" min="0" max="100" value="83">
+              </label>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="comparison">
+        <div class="section-header">
+          <div>
+            <h2>Comparison Section</h2>
+            <p>The brain is unusually explicit about what a strong output looks like and what failure smells like. This side-by-side view makes that test visible.</p>
+          </div>
+        </div>
+        <div class="compare-grid">
+          <article class="compare-card good">
+            <strong>What the protocol wants</strong>
+            <ul>
+              <li>A calm, readable artifact with a clear story arc.</li>
+              <li>Interaction that helps inspect or compare, not merely decorate.</li>
+              <li>Strong hierarchy with spacing, cards, and visual grouping.</li>
+              <li>Content reshaped into a better order when the source is messy.</li>
+              <li>One coherent visual direction and one accent color.</li>
+            </ul>
+            <div class="tag-row">
+              <span class="tag">Clear</span>
+              <span class="tag">Premium</span>
+              <span class="tag">Decision-ready</span>
+            </div>
+          </article>
+          <article class="compare-card bad">
+            <strong>What the protocol rejects</strong>
+            <ul>
+              <li>A glossy dashboard that says very little.</li>
+              <li>Too many cards, controls, colors, or ornamental effects.</li>
+              <li>Desktop-first layouts that break on phones.</li>
+              <li>JavaScript-dependent readability instead of progressive enhancement.</li>
+              <li>Fake metrics, filler copy, or unsupported claims.</li>
+            </ul>
+            <div class="tag-row">
+              <span class="tag">No chart theater</span>
+              <span class="tag">No clutter</span>
+              <span class="tag">No fake content</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="flow">
+        <div class="section-header">
+          <div>
+            <h2>Execution Flow</h2>
+            <p>Each numbered step in the markdown brain becomes a compact working card. On small screens this flows horizontally so the sequence stays intact.</p>
+          </div>
+        </div>
+        <div class="flow-grid" aria-label="Execution flow cards">
+          <article class="flow-card">
+            <div class="step-no">1</div>
+            <strong>Identify the real outcome</strong>
+            <p>Decide whether the page is helping someone understand, inspect, compare, simulate, or recommend.</p>
+          </article>
+          <article class="flow-card">
+            <div class="step-no">2</div>
+            <strong>Rebuild the architecture</strong>
+            <p>Reorder the source into summary, grouped themes, trade-offs, and concrete actions.</p>
+          </article>
+          <article class="flow-card">
+            <div class="step-no">3</div>
+            <strong>Choose one visual direction</strong>
+            <p>Pick a coherent mood and avoid mixing multiple design languages inside one file.</p>
+          </article>
+          <article class="flow-card">
+            <div class="step-no">4</div>
+            <strong>Add meaningful interaction</strong>
+            <p>Use toggles, filters, comparisons, expanders, or simple what-if controls only when they help.</p>
+          </article>
+          <article class="flow-card">
+            <div class="step-no">5</div>
+            <strong>Stay in the single-file envelope</strong>
+            <p>Keep it valid HTML5, self-contained, and free of external dependencies or layout breakage.</p>
+          </article>
+          <article class="flow-card">
+            <div class="step-no">6</div>
+            <strong>Audit trust and scanability</strong>
+            <p>Check for hierarchy, calmness, semantic color use, and unsupported content.</p>
+          </article>
+          <article class="flow-card">
+            <div class="step-no">7</div>
+            <strong>Return only the HTML</strong>
+            <p>Deliver the final local artifact with no extra explanation wrapped around it.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="roadmap">
+        <div class="section-header">
+          <div>
+            <h2>Practical Next Steps</h2>
+            <p>This is how you would keep iterating if the HTML generator built from this brain became a real tool surface.</p>
+          </div>
+        </div>
+        <div class="action-grid">
+          <article class="action-card">
+            <strong>Turn the simulator into a checklist</strong>
+            <p>Map the scoring signals to explicit pass checks so output reviews become faster and less subjective.</p>
+          </article>
+          <article class="action-card">
+            <strong>Add input-mode presets</strong>
+            <p>Give the tool a few source presets such as report, comparison, roadmap, and messy notes to shift layout emphasis quickly.</p>
+          </article>
+          <article class="action-card">
+            <strong>Capture real examples</strong>
+            <p>Store a small corpus of strong single-file outputs so the protocol can be evaluated against concrete before-and-after cases.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section" id="references">
+        <div class="section-header">
+          <div>
+            <h2>Final Conclusion</h2>
+            <p>The markdown brain is no longer just a rule sheet. In this form it becomes a compact product surface that demonstrates its own standards.</p>
+          </div>
+        </div>
+        <div class="footer-grid">
+          <a class="reference-card" href="./BRAIN.md">
+            <div>
+              <strong>Open the source brain</strong>
+              <span>The markdown protocol this page is mirroring.</span>
+            </div>
+            <span class="reference-arrow">View</span>
+          </a>
+          <a class="reference-card" href="../../../../BRAIN.md">
+            <div>
+              <strong>Open the repo brain</strong>
+              <span>The higher-level operating contract for the whole repository.</span>
+            </div>
+            <span class="reference-arrow">View</span>
+          </a>
+          <a class="reference-card" href="../../../../CLAUDE.md">
+            <div>
+              <strong>Open local mechanics</strong>
+              <span>The command and validation conventions that sit below the repo brain.</span>
+            </div>
+            <span class="reference-arrow">View</span>
+          </a>
+        </div>
+        <p class="footer-note">The best proof of the tool is the artifact itself: one file, meaningful structure, useful interaction, and no network dependency.</p>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const root = document.documentElement;
+      const themeToggle = document.getElementById("themeToggle");
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const storageKey = "self-contained-web-app-theme";
+
+      function applyTheme(mode) {
+        if (mode === "auto") {
+          root.removeAttribute("data-theme");
+          themeToggle.textContent = media.matches ? "Theme: auto dark" : "Theme: auto light";
+          return;
+        }
+        root.setAttribute("data-theme", mode);
+        themeToggle.textContent = mode === "dark" ? "Theme: dark" : "Theme: light";
+      }
+
+      let theme = localStorage.getItem(storageKey) || "auto";
+      applyTheme(theme);
+
+      themeToggle.addEventListener("click", function () {
+        theme = theme === "auto" ? "dark" : theme === "dark" ? "light" : "auto";
+        localStorage.setItem(storageKey, theme);
+        applyTheme(theme);
+      });
+
+      media.addEventListener("change", function () {
+        if ((localStorage.getItem(storageKey) || "auto") === "auto") {
+          applyTheme("auto");
+        }
+      });
+
+      const inputs = {
+        structure: document.getElementById("structure"),
+        clarity: document.getElementById("clarity"),
+        interaction: document.getElementById("interaction"),
+        restraint: document.getElementById("restraint"),
+        mobile: document.getElementById("mobile")
+      };
+
+      const valueEls = {
+        structure: document.getElementById("structureValue"),
+        clarity: document.getElementById("clarityValue"),
+        interaction: document.getElementById("interactionValue"),
+        restraint: document.getElementById("restraintValue"),
+        mobile: document.getElementById("mobileValue")
+      };
+
+      const scoreNumber = document.getElementById("scoreNumber");
+      const scoreLabel = document.getElementById("scoreLabel");
+      const statusSignal = document.getElementById("statusSignal");
+      const meterFill = document.getElementById("meterFill");
+      const readout = document.getElementById("readout");
+
+      function getMessage(score, interaction, restraint, mobile) {
+        if (mobile < 45) {
+          return {
+            status: "Mobile risk",
+            label: "The idea may be strong, but the single-file promise breaks if the phone experience becomes fragile.",
+            chips: ["Mobile needs work", "Do less on desktop", "Protect the envelope"]
+          };
+        }
+        if (restraint < 42) {
+          return {
+            status: "Too busy",
+            label: "The page is drifting into decorative complexity. Strip back cards, effects, or color before adding anything else.",
+            chips: ["Reduce clutter", "Kill decorative UI", "Keep one visual direction"]
+          };
+        }
+        if (interaction < 36) {
+          return {
+            status: "Too static",
+            label: "The artifact reads well, but it is not yet using interaction to improve understanding in a meaningful way.",
+            chips: ["Add useful toggles", "Enable comparison", "Use interaction with purpose"]
+          };
+        }
+        if (score >= 80) {
+          return {
+            status: "Strong fit",
+            label: "Balanced enough to feel polished without drifting into dashboard theater.",
+            chips: ["Clarity leads", "Interaction is useful", "Restraint is intact"]
+          };
+        }
+        if (score >= 62) {
+          return {
+            status: "Promising",
+            label: "The foundation is solid, but one or two areas still need sharpening before the artifact feels fully premium.",
+            chips: ["Good structure", "Refine hierarchy", "Tighten details"]
+          };
+        }
+        return {
+          status: "Needs reshaping",
+          label: "The page has the right ingredients, but it still feels more like assembled pieces than one coherent artifact.",
+          chips: ["Rebuild the story", "Simplify the surface", "Improve scanability"]
+        };
+      }
+
+      function updateScore() {
+        const structure = Number(inputs.structure.value);
+        const clarity = Number(inputs.clarity.value);
+        const interaction = Number(inputs.interaction.value);
+        const restraint = Number(inputs.restraint.value);
+        const mobile = Number(inputs.mobile.value);
+
+        valueEls.structure.textContent = structure;
+        valueEls.clarity.textContent = clarity;
+        valueEls.interaction.textContent = interaction;
+        valueEls.restraint.textContent = restraint;
+        valueEls.mobile.textContent = mobile;
+
+        const score = Math.round(
+          structure * 0.24 +
+          clarity * 0.24 +
+          interaction * 0.18 +
+          restraint * 0.18 +
+          mobile * 0.16
+        );
+
+        const message = getMessage(score, interaction, restraint, mobile);
+        scoreNumber.textContent = score;
+        scoreLabel.textContent = message.label;
+        statusSignal.textContent = message.status;
+        meterFill.style.width = score + "%";
+
+        readout.innerHTML = "";
+        message.chips.forEach(function (chip) {
+          const div = document.createElement("div");
+          div.className = "readout-chip";
+          div.textContent = chip;
+          readout.appendChild(div);
+        });
+      }
+
+      Object.values(inputs).forEach(function (input) {
+        input.addEventListener("input", updateScore);
+      });
+
+      updateScore();
+    })();
+  </script>
+</body>
+</html>
