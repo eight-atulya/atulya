@@ -1,13 +1,13 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides concrete development commands and local coding conventions for work in this repository.
 
-## Project Overview
+Start with [BRAIN.md](./BRAIN.md) for the primary repo brain contract, architecture, invariants, and living repo context.
 
-Atulya is an agent memory system that provides long-term memory for AI agents using biomimetic data structures. Memories are organized as:
-- **World facts**: General knowledge ("The sky is blue")
-- **Experience facts**: Personal experiences ("I visited Paris in 2023")
-- **Mental models**: Consolidated knowledge synthesized from facts ("User prefers functional programming patterns")
+This file is intentionally narrower than `BRAIN.md`:
+
+- `BRAIN.md` is authoritative for repo identity, instruction hierarchy, architecture, invariants, and active brain state
+- `CLAUDE.md` is authoritative for day-to-day mechanics such as commands, validation, and implementation conventions
 
 ## Development Commands
 
@@ -69,51 +69,11 @@ cd atulya-control-plane && npm run dev
 ./scripts/benchmarks/start-visualizer.sh  # View results at localhost:8001
 ```
 
-## Architecture
+## Local Mechanics
 
-### Monorepo Structure
-- **atulya-api/**: Core FastAPI server with memory engine (Python, uv)
-- **atulya/**: Embedded Python bundle (atulya-all package)
-- **atulya-control-plane/**: Admin UI (Next.js, npm)
-- **atulya-cli/**: CLI tool (Rust, cargo, uses progenitor for API client)
-- **atulya-clients/**: Generated SDK clients (Python, TypeScript, Rust)
-- **atulya-docs/**: Docusaurus documentation site
-- **atulya-integrations/**: Framework integrations (LiteLLM, OpenAI)
-- **atulya-dev/**: Development tools and benchmarks
+For repo architecture, system flows, and living context, use `BRAIN.md`.
 
-### Core Engine (atulya-api/atulya_api/engine/)
-- `memory_engine.py`: Main orchestrator (~170KB) for retain/recall/reflect operations
-- `llm_wrapper.py`: LLM abstraction supporting OpenAI, Anthropic, Gemini, Groq, Ollama, LM Studio
-- `embeddings.py`: Embedding generation (local sentence-transformers or TEI)
-- `cross_encoder.py`: Reranking (local or TEI)
-- `entity_resolver.py`: Entity extraction and normalization
-- `query_analyzer.py`: Query intent analysis
-
-**retain/**: Memory ingestion pipeline
-- `orchestrator.py`: Coordinates the retain flow
-- `fact_extraction.py`: LLM-based fact extraction from content
-- `link_utils.py`: Entity link creation and management
-
-**search/**: Multi-strategy retrieval
-- `retrieval.py`: Main retrieval orchestrator
-- `graph_retrieval.py`: Entity/relationship graph traversal
-- `mpfp_retrieval.py`: Multi-Path Fact Propagation retrieval
-- `fusion.py`: Reciprocal rank fusion for combining results
-- `reranking.py`: Cross-encoder reranking
-
-### API Layer (atulya-api/atulya_api/api/)
-- `http.py`: FastAPI HTTP routers (~80KB) for all REST endpoints
-- `mcp.py`: Model Context Protocol server implementation
-
-Main operations:
-- **Retain**: Store memories, extracts facts/entities/relationships
-- **Recall**: Retrieve memories via 4 parallel strategies (semantic, BM25, graph, temporal) + reranking
-- **Reflect**: Disposition-aware reasoning using memories and mental models.
-
-### Database
-PostgreSQL with pgvector. Schema managed via Alembic migrations in `atulya-api/atulya_api/alembic/`. Migrations run automatically on API startup.
-
-Key tables: `banks`, `memory_units`, `documents`, `entities`, `entity_links`
+The sections below stay focused on implementation mechanics that are easy to execute under pressure.
 
 ### Adding Database Migrations
 
