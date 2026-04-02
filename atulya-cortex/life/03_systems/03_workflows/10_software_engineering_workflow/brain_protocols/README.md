@@ -48,6 +48,9 @@ protocol_name/
 - `dependency_drift_and_reproducible_toolchains`
   Use when a stable workflow starts warning or behaving differently after reinstall or rebuild and the real fix is to pin and verify the toolchain, not just quiet the symptom.
 
+- `semantic_read_model_salvage_and_retain_backed_validation`
+  Use when a semantic or graph-heavy rewrite helps one strong example but threatens the existing subsystem contract, and the right response is to salvage the insight, rebuild behind contract tests, and add a tiny retain-backed evaluation lane.
+
 - `git_history_rewrite_and_branch_realignment`
   Use when incorrect or sensitive content has landed in Git history and must be removed from one or more branches without losing local work.
 

@@ -92,3 +92,8 @@ Do not rely on one offline debug trace or one real example as proof that the sub
 - ownership fixes do not regress unrelated entities or duplicate handling
 - future threshold tuning has a reusable semantic proof pack
 - semantic evaluation stays realistic without making normal iteration unbearably slow
+
+## Cortex Links
+
+- Workflow protocol: [semantic_read_model_salvage_and_retain_backed_validation](../../03_systems/03_workflows/10_software_engineering_workflow/brain_protocols/semantic_read_model_salvage_and_retain_backed_validation/BRAIN.md)
+- Command trail: [incident_timeline_2026_04_02_graph_intelligence.md](../../03_systems/03_workflows/10_software_engineering_workflow/brain_protocols/semantic_read_model_salvage_and_retain_backed_validation/references/incident_timeline_2026_04_02_graph_intelligence.md)
