@@ -59,13 +59,29 @@ _STOPWORDS = {
 }
 _NEGATION_MARKERS = {
     # Hard negations — explicitly deny the claim
-    "not", "no", "never", "without",
+    "not",
+    "no",
+    "never",
+    "without",
     # State-exit verbs — subject explicitly stopped/abandoned the state
-    "stopped", "quit", "left", "gave",
-    "resigned", "retired", "ended", "cancelled", "abandoned",
-    "removed", "deleted", "closed", "rejected", "handed",
+    "stopped",
+    "quit",
+    "left",
+    "gave",
+    "resigned",
+    "retired",
+    "ended",
+    "cancelled",
+    "abandoned",
+    "removed",
+    "deleted",
+    "closed",
+    "rejected",
+    "handed",
     # Explicit past-state labels (not past tense — only when used as adjectives)
-    "former", "ex", "previously",
+    "former",
+    "ex",
+    "previously",
     # NOTE: "was/were/had" deliberately omitted — past tense IS NOT negation.
     # "Anurag was the architect" and "never touched the code" would both
     # trigger if we include "was", making both sides negated → no contradiction.
@@ -473,8 +489,8 @@ def _build_change_events(
             node_slug = _slugify(summary.title)
             left_lead = _leading_entity(left)
             right_lead = _leading_entity(right)
-            both_led_by_node = (left_lead == node_slug and right_lead == node_slug)
-            either_led_by_node = (left_lead == node_slug or right_lead == node_slug)
+            both_led_by_node = left_lead == node_slug and right_lead == node_slug
+            either_led_by_node = left_lead == node_slug or right_lead == node_slug
 
             same_doc = bool(left_doc and left_doc == right.doc_key())
             if same_doc and not both_led_by_node:
@@ -487,7 +503,7 @@ def _build_change_events(
                 contradiction_cosine_min=options.contradiction_cosine_min,
                 contradiction_cosine_max=options.contradiction_cosine_max,
             ):
-                left_ts  = left.effective_timestamp()
+                left_ts = left.effective_timestamp()
                 right_ts = right.effective_timestamp()
                 event_confidence = round(_clamp(confidence * 0.9), 3)
                 events.append(
@@ -552,6 +568,7 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
             continue
 
         events = _build_change_events(summary, confidence, options)
+
         # current_state follows the most recent supported unit.
         def _unit_recency_key(unit: GraphEvidenceUnit) -> tuple:
             ts = unit.effective_timestamp() or datetime.min.replace(tzinfo=UTC)
