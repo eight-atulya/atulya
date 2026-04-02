@@ -18,6 +18,10 @@ from atulya_api.engine.graph_scaling import (
     build_state_graph_summary,
 )
 from atulya_api.engine.memory_engine import fq_table
+from tests.graph_intelligence_eval_helper import (
+    format_graph_intelligence_eval,
+    run_graph_intelligence_eval,
+)
 
 
 def _unit(
@@ -180,6 +184,32 @@ def test_contradiction_detection_accepts_in_band_similarity():
     assert bob.status == "contradictory"
 
 
+def test_contradiction_detection_survives_semantic_state_merge():
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                "Bob supports remote work policy.",
+                entity="Bob",
+                days_ago=5,
+                embedding=[1.0, 0.0],
+            ),
+            _unit(
+                "u2",
+                "Bob does not support remote work policy.",
+                entity="Bob",
+                days_ago=1,
+                embedding=[0.8, 0.6],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    contradiction_events = [event for event in graph.change_events if event.change_type == "contradiction"]
+    assert contradiction_events
+    assert contradiction_events[0].evidence_ids == ["u1", "u2"]
+
+
 def test_contradiction_detection_skips_missing_embeddings():
     graph = build_graph_intelligence(
         [
@@ -237,6 +267,35 @@ def test_contradictory_nodes_remain_visible_at_default_confidence_threshold():
 
     bob = next(node for node in graph.nodes if node.title == "Bob")
     assert bob.status == "contradictory"
+
+
+def test_multiple_change_events_have_unique_ids():
+    graph = build_graph_intelligence(
+        [
+            _unit("u1", "Alice worked at Google.", entity="Alice", days_ago=30),
+            _unit("u2", "Alice now works at OpenAI.", entity="Alice", days_ago=10),
+            _unit("u3", "Alice recently joined Anthropic.", entity="Alice", days_ago=1),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    change_events = [event for event in graph.change_events if event.change_type == "change"]
+    assert len(change_events) == 2
+    assert len({event.id for event in change_events}) == 2
+
+
+def test_identical_facts_do_not_emit_change_event():
+    graph = build_graph_intelligence(
+        [
+            _unit("u1", "Priya owns the Brain OS roadmap.", entity="Priya", days_ago=9),
+            _unit("u2", "Priya owns the Brain OS roadmap.", entity="Priya", days_ago=1),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    priya = next(node for node in graph.nodes if node.title == "Priya")
+    assert priya.status == "stable"
+    assert not any(event.change_type == "change" for event in graph.change_events if event.node_id == priya.id)
 
 
 def test_contradiction_penalty_changes_surfacing_not_support_confidence():
@@ -442,6 +501,95 @@ def test_investigation_returns_focal_nodes_and_recommended_checks():
     assert "Alice" in investigation.answer
 
 
+def test_same_document_cross_mentions_do_not_create_false_contradiction():
+    shared_chunk_prefix = "bank_graph_doc_"
+    graph = build_graph_intelligence(
+        [
+            GraphEvidenceUnit(
+                id="u1",
+                text="Atulya hired Anurag as the lead architect.",
+                fact_type="world",
+                embedding=[1.0, 0.0],
+                occurred_start=datetime.now(UTC) - timedelta(days=5),
+                mentioned_at=datetime.now(UTC) - timedelta(days=5),
+                created_at=datetime.now(UTC) - timedelta(days=5),
+                entities=["Atulya", "Anurag"],
+                proof_count=1,
+                access_count=1,
+                chunk_id=f"{shared_chunk_prefix}0",
+            ),
+            GraphEvidenceUnit(
+                id="u2",
+                text="Anurag never wrote code for Atulya.",
+                fact_type="world",
+                embedding=[0.8, 0.6],
+                occurred_start=datetime.now(UTC) - timedelta(days=5),
+                mentioned_at=datetime.now(UTC) - timedelta(days=5),
+                created_at=datetime.now(UTC) - timedelta(days=5),
+                entities=["Atulya", "Anurag"],
+                proof_count=1,
+                access_count=1,
+                chunk_id=f"{shared_chunk_prefix}1",
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    contradiction_events = [event for event in graph.change_events if event.change_type == "contradiction"]
+    assert not contradiction_events
+
+
+def test_real_embeddings_preserve_ownership_for_cross_mentions(embeddings):
+    texts = [
+        "Anurag is the lead architect for Atulya.",
+        "Anurag never wrote code for Atulya.",
+    ]
+    vectors = embeddings.encode(texts)
+    graph = build_graph_intelligence(
+        [
+            _unit(
+                "u1",
+                texts[0],
+                entities=["Anurag", "Atulya"],
+                days_ago=10,
+                embedding=vectors[0],
+            ),
+            _unit(
+                "u2",
+                texts[1],
+                entities=["Anurag", "Atulya"],
+                days_ago=1,
+                embedding=vectors[1],
+            ),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    anurag = next(node for node in graph.nodes if node.title == "Anurag")
+    atulya = next(node for node in graph.nodes if node.title == "Atulya")
+    assert anurag.status == "contradictory"
+    assert atulya.status != "contradictory"
+
+
+def test_real_embeddings_detect_state_change(embeddings):
+    texts = [
+        "Nadia worked at OpenAI in 2024.",
+        "Nadia now works at Anthropic in 2026.",
+    ]
+    vectors = embeddings.encode(texts)
+    graph = build_graph_intelligence(
+        [
+            _unit("u1", texts[0], entity="Nadia", days_ago=30, embedding=vectors[0]),
+            _unit("u2", texts[1], entity="Nadia", days_ago=1, embedding=vectors[1]),
+        ],
+        GraphBuildOptions(limit=10, confidence_min=0.0, node_kind="entity"),
+    )
+
+    nadia = next(node for node in graph.nodes if node.title == "Nadia")
+    assert nadia.status == "changed"
+    assert not any(event.change_type == "contradiction" for event in graph.change_events if event.node_id == nadia.id)
+
+
 def test_evidence_summary_prioritizes_high_usage_memories():
     summary = build_evidence_graph_summary(
         {
@@ -587,6 +735,24 @@ async def test_graph_intelligence_and_investigation_endpoints(api_client, memory
     evidence_neighborhood = evidence_neighborhood_response.json()
     assert evidence_neighborhood["surface"] == "evidence"
     assert evidence_neighborhood["nodes"]
+
+
+@pytest.mark.asyncio
+async def test_graph_intelligence_real_retain_corpus(memory, request_context):
+    bank_id = f"graph_intelligence_real_eval_{datetime.now(UTC).timestamp()}"
+    try:
+        summary = await run_graph_intelligence_eval(memory, request_context, bank_id=bank_id)
+        by_title = {row["title"]: row for row in summary}
+
+        assert by_title["Anurag"]["status"] == "contradictory", format_graph_intelligence_eval(summary)
+        assert "contradiction" in by_title["Anurag"]["event_types"], format_graph_intelligence_eval(summary)
+        assert by_title["Atulya"]["status"] != "contradictory", format_graph_intelligence_eval(summary)
+        assert by_title["Nadia"]["status"] != "contradictory", format_graph_intelligence_eval(summary)
+        assert "Anthropic" in by_title["Nadia"]["current_state"], format_graph_intelligence_eval(summary)
+        assert by_title["Priya"]["status"] != "contradictory", format_graph_intelligence_eval(summary)
+        assert "Brain OS roadmap" in by_title["Priya"]["current_state"], format_graph_intelligence_eval(summary)
+    finally:
+        await memory.delete_bank(bank_id, request_context=request_context)
 
 
 @pytest.mark.asyncio

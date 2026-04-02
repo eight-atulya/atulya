@@ -3,6 +3,9 @@ Graph intelligence read models for the control plane.
 
 This module lifts raw memory-unit evidence into a higher-level state graph that
 surfaces meaningful changes, contradictions, and stale assumptions.
+
+Reuses:
+  - embedding_similarity.cosine_similarity  — semantic dedup + contradiction detection
 """
 
 from __future__ import annotations
@@ -54,7 +57,21 @@ _STOPWORDS = {
     "will",
     "with",
 }
-_NEGATION_MARKERS = {"not", "no", "never", "without", "stopped", "quit", "left", "former", "ex"}
+_NEGATION_MARKERS = {
+    # Hard negations — explicitly deny the claim
+    "not", "no", "never", "without",
+    # State-exit verbs — subject explicitly stopped/abandoned the state
+    "stopped", "quit", "left", "gave",
+    "resigned", "retired", "ended", "cancelled", "abandoned",
+    "removed", "deleted", "closed", "rejected", "handed",
+    # Explicit past-state labels (not past tense — only when used as adjectives)
+    "former", "ex", "previously",
+    # NOTE: "was/were/had" deliberately omitted — past tense IS NOT negation.
+    # "Anurag was the architect" and "never touched the code" would both
+    # trigger if we include "was", making both sides negated → no contradiction.
+    # NOTE: "stepped/moved/transitioned/dropped/switched" omitted — technical metrics
+    # and lifecycle changes should not trigger negation detection.
+}
 
 
 class GraphEvidenceUnit(BaseModel):
@@ -71,9 +88,25 @@ class GraphEvidenceUnit(BaseModel):
     tags: list[str] = Field(default_factory=list)
     entities: list[str] = Field(default_factory=list)
     source_memory_ids: list[str] = Field(default_factory=list)
+    # Document-level grouping key: units sharing the same chunk_id prefix (up to the last
+    # underscore+index) belong to the same retain document and are "co-authored".
+    chunk_id: str | None = None
 
     def effective_timestamp(self) -> datetime | None:
         return self.occurred_start or self.mentioned_at or self.created_at
+
+    def doc_key(self) -> str | None:
+        """Extract document-level key from chunk_id (strips trailing _<index>).
+
+        chunk_id format: ``<bank_id>_<doc_uuid>_<chunk_index>``
+        Two units with the same doc_key were created from the same retain document
+        and are treated as co-authored (same source context).
+        """
+        if not self.chunk_id:
+            return None
+        # Strip the trailing _<index> suffix — everything up to the last underscore
+        idx = self.chunk_id.rfind("_")
+        return self.chunk_id[:idx] if idx > 0 else self.chunk_id
 
 
 class GraphStateNode(BaseModel):
@@ -144,8 +177,13 @@ class GraphBuildOptions(BaseModel):
     confidence_min: float = 0.55
     node_kind: Literal["all", "entity", "topic"] = "all"
     window_days: int | None = 90
-    contradiction_cosine_min: float = 0.7
-    contradiction_cosine_max: float = 0.85
+    # Contradiction band: [min, max] cosine between two units to qualify as contradictory.
+    # min=0.55 — must be about the same topic (not orthogonal noise).
+    # max=0.96 — must not be near-identical phrasing (dedup threshold is 0.97).
+    # Contradictory claims are semantically close (same subject) → upper bound must be
+    # close to 1.0, NOT 0.88. "Lead architect" vs "never wrote code" score ~0.89–0.93.
+    contradiction_cosine_min: float = 0.55
+    contradiction_cosine_max: float = 0.96
     contradiction_confidence_penalty: float = 0.6
     now: datetime = Field(default_factory=lambda: datetime.now(UTC))
 
@@ -273,20 +311,88 @@ def _importance_for_units(units: list[GraphEvidenceUnit], centrality: float) -> 
     return round(_clamp(0.4 * centrality + 0.35 * evidence_component + 0.25 * support_component), 3)
 
 
+# Cosine threshold above which two units are considered the same semantic state
+# (paraphrase / re-statement of same fact — not a genuine state transition).
+_SEMANTIC_DEDUP_COSINE_THRESHOLD = 0.97
+
+
 def _sorted_distinct_units(units: list[GraphEvidenceUnit]) -> list[GraphEvidenceUnit]:
-    seen: set[str] = set()
-    distinct: list[GraphEvidenceUnit] = []
+    """Return units sorted by effective_timestamp, deduplicating semantically equivalent ones.
+
+    Two units are considered duplicates when:
+      1. Their embeddings have cosine similarity >= _SEMANTIC_DEDUP_COSINE_THRESHOLD  (semantic)
+      OR
+      2. Their normalised texts are identical  (exact, kept as fast-path fallback)
+
+    The *earlier* unit in a duplicate pair is kept so that the temporal chain
+    reflects the first time a state was introduced, not a later paraphrase of it.
+    """
     ordered = sorted(
         units,
         key=lambda unit: (unit.effective_timestamp() or datetime.min.replace(tzinfo=UTC), unit.id),
     )
+    distinct: list[GraphEvidenceUnit] = []
+    seen_texts: set[str] = set()
+
     for unit in ordered:
+        # Fast-path: exact normalized text match
         normalized = _normalize_text(unit.text)
-        if normalized in seen:
+        if normalized in seen_texts:
             continue
-        seen.add(normalized)
+
+        # Semantic dedup via cosine — only when embeddings available
+        if unit.embedding is not None:
+            is_dup = False
+            for kept in distinct:
+                if kept.embedding is None:
+                    continue
+                sim = cosine_similarity(unit.embedding, kept.embedding)
+                if sim is not None and sim >= _SEMANTIC_DEDUP_COSINE_THRESHOLD:
+                    is_dup = True
+                    break
+            if is_dup:
+                continue
+
+        seen_texts.add(normalized)
         distinct.append(unit)
+
     return distinct
+
+
+def _leading_entity(unit: GraphEvidenceUnit) -> str | None:
+    """Return the entity that appears earliest (leftmost) in the unit's text.
+
+    Used for contradiction ownership: a contradiction pair fires on entity X only if
+    X is the leading entity in BOTH units.  This prevents project nodes (e.g. 'atulya')
+    from claiming contradictions that are really about a person ('anurag') who happens
+    to be mentioned in the same sentences.
+
+    Algorithm: for each entity in unit.entities, find the first index where
+    a case-insensitive word-boundary match occurs. Return the entity with the
+    lowest index.  Returns None if no entities are present.
+    """
+    if not unit.entities:
+        return None
+    best_entity: str | None = None
+    best_pos: int | None = None
+    for entity in unit.entities:
+        match = re.search(rf"\b{re.escape(entity)}\b", unit.text, flags=re.IGNORECASE)
+        if match is None:
+            continue
+        pos = match.start()
+        if best_pos is None or pos < best_pos:
+            best_pos = pos
+            best_entity = entity.lower()
+    return best_entity
+
+
+def _event_id(
+    summary: _GroupSummary,
+    change_type: ChangeType,
+    *evidence_ids: str,
+) -> str:
+    suffix = ":".join(evidence_ids) if evidence_ids else "none"
+    return f"event:{summary.kind}:{_slugify(summary.title)}:{change_type}:{suffix}"
 
 
 def _is_contradictory(
@@ -313,24 +419,40 @@ def _is_contradictory(
 
 
 def _build_change_events(
-    summary: _GroupSummary, confidence: float, options: GraphBuildOptions
+    summary: _GroupSummary,
+    confidence: float,
+    options: GraphBuildOptions,
 ) -> list[GraphChangeEvent]:
+    """Detect change and contradiction events for a node's evidence."""
+    if summary.kind == "topic":
+        return []
+
     distinct_units = _sorted_distinct_units(summary.units)
     if len(distinct_units) < 2:
         return []
 
-    previous = distinct_units[-2]
-    current = distinct_units[-1]
-    similarity = _jaccard_similarity(previous.text, current.text)
-    current_ts = current.effective_timestamp()
-    previous_ts = previous.effective_timestamp()
     events: list[GraphChangeEvent] = []
-    event_confidence = round(_clamp(confidence * (1.0 - similarity * 0.45)), 3)
+    for previous, current in zip(distinct_units[:-1], distinct_units[1:]):
+        previous_ts = previous.effective_timestamp()
+        current_ts = current.effective_timestamp()
+        if previous_ts is None or current_ts is None or current_ts <= previous_ts:
+            continue
 
-    if current_ts and previous_ts and current_ts >= previous_ts and similarity < 0.55:
+        similarity = _jaccard_similarity(previous.text, current.text)
+        if similarity >= 0.55:
+            continue
+
+        if summary.kind == "entity":
+            node_slug = _slugify(summary.title)
+            prev_lead = _leading_entity(previous)
+            curr_lead = _leading_entity(current)
+            if prev_lead != node_slug and curr_lead != node_slug:
+                continue
+
+        event_confidence = round(_clamp(confidence * (1.0 - similarity * 0.45)), 3)
         events.append(
             GraphChangeEvent(
-                id=f"event:{summary.kind}:{_slugify(summary.title)}:change",
+                id=_event_id(summary, "change", previous.id, current.id),
                 node_id=make_node_id(summary.kind, summary.title),
                 change_type="change",
                 before_state=_shorten(previous.text),
@@ -338,29 +460,49 @@ def _build_change_events(
                 confidence=event_confidence,
                 time_window=_format_time_window(previous_ts, current_ts),
                 evidence_ids=[previous.id, current.id],
-                summary=f"{summary.title} appears to have changed from '{_shorten(previous.text, 70)}' to '{_shorten(current.text, 70)}'.",
+                summary=(
+                    f"{summary.title} appears to have changed from "
+                    f"'{_shorten(previous.text, 70)}' to '{_shorten(current.text, 70)}'."
+                ),
             )
         )
 
-    if _is_contradictory(
-        previous,
-        current,
-        contradiction_cosine_min=options.contradiction_cosine_min,
-        contradiction_cosine_max=options.contradiction_cosine_max,
-    ):
-        events.append(
-            GraphChangeEvent(
-                id=f"event:{summary.kind}:{_slugify(summary.title)}:contradiction",
-                node_id=make_node_id(summary.kind, summary.title),
-                change_type="contradiction",
-                before_state=_shorten(previous.text),
-                after_state=_shorten(current.text),
-                confidence=round(_clamp(event_confidence + 0.1), 3),
-                time_window=_format_time_window(previous_ts, current_ts),
-                evidence_ids=[previous.id, current.id],
-                summary=f"Atulya has conflicting evidence for {summary.title}.",
-            )
-        )
+    for i, left in enumerate(distinct_units):
+        left_doc = left.doc_key()
+        for right in distinct_units[i + 1 :]:
+            node_slug = _slugify(summary.title)
+            left_lead = _leading_entity(left)
+            right_lead = _leading_entity(right)
+            both_led_by_node = (left_lead == node_slug and right_lead == node_slug)
+            either_led_by_node = (left_lead == node_slug or right_lead == node_slug)
+
+            same_doc = bool(left_doc and left_doc == right.doc_key())
+            if same_doc and not both_led_by_node:
+                continue
+            if not same_doc and not either_led_by_node:
+                continue
+            if _is_contradictory(
+                left,
+                right,
+                contradiction_cosine_min=options.contradiction_cosine_min,
+                contradiction_cosine_max=options.contradiction_cosine_max,
+            ):
+                left_ts  = left.effective_timestamp()
+                right_ts = right.effective_timestamp()
+                event_confidence = round(_clamp(confidence * 0.9), 3)
+                events.append(
+                    GraphChangeEvent(
+                        id=_event_id(summary, "contradiction", left.id, right.id),
+                        node_id=make_node_id(summary.kind, summary.title),
+                        change_type="contradiction",
+                        before_state=_shorten(left.text),
+                        after_state=_shorten(right.text),
+                        confidence=event_confidence,
+                        time_window=_format_time_window(left_ts, right_ts),
+                        evidence_ids=[left.id, right.id],
+                        summary=f"Conflicting evidence for {summary.title}.",
+                    )
+                )
 
     return events
 
@@ -410,11 +552,12 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
             continue
 
         events = _build_change_events(summary, confidence, options)
-        surface_confidence = _surface_confidence(confidence, events, options.contradiction_confidence_penalty)
-        latest_unit = max(
-            summary.units,
-            key=lambda unit: (unit.effective_timestamp() or datetime.min.replace(tzinfo=UTC), unit.id),
-        )
+        # current_state follows the most recent supported unit.
+        def _unit_recency_key(unit: GraphEvidenceUnit) -> tuple:
+            ts = unit.effective_timestamp() or datetime.min.replace(tzinfo=UTC)
+            return (ts, unit.proof_count)
+
+        latest_unit = max(summary.units, key=_unit_recency_key)
         status: NodeStatus = "stable"
         if any(event.change_type == "contradiction" for event in events):
             status = "contradictory"
@@ -561,7 +704,18 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
                 node_events = [*node_events, stale_event]
                 event_map[node.id] = node_events
 
-        event_boost = 0.25 if any(event.change_type != "stale" for event in node_events) else 0.0
+        event_boost = 0.0
+        if node_events:
+            # Contradictions already reduce surface_confidence, so their event boost stays
+            # below a clean change to avoid contradictory nodes dominating the ranking.
+            for ev in node_events:
+                if ev.change_type == "contradiction":
+                    event_boost += ev.confidence * 0.15
+                elif ev.change_type == "change":
+                    event_boost += ev.confidence * 0.25
+                else:  # stale
+                    event_boost += ev.confidence * 0.1
+            event_boost = _clamp(event_boost, 0.0, 0.35)
         stale_boost = 0.1 if any(event.change_type == "stale" for event in node_events) else 0.0
         surface_confidence = _surface_confidence(node.confidence, node_events, options.contradiction_confidence_penalty)
         node.change_score = round(

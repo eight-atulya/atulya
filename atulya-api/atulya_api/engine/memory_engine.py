@@ -6166,7 +6166,8 @@ class MemoryEngine(MemoryEngineInterface):
         rows = await conn.fetch(
             f"""
             SELECT id, text, fact_type, context, occurred_start, mentioned_at, created_at,
-                   proof_count, access_count, tags, source_memory_ids, embedding::text AS embedding_text
+                   proof_count, access_count, tags, source_memory_ids, chunk_id,
+                   embedding::text AS embedding_text
             FROM {fq_table("memory_units")}
             {where_clause}
             ORDER BY COALESCE(occurred_start, mentioned_at, created_at) DESC NULLS LAST, created_at DESC
@@ -6211,6 +6212,7 @@ class MemoryEngine(MemoryEngineInterface):
                     tags=list(row["tags"] or []),
                     entities=entity_map.get(row["id"], []),
                     source_memory_ids=[str(source_id) for source_id in (row["source_memory_ids"] or [])],
+                    chunk_id=row["chunk_id"],
                 )
             )
 
