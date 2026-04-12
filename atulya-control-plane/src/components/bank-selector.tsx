@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useBank } from "@/lib/bank-context";
 import { client } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -57,6 +57,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 
 function BankSelectorInner() {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const { currentBank, setCurrentBank, banks, loadBanks } = useBank();
   const { theme, toggleTheme } = useTheme();
@@ -435,6 +436,14 @@ function BankSelectorInner() {
                       onSelect={(value) => {
                         setCurrentBank(value);
                         setOpen(false);
+                        const brainDeepDiveMatch = (pathname || "").match(
+                          /^\/banks\/[^/]+(\/brain-intelligence(?:\/.*)?)$/
+                        );
+                        if (brainDeepDiveMatch) {
+                          router.push(`/banks/${value}${brainDeepDiveMatch[1]}`);
+                          return;
+                        }
+
                         // Preserve current view and subTab when switching banks
                         const view = searchParams.get("view") || "data";
                         const subTab = searchParams.get("subTab");

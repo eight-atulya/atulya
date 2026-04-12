@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { LayoutPanelTop, PanelTopOpen } from "lucide-react";
 import { client } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -84,19 +85,98 @@ export default function BrainIntelligencePage() {
     return counts;
   }, [data]);
 
+  const decisionPanelUrl = `/banks/${bankId}/brain-intelligence/customer-panel`;
+  const brainTemplateUrl = `/banks/${bankId}/brain-intelligence/brain-template`;
+
+  const openDecisionPanelPopup = () => {
+    if (typeof window === "undefined") return;
+    window.open(
+      decisionPanelUrl,
+      "customer-centric-decision-panel",
+      "popup=yes,width=1680,height=980,resizable=yes,scrollbars=yes"
+    );
+  };
+
+  const openBrainTemplatePopup = () => {
+    if (typeof window === "undefined") return;
+    window.open(
+      brainTemplateUrl,
+      "brain-html-simulation-panel",
+      "popup=yes,width=1720,height=1020,resizable=yes,scrollbars=yes"
+    );
+  };
+
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Brain Intelligence</h1>
           <p className="text-sm text-muted-foreground">
             Math-first influence analytics with explainable factors and anomaly-aware trending.
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link href={`/banks/${bankId}?view=brain`}>Back to Brain</Link>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline">
+            <Link href={`/banks/${bankId}?view=brain`}>Back to Brain</Link>
+          </Button>
+        </div>
       </div>
+
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Choose Workspace</h2>
+              <p className="text-sm text-muted-foreground">
+                Open the view you want. The main buttons stay in this tab. Separate-window options
+                are shown only if you explicitly want them.
+              </p>
+            </div>
+            <div className="grid gap-3 lg:min-w-[720px] lg:grid-cols-2">
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <LayoutPanelTop className="h-4 w-4" />
+                  Customer Decision Panel
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Best for daily use. Opens the live customer-facing cockpit with bank-connected
+                  actions and decision support.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button asChild>
+                    <Link href={decisionPanelUrl}>Open Decision Panel</Link>
+                  </Button>
+                  <Button variant="outline" onClick={openDecisionPanelPopup}>
+                    <PanelTopOpen className="mr-2 h-4 w-4" />
+                    Open in Separate Window
+                  </Button>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border bg-background p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                  <LayoutPanelTop className="h-4 w-4" />
+                  BRAIN Powered Simulated Decision Engine
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Opens the simulated decision engine and decision capture engine. Use this for
+                  guided walkthroughs, scenario analysis, and structured decision capture with the
+                  preserved `brain.html` experience.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button asChild variant="outline">
+                    <Link href={brainTemplateUrl}>Open Simulated Decision Engine</Link>
+                  </Button>
+                  <Button variant="ghost" onClick={openBrainTemplatePopup}>
+                    <PanelTopOpen className="mr-2 h-4 w-4" />
+                    Open in Separate Window
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardContent className="p-4 flex gap-3 items-end">
