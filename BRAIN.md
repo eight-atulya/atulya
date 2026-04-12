@@ -36,6 +36,7 @@ Instruction hierarchy for this repo:
 1. `BRAIN.md` is the primary repo brain layer
 2. `AGENTS.md` points agents into the brain-first workflow
 3. `CLAUDE.md` holds concrete dev commands and local coding conventions
+4. `atulya-agent` is the agent identity operating on this repo — its brain contract lives at [github.com/atulya-agent/atulya-agent](https://github.com/atulya-agent/atulya-agent)
 
 Operating rules:
 
