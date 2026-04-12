@@ -529,7 +529,157 @@ export interface OperationStatus {
 }
 
 export interface OperationResult extends OperationStatus {
-  result: ReflectResponse | null;
+  result: ReflectResponse | Record<string, any> | null;
+}
+
+export interface CodebaseSourceConfig {
+  owner?: string | null;
+  repo?: string | null;
+  ref?: string | null;
+  root_path?: string | null;
+  include_globs: string[];
+  exclude_globs: string[];
+}
+
+export interface CodebaseSnapshotStats {
+  total_files: number;
+  indexed_files: number;
+  retained_files: number;
+  manifest_only_files: number;
+  excluded_files: number;
+  symbol_count: number;
+  edge_count: number;
+  added_files: number;
+  changed_files: number;
+  unchanged_files: number;
+  deleted_files: number;
+  error?: string | null;
+}
+
+export interface CodebaseSummary {
+  id: string;
+  bank_id: string;
+  name: string;
+  source_type: string;
+  source_config: CodebaseSourceConfig;
+  current_snapshot_id: string | null;
+  approved_snapshot_id: string | null;
+  source_ref: string | null;
+  source_commit_sha: string | null;
+  snapshot_status: string | null;
+  approved_source_ref?: string | null;
+  approved_source_commit_sha?: string | null;
+  approved_snapshot_status?: string | null;
+  approval_status?: string | null;
+  memory_status?: string | null;
+  stats: CodebaseSnapshotStats;
+  created_at: string | null;
+  updated_at: string | null;
+  snapshot_created_at: string | null;
+  snapshot_updated_at?: string | null;
+  approved_snapshot_updated_at?: string | null;
+}
+
+export interface CodebaseImportResult {
+  codebase_id: string;
+  snapshot_id: string;
+  operation_id: string;
+  status: string;
+}
+
+export interface CodebaseGithubImportResult extends CodebaseImportResult {
+  resolved_commit_sha: string;
+}
+
+export interface CodebaseRefreshResult {
+  snapshot_id: string | null;
+  operation_id: string | null;
+  status: string;
+  changed_files: number;
+  added_files: number;
+  deleted_files: number;
+  noop: boolean;
+}
+
+export interface CodebaseApproveResult {
+  codebase_id: string;
+  snapshot_id: string;
+  operation_id: string;
+  status: string;
+}
+
+export interface CodebaseFileItem {
+  path: string;
+  language: string | null;
+  size_bytes: number;
+  content_hash: string;
+  document_id: string | null;
+  status: string;
+  change_kind: string;
+  reason: string | null;
+}
+
+export interface CodebaseFilesResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  source_ref: string | null;
+  source_commit_sha: string | null;
+  snapshot_status: string | null;
+  items: CodebaseFileItem[];
+}
+
+export interface CodebaseSymbolMatch {
+  name: string;
+  kind: string;
+  fq_name: string;
+  path: string;
+  language: string | null;
+  container: string | null;
+  start_line: number;
+  end_line: number;
+  match_mode?: string | null;
+}
+
+export interface CodebaseSymbolsResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  items: CodebaseSymbolMatch[];
+}
+
+export interface CodebaseImpactSeed {
+  type: string;
+  value: string;
+}
+
+export interface CodebaseImpactFile {
+  path: string;
+  language: string | null;
+  size_bytes: number;
+  content_hash: string;
+  document_id: string | null;
+  status: string;
+  change_kind: string;
+  depth: number;
+}
+
+export interface CodebaseImpactEdge {
+  edge_type: string;
+  from_path: string;
+  from_symbol: string | null;
+  to_path: string | null;
+  to_symbol: string | null;
+  target_ref: string | null;
+  label: string | null;
+}
+
+export interface CodebaseImpactResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  seed: CodebaseImpactSeed | null;
+  impacted_files: CodebaseImpactFile[];
+  matched_symbols: CodebaseSymbolMatch[];
+  edges: CodebaseImpactEdge[];
+  explanation: string;
 }
 
 export class ControlPlaneClient {
@@ -1801,6 +1951,188 @@ export class ControlPlaneClient {
     }
 
     return response.json();
+  }
+
+  async importCodebaseZip(
+    bankId: string,
+    params: {
+      archive: File;
+      name: string;
+      root_path?: string;
+      include_globs?: string[];
+      exclude_globs?: string[];
+      refresh_existing?: boolean;
+    }
+  ) {
+    const formData = new FormData();
+    formData.append("archive", params.archive);
+    formData.append(
+      "request",
+      JSON.stringify({
+        name: params.name,
+        root_path: params.root_path,
+        include_globs: params.include_globs ?? [],
+        exclude_globs: params.exclude_globs ?? [],
+        refresh_existing: params.refresh_existing ?? false,
+      })
+    );
+
+    const response = await fetch(`/api/banks/${bankId}/codebases/import/zip`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || `HTTP ${response.status}`);
+    }
+    return response.json() as Promise<CodebaseImportResult>;
+  }
+
+  async importCodebaseGithub(
+    bankId: string,
+    params: {
+      owner: string;
+      repo: string;
+      ref: string;
+      root_path?: string;
+      include_globs?: string[];
+      exclude_globs?: string[];
+      refresh_existing?: boolean;
+    }
+  ) {
+    return this.fetchApi<CodebaseGithubImportResult>(
+      `/api/banks/${bankId}/codebases/import/github`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...params,
+          include_globs: params.include_globs ?? [],
+          exclude_globs: params.exclude_globs ?? [],
+          refresh_existing: params.refresh_existing ?? false,
+        }),
+      }
+    );
+  }
+
+  async refreshCodebase(
+    bankId: string,
+    codebaseId: string,
+    params?: {
+      ref?: string;
+      full_rebuild?: boolean;
+    }
+  ) {
+    return this.fetchApi<CodebaseRefreshResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/refresh`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ref: params?.ref,
+          full_rebuild: params?.full_rebuild ?? false,
+        }),
+      }
+    );
+  }
+
+  async approveCodebase(
+    bankId: string,
+    codebaseId: string,
+    params?: {
+      snapshot_id?: string;
+    }
+  ) {
+    return this.fetchApi<CodebaseApproveResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/approve`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          snapshot_id: params?.snapshot_id,
+        }),
+      }
+    );
+  }
+
+  async listCodebases(bankId: string) {
+    return this.fetchApi<{ items: CodebaseSummary[] }>(`/api/banks/${bankId}/codebases`, {
+      cache: "no-store" as RequestCache,
+    });
+  }
+
+  async getCodebase(bankId: string, codebaseId: string) {
+    return this.fetchApi<CodebaseSummary>(`/api/banks/${bankId}/codebases/${codebaseId}`, {
+      cache: "no-store" as RequestCache,
+    });
+  }
+
+  async listCodebaseFiles(
+    bankId: string,
+    codebaseId: string,
+    params?: {
+      path_prefix?: string;
+      language?: string;
+      changed_only?: boolean;
+      snapshot_id?: string;
+    }
+  ) {
+    const queryParams = new URLSearchParams();
+    if (params?.path_prefix) queryParams.set("path_prefix", params.path_prefix);
+    if (params?.language) queryParams.set("language", params.language);
+    if (params?.changed_only) queryParams.set("changed_only", "true");
+    if (params?.snapshot_id) queryParams.set("snapshot_id", params.snapshot_id);
+    const suffix = queryParams.toString() ? `?${queryParams.toString()}` : "";
+    return this.fetchApi<CodebaseFilesResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/files${suffix}`,
+      {
+        cache: "no-store" as RequestCache,
+      }
+    );
+  }
+
+  async searchCodebaseSymbols(
+    bankId: string,
+    codebaseId: string,
+    params: {
+      q: string;
+      kind?: string;
+      path_prefix?: string;
+      language?: string;
+      limit?: number;
+    }
+  ) {
+    const queryParams = new URLSearchParams();
+    queryParams.set("q", params.q);
+    if (params.kind) queryParams.set("kind", params.kind);
+    if (params.path_prefix) queryParams.set("path_prefix", params.path_prefix);
+    if (params.language) queryParams.set("language", params.language);
+    if (params.limit) queryParams.set("limit", String(params.limit));
+    return this.fetchApi<CodebaseSymbolsResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/symbols?${queryParams.toString()}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async analyzeCodebaseImpact(
+    bankId: string,
+    codebaseId: string,
+    params: {
+      path?: string;
+      symbol?: string;
+      query?: string;
+      max_depth?: number;
+      limit?: number;
+    }
+  ) {
+    return this.fetchApi<CodebaseImpactResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/impact`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...params,
+          max_depth: params.max_depth ?? 2,
+          limit: params.limit ?? 50,
+        }),
+      }
+    );
   }
 
   /**

@@ -1,0 +1,161 @@
+---
+sidebar_position: 4
+---
+
+import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
+
+# Codebases
+
+<div className="atulya-hero">
+  <div className="atulya-hero__eyebrow">Developer Intelligence</div>
+  <h1 className="atulya-hero__title">Deterministic code understanding before memory hydration</h1>
+  <p className="atulya-hero__lead">
+    Atulya Codebases turns a repository into a reviewable ASD snapshot first, then hydrates memory
+    only after explicit approval. That keeps code intelligence fast, mechanical, and token-efficient
+    while preventing silent memory drift.
+  </p>
+  <div className="atulya-hero__actions">
+    <a className="button button--primary button--lg" href="/developer/codebases-lifecycle">
+      Explore The Lifecycle
+    </a>
+    <a className="button button--secondary button--lg" href="/developer/codebases-control-plane">
+      See The Control Plane
+    </a>
+  </div>
+</div>
+
+<FeatureCardGrid
+  cards={[
+    {
+      icon: '/img/icons/codebases-overview.svg',
+      eyebrow: 'ASD First',
+      title: 'Parse before memory',
+      description:
+        'A codebase import creates a reviewable mechanical snapshot first instead of immediately mutating Atulya memory.',
+    },
+    {
+      icon: '/img/icons/codebases-lifecycle.svg',
+      eyebrow: 'Review Gate',
+      title: 'Human approval is explicit',
+      description:
+        'Repo map, symbol search, and impact analysis are available before approval, while recall and reflect stay tied to the last approved snapshot.',
+    },
+    {
+      icon: '/img/icons/codebases-api.svg',
+      eyebrow: 'Typed Surfaces',
+      title: 'Built for coders and tools',
+      description:
+        'ZIP import, GitHub import, refresh, files, symbols, impact, and approve are all exposed as typed APIs that fit real developer workflows.',
+    },
+    {
+      icon: '/img/icons/codebases-control-plane.svg',
+      eyebrow: 'Operator UX',
+      title: 'Control Plane review loop',
+      description:
+        'The docs and UI are designed around the actual sequence a team follows: import, inspect, compare, approve, and only then hydrate memory.',
+    },
+  ]}
+/>
+
+## The Core Promise
+
+If you only remember one thing, remember this:
+
+- **ASD** gives immediate structural understanding of the repo
+- **approval** decides when that parsed snapshot becomes memory-backed
+- **Atulya memory** remains stable until a human accepts the new snapshot
+
+```mermaid
+flowchart LR
+    A["Import ZIP or GitHub archive"] --> B["ASD mechanical parse"]
+    B --> C["Reviewable snapshot"]
+    C --> D["Repo map, symbol search, impact analysis"]
+    C --> E["Explicit approval"]
+    E --> F["Memory hydration"]
+    F --> G["recall / reflect use approved codebase documents"]
+```
+
+## Why Companies Care
+
+Codebases is designed to improve developer efficiency in ways that compound:
+
+- no persistent clone-heavy indexing workflow
+- no import-time LLM indexing bill
+- deterministic symbol and dependency extraction for supported languages
+- review-before-memory so teams do not silently pollute reasoning state
+- explicit refresh so GitHub-backed repos stay cheap when nothing changed
+
+That combination is especially useful for:
+
+- engineering teams reviewing large repos
+- platform teams operating shared memory banks
+- agentic coding workflows where token spend and auditability both matter
+
+## What ASD Owns
+
+ASD is the proprietary mechanical code-intelligence layer. In v1 it owns:
+
+- archive extraction and filtering
+- path normalization
+- language detection
+- `tree-sitter` parsing for supported languages
+- symbol extraction
+- import and dependency edge construction
+- normalized repo-map metadata
+
+Deep parsing is strongest today for:
+
+- Python
+- JavaScript
+- TypeScript
+- JSX
+- TSX
+
+Unsupported languages still appear in the manifest and file map, but they do not pretend to have deep graph intelligence.
+
+## How The System Is Split
+
+| Layer | What it is for |
+|---|---|
+| `Codebases` | Deterministic code intelligence |
+| `retain` | General memory ingestion |
+| `recall` | Memory retrieval |
+| `reflect` | Memory-backed reasoning |
+
+This separation is intentional.
+
+Code understanding should be mechanical first. Memory-backed reasoning should happen only after the reviewed source state is approved.
+
+## Where To Go Next
+
+| If you want to... | Start here |
+|---|---|
+| Understand the exact state machine | [Codebases Lifecycle](./codebases-lifecycle) |
+| Inspect the UI review loop | [Codebases Control Plane](./codebases-control-plane) |
+| Integrate the endpoints directly | [Codebases API](./codebases-api) |
+
+## Practical Guidance
+
+Use ZIP import when:
+
+- the repo is private
+- you want an offline or curated snapshot
+- you want exact archive control
+
+Use GitHub import when:
+
+- the repo is public
+- you want explicit refresh against a ref
+- you want a no-op result when the commit SHA has not changed
+
+## What This Is Not
+
+Codebases is not trying to replace general memory operations.
+
+Instead:
+
+- `Codebases` is the precise structural layer
+- `retain`, `recall`, and `reflect` stay the semantic and reasoning layer
+- approval is the bridge between the two
+
+That is what keeps the fast path efficient and the memory path trustworthy.

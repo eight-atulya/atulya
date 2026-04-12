@@ -1,0 +1,130 @@
+---
+title: Codebases Control Plane
+---
+
+import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
+
+# Codebases Control Plane
+
+<div className="atulya-hero atulya-hero--compact">
+  <div className="atulya-hero__eyebrow">Operator UX</div>
+  <h1 className="atulya-hero__title">A workbench for developers, not just operators</h1>
+  <p className="atulya-hero__lead">
+    The Control Plane `Codebases` experience is built to match how engineers really inspect a
+    repository: import it, look at the structure, compare it against the approved state, then
+    choose when to publish into memory.
+  </p>
+</div>
+
+<FeatureCardGrid
+  cards={[
+    {
+      icon: '/img/icons/codebases-overview.svg',
+      eyebrow: 'Selected Repo',
+      title: 'Current and approved snapshot in one place',
+      description:
+        'Developers can see whether they are looking at a fresh parsed snapshot or the last approved memory-backed one.',
+    },
+    {
+      icon: '/img/icons/codebases-control-plane.svg',
+      eyebrow: 'Workbench',
+      title: 'Repo map, symbol search, impact',
+      description:
+        'The structural tools are usable before approval so review is meaningful instead of blind.',
+    },
+    {
+      icon: '/img/icons/codebases-lifecycle.svg',
+      eyebrow: 'Review Flow',
+      title: 'Approve only when ready',
+      description:
+        'The UI keeps approval explicit, which prevents silent memory growth from unreviewed imports or refreshes.',
+    },
+  ]}
+/>
+
+## What The Page Is Optimized For
+
+The page is built around four developer questions:
+
+1. what repo snapshot am I looking at
+2. what changed
+3. what symbols and files matter
+4. should this snapshot become the memory-backed source of truth
+
+## The Main Areas
+
+### Import
+
+Developers can import from:
+
+- ZIP archive
+- public GitHub repo and ref
+
+The import area is designed to make the source choice obvious instead of burying it behind generic file-ingestion UX.
+
+### Selected Codebase Panel
+
+This panel shows:
+
+- parse status
+- memory approval status
+- current snapshot ID
+- approved snapshot ID
+- source ref or commit
+- indexed file counts
+
+That combination matters because teams often need to compare the newest parsed state against the currently approved memory state.
+
+### Review Action
+
+The key action is:
+
+- `Approve Memory Import`
+
+This should be read as:
+
+- "publish this parsed snapshot into Atulya memory"
+
+not:
+
+- "finish importing the repo"
+
+That distinction helps developers trust what the button actually does.
+
+### Workbench Tabs
+
+The workbench is split into:
+
+- `Repo Map`
+- `Symbol Search`
+- `Impact`
+
+Those three tabs map well to how developers think during code review and refactor planning:
+
+- browse the shape
+- search the name
+- trace the blast radius
+
+## Before Approval Versus After Approval
+
+| State | What the developer sees |
+|---|---|
+| Before approval | Parsed snapshot is visible, `document_id` may still be empty for source files |
+| After approval | Stable codebase documents exist and memory-backed flows can rely on the snapshot |
+
+This is one of the most important UX details: the page is useful even before approval, so review becomes a real workflow rather than a ceremonial click.
+
+## Why This Matters
+
+Many repo tools collapse import, parse, and publish into one opaque operation.
+
+Atulya deliberately does not.
+
+The Control Plane keeps those phases separate because engineering teams care about:
+
+- deterministic structural understanding
+- token efficiency
+- auditability
+- avoiding silent changes to shared reasoning state
+
+That is why the `Codebases` page should feel closer to a developer workbench than a generic admin form.

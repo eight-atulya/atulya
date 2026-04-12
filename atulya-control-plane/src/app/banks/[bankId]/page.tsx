@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BankSelector } from "@/components/bank-selector";
 import { Sidebar } from "@/components/sidebar";
@@ -10,6 +10,7 @@ import { DocumentsView } from "@/components/documents-view";
 import { EntitiesView } from "@/components/entities-view";
 import { ThinkView } from "@/components/think-view";
 import { SearchDebugView } from "@/components/search-debug-view";
+import { CodebasesView } from "@/components/codebases-view";
 import { BankProfileView } from "@/components/bank-profile-view";
 import { BankConfigView } from "@/components/bank-config-view";
 import { BankStatsView } from "@/components/bank-stats-view";
@@ -39,14 +40,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Brain, Trash2, Loader2, MoreVertical, Pencil, RotateCcw } from "lucide-react";
+import { Brain, Trash2, Loader2, MoreVertical, RotateCcw } from "lucide-react";
 
-type NavItem = "brain" | "recall" | "reflect" | "data" | "documents" | "entities" | "profile";
+type NavItem =
+  | "brain"
+  | "recall"
+  | "reflect"
+  | "data"
+  | "documents"
+  | "codebases"
+  | "entities"
+  | "profile";
 type DataSubTab = "world" | "experience" | "observations" | "mental-models";
 type BankConfigTab = "general" | "configuration" | "webhooks" | "dreams";
 
 export default function BankPage() {
-  const params = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { features } = useFeatures();
@@ -379,6 +387,9 @@ export default function BankPage() {
                 <ThinkView />
               </div>
             )}
+
+            {/* Codebases Tab */}
+            {view === "codebases" && <CodebasesView />}
 
             {/* Data/Memories Tab */}
             {view === "data" && (

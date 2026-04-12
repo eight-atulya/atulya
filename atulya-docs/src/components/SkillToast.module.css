@@ -16,7 +16,7 @@
 }
 
 .toast {
-  background: linear-gradient(135deg, #0074d9 0%, #005db0 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   color: white;
   border-radius: 12px;
   padding: 16px 20px;
@@ -64,7 +64,7 @@
   display: block;
   margin-top: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e6f7f8;
+  color: #fff1f2;
   overflow-x: auto;
 }
 

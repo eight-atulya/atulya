@@ -146,7 +146,7 @@ const config: Config = {
           },
         ],
         theme: {
-          primaryColor: '#0074d9',
+          primaryColor: '#dc2626',
           sidebar: {
             backgroundColor: '#09090b',
           },
@@ -194,7 +194,7 @@ const config: Config = {
       announcementBar: {
         id: 'announcement',
         content: ANNOUNCEMENT_BAR,
-        backgroundColor: '#0074d9',
+        backgroundColor: '#dc2626',
         textColor: '#ffffff',
         isCloseable: false,
       },
@@ -349,30 +349,30 @@ const config: Config = {
       },
       options: {
         themeVariables: {
-          // Gradient start (#0074d9 blue) for nodes
-          primaryColor: '#0074d9',
+          // Gradient start (#dc2626 red) for nodes
+          primaryColor: '#dc2626',
           primaryTextColor: '#ffffff',
-          primaryBorderColor: '#005db0',
-          // Gradient end (#009296 teal) for edges/clusters
-          secondaryColor: '#009296',
+          primaryBorderColor: '#991b1b',
+          // Gradient end (#e11d48 rose) for edges/clusters
+          secondaryColor: '#e11d48',
           secondaryTextColor: '#ffffff',
-          secondaryBorderColor: '#007a7d',
+          secondaryBorderColor: '#be123c',
           // Tertiary
-          tertiaryColor: '#e6f7f8',
+          tertiaryColor: '#fff1f2',
           tertiaryTextColor: '#1e293b',
           // Lines and edges - gradient end color
-          lineColor: '#009296',
+          lineColor: '#e11d48',
           // Text
           textColor: '#1e293b',
           // Node specific - gradient start
-          nodeBkg: '#0074d9',
+          nodeBkg: '#dc2626',
           nodeTextColor: '#ffffff',
-          nodeBorder: '#005db0',
+          nodeBorder: '#991b1b',
           // Main background
-          mainBkg: '#0074d9',
+          mainBkg: '#dc2626',
           // Clusters/subgraphs - gradient end
-          clusterBkg: 'rgba(0, 146, 150, 0.08)',
-          clusterBorder: '#009296',
+          clusterBkg: 'rgba(225, 29, 72, 0.08)',
+          clusterBorder: '#e11d48',
           // Labels
           edgeLabelBackground: 'transparent',
           labelBackground: 'transparent',

@@ -62,6 +62,7 @@ from .dreaming import (
 from .operation_metadata import (
     BatchRetainChildMetadata,
     BatchRetainParentMetadata,
+    CodebaseOperationMetadata,
     ConsolidationMetadata,
     RefreshMentalModelMetadata,
     RetainMetadata,
@@ -159,6 +160,11 @@ _PROTECTED_TABLES = frozenset(
         "chunks",
         "async_operations",
         "file_storage",
+        "codebases",
+        "codebase_snapshots",
+        "codebase_files",
+        "codebase_symbols",
+        "codebase_edges",
         "dream_artifacts",
         "dream_runs",
         "dream_predictions",
@@ -234,6 +240,14 @@ import asyncpg
 import numpy as np
 from pydantic import BaseModel, Field
 
+from .codebase_index import (
+    ArchiveIndexResult,
+    IndexedEdge,
+    IndexedFile,
+    IndexedSymbol,
+    build_archive_index,
+    load_zip_archive,
+)
 from .cross_encoder import CrossEncoderModel
 from .embeddings import Embeddings, create_embeddings_from_env
 from .interface import MemoryEngineInterface
@@ -888,6 +902,793 @@ class MemoryEngine(MemoryEngineInterface):
             except Exception as e:
                 # Non-fatal - log and continue
                 logger.warning(f"[FILE_CONVERT_RETAIN] Failed to delete file {storage_key}: {e}")
+
+    def _chunk_codebase_text(self, text: str, *, chunk_size: int = 2000, overlap: int = 200) -> list[str]:
+        """Split source text into deterministic overlapping chunks for recall."""
+        normalized = text.strip()
+        if not normalized:
+            return []
+
+        chunks: list[str] = []
+        start = 0
+        text_len = len(normalized)
+        while start < text_len:
+            end = min(text_len, start + chunk_size)
+            if end < text_len:
+                newline_break = normalized.rfind("\n", start, end)
+                if newline_break > start + 200:
+                    end = newline_break
+            chunk = normalized[start:end].strip()
+            if chunk:
+                chunks.append(chunk)
+            if end >= text_len:
+                break
+            start = max(end - overlap, start + 1)
+        return chunks
+
+    async def _upsert_codebase_memory_document(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        path: str,
+        language: str | None,
+        text: str,
+    ) -> str:
+        """Store deterministic code chunks as memory units without LLM extraction."""
+        from .retain import chunk_storage, embedding_processing, fact_storage
+        from .retain.types import ChunkMetadata, ProcessedFact
+
+        document_id = f"codebase:{codebase_id}:{path}"
+        tags = ["scope:codebase", f"codebase:{codebase_id}"]
+        if language:
+            tags.append(f"language:{language}")
+
+        chunks = self._chunk_codebase_text(text)
+        if not chunks:
+            return document_id
+
+        await fact_storage.ensure_bank_exists(conn, bank_id)
+        await fact_storage.handle_document_tracking(
+            conn,
+            bank_id,
+            document_id,
+            text,
+            True,
+            retain_params={"context": path},
+            document_tags=tags,
+        )
+
+        chunk_meta = [
+            ChunkMetadata(chunk_text=chunk_text, fact_count=1, content_index=0, chunk_index=index)
+            for index, chunk_text in enumerate(chunks)
+        ]
+        chunk_id_map = await chunk_storage.store_chunks_batch(conn, bank_id, document_id, chunk_meta)
+        embeddings = await embedding_processing.generate_embeddings_batch(self.embeddings, chunks)
+        now = datetime.now(UTC)
+        facts = [
+            ProcessedFact(
+                fact_text=chunk_text,
+                fact_type="world",
+                embedding=embedding,
+                occurred_start=now,
+                occurred_end=None,
+                mentioned_at=now,
+                timeline_anchor_kind="recorded_only",
+                temporal_direction="atemporal",
+                temporal_confidence=None,
+                temporal_reference_text=None,
+                context=path,
+                metadata={},
+                chunk_id=chunk_id_map[index],
+                document_id=document_id,
+                tags=tags,
+            )
+            for index, (chunk_text, embedding) in enumerate(zip(chunks, embeddings, strict=False))
+        ]
+        await fact_storage.insert_facts_batch(conn, bank_id, facts, document_id=document_id)
+        return document_id
+
+    async def _delete_codebase_memory_document(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        document_id: str,
+    ) -> None:
+        """Delete a codebase-backed memory document if it exists."""
+        await conn.execute(
+            f"DELETE FROM {fq_table('documents')} WHERE id = $1 AND bank_id = $2",
+            document_id,
+            bank_id,
+        )
+
+    async def _copy_codebase_path_graph(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        source_snapshot_id: str,
+        target_snapshot_id: str,
+        path: str,
+        valid_paths: set[str],
+    ) -> None:
+        """Copy deterministic graph rows for an unchanged file into a new snapshot."""
+        source_snapshot_uuid = uuid.UUID(source_snapshot_id)
+        target_snapshot_uuid = uuid.UUID(target_snapshot_id)
+        codebase_uuid = uuid.UUID(codebase_id)
+
+        symbols = await conn.fetch(
+            f"""
+            SELECT path, language, name, kind, fq_name, container, start_line, end_line
+            FROM {fq_table("codebase_symbols")}
+            WHERE snapshot_id = $1 AND path = $2 AND bank_id = $3
+            """,
+            source_snapshot_uuid,
+            path,
+            bank_id,
+        )
+        for row in symbols:
+            await conn.execute(
+                f"""
+                INSERT INTO {fq_table("codebase_symbols")}
+                    (codebase_id, snapshot_id, bank_id, path, language, name, kind, fq_name, container, start_line, end_line)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                """,
+                codebase_uuid,
+                target_snapshot_uuid,
+                bank_id,
+                row["path"],
+                row["language"],
+                row["name"],
+                row["kind"],
+                row["fq_name"],
+                row["container"],
+                row["start_line"],
+                row["end_line"],
+            )
+
+        edges = await conn.fetch(
+            f"""
+            SELECT edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label
+            FROM {fq_table("codebase_edges")}
+            WHERE snapshot_id = $1 AND from_path = $2 AND bank_id = $3
+            """,
+            source_snapshot_uuid,
+            path,
+            bank_id,
+        )
+        for row in edges:
+            if row["to_path"] and row["to_path"] not in valid_paths:
+                continue
+            await conn.execute(
+                f"""
+                INSERT INTO {fq_table("codebase_edges")}
+                    (codebase_id, snapshot_id, bank_id, edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                """,
+                codebase_uuid,
+                target_snapshot_uuid,
+                bank_id,
+                row["edge_type"],
+                row["from_path"],
+                row["from_symbol"],
+                row["to_path"],
+                row["to_symbol"],
+                row["target_ref"],
+                row["label"],
+            )
+
+    async def _update_codebase_snapshot(
+        self,
+        snapshot_id: str,
+        *,
+        status: str,
+        stats: dict[str, Any] | None = None,
+        source_commit_sha: str | None = None,
+    ) -> None:
+        """Persist codebase snapshot status and stats."""
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebase_snapshots")}
+                SET status = $2,
+                    stats = COALESCE($3::jsonb, stats),
+                    source_commit_sha = COALESCE($4, source_commit_sha),
+                    updated_at = NOW()
+                WHERE id = $1
+                """,
+                uuid.UUID(snapshot_id),
+                status,
+                json.dumps(stats) if stats is not None else None,
+                source_commit_sha,
+            )
+
+    async def _mark_codebase_snapshot_approved(self, snapshot_id: str) -> None:
+        """Mark a codebase snapshot as approved for memory hydration."""
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebase_snapshots")}
+                SET status = 'approved',
+                    approved_at = NOW(),
+                    updated_at = NOW()
+                WHERE id = $1
+                """,
+                uuid.UUID(snapshot_id),
+            )
+
+    async def _mark_codebase_snapshot_failed(self, snapshot_id: str, error_message: str) -> None:
+        """Mark a codebase snapshot as failed."""
+        await self._update_codebase_snapshot(
+            snapshot_id,
+            status="failed",
+            stats={"error": error_message[:2000]},
+        )
+
+    async def _store_codebase_snapshot_archive(
+        self,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str,
+        archive_bytes: bytes,
+    ) -> str:
+        """Persist raw snapshot archive bytes for later review and approval."""
+        storage_key = f"banks/{bank_id}/codebases/{codebase_id}/snapshots/{snapshot_id}/archive.zip"
+        await self._file_storage.store(
+            file_data=archive_bytes,
+            key=storage_key,
+            metadata={"bank_id": bank_id, "codebase_id": codebase_id, "snapshot_id": snapshot_id},
+        )
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebase_snapshots")}
+                SET source_archive_storage_key = $2, updated_at = NOW()
+                WHERE id = $1
+                """,
+                uuid.UUID(snapshot_id),
+                storage_key,
+            )
+        return storage_key
+
+    async def _hydrate_codebase_snapshot_memory(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str,
+        archive_bytes: bytes,
+        root_path: str | None,
+        include_globs: list[str] | None,
+        exclude_globs: list[str] | None,
+        operation_id: str | None = None,
+    ) -> dict[str, int]:
+        """Hydrate approved snapshot file text into stable codebase documents."""
+        snapshot_uuid = uuid.UUID(snapshot_id)
+        codebase_uuid = uuid.UUID(codebase_id)
+
+        approved_snapshot_row = await conn.fetchrow(
+            f"""
+            SELECT approved_snapshot_id
+            FROM {fq_table("codebases")}
+            WHERE id = $1 AND bank_id = $2
+            """,
+            codebase_uuid,
+            bank_id,
+        )
+        approved_snapshot_id = (
+            str(approved_snapshot_row["approved_snapshot_id"])
+            if approved_snapshot_row and approved_snapshot_row["approved_snapshot_id"]
+            else None
+        )
+
+        previous_files_rows = []
+        if approved_snapshot_id:
+            previous_files_rows = await conn.fetch(
+                f"""
+                SELECT path, content_hash, document_id
+                FROM {fq_table("codebase_files")}
+                WHERE snapshot_id = $1 AND bank_id = $2
+                """,
+                uuid.UUID(approved_snapshot_id),
+                bank_id,
+            )
+        previous_hashes = {row["path"]: row["content_hash"] for row in previous_files_rows}
+        previous_documents = {row["path"]: row["document_id"] for row in previous_files_rows if row["document_id"]}
+
+        if operation_id:
+            await self._set_operation_stage(
+                operation_id,
+                "hydrating_memory",
+                {"snapshot_id": snapshot_id, "codebase_id": codebase_id},
+            )
+
+        normalized_files = load_zip_archive(
+            archive_bytes,
+            root_path=root_path,
+            include_globs=include_globs,
+            exclude_globs=exclude_globs,
+        )
+        index_result = build_archive_index(normalized_files, previous_hashes=previous_hashes)
+
+        hydrated_files = 0
+        reused_files = 0
+        deleted_files = 0
+
+        for indexed_file in index_result.files:
+            stable_document_id = f"codebase:{codebase_id}:{indexed_file.path}"
+            document_id: str | None = None
+            previous_document_id = previous_documents.get(indexed_file.path)
+
+            if indexed_file.retain_text is not None:
+                document_id = stable_document_id
+                if indexed_file.change_kind == "unchanged" and previous_document_id:
+                    reused_files += 1
+                else:
+                    await self._upsert_codebase_memory_document(
+                        conn,
+                        bank_id=bank_id,
+                        codebase_id=codebase_id,
+                        path=indexed_file.path,
+                        language=indexed_file.language,
+                        text=indexed_file.retain_text,
+                    )
+                    hydrated_files += 1
+            elif previous_document_id:
+                await self._delete_codebase_memory_document(
+                    conn,
+                    bank_id=bank_id,
+                    document_id=previous_document_id,
+                )
+                deleted_files += 1
+
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebase_files")}
+                SET document_id = $4
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND path = $5
+                """,
+                snapshot_uuid,
+                bank_id,
+                codebase_uuid,
+                document_id,
+                indexed_file.path,
+            )
+
+        for deleted_path in index_result.deleted_files:
+            previous_document_id = previous_documents.get(deleted_path)
+            if not previous_document_id:
+                continue
+            await self._delete_codebase_memory_document(
+                conn,
+                bank_id=bank_id,
+                document_id=previous_document_id,
+            )
+            deleted_files += 1
+
+        return {
+            "hydrated_files": hydrated_files,
+            "reused_files": reused_files,
+            "deleted_files": deleted_files,
+        }
+
+    async def _resolve_public_github_commit_sha(self, owner: str, repo: str, ref: str) -> str:
+        """Resolve a public GitHub ref to a commit SHA."""
+        client = self._http_client or httpx.AsyncClient(timeout=30.0)
+        owns_client = self._http_client is None
+        try:
+            response = await client.get(
+                f"https://api.github.com/repos/{owner}/{repo}/commits/{ref}",
+                headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
+            )
+            if response.status_code == 404:
+                raise ValueError(f"Public GitHub ref not found: {owner}/{repo}@{ref}")
+            response.raise_for_status()
+            payload = response.json()
+            sha = payload.get("sha")
+            if not sha:
+                raise ValueError(f"GitHub did not return a commit SHA for {owner}/{repo}@{ref}")
+            return str(sha)
+        finally:
+            if owns_client:
+                await client.aclose()
+
+    async def _download_public_github_archive(self, owner: str, repo: str, commit_sha: str) -> bytes:
+        """Download a public GitHub repo snapshot as a ZIP archive."""
+        config = get_config()
+        max_archive_bytes = config.file_conversion_max_batch_size_bytes
+        client = self._http_client or httpx.AsyncClient(timeout=60.0, follow_redirects=True)
+        owns_client = self._http_client is None
+        try:
+            async with client.stream(
+                "GET",
+                f"https://api.github.com/repos/{owner}/{repo}/zipball/{commit_sha}",
+                headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
+            ) as response:
+                if response.status_code == 404:
+                    raise ValueError(f"Public GitHub archive not found: {owner}/{repo}@{commit_sha}")
+                response.raise_for_status()
+
+                content_length = response.headers.get("Content-Length")
+                if content_length:
+                    try:
+                        declared_size = int(content_length)
+                    except ValueError:
+                        declared_size = None
+                    if declared_size and declared_size > max_archive_bytes:
+                        archive_mb = declared_size / (1024 * 1024)
+                        raise ValueError(
+                            f"GitHub archive size ({archive_mb:.1f}MB) exceeds maximum of {config.file_conversion_max_batch_size_mb}MB"
+                        )
+
+                chunks: list[bytes] = []
+                total_size = 0
+                async for chunk in response.aiter_bytes():
+                    if not chunk:
+                        continue
+                    total_size += len(chunk)
+                    if total_size > max_archive_bytes:
+                        archive_mb = total_size / (1024 * 1024)
+                        raise ValueError(
+                            f"GitHub archive size ({archive_mb:.1f}MB) exceeds maximum of {config.file_conversion_max_batch_size_mb}MB"
+                        )
+                    chunks.append(chunk)
+                return b"".join(chunks)
+        finally:
+            if owns_client:
+                await client.aclose()
+
+    async def _process_codebase_archive(
+        self,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str,
+        archive_bytes: bytes,
+        archive_storage_key: str | None,
+        root_path: str | None,
+        include_globs: list[str] | None,
+        exclude_globs: list[str] | None,
+        source_commit_sha: str | None,
+        operation_id: str | None,
+    ) -> dict[str, Any]:
+        """Build an ASD-backed reviewable codebase snapshot without hydrating memory."""
+        if operation_id:
+            await self._set_operation_stage(
+                operation_id, "processing", {"snapshot_id": snapshot_id, "codebase_id": codebase_id}
+            )
+        await self._update_codebase_snapshot(snapshot_id, status="processing", source_commit_sha=source_commit_sha)
+
+        if not archive_storage_key:
+            archive_storage_key = await self._store_codebase_snapshot_archive(
+                bank_id=bank_id,
+                codebase_id=codebase_id,
+                snapshot_id=snapshot_id,
+                archive_bytes=archive_bytes,
+            )
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            async with conn.transaction():
+                codebase_row = await conn.fetchrow(
+                    f"""
+                    SELECT current_snapshot_id
+                    FROM {fq_table("codebases")}
+                    WHERE id = $1 AND bank_id = $2
+                    """,
+                    uuid.UUID(codebase_id),
+                    bank_id,
+                )
+
+                if not codebase_row:
+                    raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+
+                previous_snapshot_id = (
+                    str(codebase_row["current_snapshot_id"]) if codebase_row["current_snapshot_id"] else None
+                )
+                previous_files_rows = []
+                if previous_snapshot_id:
+                    previous_files_rows = await conn.fetch(
+                        f"""
+                        SELECT path, content_hash, document_id, status
+                        FROM {fq_table("codebase_files")}
+                        WHERE snapshot_id = $1
+                        """,
+                        uuid.UUID(previous_snapshot_id),
+                    )
+                previous_hashes = {row["path"]: row["content_hash"] for row in previous_files_rows}
+
+                await conn.execute(
+                    f"DELETE FROM {fq_table('codebase_edges')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
+                )
+                await conn.execute(
+                    f"DELETE FROM {fq_table('codebase_symbols')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
+                )
+                await conn.execute(
+                    f"DELETE FROM {fq_table('codebase_files')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
+                )
+
+                normalized_files = load_zip_archive(
+                    archive_bytes,
+                    root_path=root_path,
+                    include_globs=include_globs,
+                    exclude_globs=exclude_globs,
+                )
+                index_result = build_archive_index(normalized_files, previous_hashes=previous_hashes)
+                valid_paths = {indexed_file.path for indexed_file in index_result.files}
+
+                if operation_id:
+                    await self._set_operation_stage(
+                        operation_id,
+                        "asd_indexing",
+                        {
+                            "total_files": len(index_result.files),
+                            "changed_files": len(index_result.changed_files),
+                            "deleted_files": len(index_result.deleted_files),
+                        },
+                    )
+
+                symbol_count = 0
+                edge_count = 0
+                indexed_count = 0
+                retained_count = 0
+                manifest_only_count = 0
+                excluded_count = 0
+
+                for indexed_file in index_result.files:
+                    document_id: str | None = None
+
+                    if indexed_file.change_kind == "unchanged" and previous_snapshot_id:
+                        if indexed_file.status == "indexed":
+                            await self._copy_codebase_path_graph(
+                                conn,
+                                bank_id=bank_id,
+                                codebase_id=codebase_id,
+                                source_snapshot_id=previous_snapshot_id,
+                                target_snapshot_id=snapshot_id,
+                                path=indexed_file.path,
+                                valid_paths=valid_paths,
+                            )
+                    else:
+                        for symbol in indexed_file.symbols:
+                            await conn.execute(
+                                f"""
+                                INSERT INTO {fq_table("codebase_symbols")}
+                                    (codebase_id, snapshot_id, bank_id, path, language, name, kind, fq_name, container, start_line, end_line)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                                """,
+                                uuid.UUID(codebase_id),
+                                uuid.UUID(snapshot_id),
+                                bank_id,
+                                symbol.path,
+                                symbol.language,
+                                symbol.name,
+                                symbol.kind,
+                                symbol.fq_name,
+                                symbol.container,
+                                symbol.start_line,
+                                symbol.end_line,
+                            )
+                        for edge in indexed_file.edges:
+                            await conn.execute(
+                                f"""
+                                INSERT INTO {fq_table("codebase_edges")}
+                                    (codebase_id, snapshot_id, bank_id, edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                                """,
+                                uuid.UUID(codebase_id),
+                                uuid.UUID(snapshot_id),
+                                bank_id,
+                                edge.edge_type,
+                                edge.from_path,
+                                edge.from_symbol,
+                                edge.to_path,
+                                edge.to_symbol,
+                                edge.target_ref,
+                                edge.label,
+                            )
+
+                    await conn.execute(
+                        f"""
+                        INSERT INTO {fq_table("codebase_files")}
+                            (codebase_id, snapshot_id, bank_id, path, language, size_bytes, content_hash, document_id, status, change_kind, reason)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                        """,
+                        uuid.UUID(codebase_id),
+                        uuid.UUID(snapshot_id),
+                        bank_id,
+                        indexed_file.path,
+                        indexed_file.language,
+                        indexed_file.size_bytes,
+                        indexed_file.content_hash,
+                        document_id,
+                        indexed_file.status,
+                        indexed_file.change_kind,
+                        indexed_file.reason,
+                    )
+
+                    symbol_count += len(indexed_file.symbols)
+                    edge_count += len(indexed_file.edges)
+                    if indexed_file.status == "indexed":
+                        indexed_count += 1
+                    elif indexed_file.status == "retained":
+                        retained_count += 1
+                    elif indexed_file.status == "manifest_only":
+                        manifest_only_count += 1
+                    elif indexed_file.status == "excluded":
+                        excluded_count += 1
+
+                stats = {
+                    "total_files": len(index_result.files),
+                    "indexed_files": indexed_count,
+                    "retained_files": retained_count,
+                    "manifest_only_files": manifest_only_count,
+                    "excluded_files": excluded_count,
+                    "symbol_count": symbol_count,
+                    "edge_count": edge_count,
+                    "added_files": len(index_result.added_files),
+                    "changed_files": len(index_result.changed_files),
+                    "unchanged_files": len(index_result.unchanged_files),
+                    "deleted_files": len(index_result.deleted_files),
+                }
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebase_snapshots")}
+                    SET status = 'review_required',
+                        stats = $2::jsonb,
+                        source_commit_sha = COALESCE($3, source_commit_sha),
+                        updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(snapshot_id),
+                    json.dumps(stats),
+                    source_commit_sha,
+                )
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebases")}
+                    SET current_snapshot_id = $2, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(codebase_id),
+                    uuid.UUID(snapshot_id),
+                )
+
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "status": "review_required",
+            "added_files": len(index_result.added_files),
+            "changed_files": len(index_result.changed_files),
+            "deleted_files": len(index_result.deleted_files),
+            "noop": False,
+            "stats": stats,
+        }
+
+    async def _handle_codebase_import_zip(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        """Handle ZIP-backed codebase import tasks."""
+        storage_key = task_dict.get("storage_key")
+        if not storage_key:
+            raise ValueError("storage_key is required for codebase ZIP import")
+        archive_bytes = await self._file_storage.retrieve(storage_key)
+        return await self._process_codebase_archive(
+            bank_id=task_dict["bank_id"],
+            codebase_id=task_dict["codebase_id"],
+            snapshot_id=task_dict["snapshot_id"],
+            archive_bytes=archive_bytes,
+            archive_storage_key=storage_key,
+            root_path=task_dict.get("root_path"),
+            include_globs=task_dict.get("include_globs"),
+            exclude_globs=task_dict.get("exclude_globs"),
+            source_commit_sha=task_dict.get("source_commit_sha"),
+            operation_id=task_dict.get("operation_id"),
+        )
+
+    async def _handle_codebase_import_github(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        """Handle public GitHub-backed codebase import and refresh tasks."""
+        archive_bytes = await self._download_public_github_archive(
+            task_dict["owner"],
+            task_dict["repo"],
+            task_dict["source_commit_sha"],
+        )
+        return await self._process_codebase_archive(
+            bank_id=task_dict["bank_id"],
+            codebase_id=task_dict["codebase_id"],
+            snapshot_id=task_dict["snapshot_id"],
+            archive_bytes=archive_bytes,
+            archive_storage_key=task_dict.get("storage_key"),
+            root_path=task_dict.get("root_path"),
+            include_globs=task_dict.get("include_globs"),
+            exclude_globs=task_dict.get("exclude_globs"),
+            source_commit_sha=task_dict.get("source_commit_sha"),
+            operation_id=task_dict.get("operation_id"),
+        )
+
+    async def _handle_codebase_approve(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        """Hydrate the selected reviewable snapshot into memory after explicit approval."""
+        bank_id = task_dict["bank_id"]
+        codebase_id = task_dict["codebase_id"]
+        snapshot_id = task_dict["snapshot_id"]
+        operation_id = task_dict.get("operation_id")
+
+        if operation_id:
+            await self._set_operation_stage(
+                operation_id,
+                "loading_snapshot",
+                {"snapshot_id": snapshot_id, "codebase_id": codebase_id},
+            )
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            snapshot_row = await conn.fetchrow(
+                f"""
+                SELECT s.id, s.status, s.source_archive_storage_key, c.source_config
+                FROM {fq_table("codebase_snapshots")} s
+                JOIN {fq_table("codebases")} c ON c.id = s.codebase_id
+                WHERE s.id = $1 AND s.codebase_id = $2 AND s.bank_id = $3
+                """,
+                uuid.UUID(snapshot_id),
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not snapshot_row:
+                raise ValueError(f"Snapshot {snapshot_id} not found for codebase {codebase_id}")
+            if snapshot_row["status"] not in {"review_required", "approved"}:
+                raise ValueError(f"Snapshot {snapshot_id} is not ready for approval.")
+            source_config = decode_jsonb(snapshot_row["source_config"], {})
+            storage_key = snapshot_row["source_archive_storage_key"]
+
+        if not storage_key:
+            raise ValueError(f"Snapshot {snapshot_id} is missing archive evidence for approval.")
+
+        archive_bytes = await self._file_storage.retrieve(storage_key)
+        async with acquire_with_retry(pool) as conn:
+            async with conn.transaction():
+                hydration = await self._hydrate_codebase_snapshot_memory(
+                    conn,
+                    bank_id=bank_id,
+                    codebase_id=codebase_id,
+                    snapshot_id=snapshot_id,
+                    archive_bytes=archive_bytes,
+                    root_path=source_config.get("root_path"),
+                    include_globs=source_config.get("include_globs") or [],
+                    exclude_globs=source_config.get("exclude_globs") or [],
+                    operation_id=operation_id,
+                )
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebase_snapshots")}
+                    SET status = 'approved',
+                        approved_at = NOW(),
+                        updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(snapshot_id),
+                )
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebases")}
+                    SET approved_snapshot_id = $2, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(codebase_id),
+                    uuid.UUID(snapshot_id),
+                )
+
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "status": "approved",
+            **hydration,
+        }
 
     async def _handle_consolidation(self, task_dict: dict[str, Any]):
         """
@@ -2327,11 +3128,18 @@ class MemoryEngine(MemoryEngineInterface):
                 # Continue with processing if we can't check status
 
         consolidation_result: dict | None = None
+        task_result_payload: dict[str, Any] | None = None
         try:
             if task_type == "batch_retain":
                 await self._handle_batch_retain(task_dict)
             elif task_type == "file_convert_retain":
                 await self._handle_file_convert_retain(task_dict)
+            elif task_type == "codebase_import_zip":
+                task_result_payload = await self._handle_codebase_import_zip(task_dict)
+            elif task_type == "codebase_import_github":
+                task_result_payload = await self._handle_codebase_import_github(task_dict)
+            elif task_type == "codebase_approve":
+                task_result_payload = await self._handle_codebase_approve(task_dict)
             elif task_type == "consolidation":
                 consolidation_result = await self._handle_consolidation(task_dict)
             elif task_type == "reflect":
@@ -2366,7 +3174,7 @@ class MemoryEngine(MemoryEngineInterface):
                         schema=schema,
                     )
                 else:
-                    await self._mark_operation_completed(operation_id)
+                    await self._mark_operation_completed(operation_id, result_payload=task_result_payload)
 
         except RetryTaskAt:
             # Task-owned retry: let the poller handle scheduling
@@ -2402,6 +3210,12 @@ class MemoryEngine(MemoryEngineInterface):
                         error_message=str(e),
                         schema=schema,
                     )
+                elif task_type in ("codebase_import_zip", "codebase_import_github"):
+                    retry_count = task_dict.get("_retry_count", 0)
+                    if retry_count >= 3:
+                        snapshot_id = task_dict.get("snapshot_id")
+                        if snapshot_id:
+                            await self._mark_codebase_snapshot_failed(snapshot_id, str(e))
                 # Retryable: use RetryTaskAt if under the retry limit, else re-raise (poller marks failed)
                 retry_count = task_dict.get("_retry_count", 0)
                 if retry_count < 3:
@@ -5140,6 +5954,7 @@ class MemoryEngine(MemoryEngineInterface):
         pool = await self._get_pool()
         invalidated_obs = 0
         result: dict[str, int] = {}
+        archive_storage_keys: list[str] = []
         async with acquire_with_retry(pool) as conn:
             # Ensure connection is not in read-only mode (can happen with connection poolers)
             await conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE")
@@ -5188,6 +6003,18 @@ class MemoryEngine(MemoryEngineInterface):
                         operations_count = await conn.fetchval(
                             f"SELECT COUNT(*) FROM {fq_table('async_operations')} WHERE bank_id = $1", bank_id
                         )
+                        codebases_count = await conn.fetchval(
+                            f"SELECT COUNT(*) FROM {fq_table('codebases')} WHERE bank_id = $1", bank_id
+                        )
+                        archive_storage_rows = await conn.fetch(
+                            f"""
+                            SELECT source_archive_storage_key
+                            FROM {fq_table("codebase_snapshots")}
+                            WHERE bank_id = $1 AND source_archive_storage_key IS NOT NULL
+                            """,
+                            bank_id,
+                        )
+                        archive_storage_keys = [row["source_archive_storage_key"] for row in archive_storage_rows]
 
                         # Delete documents (cascades to chunks)
                         await conn.execute(f"DELETE FROM {fq_table('documents')} WHERE bank_id = $1", bank_id)
@@ -5202,6 +6029,9 @@ class MemoryEngine(MemoryEngineInterface):
                         # so a recreated bank starts with a clean queue state.
                         await conn.execute(f"DELETE FROM {fq_table('async_operations')} WHERE bank_id = $1", bank_id)
 
+                        # Delete codebases (cascades to snapshots, files, symbols, edges)
+                        await conn.execute(f"DELETE FROM {fq_table('codebases')} WHERE bank_id = $1", bank_id)
+
                         # Delete the bank profile itself
                         await conn.execute(f"DELETE FROM {fq_table('banks')} WHERE bank_id = $1", bank_id)
 
@@ -5210,6 +6040,7 @@ class MemoryEngine(MemoryEngineInterface):
                             "entities_deleted": entities_count,
                             "documents_deleted": documents_count,
                             "operations_deleted": operations_count,
+                            "codebases_deleted": codebases_count,
                             "bank_deleted": True,
                         }
 
@@ -5220,6 +6051,14 @@ class MemoryEngine(MemoryEngineInterface):
             await self.submit_async_consolidation(bank_id=bank_id, request_context=request_context)
 
         if not fact_type:
+            for storage_key in archive_storage_keys:
+                try:
+                    await self._file_storage.delete(storage_key)
+                except Exception as exc:
+                    logger.warning(
+                        "[DELETE_BANK] Failed to delete codebase archive %s for bank=%s: %s", storage_key, bank_id, exc
+                    )
+
             # Remove derived local brain cache file for this bank.
             try:
                 snapshot_delete = await self._brain_runtime.delete_snapshot(bank_id)
@@ -9654,6 +10493,989 @@ class MemoryEngine(MemoryEngineInterface):
 
         return {
             "operation_id": str(operation_id),
+        }
+
+    async def submit_async_codebase_zip_import(
+        self,
+        bank_id: str,
+        *,
+        name: str,
+        archive_name: str,
+        archive_bytes: bytes,
+        root_path: str | None = None,
+        include_globs: list[str] | None = None,
+        exclude_globs: list[str] | None = None,
+        refresh_existing: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue a ZIP-based codebase import."""
+        from atulya_api.extensions import BankWriteContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(bank_id=bank_id, operation="submit_codebase_import", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        config = get_config()
+        max_archive_bytes = config.file_conversion_max_batch_size_bytes
+        if len(archive_bytes) > max_archive_bytes:
+            archive_mb = len(archive_bytes) / (1024 * 1024)
+            raise ValueError(
+                f"Archive size ({archive_mb:.1f}MB) exceeds maximum of {config.file_conversion_max_batch_size_mb}MB"
+            )
+
+        pool = await self._get_pool()
+        source_config = {
+            "root_path": root_path,
+            "include_globs": include_globs or [],
+            "exclude_globs": exclude_globs or [],
+        }
+        async with acquire_with_retry(pool) as conn:
+            existing = await conn.fetchrow(
+                f"""
+                SELECT id
+                FROM {fq_table("codebases")}
+                WHERE bank_id = $1 AND name = $2 AND source_type = 'zip'
+                """,
+                bank_id,
+                name,
+            )
+            if existing and not refresh_existing:
+                raise ValueError(f"Codebase '{name}' already exists in bank {bank_id}. Use refresh_existing=true.")
+
+            if existing:
+                codebase_id = str(existing["id"])
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebases")}
+                    SET source_config = $2::jsonb, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(codebase_id),
+                    json.dumps(source_config),
+                )
+            else:
+                codebase_row = await conn.fetchrow(
+                    f"""
+                    INSERT INTO {fq_table("codebases")} (bank_id, name, source_type, source_config)
+                    VALUES ($1, $2, 'zip', $3::jsonb)
+                    RETURNING id
+                    """,
+                    bank_id,
+                    name,
+                    json.dumps(source_config),
+                )
+                codebase_id = str(codebase_row["id"])
+
+            snapshot_row = await conn.fetchrow(
+                f"""
+                INSERT INTO {fq_table("codebase_snapshots")} (codebase_id, bank_id, source_ref, status)
+                VALUES ($1, $2, $3, 'pending')
+                RETURNING id
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+                archive_name,
+            )
+            snapshot_id = str(snapshot_row["id"])
+
+        storage_key = f"banks/{bank_id}/codebases/{codebase_id}/snapshots/{snapshot_id}/archive.zip"
+        await self._file_storage.store(
+            file_data=archive_bytes,
+            key=storage_key,
+            metadata={"bank_id": bank_id, "codebase_id": codebase_id, "snapshot_id": snapshot_id},
+        )
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebase_snapshots")}
+                SET source_archive_storage_key = $2, updated_at = NOW()
+                WHERE id = $1
+                """,
+                uuid.UUID(snapshot_id),
+                storage_key,
+            )
+
+        operation = await self._submit_async_operation(
+            bank_id=bank_id,
+            operation_type="codebase_import",
+            task_type="codebase_import_zip",
+            task_payload={
+                "codebase_id": codebase_id,
+                "snapshot_id": snapshot_id,
+                "storage_key": storage_key,
+                "root_path": root_path,
+                "include_globs": include_globs or [],
+                "exclude_globs": exclude_globs or [],
+            },
+            result_metadata=CodebaseOperationMetadata(
+                codebase_id=codebase_id,
+                snapshot_id=snapshot_id,
+                source_type="zip",
+                source_ref=archive_name,
+            ).to_dict(),
+            dedupe_by_bank=False,
+        )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "operation_id": operation["operation_id"],
+            "status": "pending",
+        }
+
+    async def submit_async_codebase_github_import(
+        self,
+        bank_id: str,
+        *,
+        owner: str,
+        repo: str,
+        ref: str,
+        root_path: str | None = None,
+        include_globs: list[str] | None = None,
+        exclude_globs: list[str] | None = None,
+        refresh_existing: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue a public GitHub-backed codebase import."""
+        from atulya_api.extensions import BankWriteContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(bank_id=bank_id, operation="submit_codebase_import", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        resolved_commit_sha = await self._resolve_public_github_commit_sha(owner, repo, ref)
+        name = f"{owner}/{repo}"
+        source_config = {
+            "owner": owner,
+            "repo": repo,
+            "ref": ref,
+            "root_path": root_path,
+            "include_globs": include_globs or [],
+            "exclude_globs": exclude_globs or [],
+        }
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            existing = await conn.fetchrow(
+                f"""
+                SELECT id
+                FROM {fq_table("codebases")}
+                WHERE bank_id = $1 AND name = $2 AND source_type = 'github'
+                """,
+                bank_id,
+                name,
+            )
+            if existing and not refresh_existing:
+                raise ValueError(f"Codebase '{name}' already exists in bank {bank_id}. Use refresh_existing=true.")
+
+            if existing:
+                codebase_id = str(existing["id"])
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebases")}
+                    SET source_config = $2::jsonb, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(codebase_id),
+                    json.dumps(source_config),
+                )
+            else:
+                codebase_row = await conn.fetchrow(
+                    f"""
+                    INSERT INTO {fq_table("codebases")} (bank_id, name, source_type, source_config)
+                    VALUES ($1, $2, 'github', $3::jsonb)
+                    RETURNING id
+                    """,
+                    bank_id,
+                    name,
+                    json.dumps(source_config),
+                )
+                codebase_id = str(codebase_row["id"])
+
+            snapshot_row = await conn.fetchrow(
+                f"""
+                INSERT INTO {fq_table("codebase_snapshots")} (codebase_id, bank_id, source_ref, source_commit_sha, status)
+                VALUES ($1, $2, $3, $4, 'pending')
+                RETURNING id
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+                ref,
+                resolved_commit_sha,
+            )
+            snapshot_id = str(snapshot_row["id"])
+
+        operation = await self._submit_async_operation(
+            bank_id=bank_id,
+            operation_type="codebase_import",
+            task_type="codebase_import_github",
+            task_payload={
+                "codebase_id": codebase_id,
+                "snapshot_id": snapshot_id,
+                "owner": owner,
+                "repo": repo,
+                "root_path": root_path,
+                "include_globs": include_globs or [],
+                "exclude_globs": exclude_globs or [],
+                "source_commit_sha": resolved_commit_sha,
+            },
+            result_metadata=CodebaseOperationMetadata(
+                codebase_id=codebase_id,
+                snapshot_id=snapshot_id,
+                source_type="github",
+                source_ref=ref,
+            ).to_dict(),
+            dedupe_by_bank=False,
+        )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "operation_id": operation["operation_id"],
+            "resolved_commit_sha": resolved_commit_sha,
+            "status": "pending",
+        }
+
+    async def submit_async_codebase_refresh(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        ref: str | None = None,
+        full_rebuild: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue an explicit GitHub-backed codebase refresh or return a no-op."""
+        from atulya_api.extensions import BankWriteContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(
+                bank_id=bank_id, operation="submit_codebase_refresh", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT id, source_type, source_config, current_snapshot_id
+                FROM {fq_table("codebases")}
+                WHERE id = $1 AND bank_id = $2
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not row:
+                raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+            if row["source_type"] != "github":
+                raise ValueError("Explicit refresh is only supported for public GitHub codebases in v1.")
+
+            source_config = decode_jsonb(row["source_config"], {})
+            effective_ref = ref or source_config.get("ref")
+            if not effective_ref:
+                raise ValueError("Codebase refresh requires a GitHub ref.")
+            owner = source_config.get("owner")
+            repo = source_config.get("repo")
+            if not owner or not repo:
+                raise ValueError("GitHub codebase is missing owner/repo source configuration.")
+
+            current_snapshot_row = None
+            if row["current_snapshot_id"]:
+                current_snapshot_row = await conn.fetchrow(
+                    f"""
+                    SELECT id, source_commit_sha
+                    FROM {fq_table("codebase_snapshots")}
+                    WHERE id = $1
+                    """,
+                    row["current_snapshot_id"],
+                )
+
+        resolved_commit_sha = await self._resolve_public_github_commit_sha(owner, repo, effective_ref)
+        current_snapshot_id = str(current_snapshot_row["id"]) if current_snapshot_row else None
+        current_commit_sha = str(current_snapshot_row["source_commit_sha"]) if current_snapshot_row else None
+        if not full_rebuild and current_commit_sha == resolved_commit_sha:
+            return {
+                "snapshot_id": current_snapshot_id,
+                "operation_id": None,
+                "status": "completed",
+                "noop": True,
+                "added_files": 0,
+                "changed_files": 0,
+                "deleted_files": 0,
+            }
+
+        updated_source_config = dict(source_config)
+        updated_source_config["ref"] = effective_ref
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebases")}
+                SET source_config = $2::jsonb, updated_at = NOW()
+                WHERE id = $1
+                """,
+                uuid.UUID(codebase_id),
+                json.dumps(updated_source_config),
+            )
+            snapshot_row = await conn.fetchrow(
+                f"""
+                INSERT INTO {fq_table("codebase_snapshots")} (codebase_id, bank_id, source_ref, source_commit_sha, status)
+                VALUES ($1, $2, $3, $4, 'pending')
+                RETURNING id
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+                effective_ref,
+                resolved_commit_sha,
+            )
+            snapshot_id = str(snapshot_row["id"])
+
+        operation = await self._submit_async_operation(
+            bank_id=bank_id,
+            operation_type="codebase_refresh",
+            task_type="codebase_import_github",
+            task_payload={
+                "codebase_id": codebase_id,
+                "snapshot_id": snapshot_id,
+                "owner": owner,
+                "repo": repo,
+                "root_path": updated_source_config.get("root_path"),
+                "include_globs": updated_source_config.get("include_globs") or [],
+                "exclude_globs": updated_source_config.get("exclude_globs") or [],
+                "source_commit_sha": resolved_commit_sha,
+            },
+            result_metadata=CodebaseOperationMetadata(
+                codebase_id=codebase_id,
+                snapshot_id=snapshot_id,
+                source_type="github",
+                source_ref=effective_ref,
+            ).to_dict(),
+            dedupe_by_bank=False,
+        )
+        return {
+            "snapshot_id": snapshot_id,
+            "operation_id": operation["operation_id"],
+            "status": "pending",
+            "noop": False,
+            "added_files": 0,
+            "changed_files": 0,
+            "deleted_files": 0,
+        }
+
+    async def submit_async_codebase_approval(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue explicit approval for snapshot-backed memory hydration."""
+        from atulya_api.extensions import BankWriteContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(
+                bank_id=bank_id, operation="submit_codebase_approval", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT id, current_snapshot_id, source_type, source_config
+                FROM {fq_table("codebases")}
+                WHERE id = $1 AND bank_id = $2
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not row:
+                raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+            target_snapshot_id = snapshot_id or (
+                str(row["current_snapshot_id"]) if row["current_snapshot_id"] else None
+            )
+            if not target_snapshot_id:
+                raise ValueError("Codebase has no parsed snapshot available for approval.")
+
+            snapshot_row = await conn.fetchrow(
+                f"""
+                SELECT id, status
+                FROM {fq_table("codebase_snapshots")}
+                WHERE id = $1 AND codebase_id = $2 AND bank_id = $3
+                """,
+                uuid.UUID(target_snapshot_id),
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not snapshot_row:
+                raise ValueError(f"Snapshot {target_snapshot_id} not found for codebase {codebase_id}")
+            if snapshot_row["status"] == "approved":
+                raise ValueError("Current snapshot is already approved for memory hydration.")
+            if snapshot_row["status"] != "review_required":
+                raise ValueError("Only review-required snapshots can be approved.")
+
+        operation = await self._submit_async_operation(
+            bank_id=bank_id,
+            operation_type="codebase_approve",
+            task_type="codebase_approve",
+            task_payload={
+                "codebase_id": codebase_id,
+                "snapshot_id": target_snapshot_id,
+            },
+            result_metadata=CodebaseOperationMetadata(
+                codebase_id=codebase_id,
+                snapshot_id=target_snapshot_id,
+                source_type=row["source_type"],
+            ).to_dict(),
+            dedupe_by_bank=False,
+        )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": target_snapshot_id,
+            "operation_id": operation["operation_id"],
+            "status": "pending",
+        }
+
+    def _derive_codebase_memory_state(
+        self,
+        *,
+        current_snapshot_id: str | None,
+        approved_snapshot_id: str | None,
+        snapshot_status: str | None,
+    ) -> tuple[str, str]:
+        """Derive approval and memory lifecycle labels for codebase responses."""
+        if not current_snapshot_id:
+            return "not_ready", "not_hydrated"
+        if snapshot_status == "failed":
+            return "parse_failed", "not_hydrated" if not approved_snapshot_id else "hydrated_from_previous_snapshot"
+        if approved_snapshot_id and current_snapshot_id == approved_snapshot_id:
+            return "approved", "hydrated"
+        if snapshot_status == "review_required":
+            return (
+                "pending_approval",
+                "hydrated_from_previous_snapshot" if approved_snapshot_id else "not_hydrated",
+            )
+        if snapshot_status in {"pending", "processing"}:
+            return (
+                "parsing",
+                "hydrated_from_previous_snapshot" if approved_snapshot_id else "not_hydrated",
+            )
+        return (
+            "pending_approval" if current_snapshot_id else "not_ready",
+            "hydrated_from_previous_snapshot" if approved_snapshot_id else "not_hydrated",
+        )
+
+    def _serialize_codebase_row(self, row: asyncpg.Record) -> dict[str, Any]:
+        current_snapshot_id = str(row["current_snapshot_id"]) if row["current_snapshot_id"] else None
+        approved_snapshot_id = str(row["approved_snapshot_id"]) if row["approved_snapshot_id"] else None
+        approval_status, memory_status = self._derive_codebase_memory_state(
+            current_snapshot_id=current_snapshot_id,
+            approved_snapshot_id=approved_snapshot_id,
+            snapshot_status=row["snapshot_status"],
+        )
+        return {
+            "id": str(row["id"]),
+            "bank_id": row["bank_id"],
+            "name": row["name"],
+            "source_type": row["source_type"],
+            "source_config": decode_jsonb(row["source_config"], {}),
+            "current_snapshot_id": current_snapshot_id,
+            "approved_snapshot_id": approved_snapshot_id,
+            "source_ref": row["source_ref"],
+            "source_commit_sha": row["source_commit_sha"],
+            "snapshot_status": row["snapshot_status"],
+            "approved_source_ref": row["approved_source_ref"],
+            "approved_source_commit_sha": row["approved_source_commit_sha"],
+            "approved_snapshot_status": row["approved_snapshot_status"],
+            "approval_status": approval_status,
+            "memory_status": memory_status,
+            "stats": decode_jsonb(row["stats"], {}),
+            "created_at": row["created_at"].isoformat() if row["created_at"] else None,
+            "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+            "snapshot_created_at": row["snapshot_created_at"].isoformat() if row["snapshot_created_at"] else None,
+            "snapshot_updated_at": row["snapshot_updated_at"].isoformat() if row["snapshot_updated_at"] else None,
+            "approved_snapshot_updated_at": (
+                row["approved_snapshot_updated_at"].isoformat() if row["approved_snapshot_updated_at"] else None
+            ),
+        }
+
+    async def list_codebases(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        """List codebases for a bank."""
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="list_codebases", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT c.id, c.bank_id, c.name, c.source_type, c.source_config, c.current_snapshot_id, c.approved_snapshot_id,
+                       s.source_ref, s.source_commit_sha, s.status AS snapshot_status, s.stats,
+                       s.created_at AS snapshot_created_at, s.updated_at AS snapshot_updated_at,
+                       approved.source_ref AS approved_source_ref,
+                       approved.source_commit_sha AS approved_source_commit_sha,
+                       approved.status AS approved_snapshot_status,
+                       approved.updated_at AS approved_snapshot_updated_at,
+                       c.created_at, c.updated_at
+                FROM {fq_table("codebases")} c
+                LEFT JOIN {fq_table("codebase_snapshots")} s ON s.id = c.current_snapshot_id
+                LEFT JOIN {fq_table("codebase_snapshots")} approved ON approved.id = c.approved_snapshot_id
+                WHERE c.bank_id = $1
+                ORDER BY c.updated_at DESC, c.created_at DESC
+                """,
+                bank_id,
+            )
+        return [self._serialize_codebase_row(row) for row in rows]
+
+    async def get_codebase(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any] | None:
+        """Get codebase metadata and current snapshot summary."""
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="get_codebase", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT c.id, c.bank_id, c.name, c.source_type, c.source_config, c.current_snapshot_id, c.approved_snapshot_id,
+                       s.source_ref, s.source_commit_sha, s.status AS snapshot_status, s.stats,
+                       approved.source_ref AS approved_source_ref,
+                       approved.source_commit_sha AS approved_source_commit_sha,
+                       approved.status AS approved_snapshot_status,
+                       c.created_at, c.updated_at, s.created_at AS snapshot_created_at, s.updated_at AS snapshot_updated_at,
+                       approved.updated_at AS approved_snapshot_updated_at
+                FROM {fq_table("codebases")} c
+                LEFT JOIN {fq_table("codebase_snapshots")} s ON s.id = c.current_snapshot_id
+                LEFT JOIN {fq_table("codebase_snapshots")} approved ON approved.id = c.approved_snapshot_id
+                WHERE c.id = $1 AND c.bank_id = $2
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+        if not row:
+            return None
+        return self._serialize_codebase_row(row)
+
+    async def list_codebase_files(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        path_prefix: str | None = None,
+        language: str | None = None,
+        changed_only: bool = False,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """List files in the current or selected codebase snapshot."""
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="list_codebase_files", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            codebase = await conn.fetchrow(
+                f"SELECT current_snapshot_id, name FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not codebase:
+                raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+            effective_snapshot_id = snapshot_id or (
+                str(codebase["current_snapshot_id"]) if codebase["current_snapshot_id"] else None
+            )
+            if not effective_snapshot_id:
+                return {
+                    "codebase_id": codebase_id,
+                    "snapshot_id": None,
+                    "source_ref": None,
+                    "source_commit_sha": None,
+                    "snapshot_status": None,
+                    "items": [],
+                }
+
+            snapshot_row = await conn.fetchrow(
+                f"""
+                SELECT source_ref, source_commit_sha, status
+                FROM {fq_table("codebase_snapshots")}
+                WHERE id = $1 AND codebase_id = $2 AND bank_id = $3
+                """,
+                uuid.UUID(effective_snapshot_id),
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+
+            where_clauses = ["snapshot_id = $1", "bank_id = $2", "codebase_id = $3"]
+            params: list[Any] = [uuid.UUID(effective_snapshot_id), bank_id, uuid.UUID(codebase_id)]
+            if path_prefix:
+                where_clauses.append(f"path LIKE ${len(params) + 1}")
+                params.append(f"{path_prefix}%")
+            if language:
+                where_clauses.append(f"language = ${len(params) + 1}")
+                params.append(language)
+            if changed_only:
+                where_clauses.append("change_kind != 'unchanged'")
+
+            rows = await conn.fetch(
+                f"""
+                SELECT path, language, size_bytes, content_hash, document_id, status, change_kind, reason
+                FROM {fq_table("codebase_files")}
+                WHERE {" AND ".join(where_clauses)}
+                ORDER BY path ASC
+                """,
+                *params,
+            )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective_snapshot_id,
+            "source_ref": snapshot_row["source_ref"] if snapshot_row else None,
+            "source_commit_sha": snapshot_row["source_commit_sha"] if snapshot_row else None,
+            "snapshot_status": snapshot_row["status"] if snapshot_row else None,
+            "items": [
+                {
+                    "path": row["path"],
+                    "language": row["language"],
+                    "size_bytes": row["size_bytes"],
+                    "content_hash": row["content_hash"],
+                    "document_id": row["document_id"],
+                    "status": row["status"],
+                    "change_kind": row["change_kind"],
+                    "reason": row["reason"],
+                }
+                for row in rows
+            ],
+        }
+
+    async def search_codebase_symbols(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        q: str,
+        kind: str | None = None,
+        path_prefix: str | None = None,
+        language: str | None = None,
+        limit: int = 50,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Search deterministic codebase symbols by exact, prefix, and fuzzy match."""
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="search_codebase_symbols", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            codebase = await conn.fetchrow(
+                f"SELECT current_snapshot_id FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not codebase:
+                raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+            if not codebase["current_snapshot_id"]:
+                return {"codebase_id": codebase_id, "snapshot_id": None, "items": []}
+
+            where_clauses = ["snapshot_id = $1", "bank_id = $2", "codebase_id = $3"]
+            params: list[Any] = [codebase["current_snapshot_id"], bank_id, uuid.UUID(codebase_id)]
+            if kind:
+                where_clauses.append(f"kind = ${len(params) + 1}")
+                params.append(kind)
+            if path_prefix:
+                where_clauses.append(f"path LIKE ${len(params) + 1}")
+                params.append(f"{path_prefix}%")
+            if language:
+                where_clauses.append(f"language = ${len(params) + 1}")
+                params.append(language)
+
+            params.extend([q, f"{q}%", f"%{q}%"])
+            query = f"""
+                SELECT path, language, name, kind, fq_name, container, start_line, end_line,
+                       CASE
+                           WHEN name = ${len(params) - 2} OR fq_name = ${len(params) - 2} THEN 'exact'
+                           WHEN name LIKE ${len(params) - 1} OR fq_name LIKE ${len(params) - 1} THEN 'prefix'
+                           ELSE 'fuzzy'
+                       END AS match_mode,
+                       CASE
+                           WHEN name = ${len(params) - 2} OR fq_name = ${len(params) - 2} THEN 3
+                           WHEN name LIKE ${len(params) - 1} OR fq_name LIKE ${len(params) - 1} THEN 2
+                           ELSE 1
+                       END AS match_rank
+                FROM {fq_table("codebase_symbols")}
+                WHERE {" AND ".join(where_clauses)}
+                  AND (
+                      name = ${len(params) - 2}
+                      OR fq_name = ${len(params) - 2}
+                      OR name LIKE ${len(params) - 1}
+                      OR fq_name LIKE ${len(params) - 1}
+                      OR name ILIKE ${len(params)}
+                      OR fq_name ILIKE ${len(params)}
+                  )
+                ORDER BY match_rank DESC, path ASC, start_line ASC
+                LIMIT ${len(params) + 1}
+            """
+            rows = await conn.fetch(query, *params, limit)
+            snapshot_id = str(codebase["current_snapshot_id"])
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "items": [
+                {
+                    "name": row["name"],
+                    "kind": row["kind"],
+                    "fq_name": row["fq_name"],
+                    "path": row["path"],
+                    "language": row["language"],
+                    "container": row["container"],
+                    "start_line": row["start_line"],
+                    "end_line": row["end_line"],
+                    "match_mode": row["match_mode"],
+                }
+                for row in rows
+            ],
+        }
+
+    async def analyze_codebase_impact(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        path: str | None = None,
+        symbol: str | None = None,
+        query: str | None = None,
+        max_depth: int = 2,
+        limit: int = 50,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Run deterministic impact analysis over codebase import edges."""
+        from atulya_api.extensions import BankReadContext
+
+        provided = [value for value in (path, symbol, query) if value]
+        if len(provided) != 1:
+            raise ValueError("Exactly one of path, symbol, or query is required.")
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="analyze_codebase_impact", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            codebase = await conn.fetchrow(
+                f"SELECT current_snapshot_id FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not codebase:
+                raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+            snapshot_id = codebase["current_snapshot_id"]
+            if not snapshot_id:
+                return {
+                    "codebase_id": codebase_id,
+                    "snapshot_id": None,
+                    "seed": None,
+                    "impacted_files": [],
+                    "matched_symbols": [],
+                    "edges": [],
+                    "explanation": "No snapshot has been imported for this codebase yet.",
+                }
+
+            file_rows = await conn.fetch(
+                f"""
+                SELECT path, language, size_bytes, content_hash, document_id, status, change_kind
+                FROM {fq_table("codebase_files")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3
+                """,
+                snapshot_id,
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
+            edge_rows = await conn.fetch(
+                f"""
+                SELECT edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label
+                FROM {fq_table("codebase_edges")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND edge_type = 'imports'
+                """,
+                snapshot_id,
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
+            file_map = {row["path"]: row for row in file_rows}
+
+            matched_symbols: list[dict[str, Any]] = []
+            seed_paths: list[str] = []
+            seed_description = None
+
+            if path:
+                normalized_path = path.replace("\\", "/").lstrip("/")
+                if normalized_path not in file_map:
+                    raise ValueError(f"Path not found in codebase snapshot: {path}")
+                seed_paths = [normalized_path]
+                seed_description = {"type": "path", "value": normalized_path}
+                symbol_rows = await conn.fetch(
+                    f"""
+                    SELECT name, kind, fq_name, path, language, container, start_line, end_line
+                    FROM {fq_table("codebase_symbols")}
+                    WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND path = $4
+                    ORDER BY start_line ASC
+                    LIMIT $5
+                    """,
+                    snapshot_id,
+                    bank_id,
+                    uuid.UUID(codebase_id),
+                    normalized_path,
+                    min(limit, 25),
+                )
+                matched_symbols = [
+                    {
+                        "name": row["name"],
+                        "kind": row["kind"],
+                        "fq_name": row["fq_name"],
+                        "path": row["path"],
+                        "language": row["language"],
+                        "container": row["container"],
+                        "start_line": row["start_line"],
+                        "end_line": row["end_line"],
+                    }
+                    for row in symbol_rows
+                ]
+            else:
+                lookup = symbol or query or ""
+                symbol_rows = await conn.fetch(
+                    f"""
+                    SELECT name, kind, fq_name, path, language, container, start_line, end_line
+                    FROM {fq_table("codebase_symbols")}
+                    WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3
+                      AND (
+                          name = $4
+                          OR fq_name = $4
+                          OR name ILIKE $5
+                          OR fq_name ILIKE $5
+                      )
+                    ORDER BY CASE WHEN name = $4 OR fq_name = $4 THEN 0 ELSE 1 END, path ASC, start_line ASC
+                    LIMIT $6
+                    """,
+                    snapshot_id,
+                    bank_id,
+                    uuid.UUID(codebase_id),
+                    lookup,
+                    f"%{lookup}%",
+                    min(limit, 25),
+                )
+                if symbol_rows:
+                    matched_symbols = [
+                        {
+                            "name": row["name"],
+                            "kind": row["kind"],
+                            "fq_name": row["fq_name"],
+                            "path": row["path"],
+                            "language": row["language"],
+                            "container": row["container"],
+                            "start_line": row["start_line"],
+                            "end_line": row["end_line"],
+                        }
+                        for row in symbol_rows
+                    ]
+                    seed_paths = sorted({row["path"] for row in symbol_rows})
+                    seed_description = {"type": "symbol" if symbol else "query", "value": lookup}
+                else:
+                    path_matches = [row["path"] for row in file_rows if lookup.lower() in row["path"].lower()][
+                        : min(limit, 10)
+                    ]
+                    if not path_matches:
+                        return {
+                            "codebase_id": codebase_id,
+                            "snapshot_id": str(snapshot_id),
+                            "seed": {"type": "query", "value": lookup},
+                            "impacted_files": [],
+                            "matched_symbols": [],
+                            "edges": [],
+                            "explanation": f"No file path or symbol matched '{lookup}'.",
+                        }
+                    seed_paths = path_matches
+                    seed_description = {"type": "query", "value": lookup}
+
+            reverse_edges: dict[str, list[dict[str, Any]]] = {}
+            for row in edge_rows:
+                if row["to_path"]:
+                    reverse_edges.setdefault(row["to_path"], []).append(
+                        {
+                            "edge_type": row["edge_type"],
+                            "from_path": row["from_path"],
+                            "from_symbol": row["from_symbol"],
+                            "to_path": row["to_path"],
+                            "to_symbol": row["to_symbol"],
+                            "target_ref": row["target_ref"],
+                            "label": row["label"],
+                        }
+                    )
+
+            visited_depth: dict[str, int] = {}
+            traversed_edges: list[dict[str, Any]] = []
+            queue: list[tuple[str, int]] = [(seed_path, 0) for seed_path in seed_paths]
+            while queue:
+                current_path, depth = queue.pop(0)
+                if current_path in visited_depth and visited_depth[current_path] <= depth:
+                    continue
+                visited_depth[current_path] = depth
+                if depth >= max_depth:
+                    continue
+                for edge in reverse_edges.get(current_path, []):
+                    traversed_edges.append(dict(edge))
+                    upstream = edge["from_path"]
+                    if upstream not in visited_depth or visited_depth[upstream] > depth + 1:
+                        queue.append((upstream, depth + 1))
+
+            ordered_paths = sorted(visited_depth, key=lambda candidate: (visited_depth[candidate], candidate))
+            impacted_files = [
+                {
+                    "path": file_map[path_value]["path"],
+                    "language": file_map[path_value]["language"],
+                    "size_bytes": file_map[path_value]["size_bytes"],
+                    "content_hash": file_map[path_value]["content_hash"],
+                    "document_id": file_map[path_value]["document_id"],
+                    "status": file_map[path_value]["status"],
+                    "change_kind": file_map[path_value]["change_kind"],
+                    "depth": visited_depth[path_value],
+                }
+                for path_value in ordered_paths[:limit]
+                if path_value in file_map
+            ]
+
+        explanation = (
+            f"Seeded impact analysis from {seed_description['type']} '{seed_description['value']}'. "
+            f"Traversed reverse import edges up to depth {max_depth} and found {len(impacted_files)} impacted files."
+        )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": str(snapshot_id),
+            "seed": seed_description,
+            "impacted_files": impacted_files,
+            "matched_symbols": matched_symbols,
+            "edges": traversed_edges[: limit * 4],
+            "explanation": explanation,
         }
 
     async def submit_async_retain(

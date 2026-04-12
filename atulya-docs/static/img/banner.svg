@@ -60,9 +60,9 @@
 	.st54{opacity:0.5;fill:#7C0FEF;}
 </style>
 <linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="0" y1="136.5" x2="1572" y2="136.5">
-	<stop  offset="0" style="stop-color:#009296"/>
-	<stop  offset="0.838" style="stop-color:#0079CE"/>
-	<stop  offset="1" style="stop-color:#0074D9"/>
+	<stop  offset="0" style="stop-color:#E11D48"/>
+	<stop  offset="0.838" style="stop-color:#EF4444"/>
+	<stop  offset="1" style="stop-color:#DC2626"/>
 </linearGradient>
 <rect y="-0.63" class="st0" width="1572" height="274.27"/>
 <line class="st1" x1="834.29" y1="190.07" x2="834.29" y2="82.93"/>

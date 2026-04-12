@@ -18,6 +18,44 @@ const sidebars: SidebarsConfig = {
           label: 'Graph Intelligence',
         },
         {
+          type: 'category',
+          label: 'Codebases',
+          items: [
+            {
+              type: 'doc',
+              id: 'developer/codebases',
+              label: 'Overview',
+              customProps: {
+                icon: '/img/icons/codebases-overview.svg',
+              },
+            },
+            {
+              type: 'doc',
+              id: 'developer/codebases-lifecycle',
+              label: 'Lifecycle',
+              customProps: {
+                icon: '/img/icons/codebases-lifecycle.svg',
+              },
+            },
+            {
+              type: 'doc',
+              id: 'developer/codebases-control-plane',
+              label: 'Control Plane',
+              customProps: {
+                icon: '/img/icons/codebases-control-plane.svg',
+              },
+            },
+            {
+              type: 'doc',
+              id: 'developer/codebases-api',
+              label: 'API',
+              customProps: {
+                icon: '/img/icons/codebases-api.svg',
+              },
+            },
+          ],
+        },
+        {
           type: 'doc',
           id: 'developer/retain',
           label: 'Retain',

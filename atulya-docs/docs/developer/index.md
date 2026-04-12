@@ -52,6 +52,22 @@ Use it when you want to:
 
 See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the full walkthrough.
 
+## Featured: Codebases
+
+Another Control Plane feature aimed directly at developers is **Codebases**.
+
+It lets teams import a repository from a ZIP archive or public GitHub ref, parse it through Atulya's mechanical ASD layer, and review the resulting snapshot before any code text is hydrated into memory.
+
+This matters because code intelligence and memory are intentionally separated:
+
+- `ASD` gives immediate repo map, symbol search, and impact analysis
+- memory hydration happens only after explicit approval
+- `recall` and `reflect` stay aligned to the last approved snapshot
+
+That keeps the developer workflow fast and deterministic without silently growing LLM-backed memory from every import.
+
+See [Codebases](./codebases) for the full lifecycle.
+
 ## Why This Matters For Enterprise Agentic Organizations
 
 Enterprise agentic organizations do not just need assistants that can answer questions. They need systems that can:

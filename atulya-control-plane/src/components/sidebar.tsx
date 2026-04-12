@@ -12,12 +12,21 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
+  FolderGit2,
   Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 
-type NavItem = "brain" | "recall" | "reflect" | "data" | "documents" | "entities" | "profile";
+type NavItem =
+  | "brain"
+  | "recall"
+  | "reflect"
+  | "data"
+  | "documents"
+  | "codebases"
+  | "entities"
+  | "profile";
 
 interface SidebarProps {
   currentTab: NavItem;
@@ -39,6 +48,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
     { id: "recall" as NavItem, label: "Recall", icon: Search },
     { id: "reflect" as NavItem, label: "Reflect", icon: Sparkles },
     { id: "documents" as NavItem, label: "Documents", icon: FileText },
+    { id: "codebases" as NavItem, label: "Codebases", icon: FolderGit2 },
     { id: "entities" as NavItem, label: "Entities", icon: Users },
     { id: "profile" as NavItem, label: "Bank Configuration", icon: Settings },
   ];

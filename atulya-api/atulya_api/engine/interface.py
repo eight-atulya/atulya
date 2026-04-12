@@ -521,6 +521,137 @@ class MemoryEngineInterface(ABC):
         ...
 
     # =========================================================================
+    # Codebases
+    # =========================================================================
+
+    @abstractmethod
+    async def submit_async_codebase_zip_import(
+        self,
+        bank_id: str,
+        *,
+        name: str,
+        archive_name: str,
+        archive_bytes: bytes,
+        root_path: str | None = None,
+        include_globs: list[str] | None = None,
+        exclude_globs: list[str] | None = None,
+        refresh_existing: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue a ZIP-backed codebase import."""
+        ...
+
+    @abstractmethod
+    async def submit_async_codebase_github_import(
+        self,
+        bank_id: str,
+        *,
+        owner: str,
+        repo: str,
+        ref: str,
+        root_path: str | None = None,
+        include_globs: list[str] | None = None,
+        exclude_globs: list[str] | None = None,
+        refresh_existing: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue a public GitHub-backed codebase import."""
+        ...
+
+    @abstractmethod
+    async def submit_async_codebase_refresh(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        ref: str | None = None,
+        full_rebuild: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue or short-circuit an explicit codebase refresh."""
+        ...
+
+    @abstractmethod
+    async def submit_async_codebase_approval(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue approval-driven codebase memory hydration."""
+        ...
+
+    @abstractmethod
+    async def list_codebases(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        """List codebases for a bank."""
+        ...
+
+    @abstractmethod
+    async def get_codebase(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any] | None:
+        """Get a codebase and its current snapshot summary."""
+        ...
+
+    @abstractmethod
+    async def list_codebase_files(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        path_prefix: str | None = None,
+        language: str | None = None,
+        changed_only: bool = False,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """List files for the current or selected codebase snapshot."""
+        ...
+
+    @abstractmethod
+    async def search_codebase_symbols(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        q: str,
+        kind: str | None = None,
+        path_prefix: str | None = None,
+        language: str | None = None,
+        limit: int = 50,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Search deterministic symbols for a codebase snapshot."""
+        ...
+
+    @abstractmethod
+    async def analyze_codebase_impact(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        path: str | None = None,
+        symbol: str | None = None,
+        query: str | None = None,
+        max_depth: int = 2,
+        limit: int = 50,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Run deterministic impact analysis over the codebase graph."""
+        ...
+
+    # =========================================================================
     # Entities
     # =========================================================================
 

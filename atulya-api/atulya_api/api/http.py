@@ -565,6 +565,237 @@ class FileRetainResponse(BaseModel):
     )
 
 
+class CodebaseSourceConfigResponse(BaseModel):
+    """Normalized source configuration for a codebase."""
+
+    owner: str | None = None
+    repo: str | None = None
+    ref: str | None = None
+    root_path: str | None = None
+    include_globs: list[str] = FieldWithDefault(list)
+    exclude_globs: list[str] = FieldWithDefault(list)
+
+
+class CodebaseSnapshotStatsResponse(BaseModel):
+    """Snapshot-level deterministic indexing stats."""
+
+    total_files: int = 0
+    indexed_files: int = 0
+    retained_files: int = 0
+    manifest_only_files: int = 0
+    excluded_files: int = 0
+    symbol_count: int = 0
+    edge_count: int = 0
+    added_files: int = 0
+    changed_files: int = 0
+    unchanged_files: int = 0
+    deleted_files: int = 0
+    error: str | None = None
+
+
+class CodebaseImportZipRequest(BaseModel):
+    """JSON payload for ZIP-based codebase import."""
+
+    name: str
+    root_path: str | None = None
+    include_globs: list[str] = FieldWithDefault(list)
+    exclude_globs: list[str] = FieldWithDefault(list)
+    refresh_existing: bool = False
+
+
+class CodebaseImportGithubRequest(BaseModel):
+    """JSON payload for public GitHub-backed codebase import."""
+
+    owner: str
+    repo: str
+    ref: str
+    root_path: str | None = None
+    include_globs: list[str] = FieldWithDefault(list)
+    exclude_globs: list[str] = FieldWithDefault(list)
+    refresh_existing: bool = False
+
+
+class CodebaseImportResponse(BaseModel):
+    """Queued codebase import response."""
+
+    codebase_id: str
+    snapshot_id: str
+    operation_id: str
+    status: str
+
+
+class CodebaseGithubImportResponse(CodebaseImportResponse):
+    """Queued GitHub codebase import response."""
+
+    resolved_commit_sha: str
+
+
+class CodebaseRefreshRequest(BaseModel):
+    """Explicit codebase refresh request."""
+
+    ref: str | None = None
+    full_rebuild: bool = False
+
+
+class CodebaseRefreshResponse(BaseModel):
+    """Explicit codebase refresh response."""
+
+    snapshot_id: str | None = None
+    operation_id: str | None = None
+    status: str
+    changed_files: int = 0
+    added_files: int = 0
+    deleted_files: int = 0
+    noop: bool = False
+
+
+class CodebaseApproveRequest(BaseModel):
+    """Approve a parsed codebase snapshot for memory hydration."""
+
+    snapshot_id: str | None = None
+
+
+class CodebaseApproveResponse(BaseModel):
+    """Queued codebase approval response."""
+
+    codebase_id: str
+    snapshot_id: str
+    operation_id: str
+    status: str
+
+
+class CodebaseResponse(BaseModel):
+    """Codebase metadata plus current snapshot summary."""
+
+    id: str
+    bank_id: str
+    name: str
+    source_type: str
+    source_config: CodebaseSourceConfigResponse = Field(default_factory=CodebaseSourceConfigResponse)
+    current_snapshot_id: str | None = None
+    approved_snapshot_id: str | None = None
+    source_ref: str | None = None
+    source_commit_sha: str | None = None
+    snapshot_status: str | None = None
+    approved_source_ref: str | None = None
+    approved_source_commit_sha: str | None = None
+    approved_snapshot_status: str | None = None
+    approval_status: str | None = None
+    memory_status: str | None = None
+    stats: CodebaseSnapshotStatsResponse = Field(default_factory=CodebaseSnapshotStatsResponse)
+    created_at: str | None = None
+    updated_at: str | None = None
+    snapshot_created_at: str | None = None
+    snapshot_updated_at: str | None = None
+    approved_snapshot_updated_at: str | None = None
+
+
+class CodebaseListResponse(BaseModel):
+    """List of codebases for a bank."""
+
+    items: list[CodebaseResponse]
+
+
+class CodebaseFileItemResponse(BaseModel):
+    """Single file entry in a codebase snapshot."""
+
+    path: str
+    language: str | None = None
+    size_bytes: int
+    content_hash: str
+    document_id: str | None = None
+    status: str
+    change_kind: str
+    reason: str | None = None
+
+
+class CodebaseFilesResponse(BaseModel):
+    """Codebase file listing response."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    source_ref: str | None = None
+    source_commit_sha: str | None = None
+    snapshot_status: str | None = None
+    items: list[CodebaseFileItemResponse]
+
+
+class CodebaseSymbolMatchResponse(BaseModel):
+    """Single deterministic symbol match."""
+
+    name: str
+    kind: str
+    fq_name: str
+    path: str
+    language: str | None = None
+    container: str | None = None
+    start_line: int
+    end_line: int
+    match_mode: str | None = None
+
+
+class CodebaseSymbolsResponse(BaseModel):
+    """Symbol search results for a codebase."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    items: list[CodebaseSymbolMatchResponse]
+
+
+class CodebaseImpactRequest(BaseModel):
+    """Impact analysis request for a codebase."""
+
+    path: str | None = None
+    symbol: str | None = None
+    query: str | None = None
+    max_depth: int = Field(default=2, ge=1, le=8)
+    limit: int = Field(default=50, ge=1, le=200)
+
+
+class CodebaseImpactSeedResponse(BaseModel):
+    """Seed used to start deterministic impact analysis."""
+
+    type: str
+    value: str
+
+
+class CodebaseImpactFileResponse(BaseModel):
+    """Impacted file entry with traversal depth."""
+
+    path: str
+    language: str | None = None
+    size_bytes: int
+    content_hash: str
+    document_id: str | None = None
+    status: str
+    change_kind: str
+    depth: int
+
+
+class CodebaseImpactEdgeResponse(BaseModel):
+    """Deterministic code graph edge returned for impact analysis."""
+
+    edge_type: str
+    from_path: str
+    from_symbol: str | None = None
+    to_path: str | None = None
+    to_symbol: str | None = None
+    target_ref: str | None = None
+    label: str | None = None
+
+
+class CodebaseImpactResponse(BaseModel):
+    """Impact analysis response."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    seed: CodebaseImpactSeedResponse | None = None
+    impacted_files: list[CodebaseImpactFileResponse]
+    matched_symbols: list[CodebaseSymbolMatchResponse]
+    edges: list[CodebaseImpactEdgeResponse]
+    explanation: str
+
+
 class FactsIncludeOptions(BaseModel):
     """Options for including facts (based_on) in reflect results."""
 
@@ -1890,7 +2121,7 @@ class OperationResultResponse(BaseModel):
     completed_at: str | None = None
     error_message: str | None = None
     stage: str | None = None
-    result: ReflectResponse | None = None
+    result: ReflectResponse | dict[str, Any] | None = None
 
 
 class FeaturesInfo(BaseModel):
@@ -2417,6 +2648,21 @@ def _register_routes(app: FastAPI):
             else:
                 api_key = authorization.strip()
         return RequestContext(api_key=api_key)
+
+    def _codebase_source_config_model(raw: dict[str, Any] | None) -> CodebaseSourceConfigResponse:
+        return CodebaseSourceConfigResponse.model_validate(raw or {})
+
+    def _codebase_stats_model(raw: dict[str, Any] | None) -> CodebaseSnapshotStatsResponse:
+        return CodebaseSnapshotStatsResponse.model_validate(raw or {})
+
+    def _codebase_response_model(raw: dict[str, Any]) -> CodebaseResponse:
+        return CodebaseResponse.model_validate(
+            {
+                **raw,
+                "source_config": _codebase_source_config_model(raw.get("source_config")),
+                "stats": _codebase_stats_model(raw.get("stats")),
+            }
+        )
 
     # Global exception handler for authentication errors
     @app.exception_handler(AuthenticationError)
@@ -4013,7 +4259,7 @@ def _register_routes(app: FastAPI):
         operation_type: str | None = Query(
             default=None,
             alias="type",
-            description="Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery",
+            description="Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, codebase_import, codebase_refresh, codebase_approve, webhook_delivery",
         ),
         limit: int = Query(default=20, ge=1, le=100, description="Maximum number of operations to return"),
         offset: int = Query(default=0, ge=0, description="Number of operations to skip"),
@@ -5700,6 +5946,384 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/files/retain: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/import/zip",
+        response_model=CodebaseImportResponse,
+        summary="Import a codebase from ZIP",
+        description="Upload a repository ZIP archive and build a deterministic codebase snapshot without cloning or LLM indexing.",
+        operation_id="import_codebase_zip",
+        tags=["Codebases"],
+    )
+    async def api_codebase_import_zip(
+        bank_id: str,
+        archive: UploadFile = File(..., description="Repository ZIP archive"),
+        request: str = Form(..., description="JSON string with CodebaseImportZipRequest model"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Import a ZIP-backed codebase into a bank."""
+        try:
+            try:
+                request_data = CodebaseImportZipRequest.model_validate_json(request)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Invalid request JSON: {str(e)}")
+
+            archive_bytes = await archive.read()
+            result = await app.state.memory.submit_async_codebase_zip_import(
+                bank_id=bank_id,
+                name=request_data.name,
+                archive_name=archive.filename or "archive.zip",
+                archive_bytes=archive_bytes,
+                root_path=request_data.root_path,
+                include_globs=request_data.include_globs,
+                exclude_globs=request_data.exclude_globs,
+                refresh_existing=request_data.refresh_existing,
+                request_context=request_context,
+            )
+            return CodebaseImportResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/import/zip: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/import/github",
+        response_model=CodebaseGithubImportResponse,
+        summary="Import a public GitHub codebase",
+        description="Resolve a public GitHub ref, download its archive, and build a deterministic codebase snapshot.",
+        operation_id="import_codebase_github",
+        tags=["Codebases"],
+    )
+    async def api_codebase_import_github(
+        bank_id: str,
+        request: CodebaseImportGithubRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Import a public GitHub-backed codebase into a bank."""
+        try:
+            result = await app.state.memory.submit_async_codebase_github_import(
+                bank_id=bank_id,
+                owner=request.owner,
+                repo=request.repo,
+                ref=request.ref,
+                root_path=request.root_path,
+                include_globs=request.include_globs,
+                exclude_globs=request.exclude_globs,
+                refresh_existing=request.refresh_existing,
+                request_context=request_context,
+            )
+            return CodebaseGithubImportResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/import/github: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/refresh",
+        response_model=CodebaseRefreshResponse,
+        summary="Refresh a codebase snapshot",
+        description="Refresh a GitHub-backed codebase by resolving the latest commit SHA and rebuilding a new reviewable ASD snapshot.",
+        operation_id="refresh_codebase",
+        tags=["Codebases"],
+    )
+    async def api_codebase_refresh(
+        bank_id: str,
+        codebase_id: str,
+        request: CodebaseRefreshRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Refresh a codebase snapshot."""
+        try:
+            result = await app.state.memory.submit_async_codebase_refresh(
+                bank_id=bank_id,
+                codebase_id=codebase_id,
+                ref=request.ref,
+                full_rebuild=request.full_rebuild,
+                request_context=request_context,
+            )
+            return CodebaseRefreshResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/refresh: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/approve",
+        response_model=CodebaseApproveResponse,
+        summary="Approve a codebase snapshot for memory hydration",
+        description="Explicitly approve the current or selected reviewable codebase snapshot so Atulya can hydrate source-file text into memory.",
+        operation_id="approve_codebase",
+        tags=["Codebases"],
+    )
+    async def api_codebase_approve(
+        bank_id: str,
+        codebase_id: str,
+        request: CodebaseApproveRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Queue a human-approved codebase memory hydration operation."""
+        try:
+            result = await app.state.memory.submit_async_codebase_approval(
+                bank_id=bank_id,
+                codebase_id=codebase_id,
+                snapshot_id=request.snapshot_id,
+                request_context=request_context,
+            )
+            return CodebaseApproveResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/approve: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases",
+        response_model=CodebaseListResponse,
+        summary="List codebases",
+        description="List imported codebases for a bank.",
+        operation_id="list_codebases",
+        tags=["Codebases"],
+    )
+    async def api_list_codebases(bank_id: str, request_context: RequestContext = Depends(get_request_context)):
+        """List codebases for a bank."""
+        try:
+            items = await app.state.memory.list_codebases(bank_id, request_context=request_context)
+            return CodebaseListResponse(items=[_codebase_response_model(item) for item in items])
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}",
+        response_model=CodebaseResponse,
+        summary="Get codebase",
+        description="Get codebase metadata plus current snapshot summary.",
+        operation_id="get_codebase",
+        tags=["Codebases"],
+    )
+    async def api_get_codebase(
+        bank_id: str,
+        codebase_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Get a codebase by ID."""
+        try:
+            codebase = await app.state.memory.get_codebase(bank_id, codebase_id, request_context=request_context)
+            if not codebase:
+                raise HTTPException(status_code=404, detail=f"Codebase {codebase_id} not found in bank {bank_id}")
+            return _codebase_response_model(codebase)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/files",
+        response_model=CodebaseFilesResponse,
+        summary="List codebase files",
+        description="Return the repo map and filtered file listing for a codebase snapshot.",
+        operation_id="list_codebase_files",
+        tags=["Codebases"],
+    )
+    async def api_list_codebase_files(
+        bank_id: str,
+        codebase_id: str,
+        path_prefix: str | None = Query(default=None, description="Only include files under this path prefix"),
+        language: str | None = Query(default=None, description="Filter by detected language"),
+        changed_only: bool = Query(default=False, description="Only include changed or added files"),
+        snapshot_id: str | None = Query(default=None, description="Optional snapshot override"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """List files for a codebase snapshot."""
+        try:
+            result = await app.state.memory.list_codebase_files(
+                bank_id,
+                codebase_id,
+                path_prefix=path_prefix,
+                language=language,
+                changed_only=changed_only,
+                snapshot_id=snapshot_id,
+                request_context=request_context,
+            )
+            codebase = await app.state.memory.get_codebase(bank_id, codebase_id, request_context=request_context)
+            if not codebase:
+                raise HTTPException(status_code=404, detail=f"Codebase {codebase_id} not found in bank {bank_id}")
+            return CodebaseFilesResponse.model_validate(
+                {
+                    **result,
+                    "source_ref": codebase.get("source_ref"),
+                    "source_commit_sha": codebase.get("source_commit_sha"),
+                    "snapshot_status": codebase.get("snapshot_status"),
+                    "items": [CodebaseFileItemResponse.model_validate(item) for item in result["items"]],
+                }
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/files: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/symbols",
+        response_model=CodebaseSymbolsResponse,
+        summary="Search codebase symbols",
+        description="Search deterministic symbols by exact, prefix, or fuzzy match.",
+        operation_id="search_codebase_symbols",
+        tags=["Codebases"],
+    )
+    async def api_search_codebase_symbols(
+        bank_id: str,
+        codebase_id: str,
+        q: str = Query(..., min_length=1, description="Symbol query"),
+        kind: str | None = Query(default=None, description="Optional symbol kind filter"),
+        path_prefix: str | None = Query(default=None, description="Only search under this path prefix"),
+        language: str | None = Query(default=None, description="Filter by detected language"),
+        limit: int = Query(default=50, ge=1, le=200, description="Maximum number of symbol matches"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Search symbols in a codebase snapshot."""
+        try:
+            result = await app.state.memory.search_codebase_symbols(
+                bank_id,
+                codebase_id,
+                q=q,
+                kind=kind,
+                path_prefix=path_prefix,
+                language=language,
+                limit=limit,
+                request_context=request_context,
+            )
+            return CodebaseSymbolsResponse.model_validate(
+                {
+                    **result,
+                    "items": [CodebaseSymbolMatchResponse.model_validate(item) for item in result["items"]],
+                }
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/symbols: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/impact",
+        response_model=CodebaseImpactResponse,
+        summary="Analyze codebase impact",
+        description="Run deterministic impact analysis from a path, symbol, or query over the codebase graph.",
+        operation_id="analyze_codebase_impact",
+        tags=["Codebases"],
+    )
+    async def api_codebase_impact(
+        bank_id: str,
+        codebase_id: str,
+        request: CodebaseImpactRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Analyze impact within a codebase snapshot."""
+        provided = [value for value in (request.path, request.symbol, request.query) if value]
+        if len(provided) != 1:
+            raise HTTPException(status_code=400, detail="Exactly one of path, symbol, or query is required.")
+
+        try:
+            result = await app.state.memory.analyze_codebase_impact(
+                bank_id,
+                codebase_id,
+                path=request.path,
+                symbol=request.symbol,
+                query=request.query,
+                max_depth=request.max_depth,
+                limit=request.limit,
+                request_context=request_context,
+            )
+            return CodebaseImpactResponse.model_validate(
+                {
+                    **result,
+                    "seed": (
+                        CodebaseImpactSeedResponse.model_validate(result["seed"])
+                        if result.get("seed") is not None
+                        else None
+                    ),
+                    "impacted_files": [
+                        CodebaseImpactFileResponse.model_validate(item) for item in result["impacted_files"]
+                    ],
+                    "matched_symbols": [
+                        CodebaseSymbolMatchResponse.model_validate(item) for item in result["matched_symbols"]
+                    ],
+                    "edges": [CodebaseImpactEdgeResponse.model_validate(item) for item in result["edges"]],
+                }
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/impact: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.delete(

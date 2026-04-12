@@ -96,7 +96,7 @@
   border-radius: 10px;
   border: 1px solid var(--ifm-color-emphasis-200);
   border-top: 3px solid transparent;
-  border-image: linear-gradient(90deg, #0074d9, #009296) 1;
+  border-image: linear-gradient(90deg, #dc2626, #e11d48) 1;
   background: var(--ifm-background-surface-color);
   text-decoration: none !important;
   color: inherit;
@@ -111,7 +111,7 @@
 
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(0, 116, 217, 0.12);
+  box-shadow: 0 6px 24px rgba(220, 38, 38, 0.14);
   text-decoration: none !important;
   color: inherit;
 }

@@ -4,11 +4,11 @@
 }
 
 .banner {
-  background: linear-gradient(135deg, #0074d9 0%, #005db0 100%);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
   border-radius: 8px;
   padding: 10px 14px;
   color: white;
-  box-shadow: 0 2px 8px rgba(0, 116, 217, 0.12);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.16);
   border: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
@@ -17,7 +17,7 @@
 }
 
 .banner:hover {
-  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.2);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.24);
 }
 
 .icon {
@@ -55,7 +55,7 @@
   font-size: 10px;
   font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Monaco, Consolas, monospace;
   border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #e6f7f8;
+  color: #fff1f2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -131,22 +131,22 @@
 
 /* Dark mode - make it stand out even more */
 html[data-theme='dark'] .banner {
-  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.2),
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.24),
               0 0 0 1px rgba(255, 255, 255, 0.15);
 }
 
 html[data-theme='dark'] .banner:hover {
-  box-shadow: 0 6px 16px rgba(0, 116, 217, 0.3),
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.3),
               0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 /* Light mode adjustments */
 html[data-theme='light'] .banner {
-  box-shadow: 0 4px 12px rgba(0, 116, 217, 0.15),
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.18),
               0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 html[data-theme='light'] .banner:hover {
-  box-shadow: 0 6px 16px rgba(0, 116, 217, 0.25),
+  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.26),
               0 4px 8px rgba(0, 0, 0, 0.08);
 }

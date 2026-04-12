@@ -1,0 +1,20 @@
+<svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="codebasesControlPlaneGradient" x1="16" y1="18" x2="80" y2="78" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#DC2626"/>
+      <stop offset="1" stop-color="#E11D48"/>
+    </linearGradient>
+  </defs>
+  <rect x="10" y="10" width="76" height="76" rx="22" fill="#0F172A"/>
+  <rect x="19" y="19" width="58" height="58" rx="18" fill="white"/>
+  <rect x="25" y="25" width="12" height="46" rx="6" fill="#FEE2E2"/>
+  <rect x="41" y="25" width="30" height="12" rx="6" fill="url(#codebasesControlPlaneGradient)" opacity="0.18"/>
+  <rect x="41" y="42" width="30" height="11" rx="5.5" fill="#F3F4F6"/>
+  <rect x="41" y="58" width="20" height="10" rx="5" fill="#FFE4E6"/>
+  <circle cx="31" cy="35" r="3.5" fill="#DC2626"/>
+  <circle cx="31" cy="48" r="3.5" fill="#E11D48"/>
+  <circle cx="31" cy="61" r="3.5" fill="#0F172A"/>
+  <path d="M48 31H65" stroke="#DC2626" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M48 47.5H64" stroke="#0F172A" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M48 63H57" stroke="#E11D48" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

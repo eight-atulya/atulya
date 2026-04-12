@@ -3204,10 +3204,10 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery",
+              "description": "Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, codebase_import, codebase_refresh, codebase_approve, webhook_delivery",
               "title": "Type"
             },
-            "description": "Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, webhook_delivery"
+            "description": "Filter by operation type: retain, reflect, consolidation, refresh_mental_model, file_convert_retain, codebase_import, codebase_refresh, codebase_approve, webhook_delivery"
           },
           {
             "name": "limit",
@@ -5780,6 +5780,787 @@
           }
         }
       }
+    },
+    "/v1/default/banks/{bank_id}/codebases/import/zip": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Import a codebase from ZIP",
+        "description": "Upload a repository ZIP archive and build a deterministic codebase snapshot without cloning or LLM indexing.",
+        "operationId": "import_codebase_zip",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_codebase_zip"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/import/github": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Import a public GitHub codebase",
+        "description": "Resolve a public GitHub ref, download its archive, and build a deterministic codebase snapshot.",
+        "operationId": "import_codebase_github",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseImportGithubRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseGithubImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/refresh": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Refresh a codebase snapshot",
+        "description": "Refresh a GitHub-backed codebase by resolving the latest commit SHA and rebuilding a new reviewable ASD snapshot.",
+        "operationId": "refresh_codebase",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseRefreshRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseRefreshResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/approve": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Approve a codebase snapshot for memory hydration",
+        "description": "Explicitly approve the current or selected reviewable codebase snapshot so Atulya can hydrate source-file text into memory.",
+        "operationId": "approve_codebase",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseApproveRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseApproveResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "List codebases",
+        "description": "List imported codebases for a bank.",
+        "operationId": "list_codebases",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Get codebase",
+        "description": "Get codebase metadata plus current snapshot summary.",
+        "operationId": "get_codebase",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/files": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "List codebase files",
+        "description": "Return the repo map and filtered file listing for a codebase snapshot.",
+        "operationId": "list_codebase_files",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "path_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only include files under this path prefix",
+              "title": "Path Prefix"
+            },
+            "description": "Only include files under this path prefix"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by detected language",
+              "title": "Language"
+            },
+            "description": "Filter by detected language"
+          },
+          {
+            "name": "changed_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only include changed or added files",
+              "default": false,
+              "title": "Changed Only"
+            },
+            "description": "Only include changed or added files"
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional snapshot override",
+              "title": "Snapshot Id"
+            },
+            "description": "Optional snapshot override"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseFilesResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/symbols": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Search codebase symbols",
+        "description": "Search deterministic symbols by exact, prefix, or fuzzy match.",
+        "operationId": "search_codebase_symbols",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Symbol query",
+              "title": "Q"
+            },
+            "description": "Symbol query"
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional symbol kind filter",
+              "title": "Kind"
+            },
+            "description": "Optional symbol kind filter"
+          },
+          {
+            "name": "path_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Only search under this path prefix",
+              "title": "Path Prefix"
+            },
+            "description": "Only search under this path prefix"
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by detected language",
+              "title": "Language"
+            },
+            "description": "Filter by detected language"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Maximum number of symbol matches",
+              "default": 50,
+              "title": "Limit"
+            },
+            "description": "Maximum number of symbol matches"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseSymbolsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/impact": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Analyze codebase impact",
+        "description": "Run deterministic impact analysis from a path, symbol, or query over the codebase graph.",
+        "operationId": "analyze_codebase_impact",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseImpactRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseImpactResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -6250,6 +7031,27 @@
           "file"
         ],
         "title": "Body_import_brain_snapshot"
+      },
+      "Body_import_codebase_zip": {
+        "properties": {
+          "archive": {
+            "type": "string",
+            "format": "binary",
+            "title": "Archive",
+            "description": "Repository ZIP archive"
+          },
+          "request": {
+            "type": "string",
+            "title": "Request",
+            "description": "JSON string with CodebaseImportZipRequest model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "archive",
+          "request"
+        ],
+        "title": "Body_import_codebase_zip"
       },
       "Body_validate_brain_import": {
         "properties": {
@@ -6786,6 +7588,1118 @@
         "example": {
           "deleted_count": 3
         }
+      },
+      "CodebaseApproveRequest": {
+        "properties": {
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          }
+        },
+        "type": "object",
+        "title": "CodebaseApproveRequest",
+        "description": "Approve a parsed codebase snapshot for memory hydration."
+      },
+      "CodebaseApproveResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "snapshot_id",
+          "operation_id",
+          "status"
+        ],
+        "title": "CodebaseApproveResponse",
+        "description": "Queued codebase approval response."
+      },
+      "CodebaseFileItemResponse": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "change_kind": {
+            "type": "string",
+            "title": "Change Kind"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "size_bytes",
+          "content_hash",
+          "status",
+          "change_kind"
+        ],
+        "title": "CodebaseFileItemResponse",
+        "description": "Single file entry in a codebase snapshot."
+      },
+      "CodebaseFilesResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref"
+          },
+          "source_commit_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Commit Sha"
+          },
+          "snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Status"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseFileItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "items"
+        ],
+        "title": "CodebaseFilesResponse",
+        "description": "Codebase file listing response."
+      },
+      "CodebaseGithubImportResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "resolved_commit_sha": {
+            "type": "string",
+            "title": "Resolved Commit Sha"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "snapshot_id",
+          "operation_id",
+          "status",
+          "resolved_commit_sha"
+        ],
+        "title": "CodebaseGithubImportResponse",
+        "description": "Queued GitHub codebase import response."
+      },
+      "CodebaseImpactEdgeResponse": {
+        "properties": {
+          "edge_type": {
+            "type": "string",
+            "title": "Edge Type"
+          },
+          "from_path": {
+            "type": "string",
+            "title": "From Path"
+          },
+          "from_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Symbol"
+          },
+          "to_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Path"
+          },
+          "to_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Symbol"
+          },
+          "target_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Ref"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "edge_type",
+          "from_path"
+        ],
+        "title": "CodebaseImpactEdgeResponse",
+        "description": "Deterministic code graph edge returned for impact analysis."
+      },
+      "CodebaseImpactFileResponse": {
+        "properties": {
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "content_hash": {
+            "type": "string",
+            "title": "Content Hash"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "change_kind": {
+            "type": "string",
+            "title": "Change Kind"
+          },
+          "depth": {
+            "type": "integer",
+            "title": "Depth"
+          }
+        },
+        "type": "object",
+        "required": [
+          "path",
+          "size_bytes",
+          "content_hash",
+          "status",
+          "change_kind",
+          "depth"
+        ],
+        "title": "CodebaseImpactFileResponse",
+        "description": "Impacted file entry with traversal depth."
+      },
+      "CodebaseImpactRequest": {
+        "properties": {
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Symbol"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "max_depth": {
+            "type": "integer",
+            "maximum": 8.0,
+            "minimum": 1.0,
+            "title": "Max Depth",
+            "default": 2
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 50
+          }
+        },
+        "type": "object",
+        "title": "CodebaseImpactRequest",
+        "description": "Impact analysis request for a codebase."
+      },
+      "CodebaseImpactResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "seed": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CodebaseImpactSeedResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "impacted_files": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseImpactFileResponse"
+            },
+            "type": "array",
+            "title": "Impacted Files"
+          },
+          "matched_symbols": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseSymbolMatchResponse"
+            },
+            "type": "array",
+            "title": "Matched Symbols"
+          },
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseImpactEdgeResponse"
+            },
+            "type": "array",
+            "title": "Edges"
+          },
+          "explanation": {
+            "type": "string",
+            "title": "Explanation"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "impacted_files",
+          "matched_symbols",
+          "edges",
+          "explanation"
+        ],
+        "title": "CodebaseImpactResponse",
+        "description": "Impact analysis response."
+      },
+      "CodebaseImpactSeedResponse": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "value"
+        ],
+        "title": "CodebaseImpactSeedResponse",
+        "description": "Seed used to start deterministic impact analysis."
+      },
+      "CodebaseImportGithubRequest": {
+        "properties": {
+          "owner": {
+            "type": "string",
+            "title": "Owner"
+          },
+          "repo": {
+            "type": "string",
+            "title": "Repo"
+          },
+          "ref": {
+            "type": "string",
+            "title": "Ref"
+          },
+          "root_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Path"
+          },
+          "include_globs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Include Globs",
+            "default": []
+          },
+          "exclude_globs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Exclude Globs",
+            "default": []
+          },
+          "refresh_existing": {
+            "type": "boolean",
+            "title": "Refresh Existing",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "owner",
+          "repo",
+          "ref"
+        ],
+        "title": "CodebaseImportGithubRequest",
+        "description": "JSON payload for public GitHub-backed codebase import."
+      },
+      "CodebaseImportResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "snapshot_id",
+          "operation_id",
+          "status"
+        ],
+        "title": "CodebaseImportResponse",
+        "description": "Queued codebase import response."
+      },
+      "CodebaseListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "CodebaseListResponse",
+        "description": "List of codebases for a bank."
+      },
+      "CodebaseRefreshRequest": {
+        "properties": {
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "full_rebuild": {
+            "type": "boolean",
+            "title": "Full Rebuild",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "CodebaseRefreshRequest",
+        "description": "Explicit codebase refresh request."
+      },
+      "CodebaseRefreshResponse": {
+        "properties": {
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "changed_files": {
+            "type": "integer",
+            "title": "Changed Files",
+            "default": 0
+          },
+          "added_files": {
+            "type": "integer",
+            "title": "Added Files",
+            "default": 0
+          },
+          "deleted_files": {
+            "type": "integer",
+            "title": "Deleted Files",
+            "default": 0
+          },
+          "noop": {
+            "type": "boolean",
+            "title": "Noop",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "CodebaseRefreshResponse",
+        "description": "Explicit codebase refresh response."
+      },
+      "CodebaseResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "source_type": {
+            "type": "string",
+            "title": "Source Type"
+          },
+          "source_config": {
+            "$ref": "#/components/schemas/CodebaseSourceConfigResponse"
+          },
+          "current_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Snapshot Id"
+          },
+          "approved_snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Snapshot Id"
+          },
+          "source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Ref"
+          },
+          "source_commit_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Commit Sha"
+          },
+          "snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Status"
+          },
+          "approved_source_ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Source Ref"
+          },
+          "approved_source_commit_sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Source Commit Sha"
+          },
+          "approved_snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Snapshot Status"
+          },
+          "approval_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Status"
+          },
+          "memory_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Status"
+          },
+          "stats": {
+            "$ref": "#/components/schemas/CodebaseSnapshotStatsResponse"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "snapshot_created_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Created At"
+          },
+          "snapshot_updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Updated At"
+          },
+          "approved_snapshot_updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approved Snapshot Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "bank_id",
+          "name",
+          "source_type"
+        ],
+        "title": "CodebaseResponse",
+        "description": "Codebase metadata plus current snapshot summary."
+      },
+      "CodebaseSnapshotStatsResponse": {
+        "properties": {
+          "total_files": {
+            "type": "integer",
+            "title": "Total Files",
+            "default": 0
+          },
+          "indexed_files": {
+            "type": "integer",
+            "title": "Indexed Files",
+            "default": 0
+          },
+          "retained_files": {
+            "type": "integer",
+            "title": "Retained Files",
+            "default": 0
+          },
+          "manifest_only_files": {
+            "type": "integer",
+            "title": "Manifest Only Files",
+            "default": 0
+          },
+          "excluded_files": {
+            "type": "integer",
+            "title": "Excluded Files",
+            "default": 0
+          },
+          "symbol_count": {
+            "type": "integer",
+            "title": "Symbol Count",
+            "default": 0
+          },
+          "edge_count": {
+            "type": "integer",
+            "title": "Edge Count",
+            "default": 0
+          },
+          "added_files": {
+            "type": "integer",
+            "title": "Added Files",
+            "default": 0
+          },
+          "changed_files": {
+            "type": "integer",
+            "title": "Changed Files",
+            "default": 0
+          },
+          "unchanged_files": {
+            "type": "integer",
+            "title": "Unchanged Files",
+            "default": 0
+          },
+          "deleted_files": {
+            "type": "integer",
+            "title": "Deleted Files",
+            "default": 0
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "CodebaseSnapshotStatsResponse",
+        "description": "Snapshot-level deterministic indexing stats."
+      },
+      "CodebaseSourceConfigResponse": {
+        "properties": {
+          "owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner"
+          },
+          "repo": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo"
+          },
+          "ref": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ref"
+          },
+          "root_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Path"
+          },
+          "include_globs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Include Globs",
+            "default": []
+          },
+          "exclude_globs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Exclude Globs",
+            "default": []
+          }
+        },
+        "type": "object",
+        "title": "CodebaseSourceConfigResponse",
+        "description": "Normalized source configuration for a codebase."
+      },
+      "CodebaseSymbolMatchResponse": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "fq_name": {
+            "type": "string",
+            "title": "Fq Name"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "container": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Container"
+          },
+          "start_line": {
+            "type": "integer",
+            "title": "Start Line"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "match_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Match Mode"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "fq_name",
+          "path",
+          "start_line",
+          "end_line"
+        ],
+        "title": "CodebaseSymbolMatchResponse",
+        "description": "Single deterministic symbol match."
+      },
+      "CodebaseSymbolsResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseSymbolMatchResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "items"
+        ],
+        "title": "CodebaseSymbolsResponse",
+        "description": "Symbol search results for a codebase."
       },
       "ConsolidationResponse": {
         "properties": {
@@ -10002,9 +11916,14 @@
                 "$ref": "#/components/schemas/ReflectResponse"
               },
               {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
                 "type": "null"
               }
-            ]
+            ],
+            "title": "Result"
           }
         },
         "type": "object",

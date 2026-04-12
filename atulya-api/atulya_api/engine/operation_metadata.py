@@ -67,3 +67,17 @@ class RefreshMentalModelMetadata:
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for JSON serialization."""
         return asdict(self)
+
+
+@dataclass
+class CodebaseOperationMetadata:
+    """Metadata for queued codebase import, refresh, and approval operations."""
+
+    codebase_id: str
+    snapshot_id: str
+    source_type: str
+    source_ref: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dict for JSON serialization."""
+        return asdict(self)
