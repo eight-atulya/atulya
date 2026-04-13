@@ -713,6 +713,7 @@ class CodebaseApproveRequest(BaseModel):
     """Approve a parsed codebase snapshot for memory hydration."""
 
     snapshot_id: str | None = None
+    memory_ingest_mode: Literal["direct", "retain"] = "direct"
 
 
 class CodebaseApproveResponse(BaseModel):
@@ -722,6 +723,7 @@ class CodebaseApproveResponse(BaseModel):
     snapshot_id: str
     operation_id: str
     status: str
+    memory_ingest_mode: Literal["direct", "retain"] = "direct"
 
 
 class CodebaseResponse(BaseModel):
@@ -896,6 +898,7 @@ class CodebaseRouteRequest(BaseModel):
     item_ids: list[str]
     target: Literal["memory", "research", "dismissed", "unrouted"]
     queue_memory_import: bool = False
+    memory_ingest_mode: Literal["direct", "retain"] = "direct"
 
 
 class CodebaseRouteResponse(BaseModel):
@@ -907,6 +910,7 @@ class CodebaseRouteResponse(BaseModel):
     target: str
     operation_id: str | None = None
     queued_for_memory: bool = False
+    memory_ingest_mode: Literal["direct", "retain"] = "direct"
     review_counts: CodebaseReviewCountsResponse = Field(default_factory=CodebaseReviewCountsResponse)
 
 
@@ -6272,6 +6276,7 @@ def _register_routes(app: FastAPI):
                 bank_id=bank_id,
                 codebase_id=codebase_id,
                 snapshot_id=request.snapshot_id,
+                memory_ingest_mode=request.memory_ingest_mode,
                 request_context=request_context,
             )
             return CodebaseApproveResponse.model_validate(result)
@@ -6497,6 +6502,7 @@ def _register_routes(app: FastAPI):
                 item_ids=request.item_ids,
                 target=request.target,
                 queue_memory_import=request.queue_memory_import,
+                memory_ingest_mode=request.memory_ingest_mode,
                 request_context=request_context,
             )
             return CodebaseRouteResponse.model_validate(result)

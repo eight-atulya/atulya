@@ -5,11 +5,13 @@ import { toast } from "sonner";
 import { useBank } from "@/lib/bank-context";
 import {
   client,
+  CodebaseChunkItem,
   CodebaseChunkDetail,
   CodebaseFileItem,
   CodebaseChunksResult,
   CodebaseFilesResult,
   CodebaseImpactResult,
+  CodebaseMemoryIngestMode,
   CodebaseReviewSummary,
   CodebaseSummary,
   CodebaseSymbolsResult,
@@ -74,6 +76,19 @@ type ParsedGithubSource = {
   repo: string;
   ref?: string;
 };
+
+type PendingMemoryAction =
+  | {
+      kind: "route";
+      itemIds: string[];
+      chunkCount: number;
+      previewChunk: CodebaseChunkItem | CodebaseChunkDetail | null;
+    }
+  | {
+      kind: "approve";
+      chunkCount: number;
+      previewChunk: null;
+    };
 
 type RepoMapGroup = {
   directory: string;
@@ -257,6 +272,16 @@ function routeTone(routeTarget: string | null | undefined): string {
   }
 }
 
+function memoryIngestModeLabel(mode: CodebaseMemoryIngestMode): string {
+  return mode === "retain" ? "Retain Pipeline" : "ASD Direct";
+}
+
+function memoryIngestModeDescription(mode: CodebaseMemoryIngestMode): string {
+  return mode === "retain"
+    ? "Runs the chunk through Atulya retain with ASD-enriched context so memory can form richer links and meaning."
+    : "Stores the exact ASD-reviewed chunk directly as deterministic memory for the fastest, lowest-overhead sync.";
+}
+
 export function CodebasesView() {
   const { currentBank } = useBank();
 
@@ -294,6 +319,9 @@ export function CodebasesView() {
   const [refreshRef, setRefreshRef] = useState("");
   const [refreshingCodebase, setRefreshingCodebase] = useState(false);
   const [approvingCodebase, setApprovingCodebase] = useState(false);
+  const [memoryActionDialogOpen, setMemoryActionDialogOpen] = useState(false);
+  const [pendingMemoryAction, setPendingMemoryAction] = useState<PendingMemoryAction | null>(null);
+  const [memoryIngestMode, setMemoryIngestMode] = useState<CodebaseMemoryIngestMode>("retain");
 
   const [reviewSummary, setReviewSummary] = useState<CodebaseReviewSummary | null>(null);
   const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
@@ -561,6 +589,12 @@ export function CodebasesView() {
     }
   };
 
+  const openMemoryActionDialog = (action: PendingMemoryAction) => {
+    setPendingMemoryAction(action);
+    setMemoryIngestMode("retain");
+    setMemoryActionDialogOpen(true);
+  };
+
   const handleGithubImport = async () => {
     const parsedRepoUrl = parseGithubRepoUrl(githubRepoUrl);
     const effectiveOwner = githubOwner.trim() || parsedRepoUrl?.owner || "";
@@ -690,13 +724,14 @@ export function CodebasesView() {
     }
   };
 
-  const handleApprove = async () => {
+  const handleApprove = async (selectedMode: CodebaseMemoryIngestMode = "direct") => {
     if (!currentBank || !selectedCodebase?.current_snapshot_id) return;
 
     setApprovingCodebase(true);
     try {
       const response = await client.approveCodebase(currentBank, selectedCodebase.id, {
         snapshot_id: selectedCodebase.current_snapshot_id,
+        memory_ingest_mode: selectedMode,
       });
       setActiveOperationId(response.operation_id);
       setOperationStatus({
@@ -710,7 +745,9 @@ export function CodebasesView() {
         stage: "queued",
       });
       setOperationResult(null);
-      toast.success("Queued memory hydration for the current reviewed snapshot.");
+      toast.success(
+        `Queued ${memoryIngestModeLabel(selectedMode).toLowerCase()} memory hydration for the current reviewed snapshot.`
+      );
     } finally {
       setApprovingCodebase(false);
     }
@@ -750,7 +787,8 @@ export function CodebasesView() {
 
   const handleRouteItems = async (
     target: "memory" | "research" | "dismissed" | "unrouted",
-    itemIds: string[]
+    itemIds: string[],
+    selectedMode: CodebaseMemoryIngestMode = "direct"
   ) => {
     if (!currentBank || !selectedCodebaseId || itemIds.length === 0) return;
     setRoutingTarget(target);
@@ -759,6 +797,7 @@ export function CodebasesView() {
         item_ids: itemIds,
         target,
         queue_memory_import: target === "memory",
+        memory_ingest_mode: selectedMode,
       });
       setSelectedChunkIds([]);
       setReviewSummary((current) =>
@@ -791,12 +830,24 @@ export function CodebasesView() {
       }
       toast.success(
         response.queued_for_memory
-          ? `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to memory and queued async memory intake.`
+          ? `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to memory and queued ${memoryIngestModeLabel(selectedMode).toLowerCase()} intake.`
           : `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to ${target}.`
       );
     } finally {
       setRoutingTarget(null);
     }
+  };
+
+  const confirmMemoryAction = async () => {
+    if (!pendingMemoryAction) return;
+    const selectedMode = memoryIngestMode;
+    setMemoryActionDialogOpen(false);
+    if (pendingMemoryAction.kind === "approve") {
+      await handleApprove(selectedMode);
+    } else {
+      await handleRouteItems("memory", pendingMemoryAction.itemIds, selectedMode);
+    }
+    setPendingMemoryAction(null);
   };
 
   useEffect(() => {
@@ -1419,7 +1470,13 @@ export function CodebasesView() {
                     Refresh
                   </Button>
                   <Button
-                    onClick={handleApprove}
+                    onClick={() =>
+                      openMemoryActionDialog({
+                        kind: "approve",
+                        chunkCount: reviewSummary?.review_counts.memory || 0,
+                        previewChunk: null,
+                      })
+                    }
                     disabled={!canApproveMemory || approvingCodebase}
                     className="w-full xl:w-auto"
                   >
@@ -1762,7 +1819,18 @@ export function CodebasesView() {
                 <Button
                   size="sm"
                   disabled={!selectedChunkIds.length || routingTarget !== null}
-                  onClick={() => void handleRouteItems("memory", selectedChunkIds)}
+                  onClick={() =>
+                    openMemoryActionDialog({
+                      kind: "route",
+                      itemIds: selectedChunkIds,
+                      chunkCount: selectedChunkIds.length,
+                      previewChunk:
+                        selectedChunkIds.length === 1
+                          ? chunksResult.items.find((item) => item.id === selectedChunkIds[0]) ||
+                            null
+                          : null,
+                    })
+                  }
                 >
                   {routingTarget === "memory" ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1892,7 +1960,14 @@ export function CodebasesView() {
                                     <Button
                                       variant="outline"
                                       size="sm"
-                                      onClick={() => void handleRouteItems("memory", [item.id])}
+                                      onClick={() =>
+                                        openMemoryActionDialog({
+                                          kind: "route",
+                                          itemIds: [item.id],
+                                          chunkCount: 1,
+                                          previewChunk: item,
+                                        })
+                                      }
                                       disabled={routingTarget !== null}
                                     >
                                       Memory
@@ -2512,7 +2587,14 @@ export function CodebasesView() {
                                 <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={() => void handleRouteItems("memory", [item.id])}
+                                  onClick={() =>
+                                    openMemoryActionDialog({
+                                      kind: "route",
+                                      itemIds: [item.id],
+                                      chunkCount: 1,
+                                      previewChunk: item,
+                                    })
+                                  }
                                 >
                                   Promote To Memory
                                 </Button>
@@ -2767,6 +2849,151 @@ export function CodebasesView() {
         </CardContent>
       </Card>
 
+      <Dialog
+        open={memoryActionDialogOpen}
+        onOpenChange={(open) => {
+          setMemoryActionDialogOpen(open);
+          if (!open) {
+            setPendingMemoryAction(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingMemoryAction?.kind === "approve"
+                ? "Choose Memory Ingest Path"
+                : "Send Chunk To Memory"}
+            </DialogTitle>
+            <DialogDescription className="leading-relaxed">
+              {pendingMemoryAction?.kind === "approve"
+                ? "Choose how the routed ASD-reviewed chunks should enter memory. Direct mode is exact and fast. Retain mode is heavier, but it uses Atulya's richer ingest path with ASD context."
+                : "Choose whether this ASD-reviewed chunk should enter memory directly or go through the richer retain pipeline with extra ASD context."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {(["retain", "direct"] as CodebaseMemoryIngestMode[]).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setMemoryIngestMode(mode)}
+                className={`rounded-xl border p-4 text-left transition-colors ${
+                  memoryIngestMode === mode
+                    ? "border-primary bg-primary/5"
+                    : "border-border/70 bg-background hover:bg-muted/20"
+                }`}
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-foreground">
+                    {memoryIngestModeLabel(mode)}
+                    {mode === "retain" ? " (Recommended)" : ""}
+                  </div>
+                  <span
+                    className={`inline-flex min-h-8 items-center whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold leading-none ${
+                      mode === "retain"
+                        ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                        : "bg-amber-500/10 text-amber-700 dark:text-amber-300"
+                    }`}
+                  >
+                    {mode === "retain" ? "Richer linking" : "Fastest path"}
+                  </span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {memoryIngestModeDescription(mode)}
+                </p>
+              </button>
+            ))}
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-lg border border-border/70 p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Action</div>
+              <div className="mt-1 text-sm font-medium text-foreground">
+                {pendingMemoryAction?.kind === "approve"
+                  ? "Approve Routed Memory"
+                  : "Route And Queue"}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/70 p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Chunks</div>
+              <div className="mt-1 text-sm font-medium text-foreground">
+                {pendingMemoryAction?.chunkCount || 0}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/70 p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Symbol</div>
+              <div className="mt-1 break-words text-sm font-medium text-foreground [overflow-wrap:anywhere]">
+                {pendingMemoryAction?.previewChunk?.parent_symbol ||
+                  pendingMemoryAction?.previewChunk?.container ||
+                  "-"}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/70 p-3">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Cluster</div>
+              <div className="mt-1 break-words text-sm font-medium text-foreground [overflow-wrap:anywhere]">
+                {pendingMemoryAction?.previewChunk?.cluster_label || "-"}
+              </div>
+            </div>
+          </div>
+
+          {pendingMemoryAction?.previewChunk ? (
+            <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+              <div className="mb-2 text-sm font-semibold text-foreground">ASD Context Preview</div>
+              <div className="space-y-2">
+                <HoverPath
+                  value={`${pendingMemoryAction.previewChunk.path}:${pendingMemoryAction.previewChunk.start_line}-${pendingMemoryAction.previewChunk.end_line}`}
+                />
+                <div className="line-clamp-4 text-sm text-muted-foreground">
+                  {pendingMemoryAction.previewChunk.preview_text}
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span className="rounded-full bg-muted px-2.5 py-1">
+                    {pendingMemoryAction.previewChunk.kind}
+                  </span>
+                  <span className="rounded-full bg-muted px-2.5 py-1">
+                    {pendingMemoryAction.previewChunk.language || "unknown"}
+                  </span>
+                  <span className="rounded-full bg-muted px-2.5 py-1">
+                    {pendingMemoryAction.previewChunk.related_count} related
+                  </span>
+                  <span className="rounded-full bg-muted px-2.5 py-1">
+                    {(pendingMemoryAction.previewChunk.parse_confidence * 100).toFixed(0)}% parse
+                    confidence
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+            {memoryIngestMode === "retain"
+              ? "Retain mode sends the reviewed code through Atulya's richer ingest path with ASD-generated context. This is heavier, but better for relationships, semantic retrieval, and future synthesis."
+              : "ASD Direct mode stores the exact reviewed chunk as memory immediately. It is deterministic and efficient, but it intentionally skips the richer retain-time linking path."}
+          </div>
+
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMemoryActionDialogOpen(false);
+                setPendingMemoryAction(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void confirmMemoryAction()}
+              disabled={routingTarget !== null || approvingCodebase}
+            >
+              {pendingMemoryAction?.kind === "approve"
+                ? `Queue ${memoryIngestModeLabel(memoryIngestMode)}`
+                : `Send Via ${memoryIngestModeLabel(memoryIngestMode)}`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={chunkDialogOpen} onOpenChange={setChunkDialogOpen}>
         <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
@@ -2822,7 +3049,16 @@ export function CodebasesView() {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <Button onClick={() => void handleRouteItems("memory", [chunkDetail.id])}>
+                <Button
+                  onClick={() =>
+                    openMemoryActionDialog({
+                      kind: "route",
+                      itemIds: [chunkDetail.id],
+                      chunkCount: 1,
+                      previewChunk: chunkDetail,
+                    })
+                  }
+                >
                   Send To Memory
                 </Button>
                 <Button

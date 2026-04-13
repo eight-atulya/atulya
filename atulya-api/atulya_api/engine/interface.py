@@ -578,6 +578,7 @@ class MemoryEngineInterface(ABC):
         codebase_id: str,
         *,
         snapshot_id: str | None = None,
+        memory_ingest_mode: str = "direct",
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Queue approval-driven codebase memory hydration."""
@@ -672,6 +673,7 @@ class MemoryEngineInterface(ABC):
         item_ids: list[str],
         target: str,
         queue_memory_import: bool = False,
+        memory_ingest_mode: str = "direct",
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Bulk-route review items."""

@@ -618,11 +618,14 @@ export interface CodebaseRefreshResult {
   noop: boolean;
 }
 
+export type CodebaseMemoryIngestMode = "direct" | "retain";
+
 export interface CodebaseApproveResult {
   codebase_id: string;
   snapshot_id: string;
   operation_id: string;
   status: string;
+  memory_ingest_mode: CodebaseMemoryIngestMode;
 }
 
 export interface CodebaseFileItem {
@@ -744,6 +747,7 @@ export interface CodebaseRouteResult {
   target: string;
   operation_id?: string | null;
   queued_for_memory: boolean;
+  memory_ingest_mode: CodebaseMemoryIngestMode;
   review_counts: CodebaseReviewCounts;
 }
 
@@ -2142,6 +2146,7 @@ export class ControlPlaneClient {
     codebaseId: string,
     params?: {
       snapshot_id?: string;
+      memory_ingest_mode?: CodebaseMemoryIngestMode;
     }
   ) {
     return this.fetchApi<CodebaseApproveResult>(
@@ -2150,6 +2155,7 @@ export class ControlPlaneClient {
         method: "POST",
         body: JSON.stringify({
           snapshot_id: params?.snapshot_id,
+          memory_ingest_mode: params?.memory_ingest_mode,
         }),
       }
     );
@@ -2271,6 +2277,7 @@ export class ControlPlaneClient {
       item_ids: string[];
       target: "memory" | "research" | "dismissed" | "unrouted";
       queue_memory_import?: boolean;
+      memory_ingest_mode?: CodebaseMemoryIngestMode;
     }
   ) {
     return this.fetchApi<CodebaseRouteResult>(

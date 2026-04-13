@@ -393,13 +393,13 @@ export function BankConfigView() {
   if (!bankConfigEnabled) {
     return (
       <div className="flex flex-col items-center justify-center py-16 gap-3 text-center">
-        <p className="text-base font-medium text-foreground">Bank configuration is disabled</p>
+        <p className="text-base font-medium text-foreground">Brain configuration is disabled</p>
         <p className="text-sm text-muted-foreground max-w-sm">
           Set{" "}
           <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">
             ATULYA_API_ENABLE_BANK_CONFIG_API=true
           </code>{" "}
-          to enable per-bank configuration.
+          to enable per-brain configuration.
         </p>
       </div>
     );

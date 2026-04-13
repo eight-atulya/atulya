@@ -8138,6 +8138,15 @@
               }
             ],
             "title": "Snapshot Id"
+          },
+          "memory_ingest_mode": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "retain"
+            ],
+            "title": "Memory Ingest Mode",
+            "default": "direct"
           }
         },
         "type": "object",
@@ -8161,6 +8170,15 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "memory_ingest_mode": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "retain"
+            ],
+            "title": "Memory Ingest Mode",
+            "default": "direct"
           }
         },
         "type": "object",
@@ -9686,6 +9704,15 @@
             "type": "boolean",
             "title": "Queue Memory Import",
             "default": false
+          },
+          "memory_ingest_mode": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "retain"
+            ],
+            "title": "Memory Ingest Mode",
+            "default": "direct"
           }
         },
         "type": "object",
@@ -9729,6 +9756,15 @@
             "type": "boolean",
             "title": "Queued For Memory",
             "default": false
+          },
+          "memory_ingest_mode": {
+            "type": "string",
+            "enum": [
+              "direct",
+              "retain"
+            ],
+            "title": "Memory Ingest Mode",
+            "default": "direct"
           },
           "review_counts": {
             "$ref": "#/components/schemas/CodebaseReviewCountsResponse"

@@ -205,6 +205,82 @@ async def test_codebase_zip_import_requires_chunk_routing_before_memory_hydratio
 
 
 @pytest.mark.asyncio
+async def test_codebase_approval_can_use_retain_pipeline_for_memory_hydration(
+    memory_no_llm_verify, request_context
+):
+    bank_id = _bank_id("retain_mode")
+    archive_bytes = _build_repo_zip(
+        {
+            "demo-repo/src/main.py": "def greet_user(name: str) -> str:\n    return f'Hello {name}'\n",
+            "demo-repo/README.md": "# Demo Repo\n",
+        }
+    )
+
+    try:
+        await memory_no_llm_verify.get_bank_profile(bank_id=bank_id, request_context=request_context)
+
+        submit_result = await memory_no_llm_verify.submit_async_codebase_zip_import(
+            bank_id=bank_id,
+            name="retain-mode-repo",
+            archive_name="retain-mode-repo.zip",
+            archive_bytes=archive_bytes,
+            request_context=request_context,
+        )
+
+        import_operation = await memory_no_llm_verify.get_operation_result(
+            bank_id,
+            submit_result["operation_id"],
+            request_context=request_context,
+        )
+        assert import_operation["status"] == "completed"
+
+        chunks = await _route_all_chunks_to_memory(
+            memory_no_llm_verify,
+            bank_id,
+            submit_result["codebase_id"],
+            request_context,
+        )
+        main_chunk = next(item for item in chunks if item["path"] == "src/main.py")
+
+        approve_result = await memory_no_llm_verify.submit_async_codebase_approval(
+            bank_id,
+            submit_result["codebase_id"],
+            memory_ingest_mode="retain",
+            request_context=request_context,
+        )
+        assert approve_result["memory_ingest_mode"] == "retain"
+
+        approve_operation = await memory_no_llm_verify.get_operation_result(
+            bank_id,
+            approve_result["operation_id"],
+            request_context=request_context,
+        )
+        assert approve_operation["status"] == "completed"
+        assert approve_operation["result"]["status"] == "approved"
+        assert approve_operation["result"]["memory_ingest_mode"] == "retain"
+
+        approved_chunks = await memory_no_llm_verify.list_codebase_chunks(
+            bank_id,
+            submit_result["codebase_id"],
+            request_context=request_context,
+        )
+        approved_main_chunk = next(
+            item for item in approved_chunks["items"] if item["chunk_key"] == main_chunk["chunk_key"]
+        )
+        assert approved_main_chunk["document_id"] == f"codebase:{submit_result['codebase_id']}:chunk:{main_chunk['chunk_key']}"
+
+        approved_document = await memory_no_llm_verify.get_document(
+            approved_main_chunk["document_id"],
+            bank_id,
+            request_context=request_context,
+        )
+        assert approved_document is not None
+        assert "Hello" in approved_document["original_text"]
+    finally:
+        await memory_no_llm_verify.delete_bank(bank_id, request_context=request_context)
+
+
+@pytest.mark.asyncio
 async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_is_rerouted_and_approved(
     memory_no_llm_verify, request_context, monkeypatch
 ):

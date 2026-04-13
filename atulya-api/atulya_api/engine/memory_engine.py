@@ -1406,6 +1406,8 @@ class MemoryEngine(MemoryEngineInterface):
         snapshot_id: str,
         operation_id: str | None = None,
         batch_size: int = 20,
+        memory_ingest_mode: str = "direct",
+        request_context: "RequestContext | None" = None,
     ) -> dict[str, int]:
         """Hydrate routed memory chunks into stable memory documents in small batches."""
         codebase_uuid = uuid.UUID(codebase_id)
@@ -1431,7 +1433,7 @@ class MemoryEngine(MemoryEngineInterface):
             current_rows = await conn.fetch(
                 f"""
                 SELECT c.id, c.chunk_key, c.path, c.language, c.label, c.content_hash, c.content_text, c.document_id,
-                       r.route_target
+                       c.start_line, c.end_line, c.parent_symbol, c.cluster_label, r.route_target
                 FROM {fq_table("codebase_chunks")} c
                 JOIN {fq_table("codebase_review_routes")} r
                   ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
@@ -1484,39 +1486,85 @@ class MemoryEngine(MemoryEngineInterface):
 
         for start in range(0, len(current_memory_rows), batch_size):
             batch = current_memory_rows[start : start + batch_size]
+            if operation_id:
+                await self._set_operation_stage(
+                    operation_id,
+                    "hydrating",
+                    {
+                        "snapshot_id": snapshot_id,
+                        "codebase_id": codebase_id,
+                        "processed": start,
+                        "batch_size": len(batch),
+                        "memory_ingest_mode": memory_ingest_mode,
+                    },
+                )
+
+            rows_to_update: list[tuple[uuid.UUID, str]] = []
+            rows_to_ingest: list[asyncpg.Record] = []
+            for row in batch:
+                stable_document_id = f"codebase:{codebase_id}:chunk:{row['chunk_key']}"
+                previous = previous_memory_chunks.get(row["chunk_key"])
+                rows_to_update.append((row["id"], stable_document_id))
+                if previous and previous["content_hash"] == row["content_hash"]:
+                    reused_files += 1
+                    continue
+                rows_to_ingest.append(row)
+
+            if rows_to_ingest:
+                if memory_ingest_mode == "retain":
+                    if request_context is None:
+                        raise ValueError("request_context is required for retain-based codebase hydration")
+                    rows_by_language: dict[str | None, list[dict[str, Any]]] = {}
+                    for row in rows_to_ingest:
+                        stable_document_id = f"codebase:{codebase_id}:chunk:{row['chunk_key']}"
+                        context_parts = [
+                            f"ASD-reviewed code chunk from {row['path']}:{row['start_line']}-{row['end_line']}"
+                        ]
+                        if row["label"]:
+                            context_parts.append(f"label={row['label']}")
+                        if row["parent_symbol"]:
+                            context_parts.append(f"symbol={row['parent_symbol']}")
+                        if row["cluster_label"]:
+                            context_parts.append(f"cluster={row['cluster_label']}")
+                        if row["language"]:
+                            context_parts.append(f"language={row['language']}")
+                        rows_by_language.setdefault(row["language"], []).append(
+                            {
+                                "content": row["content_text"],
+                                "context": " | ".join(context_parts),
+                                "document_id": stable_document_id,
+                            }
+                        )
+                    for language, contents in rows_by_language.items():
+                        document_tags = ["scope:codebase", f"codebase:{codebase_id}"]
+                        if language:
+                            document_tags.append(f"language:{language}")
+                        await self.retain_batch_async(
+                            bank_id=bank_id,
+                            contents=contents,
+                            request_context=request_context,
+                            document_tags=document_tags,
+                        )
+                    hydrated_files += len(rows_to_ingest)
+                else:
+                    async with acquire_with_retry(pool) as conn:
+                        async with conn.transaction():
+                            for row in rows_to_ingest:
+                                await self._upsert_codebase_memory_chunk(
+                                    conn,
+                                    bank_id=bank_id,
+                                    codebase_id=codebase_id,
+                                    chunk_key=row["chunk_key"],
+                                    path=row["path"],
+                                    language=row["language"],
+                                    text=row["content_text"],
+                                    label=row["label"],
+                                )
+                    hydrated_files += len(rows_to_ingest)
+
             async with acquire_with_retry(pool) as conn:
                 async with conn.transaction():
-                    if operation_id:
-                        await self._set_operation_stage(
-                            operation_id,
-                            "hydrating",
-                            {
-                                "snapshot_id": snapshot_id,
-                                "codebase_id": codebase_id,
-                                "processed": start,
-                                "batch_size": len(batch),
-                            },
-                        )
-
-                    for row in batch:
-                        stable_document_id = f"codebase:{codebase_id}:chunk:{row['chunk_key']}"
-                        previous = previous_memory_chunks.get(row["chunk_key"])
-                        document_id = stable_document_id
-                        if previous and previous["content_hash"] == row["content_hash"]:
-                            reused_files += 1
-                        else:
-                            await self._upsert_codebase_memory_chunk(
-                                conn,
-                                bank_id=bank_id,
-                                codebase_id=codebase_id,
-                                chunk_key=row["chunk_key"],
-                                path=row["path"],
-                                language=row["language"],
-                                text=row["content_text"],
-                                label=row["label"],
-                            )
-                            hydrated_files += 1
-
+                    for chunk_id, document_id in rows_to_update:
                         await conn.execute(
                             f"""
                             UPDATE {fq_table("codebase_chunks")}
@@ -1527,7 +1575,7 @@ class MemoryEngine(MemoryEngineInterface):
                             bank_id,
                             codebase_uuid,
                             document_id,
-                            row["id"],
+                            chunk_id,
                         )
 
         stale_chunk_keys = set(previous_memory_chunks) - current_memory_keys
@@ -2023,16 +2071,29 @@ class MemoryEngine(MemoryEngineInterface):
 
     async def _handle_codebase_approve(self, task_dict: dict[str, Any]) -> dict[str, Any]:
         """Hydrate the selected reviewable snapshot into memory after explicit approval."""
+        from atulya_api.models import RequestContext
+
         bank_id = task_dict["bank_id"]
         codebase_id = task_dict["codebase_id"]
         snapshot_id = task_dict["snapshot_id"]
         operation_id = task_dict.get("operation_id")
+        memory_ingest_mode = task_dict.get("memory_ingest_mode", "direct")
+
+        internal_context = RequestContext(
+            internal=True,
+            tenant_id=task_dict.get("_tenant_id"),
+            api_key_id=task_dict.get("_api_key_id"),
+        )
 
         if operation_id:
             await self._set_operation_stage(
                 operation_id,
                 "loading_snapshot",
-                {"snapshot_id": snapshot_id, "codebase_id": codebase_id},
+                {
+                    "snapshot_id": snapshot_id,
+                    "codebase_id": codebase_id,
+                    "memory_ingest_mode": memory_ingest_mode,
+                },
             )
 
         pool = await self._get_pool()
@@ -2062,6 +2123,8 @@ class MemoryEngine(MemoryEngineInterface):
             codebase_id=codebase_id,
             snapshot_id=snapshot_id,
             operation_id=operation_id,
+            memory_ingest_mode=memory_ingest_mode,
+            request_context=internal_context,
         )
 
         async with acquire_with_retry(pool) as conn:
@@ -2121,6 +2184,7 @@ class MemoryEngine(MemoryEngineInterface):
             "codebase_id": codebase_id,
             "snapshot_id": snapshot_id,
             "status": snapshot_status,
+            "memory_ingest_mode": memory_ingest_mode,
             **hydration,
         }
 
@@ -11374,6 +11438,7 @@ class MemoryEngine(MemoryEngineInterface):
         codebase_id: str,
         *,
         snapshot_id: str | None = None,
+        memory_ingest_mode: str = "direct",
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Queue explicit approval for snapshot-backed memory hydration."""
@@ -11434,27 +11499,39 @@ class MemoryEngine(MemoryEngineInterface):
             if not memory_route_count:
                 raise ValueError("Route at least one chunk to memory before approving.")
 
+        if memory_ingest_mode not in {"direct", "retain"}:
+            raise ValueError("memory_ingest_mode must be direct or retain.")
+
+        task_payload: dict[str, Any] = {
+            "codebase_id": codebase_id,
+            "snapshot_id": target_snapshot_id,
+            "memory_ingest_mode": memory_ingest_mode,
+        }
+        if request_context.tenant_id:
+            task_payload["_tenant_id"] = request_context.tenant_id
+        if request_context.api_key_id:
+            task_payload["_api_key_id"] = request_context.api_key_id
+
         operation = await self._submit_async_operation(
             bank_id=bank_id,
             operation_type="codebase_approve",
             task_type="codebase_approve",
-            task_payload={
-                "codebase_id": codebase_id,
-                "snapshot_id": target_snapshot_id,
-            },
+            task_payload=task_payload,
             result_metadata=CodebaseOperationMetadata(
                 codebase_id=codebase_id,
                 snapshot_id=target_snapshot_id,
                 source_type=row["source_type"],
-            ).to_dict(),
+            ).to_dict()
+            | {"memory_ingest_mode": memory_ingest_mode},
             dedupe_by_bank=True,
-            dedupe_key=f"codebase_approve:{codebase_id}:{target_snapshot_id}",
+            dedupe_key=f"codebase_approve:{codebase_id}:{target_snapshot_id}:{memory_ingest_mode}",
         )
         return {
             "codebase_id": codebase_id,
             "snapshot_id": target_snapshot_id,
             "operation_id": operation["operation_id"],
             "status": "pending",
+            "memory_ingest_mode": memory_ingest_mode,
         }
 
     def _derive_codebase_memory_state(
@@ -12056,6 +12133,7 @@ class MemoryEngine(MemoryEngineInterface):
         item_ids: list[str],
         target: str,
         queue_memory_import: bool = False,
+        memory_ingest_mode: str = "direct",
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Route review chunks to memory, research, or dismissed."""
@@ -12065,6 +12143,8 @@ class MemoryEngine(MemoryEngineInterface):
             raise ValueError("target must be one of memory, research, dismissed, or unrouted")
         if not item_ids:
             raise ValueError("item_ids is required")
+        if memory_ingest_mode not in {"direct", "retain"}:
+            raise ValueError("memory_ingest_mode must be direct or retain")
 
         await self._authenticate_tenant(request_context)
         if self._operation_validator:
@@ -12111,6 +12191,7 @@ class MemoryEngine(MemoryEngineInterface):
                 bank_id,
                 codebase_id,
                 snapshot_id=snapshot_id,
+                memory_ingest_mode=memory_ingest_mode,
                 request_context=request_context,
             )
             operation_id = approval["operation_id"]
@@ -12122,6 +12203,7 @@ class MemoryEngine(MemoryEngineInterface):
             "target": target,
             "operation_id": operation_id,
             "queued_for_memory": queued_for_memory,
+            "memory_ingest_mode": memory_ingest_mode,
             "review_counts": review_counts,
         }
 

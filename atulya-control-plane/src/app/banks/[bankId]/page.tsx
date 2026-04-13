@@ -174,14 +174,14 @@ export default function BankPage() {
             {/* Brain View Tab */}
             {view === "brain" && <BrainView />}
 
-            {/* Bank Configuration Tab */}
+            {/* Brain Configuration Tab */}
             {view === "profile" && (
               <div>
                 <div className="flex justify-between items-start mb-6">
                   <div>
-                    <h1 className="text-3xl font-bold mb-2 text-foreground">Bank Configuration</h1>
+                    <h1 className="text-3xl font-bold mb-2 text-foreground">Brain Configuration</h1>
                     <p className="text-muted-foreground">
-                      Manage bank settings, profile, and operations.
+                      Manage brain settings, profile, and operations.
                     </p>
                   </div>
                   <DropdownMenu>
