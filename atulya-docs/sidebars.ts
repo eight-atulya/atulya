@@ -13,22 +13,14 @@ const sidebars: SidebarsConfig = {
           label: 'Overview',
         },
         {
-          type: 'doc',
-          id: 'developer/control-plane-graph-intelligence',
-          label: 'Graph Intelligence',
-        },
-        {
           type: 'category',
           label: 'Codebases',
+          link: {
+            type: 'doc',
+            id: 'developer/codebases',
+          },
+          collapsible: false,
           items: [
-            {
-              type: 'doc',
-              id: 'developer/codebases',
-              label: 'Overview',
-              customProps: {
-                icon: '/img/icons/codebases-overview.svg',
-              },
-            },
             {
               type: 'doc',
               id: 'developer/codebases-lifecycle',
@@ -47,6 +39,14 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'developer/codebases-for-coding-agents',
+              label: 'Coding Agents',
+              customProps: {
+                icon: '/img/icons/codebases-api.svg',
+              },
+            },
+            {
+              type: 'doc',
               id: 'developer/codebases-api',
               label: 'API',
               customProps: {
@@ -54,6 +54,11 @@ const sidebars: SidebarsConfig = {
               },
             },
           ],
+        },
+        {
+          type: 'doc',
+          id: 'developer/control-plane-graph-intelligence',
+          label: 'Graph Intelligence',
         },
         {
           type: 'doc',

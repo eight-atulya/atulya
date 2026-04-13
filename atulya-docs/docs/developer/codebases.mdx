@@ -18,6 +18,9 @@ import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
     <a className="button button--primary button--lg" href="/developer/codebases-lifecycle">
       Explore The Lifecycle
     </a>
+    <a className="button button--secondary button--lg" href="/developer/codebases-for-coding-agents">
+      Coding Agent Guide
+    </a>
     <a className="button button--secondary button--lg" href="/developer/codebases-control-plane">
       See The Control Plane
     </a>
@@ -94,6 +97,86 @@ That combination is especially useful for:
 - platform teams operating shared memory banks
 - agentic coding workflows where token spend and auditability both matter
 
+## Why Coding Agents Get Faster
+
+The feature matters most when you look at the full agent loop instead of only import.
+
+| Agent need | Codebases answer |
+|---|---|
+| Understand repo structure quickly | ASD builds the repo map, symbols, chunks, and impact graph immediately |
+| Avoid spending tokens on every import | Parsing stays mechanical first and memory hydration is explicit |
+| Keep shared memory trustworthy | The latest snapshot is reviewable before it can affect `recall` or `reflect` |
+| Stage only the valuable parts of a repo | Chunk routing separates `memory`, `research`, `dismissed`, and `unrouted` work |
+| Choose between speed and richer memory formation | The memory modal now exposes `ASD Direct` versus `Retain Pipeline` |
+
+```mermaid
+flowchart TD
+    A["Agent receives repo or ZIP"] --> B["ASD parses archive mechanically"]
+    B --> C["Repo map + symbols + impact + review queue"]
+    C --> D["Operator or agent reviews high-value chunks"]
+    D --> E{"Memory ingest mode"}
+    E -->|"ASD Direct"| F["Deterministic chunk-backed memory"]
+    E -->|"Retain Pipeline"| G["Retain with ASD-enriched context"]
+    F --> H["Approved memory snapshot"]
+    G --> H
+    H --> I["recall / reflect / agent workflows"]
+```
+
+## Release Readiness At A Glance
+
+| Surface | What is ready |
+|---|---|
+| Import | ZIP and public GitHub archive import |
+| Parse | ASD-first snapshot creation with chunk graph and deterministic diagnostics |
+| Review | Review queue, repo map, symbol search, impact, research queue, approved memory history |
+| Memory publish | Explicit approval with `ASD Direct` or `Retain Pipeline` selection |
+| Refresh | GitHub refresh with `noop` when the commit SHA has not changed |
+| Operator UX | Progressive loading for large repos and modal detail flows instead of full-page overload |
+
+## How The Pieces Fit Together
+
+| Layer | Primary job | Why it matters |
+|---|---|---|
+| Archive import | Normalize ZIP and GitHub sources into one pipeline | Keeps ingestion predictable and clone-free |
+| ASD mechanical parse | Build files, symbols, chunks, clusters, and graph edges | Gives coding agents structural understanding before memory |
+| Review routing | Decide what belongs in `memory`, `research`, or nowhere | Prevents low-value code from polluting shared reasoning |
+| Memory ingestion | Publish approved chunks with `ASD Direct` or `Retain Pipeline` | Lets teams balance speed against richer memory formation |
+| Memory-backed reasoning | Power `recall` and `reflect` from the approved snapshot | Keeps shared reasoning conservative and auditable |
+
+```mermaid
+flowchart TB
+    subgraph Source["Source Intake"]
+        A["ZIP upload"]
+        B["Public GitHub ref"]
+    end
+
+    subgraph ASD["ASD Code Intelligence"]
+        C["Archive normalization"]
+        D["Files + symbols + chunks"]
+        E["Impact graph + related chunks"]
+    end
+
+    subgraph Review["Review And Routing"]
+        F["Review queue"]
+        G["Research queue"]
+        H["Approved memory candidates"]
+    end
+
+    subgraph Memory["Memory Publish"]
+        I["ASD Direct"]
+        J["Retain Pipeline"]
+        K["Approved memory snapshot"]
+    end
+
+    A --> C
+    B --> C
+    C --> D --> E --> F
+    F --> G
+    F --> H
+    H --> I --> K
+    H --> J --> K
+```
+
 ## What ASD Owns
 
 ASD is the proprietary mechanical code-intelligence layer. In v1 it owns:
@@ -129,6 +212,16 @@ This separation is intentional.
 
 Code understanding should be mechanical first. Memory-backed reasoning should happen only after the reviewed source state is approved.
 
+## Operator Decision Table
+
+| If the team needs... | Use this path |
+|---|---|
+| Exact deterministic code persistence with minimal overhead | `ASD Direct` |
+| Richer semantic linking into Atulya memory | `Retain Pipeline` |
+| Structural review without touching memory yet | Review Queue + Repo Map + Symbol Search + Impact |
+| Deeper follow-up without publishing to memory | Research Queue |
+| Trusted reasoning against the current approved repo state | `recall` and `reflect` after approval |
+
 ## Where To Go Next
 
 | If you want to... | Start here |
@@ -136,8 +229,17 @@ Code understanding should be mechanical first. Memory-backed reasoning should ha
 | Understand the exact state machine | [Codebases Lifecycle](./codebases-lifecycle) |
 | Inspect the UI review loop | [Codebases Control Plane](./codebases-control-plane) |
 | Integrate the endpoints directly | [Codebases API](./codebases-api) |
+| Optimize coding-agent workflows | [Codebases For Coding Agents](./codebases-for-coding-agents) |
 
 ## Practical Guidance
+
+| Situation | Recommended move |
+|---|---|
+| Private or curated repo snapshot | ZIP import |
+| Public repo with cheap explicit refresh | GitHub import |
+| Large repo where only a few code regions matter | Route only high-value chunks to memory |
+| Core subsystem that future agents should deeply understand | Approve through `Retain Pipeline` |
+| Broad repo sync where cost and determinism matter more | Approve through `ASD Direct` |
 
 Use ZIP import when:
 
@@ -150,6 +252,14 @@ Use GitHub import when:
 - the repo is public
 - you want explicit refresh against a ref
 - you want a no-op result when the commit SHA has not changed
+
+## Before Versus After Approval
+
+| Stage | What developers can do | What memory sees |
+|---|---|---|
+| Parsed but unapproved | Inspect repo map, symbols, chunks, impact, and routes | Memory stays on the older approved snapshot or empty |
+| Routed for memory | Choose the best chunks and select the ingest mode | Memory still does not move until approval runs |
+| Approved | Query approved chunk history and trust the new snapshot | `recall` and `reflect` use the approved codebase documents |
 
 ## What This Is Not
 

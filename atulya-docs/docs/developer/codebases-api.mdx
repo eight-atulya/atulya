@@ -84,6 +84,42 @@ Use it when:
 
 Approval now applies only the chunks already routed to `memory`, in batches, instead of trying to hydrate every parsed file in one step.
 
+### Memory Ingest Mode
+
+Approval and route-to-memory flows now support an explicit `memory_ingest_mode`.
+
+| Mode | Best for | Tradeoff |
+|---|---|---|
+| `direct` | Fast deterministic chunk hydration | Skips the richer retain-time semantic extraction path |
+| `retain` | Richer memory formation and better semantic linking | Heavier than direct hydration |
+
+Use `retain` when:
+
+- the chunk is strategically important
+- you want Atulya memory to form richer links and meaning from ASD-reviewed code
+- the shared memory bank will power agent reasoning, not only exact lookup
+
+Use `direct` when:
+
+- you need the cheapest deterministic sync
+- you want exact reviewed code chunks persisted quickly
+- the repo is large and you want to stay conservative about heavier ingestion
+
+```mermaid
+sequenceDiagram
+    participant UI as Control Plane
+    participant API as Codebases API
+    participant ASD as ASD Snapshot
+    participant MEM as Memory Hydration
+
+    UI->>API: route chunk to memory + memory_ingest_mode
+    API->>ASD: validate routed chunks against current snapshot
+    API->>MEM: queue codebase_approve task
+    MEM->>MEM: hydrate only memory-routed chunks
+    MEM-->>API: operation result with ingest mode
+    API-->>UI: operation status / completion
+```
+
 ## Review Endpoints
 
 - `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/review`
@@ -99,6 +135,15 @@ These endpoints make the chunk review loop first-class:
 - chunk detail exposes code preview, related chunks, cluster members, symbol context, and path-level impact edges
 - review routing explicitly sends chunks to `memory`, `research`, `dismissed`, or back to `unrouted`
 - research queue shows staged chunks that should not be hydrated yet
+
+### Review Route Request Shape
+
+| Field | Purpose |
+|---|---|
+| `item_ids[]` | Chunks to update |
+| `target` | `memory`, `research`, `dismissed`, or `unrouted` |
+| `queue_memory_import` | When `true`, queue approval-style hydration right after routing |
+| `memory_ingest_mode` | `direct` or `retain` for the queued memory operation |
 
 ## Query Endpoints
 
@@ -129,6 +174,16 @@ Typical states:
 | New parsed snapshot while older memory stays active | `review_required` | `pending_approval` | `hydrated_from_previous_snapshot` |
 | Approved current snapshot | `approved` | `approved` | `hydrated` |
 | Current snapshot applied but still has unrouted items | `partially_approved` | `partially_approved` | `hydrated` |
+
+## Endpoint Map By Workflow
+
+| Workflow | Endpoints |
+|---|---|
+| Import repo | `import/zip`, `import/github` |
+| Review current snapshot | `review`, `chunks`, `chunks/{chunk_id}`, `files`, `symbols`, `impact` |
+| Stage follow-up work | `review/route`, `research` |
+| Publish to memory | `approve` |
+| Track source of truth | `codebases`, `codebases/{codebase_id}` |
 
 ## Files Endpoint
 

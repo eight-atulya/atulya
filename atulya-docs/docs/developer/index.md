@@ -32,6 +32,48 @@ This is exactly the direction behind the broader **BRAIN** thesis: memory must e
 
 Atulya solves these problems with a memory system designed specifically for AI agents, and it points toward a future where agents operate with stronger integrity, better organizational memory, and more durable reasoning over time.
 
+## Start Here If You Build Coding Agents
+
+The developer docs now have two high-leverage workbenches:
+
+| Surface | When to open it first | What you get |
+|------|------------------------|--------------|
+| **Codebases** | You need deterministic understanding of a repo before memory changes | ASD parsing, repo map, symbol search, impact analysis, review routing, and approved memory publish |
+| **Graph Intelligence** | You need to inspect what changed inside a memory bank and why Atulya believes it | state-aware graph review, evidence tracing, and scalable investigation views |
+
+If your workflow starts from source code, begin with **Codebases**. If your workflow starts from memory state or evidence review, begin with **Graph Intelligence**.
+
+```mermaid
+flowchart LR
+    A["Repo or ZIP"] --> B["Codebases"]
+    B --> C["ASD parse + review queue"]
+    C --> D["Approved memory hydration"]
+    D --> E["Graph Intelligence"]
+    E --> F["Evidence-backed operator review"]
+```
+
+## Featured: Codebases
+
+One of Atulya's most important developer features is **Codebases**.
+
+It lets teams import a repository from a ZIP archive or public GitHub ref, parse it through Atulya's mechanical ASD layer, and review the resulting snapshot before any code text is hydrated into memory.
+
+This matters because code intelligence and memory are intentionally separated:
+
+- `ASD` gives immediate repo map, symbol search, and impact analysis
+- memory hydration happens only after explicit approval
+- `recall` and `reflect` stay aligned to the last approved snapshot
+
+That keeps the developer workflow fast and deterministic without silently growing LLM-backed memory from every import.
+
+| If you need to... | Start here |
+|------|----------------|
+| Review repository structure before memory mutation | [Codebases](./codebases) |
+| Understand the full import-to-approval state machine | [Codebases Lifecycle](./codebases-lifecycle) |
+| Learn the workbench and modal review UX | [Codebases Control Plane](./codebases-control-plane) |
+| Optimize workflows for coding agents | [Codebases For Coding Agents](./codebases-for-coding-agents) |
+| Integrate import, review, routing, and approval via API | [Codebases API](./codebases-api) |
+
 ## Featured: Graph Intelligence
 
 One of Atulya's most useful Control Plane features is **Graph Intelligence**.
@@ -51,22 +93,6 @@ Use it when you want to:
 - move from a short answer to the exact proof path
 
 See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the full walkthrough.
-
-## Featured: Codebases
-
-Another Control Plane feature aimed directly at developers is **Codebases**.
-
-It lets teams import a repository from a ZIP archive or public GitHub ref, parse it through Atulya's mechanical ASD layer, and review the resulting snapshot before any code text is hydrated into memory.
-
-This matters because code intelligence and memory are intentionally separated:
-
-- `ASD` gives immediate repo map, symbol search, and impact analysis
-- memory hydration happens only after explicit approval
-- `recall` and `reflect` stay aligned to the last approved snapshot
-
-That keeps the developer workflow fast and deterministic without silently growing LLM-backed memory from every import.
-
-See [Codebases](./codebases) for the full lifecycle.
 
 ## Why This Matters For Enterprise Agentic Organizations
 

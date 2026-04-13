@@ -109,6 +109,7 @@ The workbench is split into:
 - `Symbol Search`
 - `Impact`
 - `Research Queue`
+- `Approved Memory`
 
 Those tabs map well to how developers think during code review and refactor planning:
 
@@ -117,6 +118,48 @@ Those tabs map well to how developers think during code review and refactor plan
 - search the name
 - trace the blast radius
 - stage deeper follow-up without polluting memory
+- inspect what is already backing `recall` and `reflect`
+
+## Memory Action Modal
+
+The memory action is no longer a blind queue button.
+
+When a developer sends a chunk to memory, the UI now opens a modal that shows:
+
+- the ASD chunk preview
+- symbol and cluster context
+- parse confidence
+- the ingest choice between `ASD Direct` and `Retain Pipeline`
+
+| UI choice | What a developer is saying |
+|---|---|
+| `ASD Direct` | "Store the reviewed code exactly and keep the operation cheap." |
+| `Retain Pipeline` | "Use the richer memory ingest path because this chunk deserves stronger semantic linking." |
+
+```mermaid
+flowchart TD
+    A["Review queue / research queue / detail dialog"] --> B["Open memory modal"]
+    B --> C["Inspect ASD context"]
+    C --> D{"Choose ingest mode"}
+    D -->|"ASD Direct"| E["Queue deterministic memory hydration"]
+    D -->|"Retain Pipeline"| F["Queue retain-backed memory hydration"]
+```
+
+## Approved Memory Tab
+
+The `Approved Memory` tab answers a question teams ask constantly:
+
+- what code is actually backing shared memory right now
+
+That tab shows:
+
+- approved snapshot ID
+- approved source ref or commit
+- approved chunk cards
+- document IDs
+- chunk detail drill-down
+
+This matters because the newest parsed snapshot and the currently approved memory snapshot are often not the same thing.
 
 ## Before Approval Versus After Approval
 
@@ -125,6 +168,15 @@ Those tabs map well to how developers think during code review and refactor plan
 | Before approval | Parsed snapshot is visible, chunk routes are editable, and `document_id` stays empty |
 | During review | The queue can send chunks to memory, research, dismissed, or back to unrouted |
 | After approval | Stable chunk-backed codebase documents exist and memory-backed flows can rely on the applied snapshot |
+
+## Why The UX Is Structured This Way
+
+| UX choice | Why it exists |
+|---|---|
+| Progressive loading | Large repos should not freeze the workbench |
+| Dialog-based detail inspection | Keep the main list clean while still supporting deep review |
+| Explicit memory modal | Make the speed-versus-richness tradeoff honest |
+| Approved memory history | Let teams see what is powering agent memory today |
 
 This is one of the most important UX details: the page is useful even before approval, so review becomes a real workflow rather than a ceremonial click.
 
