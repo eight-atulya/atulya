@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   Table,
   TableBody,
@@ -157,6 +158,30 @@ function directoryFromPath(path: string): string {
   const parts = path.split("/").filter(Boolean);
   if (parts.length <= 1) return "repo root";
   return parts.slice(0, -1).join("/");
+}
+
+function HoverPath({ value, className = "" }: { value: string; className?: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className={`block max-w-full truncate text-left font-mono text-xs text-card-foreground ${className}`.trim()}
+          aria-label={value}
+          title={value}
+        >
+          {value}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent
+        side="top"
+        align="start"
+        className="max-w-[min(42rem,calc(100vw-2rem))] break-all font-mono text-xs leading-relaxed"
+      >
+        {value}
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function statusClasses(status: string | null | undefined): string {
@@ -1760,8 +1785,10 @@ export function CodebasesView() {
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs text-card-foreground">
-                              {item.path}:{item.start_line}-{item.end_line}
+                            <TableCell className="max-w-[22rem]">
+                              <HoverPath
+                                value={`${item.path}:${item.start_line}-${item.end_line}`}
+                              />
                             </TableCell>
                             <TableCell className="text-card-foreground">{item.kind}</TableCell>
                             <TableCell className="text-card-foreground">
@@ -1782,29 +1809,51 @@ export function CodebasesView() {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => void openChunkDetail(item.id)}
-                                >
-                                  Details
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => void handleRouteItems("memory", [item.id])}
-                                  disabled={routingTarget !== null}
-                                >
-                                  Memory
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => void handleRouteItems("research", [item.id])}
-                                  disabled={routingTarget !== null}
-                                >
-                                  Research
-                                </Button>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => void openChunkDetail(item.id)}
+                                    >
+                                      Details
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    Inspect code, symbols, related chunks, and impact edges.
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => void handleRouteItems("memory", [item.id])}
+                                      disabled={routingTarget !== null}
+                                    >
+                                      Memory
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    Route this chunk into approved memory on the next apply step.
+                                  </TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => void handleRouteItems("research", [item.id])}
+                                      disabled={routingTarget !== null}
+                                    >
+                                      Research
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="top">
+                                    Keep this chunk staged for deeper review without memory
+                                    hydration.
+                                  </TooltipContent>
+                                </Tooltip>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -2156,8 +2205,8 @@ export function CodebasesView() {
                             {item.name}
                           </TableCell>
                           <TableCell className="text-card-foreground">{item.kind}</TableCell>
-                          <TableCell className="font-mono text-xs text-card-foreground">
-                            {item.path}
+                          <TableCell className="max-w-[24rem]">
+                            <HoverPath value={item.path} />
                           </TableCell>
                           <TableCell className="text-card-foreground">
                             {item.container || "-"}
@@ -2288,8 +2337,8 @@ export function CodebasesView() {
                           <TableBody>
                             {impactResult.impacted_files.map((item) => (
                               <TableRow key={`${item.path}-${item.depth}`}>
-                                <TableCell className="font-mono text-xs text-card-foreground">
-                                  {item.path}
+                                <TableCell className="max-w-[24rem]">
+                                  <HoverPath value={item.path} />
                                 </TableCell>
                                 <TableCell className="text-card-foreground">{item.depth}</TableCell>
                                 <TableCell className="text-card-foreground">
@@ -2320,13 +2369,13 @@ export function CodebasesView() {
                               key={`${edge.from_path}-${edge.to_path}-${index}`}
                               className="rounded-lg border border-border/60 bg-background/70 p-3"
                             >
-                              <div className="font-mono text-xs text-foreground">
+                              <div className="break-all font-mono text-xs text-foreground">
                                 {edge.from_path}
                               </div>
                               <div className="my-1 text-xs uppercase tracking-wide text-muted-foreground">
                                 {edge.edge_type}
                               </div>
-                              <div className="font-mono text-xs text-foreground">
+                              <div className="break-all font-mono text-xs text-foreground">
                                 {edge.to_path || edge.target_ref || "external target"}
                               </div>
                             </div>
@@ -2376,8 +2425,10 @@ export function CodebasesView() {
                                 {item.preview_text}
                               </div>
                             </TableCell>
-                            <TableCell className="font-mono text-xs text-card-foreground">
-                              {item.path}:{item.start_line}-{item.end_line}
+                            <TableCell className="max-w-[22rem]">
+                              <HoverPath
+                                value={`${item.path}:${item.start_line}-${item.end_line}`}
+                              />
                             </TableCell>
                             <TableCell className="text-card-foreground">
                               {item.cluster_label || "-"}
@@ -2445,10 +2496,12 @@ export function CodebasesView() {
       </Card>
 
       <Dialog open={chunkDialogOpen} onOpenChange={setChunkDialogOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
-            <DialogTitle>{chunkDetail?.label || "Chunk Detail"}</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="break-words pr-10 [overflow-wrap:anywhere]">
+              {chunkDetail?.label || "Chunk Detail"}
+            </DialogTitle>
+            <DialogDescription className="break-words [overflow-wrap:anywhere]">
               Inspect the semantic chunk, its symbol context, related chunks, and route actions
               before deciding whether it belongs in memory or the research queue.
             </DialogDescription>
@@ -2461,14 +2514,14 @@ export function CodebasesView() {
             </div>
           ) : chunkDetail ? (
             <div className="space-y-6">
-              <div className="grid gap-3 md:grid-cols-4">
-                <div className="rounded-lg border border-border/70 p-3">
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0 rounded-lg border border-border/70 p-3">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">Path</div>
-                  <div className="mt-1 font-mono text-xs text-foreground">
+                  <div className="mt-1 break-all font-mono text-xs leading-relaxed text-foreground">
                     {chunkDetail.path}:{chunkDetail.start_line}-{chunkDetail.end_line}
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/70 p-3">
+                <div className="min-w-0 rounded-lg border border-border/70 p-3">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">Route</div>
                   <div className="mt-1">
                     <span
@@ -2478,15 +2531,15 @@ export function CodebasesView() {
                     </span>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/70 p-3">
+                <div className="min-w-0 rounded-lg border border-border/70 p-3">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     Cluster
                   </div>
-                  <div className="mt-1 text-sm font-medium text-foreground">
+                  <div className="mt-1 break-words text-sm font-medium leading-relaxed text-foreground [overflow-wrap:anywhere]">
                     {chunkDetail.cluster_label || "-"}
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/70 p-3">
+                <div className="min-w-0 rounded-lg border border-border/70 p-3">
                   <div className="text-xs uppercase tracking-wide text-muted-foreground">
                     Parse Confidence
                   </div>
@@ -2514,9 +2567,9 @@ export function CodebasesView() {
                 </Button>
               </div>
 
-              <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+              <div className="min-w-0 rounded-xl border border-border/70 bg-muted/20 p-4">
                 <div className="mb-2 text-sm font-semibold text-foreground">Code Preview</div>
-                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-foreground">
+                <pre className="overflow-x-auto whitespace-pre-wrap break-words font-mono text-xs leading-relaxed text-foreground [overflow-wrap:anywhere]">
                   {chunkDetail.content_text}
                 </pre>
               </div>
@@ -2535,8 +2588,10 @@ export function CodebasesView() {
                           className="w-full rounded-lg border border-border/60 bg-background/70 p-3 text-left hover:bg-muted/20"
                           onClick={() => void openChunkDetail(item.id)}
                         >
-                          <div className="font-medium text-foreground">{item.label}</div>
-                          <div className="mt-1 font-mono text-xs text-muted-foreground">
+                          <div className="break-words font-medium text-foreground [overflow-wrap:anywhere]">
+                            {item.label}
+                          </div>
+                          <div className="mt-1 break-all font-mono text-xs text-muted-foreground">
                             {item.path}:{item.start_line}-{item.end_line}
                           </div>
                           <div className="mt-2 text-xs text-muted-foreground">
@@ -2561,8 +2616,10 @@ export function CodebasesView() {
                           key={`${item.fq_name}-${item.start_line}`}
                           className="rounded-lg border border-border/60 p-3"
                         >
-                          <div className="font-medium text-foreground">{item.name}</div>
-                          <div className="mt-1 text-xs text-muted-foreground">
+                          <div className="break-words font-medium text-foreground [overflow-wrap:anywhere]">
+                            {item.name}
+                          </div>
+                          <div className="mt-1 break-all text-xs leading-relaxed text-muted-foreground">
                             {item.kind} · {item.path}:{item.start_line}-{item.end_line}
                           </div>
                         </div>
@@ -2586,11 +2643,13 @@ export function CodebasesView() {
                           key={`${edge.from_path}-${edge.to_path}-${index}`}
                           className="rounded-lg border border-border/60 p-3"
                         >
-                          <div className="font-mono text-xs text-foreground">{edge.from_path}</div>
+                          <div className="break-all font-mono text-xs text-foreground">
+                            {edge.from_path}
+                          </div>
                           <div className="my-1 text-xs uppercase tracking-wide text-muted-foreground">
                             {edge.edge_type}
                           </div>
-                          <div className="font-mono text-xs text-foreground">
+                          <div className="break-all font-mono text-xs text-foreground">
                             {edge.to_path || edge.target_ref || "external target"}
                           </div>
                         </div>
@@ -2614,8 +2673,10 @@ export function CodebasesView() {
                           className="w-full rounded-lg border border-border/60 bg-background/70 p-3 text-left hover:bg-muted/20"
                           onClick={() => void openChunkDetail(item.id)}
                         >
-                          <div className="font-medium text-foreground">{item.label}</div>
-                          <div className="mt-1 font-mono text-xs text-muted-foreground">
+                          <div className="break-words font-medium text-foreground [overflow-wrap:anywhere]">
+                            {item.label}
+                          </div>
+                          <div className="mt-1 break-all font-mono text-xs text-muted-foreground">
                             {item.path}:{item.start_line}-{item.end_line}
                           </div>
                         </button>
