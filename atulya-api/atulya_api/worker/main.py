@@ -46,7 +46,7 @@ def create_worker_app(poller: WorkerPoller, memory):
 
     # Initialize OpenTelemetry metrics
     try:
-        prometheus_reader = initialize_metrics(service_name="atulya-worker", service_version="1.0.0")
+        prometheus_reader = initialize_metrics(service_name="atulya-worker")
         create_metrics_collector()
         app.state.prometheus_reader = prometheus_reader
         logger.info("Metrics initialized - available at /metrics endpoint")

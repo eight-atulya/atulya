@@ -24,11 +24,42 @@ API_DIR="$ROOT_DIR/atulya-api"
 VERSIONS_DIR="$API_DIR/atulya_api/alembic/versions"
 BASELINE_FILE="$VERSIONS_DIR/0800a1b2c3d4_v0800_schema_baseline.py"
 EXPECTED_VERSION="${1:-0.8.0}"
-EXPECTED_REVISION="0800a1b2c3d4"
+BASELINE_REVISION="0800a1b2c3d4"
+EXPECTED_REVISION=""
 
 EXPECTED_TY_REFS=(
     "atulya_api/api/http.py:4539:28"
     "atulya_api/main.py:147:18"
+)
+
+EXPECTED_TABLES=(
+    "alembic_version"
+    "async_operations"
+    "banks"
+    "chunks"
+    "codebase_chunk_edges"
+    "codebase_chunks"
+    "codebase_edges"
+    "codebase_files"
+    "codebase_review_routes"
+    "codebase_snapshots"
+    "codebase_symbols"
+    "codebases"
+    "directives"
+    "documents"
+    "dream_artifacts"
+    "dream_prediction_outcomes"
+    "dream_predictions"
+    "dream_proposals"
+    "dream_runs"
+    "entities"
+    "entity_cooccurrences"
+    "file_storage"
+    "memory_links"
+    "memory_units"
+    "mental_models"
+    "unit_entities"
+    "webhooks"
 )
 
 require_cmd() {
@@ -45,21 +76,99 @@ assert_file_exists() {
     fi
 }
 
-assert_single_baseline_file() {
-    migration_files=()
-    while IFS= read -r line; do
-        migration_files+=("$line")
-    done < <(find "$VERSIONS_DIR" -maxdepth 1 -type f -name '*.py' | sort)
+assert_linear_migration_chain() {
+    EXPECTED_REVISION="$(
+        VERSIONS_DIR="$VERSIONS_DIR" BASELINE_FILE="$BASELINE_FILE" BASELINE_REVISION="$BASELINE_REVISION" \
+        uv run python - <<'PY'
+import os
+import re
+import sys
+from pathlib import Path
 
-    if [ "${#migration_files[@]}" -ne 1 ]; then
-        print_error "Expected exactly 1 Alembic migration file in $VERSIONS_DIR, found ${#migration_files[@]}"
-        printf ' - %s\n' "${migration_files[@]}"
-        exit 1
-    fi
-    if [ "${migration_files[0]}" != "$BASELINE_FILE" ]; then
-        print_error "Unexpected baseline migration file: ${migration_files[0]}"
-        exit 1
-    fi
+versions_dir = Path(os.environ["VERSIONS_DIR"])
+baseline_file = Path(os.environ["BASELINE_FILE"])
+baseline_revision = os.environ["BASELINE_REVISION"]
+
+revision_re = re.compile(r'^revision:\s*str\s*=\s*"([0-9a-f]+)"$', re.MULTILINE)
+down_re = re.compile(r'^down_revision:\s*str \| Sequence\[str\] \| None\s*=\s*(.+)$', re.MULTILINE)
+
+files = sorted(path for path in versions_dir.glob("*.py") if path.name != "__init__.py")
+if not files:
+    print(f"No Alembic migration files found in {versions_dir}", file=sys.stderr)
+    sys.exit(1)
+
+if baseline_file not in files:
+    print(f"Baseline migration file missing: {baseline_file}", file=sys.stderr)
+    sys.exit(1)
+
+revisions: dict[str, dict[str, str | None]] = {}
+children: dict[str, list[str]] = {}
+
+for path in files:
+    text = path.read_text()
+    revision_match = revision_re.search(text)
+    down_match = down_re.search(text)
+    if not revision_match or not down_match:
+        print(f"Could not parse revision metadata from {path}", file=sys.stderr)
+        sys.exit(1)
+
+    revision = revision_match.group(1)
+    down_raw = down_match.group(1).strip()
+    if down_raw == "None":
+        down_revision = None
+    else:
+        down_revision = down_raw.strip('"')
+
+    if revision in revisions:
+        print(f"Duplicate Alembic revision detected: {revision}", file=sys.stderr)
+        sys.exit(1)
+
+    revisions[revision] = {"path": str(path), "down_revision": down_revision}
+    if down_revision is not None:
+        children.setdefault(down_revision, []).append(revision)
+
+roots = [revision for revision, meta in revisions.items() if meta["down_revision"] is None]
+if roots != [baseline_revision]:
+    print(f"Expected a single baseline root revision {baseline_revision}, found {roots}", file=sys.stderr)
+    sys.exit(1)
+
+baseline_meta = revisions.get(baseline_revision)
+if baseline_meta is None or Path(str(baseline_meta["path"])) != baseline_file:
+    print(
+        f"Baseline revision {baseline_revision} is not anchored to {baseline_file}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+branch_points = {revision: refs for revision, refs in children.items() if len(refs) > 1}
+if branch_points:
+    print(f"Expected a linear v0.8.x migration chain, found branches: {branch_points}", file=sys.stderr)
+    sys.exit(1)
+
+heads = [revision for revision in revisions if revision not in children]
+if len(heads) != 1:
+    print(f"Expected exactly one Alembic head revision, found {heads}", file=sys.stderr)
+    sys.exit(1)
+
+head = heads[0]
+visited = []
+current = head
+while current is not None:
+    visited.append(current)
+    current = revisions[current]["down_revision"]
+
+if set(visited) != set(revisions):
+    print(
+        f"Migration chain does not cover all revisions. visited={visited}, known={sorted(revisions)}",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+print(head)
+PY
+    )"
+
+    print_info "Validated linear Alembic chain through head revision ${EXPECTED_REVISION}"
 }
 
 run_ty_with_allowlist() {
@@ -99,7 +208,7 @@ run_ty_with_allowlist() {
 verify_fresh_migrations() {
     (
         cd "$API_DIR"
-        EXPECTED_REVISION="$EXPECTED_REVISION" EXPECTED_VERSION="$EXPECTED_VERSION" uv run python - <<'PY'
+        EXPECTED_REVISION="$EXPECTED_REVISION" EXPECTED_VERSION="$EXPECTED_VERSION" EXPECTED_TABLES="$(printf '%s,' "${EXPECTED_TABLES[@]}")" uv run python - <<'PY'
 import asyncio
 import os
 
@@ -109,23 +218,7 @@ from atulya_api.migrations import check_migration_status, run_migrations
 from atulya_api.pg0 import EmbeddedPostgres
 
 EXPECTED_REVISION = os.environ["EXPECTED_REVISION"]
-EXPECTED_TABLES = [
-    "alembic_version",
-    "async_operations",
-    "banks",
-    "chunks",
-    "directives",
-    "documents",
-    "dream_artifacts",
-    "entities",
-    "entity_cooccurrences",
-    "file_storage",
-    "memory_links",
-    "memory_units",
-    "mental_models",
-    "unit_entities",
-    "webhooks",
-]
+EXPECTED_TABLES = [table for table in os.environ["EXPECTED_TABLES"].split(",") if table]
 EXPECTED_MATVIEWS = ["memory_units_bm25"]
 
 
@@ -185,18 +278,18 @@ print_info "Running v${EXPECTED_VERSION} release preflight"
 require_cmd uv
 require_cmd rg
 assert_file_exists "$BASELINE_FILE"
-assert_single_baseline_file
+assert_linear_migration_chain
 
-print_info "Checking baseline migration imports cleanly"
+print_info "Checking Alembic migrations import cleanly"
 (
     cd "$API_DIR"
-    uv run python -m py_compile "atulya_api/alembic/versions/0800a1b2c3d4_v0800_schema_baseline.py"
+    uv run python -m py_compile atulya_api/alembic/versions/*.py
 )
 
-print_info "Running targeted Ruff on the v0.8.0 baseline migration"
+print_info "Running targeted Ruff on the v0.8.x migration chain"
 (
     cd "$API_DIR"
-    uv run ruff check "atulya_api/alembic/versions/0800a1b2c3d4_v0800_schema_baseline.py"
+    uv run ruff check atulya_api/alembic/versions/*.py
 )
 
 print_info "Running ty check with the current release allowlist"

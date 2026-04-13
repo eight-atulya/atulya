@@ -154,11 +154,13 @@ def initialize_tracing(
     """
     global _tracer, _tracing_enabled
 
+    from atulya_api import __version__
+
     # Create resource with service information
     resource = Resource.create(
         {
             "service.name": service_name,
-            "service.version": "0.4.8",  # Could import from __version__
+            "service.version": __version__,
             "deployment.environment.name": deployment_environment,
         }
     )

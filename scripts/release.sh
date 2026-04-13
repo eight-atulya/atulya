@@ -82,6 +82,10 @@ PYTHON_INIT_FILES=(
     "atulya-api/atulya_api/__init__.py"
     "atulya-embed/atulya_embed/__init__.py"
     "atulya-clients/python/atulya_client_api/__init__.py"
+    "atulya-integrations/litellm/hindsight_litellm/__init__.py"
+    "atulya-integrations/litellm/atulya_litellm/__init__.py"
+    "atulya-integrations/crewai/atulya_crewai/__init__.py"
+    "atulya-integrations/pydantic-ai/atulya_pydantic_ai/__init__.py"
 )
 for init_file in "${PYTHON_INIT_FILES[@]}"; do
     if [ -f "$init_file" ]; then
@@ -92,6 +96,28 @@ for init_file in "${PYTHON_INIT_FILES[@]}"; do
         print_warn "File $init_file not found, skipping"
     fi
 done
+
+# Update Python client generator config so regenerated SDK metadata matches the release.
+PYTHON_CLIENT_GENERATOR_CONFIG="atulya-clients/python/openapi-generator-config.yaml"
+if [ -f "$PYTHON_CLIENT_GENERATOR_CONFIG" ]; then
+    print_info "Updating $PYTHON_CLIENT_GENERATOR_CONFIG"
+    sed -i.bak "s/^packageVersion: .*/packageVersion: $VERSION/" "$PYTHON_CLIENT_GENERATOR_CONFIG"
+    rm "${PYTHON_CLIENT_GENERATOR_CONFIG}.bak"
+else
+    print_warn "File $PYTHON_CLIENT_GENERATOR_CONFIG not found, skipping"
+fi
+
+# Update dependency floors in the meta package so the release points at the new patch version.
+ATULYA_META_PYPROJECT="atulya/pyproject.toml"
+if [ -f "$ATULYA_META_PYPROJECT" ]; then
+    print_info "Updating dependency floors in $ATULYA_META_PYPROJECT"
+    sed -i.bak "s/atulya-api>=.*/atulya-api>=$VERSION\",/" "$ATULYA_META_PYPROJECT"
+    sed -i.bak "s/atulya-client>=.*/atulya-client>=$VERSION\",/" "$ATULYA_META_PYPROJECT"
+    sed -i.bak "s/atulya-embed>=.*/atulya-embed>=$VERSION\",/" "$ATULYA_META_PYPROJECT"
+    rm "${ATULYA_META_PYPROJECT}.bak"
+else
+    print_warn "File $ATULYA_META_PYPROJECT not found, skipping"
+fi
 
 # Update Rust CLI
 CARGO_FILE="atulya-cli/Cargo.toml"
@@ -185,6 +211,15 @@ if [ -f "scripts/update-docs-version.sh" ]; then
     fi
 else
     print_warn "update-docs-version.sh not found, skipping docs update"
+fi
+
+# Regenerate llms-full so tracked docs artifacts stay in sync with the release docs.
+print_info "Regenerating llms-full.txt..."
+if uv run generate-llms-full; then
+    print_info "✓ llms-full.txt regenerated"
+else
+    print_error "Failed to regenerate llms-full.txt"
+    exit 1
 fi
 
 # Regenerate OpenAPI spec and clients with new version

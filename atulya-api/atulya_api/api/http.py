@@ -2629,7 +2629,7 @@ def create_app(
 
         # Initialize OpenTelemetry metrics
         try:
-            prometheus_reader = initialize_metrics(service_name="atulya-api", service_version="1.0.0")
+            prometheus_reader = initialize_metrics(service_name="atulya-api")
             create_metrics_collector()
             app.state.prometheus_reader = prometheus_reader
             logging.info("Metrics initialized - available at /metrics endpoint")

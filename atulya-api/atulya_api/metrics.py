@@ -91,7 +91,7 @@ logger = logging.getLogger(__name__)
 _meter = None
 
 
-def initialize_metrics(service_name: str = "atulya-api", service_version: str = "1.0.0"):
+def initialize_metrics(service_name: str = "atulya-api", service_version: str | None = None):
     """
     Initialize OpenTelemetry metrics with Prometheus exporter.
 
@@ -99,12 +99,17 @@ def initialize_metrics(service_name: str = "atulya-api", service_version: str = 
 
     Args:
         service_name: Name of the service for resource attributes
-        service_version: Version of the service
+        service_version: Version of the service. Defaults to the installed Atulya version.
 
     Returns:
         PrometheusMetricReader instance (for accessing metrics endpoint)
     """
     global _meter
+
+    if service_version is None:
+        from atulya_api import __version__
+
+        service_version = __version__
 
     # Create resource with service information
     resource = Resource.create(

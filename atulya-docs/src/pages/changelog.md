@@ -10,9 +10,25 @@ For full release details, see [GitHub Releases](https://github.com/eight-atulya/
 
 ## Upcoming
 
+No unreleased entries yet.
+
+## [0.8.1](https://github.com/eight-atulya/atulya/releases/tag/v0.8.1)
+
 **Features**
 
-- Added Graph Intelligence to the Control Plane: a state-first graph for seeing what changed, an evidence graph for raw proof, analyst-driven investigation, and scalable overview/neighborhood graph exploration.
+- Added ASD-first Codebases: ZIP or GitHub-backed repo import, deterministic parsing, chunk review queue, repo map, symbol search, impact analysis, and selective memory hydration. ([`c6e2653`](https://github.com/eight-atulya/atulya/commit/c6e2653))
+- Added explicit memory-ingest choices for reviewed codebase chunks, including `ASD Direct` and `Retain Pipeline`. ([`7055137`](https://github.com/eight-atulya/atulya/commit/7055137))
+- Added Graph Intelligence to the Control Plane: a state-first graph for seeing what changed, an evidence graph for raw proof, analyst-driven investigation, and scalable overview/neighborhood graph exploration. ([`f5aabf8`](https://github.com/eight-atulya/atulya/commit/f5aabf8))
+
+**Improvements**
+
+- Improved Codebases GitHub imports, pending-job cancellation, and developer workbench UX for large repos. ([`42281bc`](https://github.com/eight-atulya/atulya/commit/42281bc))
+- Improved Codebases memory routing with approved-history visibility and queue-backed hydration flows. ([`f88ff1e`](https://github.com/eight-atulya/atulya/commit/f88ff1e))
+- Added async Reflect across the API and Control Plane so long-running reasoning work can run safely through operations. ([`a965005`](https://github.com/eight-atulya/atulya/commit/a965005))
+
+**Docs**
+
+- Elevated Codebases across the developer docs, including released `0.8` docs sync, a dedicated coding-agent guide, and stronger landing-page navigation. ([`6747b1c`](https://github.com/eight-atulya/atulya/commit/6747b1c))
 
 ## [0.8.0](https://github.com/eight-atulya/atulya/releases/tag/v0.8.0)
 
