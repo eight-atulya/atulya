@@ -518,7 +518,7 @@ export interface ReflectResponse {
 
 export interface OperationStatus {
   operation_id: string;
-  status: "pending" | "completed" | "failed" | "not_found";
+  status: "pending" | "completed" | "failed" | "not_found" | "cancelled";
   operation_type: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -1991,9 +1991,10 @@ export class ControlPlaneClient {
   async importCodebaseGithub(
     bankId: string,
     params: {
-      owner: string;
-      repo: string;
-      ref: string;
+      owner?: string;
+      repo?: string;
+      ref?: string;
+      repo_url?: string;
       root_path?: string;
       include_globs?: string[];
       exclude_globs?: string[];

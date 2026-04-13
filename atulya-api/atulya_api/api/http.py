@@ -12,6 +12,7 @@ import uuid
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Literal
+from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
 from fastapi.responses import Response
@@ -35,7 +36,7 @@ def _parse_metadata(metadata: Any) -> dict[str, Any]:
 
 from typing import Callable
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from atulya_api import MemoryEngine
 
@@ -606,13 +607,58 @@ class CodebaseImportZipRequest(BaseModel):
 class CodebaseImportGithubRequest(BaseModel):
     """JSON payload for public GitHub-backed codebase import."""
 
-    owner: str
-    repo: str
-    ref: str
+    owner: str | None = None
+    repo: str | None = None
+    ref: str | None = None
+    repo_url: str | None = None
     root_path: str | None = None
     include_globs: list[str] = FieldWithDefault(list)
     exclude_globs: list[str] = FieldWithDefault(list)
     refresh_existing: bool = False
+
+    @staticmethod
+    def _parse_repo_url(repo_url: str) -> tuple[str, str, str | None]:
+        normalized = repo_url.strip()
+        if not normalized:
+            raise ValueError("repo_url cannot be empty")
+
+        parsed_ref: str | None = None
+        if normalized.startswith("git@github.com:"):
+            path = normalized.split(":", 1)[1]
+        else:
+            parsed = urlparse(normalized)
+            if parsed.scheme not in {"http", "https"} or parsed.netloc not in {"github.com", "www.github.com"}:
+                raise ValueError("repo_url must be a GitHub repository URL")
+            path = parsed.path.lstrip("/")
+
+        parts = [part for part in path.split("/") if part]
+        if len(parts) < 2:
+            raise ValueError("repo_url must include both owner and repository name")
+
+        owner = parts[0]
+        repo = parts[1]
+        if repo.endswith(".git"):
+            repo = repo[:-4]
+        if not owner or not repo:
+            raise ValueError("repo_url must include both owner and repository name")
+
+        if len(parts) >= 4 and parts[2] in {"tree", "commit", "blob"}:
+            parsed_ref = parts[3]
+
+        return owner, repo, parsed_ref
+
+    @model_validator(mode="after")
+    def normalize_repo_source(self) -> "CodebaseImportGithubRequest":
+        if self.repo_url:
+            owner, repo, parsed_ref = self._parse_repo_url(self.repo_url)
+            self.owner = self.owner or owner
+            self.repo = self.repo or repo
+            self.ref = self.ref or parsed_ref
+
+        if not self.owner or not self.repo or not self.ref:
+            raise ValueError("GitHub import requires owner, repo, and ref, or a repo_url plus ref.")
+
+        return self
 
 
 class CodebaseImportResponse(BaseModel):

@@ -1312,6 +1312,7 @@ class MemoryEngine(MemoryEngineInterface):
                 "GET",
                 f"https://api.github.com/repos/{owner}/{repo}/zipball/{commit_sha}",
                 headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
+                follow_redirects=True,
             ) as response:
                 if response.status_code == 404:
                     raise ValueError(f"Public GitHub archive not found: {owner}/{repo}@{commit_sha}")
@@ -10323,9 +10324,12 @@ class MemoryEngine(MemoryEngineInterface):
         op_uuid = uuid.UUID(operation_id)
 
         async with acquire_with_retry(pool) as conn:
-            # Check if operation exists and belongs to this memory bank
             result = await conn.fetchrow(
-                f"SELECT bank_id, status FROM {fq_table('async_operations')} WHERE operation_id = $1 AND bank_id = $2",
+                f"""
+                SELECT bank_id, status, operation_type, result_metadata
+                FROM {fq_table("async_operations")}
+                WHERE operation_id = $1 AND bank_id = $2
+                """,
                 op_uuid,
                 bank_id,
             )
@@ -10335,9 +10339,19 @@ class MemoryEngine(MemoryEngineInterface):
 
             if result["status"] == "processing":
                 raise ValueError(f"Operation {operation_id} is already processing and can no longer be cancelled")
+            if result["status"] != "pending":
+                raise ValueError(
+                    f"Operation {operation_id} is already {result['status']} and can no longer be cancelled"
+                )
 
-            # Delete the operation
-            await conn.execute(f"DELETE FROM {fq_table('async_operations')} WHERE operation_id = $1", op_uuid)
+            async with conn.transaction():
+                await self._cleanup_cancelled_operation_state(
+                    conn,
+                    bank_id=bank_id,
+                    operation_type=result["operation_type"],
+                    result_metadata=decode_jsonb(result["result_metadata"], {}),
+                )
+                await conn.execute(f"DELETE FROM {fq_table('async_operations')} WHERE operation_id = $1", op_uuid)
 
             return {
                 "success": True,
@@ -10345,6 +10359,63 @@ class MemoryEngine(MemoryEngineInterface):
                 "operation_id": operation_id,
                 "bank_id": bank_id,
             }
+
+    async def _cleanup_cancelled_operation_state(
+        self,
+        conn,
+        *,
+        bank_id: str,
+        operation_type: str | None,
+        result_metadata: dict[str, Any],
+    ) -> None:
+        """Clean up queued state for operations that are cancelled before execution starts."""
+        if operation_type not in {"codebase_import", "codebase_refresh"}:
+            return
+
+        codebase_id = result_metadata.get("codebase_id")
+        snapshot_id = result_metadata.get("snapshot_id")
+        if not codebase_id or not snapshot_id:
+            return
+
+        codebase_uuid = uuid.UUID(codebase_id)
+        snapshot_uuid = uuid.UUID(snapshot_id)
+
+        codebase_row = await conn.fetchrow(
+            f"""
+            SELECT current_snapshot_id, approved_snapshot_id
+            FROM {fq_table("codebases")}
+            WHERE id = $1 AND bank_id = $2
+            """,
+            codebase_uuid,
+            bank_id,
+        )
+        if not codebase_row:
+            return
+
+        await conn.execute(
+            f"""
+            DELETE FROM {fq_table("codebase_snapshots")}
+            WHERE id = $1 AND codebase_id = $2 AND bank_id = $3 AND status = 'pending'
+            """,
+            snapshot_uuid,
+            codebase_uuid,
+            bank_id,
+        )
+
+        if codebase_row["current_snapshot_id"] or codebase_row["approved_snapshot_id"]:
+            return
+
+        remaining_snapshots = await conn.fetchval(
+            f"SELECT COUNT(*) FROM {fq_table('codebase_snapshots')} WHERE codebase_id = $1 AND bank_id = $2",
+            codebase_uuid,
+            bank_id,
+        )
+        if remaining_snapshots == 0:
+            await conn.execute(
+                f"DELETE FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                codebase_uuid,
+                bank_id,
+            )
 
     async def update_bank(
         self,
