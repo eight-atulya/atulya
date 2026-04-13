@@ -411,7 +411,7 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
 
 
 @pytest.mark.asyncio
-async def test_codebase_http_endpoints_expose_review_chunk_routing_then_approve_flow(
+async def test_codebase_http_endpoints_route_to_memory_and_queue_async_hydration(
     memory_no_llm_verify, request_context
 ):
     bank_id = _bank_id("http")
@@ -461,10 +461,17 @@ async def test_codebase_http_endpoints_expose_review_chunk_routing_then_approve_
 
             route_response = await client.post(
                 f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route",
-                json={"item_ids": [item["id"] for item in chunks_payload["items"]], "target": "memory"},
+                json={
+                    "item_ids": [item["id"] for item in chunks_payload["items"]],
+                    "target": "memory",
+                    "queue_memory_import": True,
+                },
             )
             assert route_response.status_code == 200
-            assert route_response.json()["review_counts"]["memory"] >= 2
+            route_payload = route_response.json()
+            assert route_payload["review_counts"]["memory"] >= 2
+            assert route_payload["queued_for_memory"] is True
+            assert route_payload["operation_id"]
 
             research_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/research")
             assert research_response.status_code == 200
@@ -485,16 +492,9 @@ async def test_codebase_http_endpoints_expose_review_chunk_routing_then_approve_
             impacted_paths = [item["path"] for item in impact_response.json()["impacted_files"]]
             assert "src/main.py" in impacted_paths
 
-            approve_response = await client.post(
-                f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/approve",
-                json={},
-            )
-            assert approve_response.status_code == 200
-            approve_payload = approve_response.json()
-
             approve_operation = await memory_no_llm_verify.get_operation_result(
                 bank_id,
-                approve_payload["operation_id"],
+                route_payload["operation_id"],
                 request_context=request_context,
             )
             assert approve_operation["status"] == "completed"

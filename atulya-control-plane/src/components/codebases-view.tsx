@@ -66,7 +66,7 @@ import {
 } from "lucide-react";
 
 type ImportTab = "github" | "zip";
-type WorkspaceTab = "review" | "files" | "symbols" | "impact" | "research";
+type WorkspaceTab = "review" | "files" | "symbols" | "impact" | "research" | "approved";
 type ImpactMode = "path" | "symbol" | "query";
 
 type ParsedGithubSource = {
@@ -313,6 +313,10 @@ export function CodebasesView() {
   >(null);
   const [researchResult, setResearchResult] = useState<CodebaseChunksResult | null>(null);
   const [loadingResearch, setLoadingResearch] = useState(false);
+  const [approvedChunksResult, setApprovedChunksResult] = useState<CodebaseChunksResult | null>(
+    null
+  );
+  const [loadingApprovedChunks, setLoadingApprovedChunks] = useState(false);
 
   const [filePathPrefix, setFilePathPrefix] = useState("");
   const [fileLanguage, setFileLanguage] = useState("all");
@@ -441,6 +445,36 @@ export function CodebasesView() {
       setResearchResult(null);
     } finally {
       setLoadingResearch(false);
+    }
+  };
+
+  const loadApprovedChunks = async (
+    codebaseId: string,
+    snapshotId: string,
+    cursor?: string | null,
+    append = false
+  ) => {
+    if (!currentBank) return;
+    setLoadingApprovedChunks(true);
+    try {
+      const response = await client.listCodebaseChunks(currentBank, codebaseId, {
+        route_target: "memory",
+        snapshot_id: snapshotId,
+        limit: 20,
+        cursor: cursor || undefined,
+      });
+      setApprovedChunksResult((current) =>
+        append && current
+          ? {
+              ...response,
+              items: [...current.items, ...response.items],
+            }
+          : response
+      );
+    } catch {
+      setApprovedChunksResult(null);
+    } finally {
+      setLoadingApprovedChunks(false);
     }
   };
 
@@ -724,6 +758,7 @@ export function CodebasesView() {
       const response = await client.routeCodebaseReviewItems(currentBank, selectedCodebaseId, {
         item_ids: itemIds,
         target,
+        queue_memory_import: target === "memory",
       });
       setSelectedChunkIds([]);
       setReviewSummary((current) =>
@@ -740,8 +775,24 @@ export function CodebasesView() {
         loadChunks(selectedCodebaseId),
         loadResearchQueue(selectedCodebaseId),
       ]);
+      if (response.operation_id) {
+        setActiveOperationId(response.operation_id);
+        setOperationStatus({
+          operation_id: response.operation_id,
+          status: "pending",
+          operation_type: "codebase_approve",
+          created_at: null,
+          updated_at: null,
+          completed_at: null,
+          error_message: null,
+          stage: "queued",
+        });
+        setOperationResult(null);
+      }
       toast.success(
-        `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to ${target}.`
+        response.queued_for_memory
+          ? `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to memory and queued async memory intake.`
+          : `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to ${target}.`
       );
     } finally {
       setRoutingTarget(null);
@@ -759,6 +810,7 @@ export function CodebasesView() {
       setReviewSummary(null);
       setChunksResult(null);
       setResearchResult(null);
+      setApprovedChunksResult(null);
       setSelectedChunkIds([]);
       setFilesResult(null);
       setSymbolsResult(null);
@@ -795,6 +847,15 @@ export function CodebasesView() {
     chunkChangeFilter,
     chunkKindFilter,
   ]);
+
+  useEffect(() => {
+    if (workspaceTab !== "approved") return;
+    if (!selectedCodebaseId || !selectedCodebase?.approved_snapshot_id) {
+      setApprovedChunksResult(null);
+      return;
+    }
+    void loadApprovedChunks(selectedCodebaseId, selectedCodebase.approved_snapshot_id);
+  }, [workspaceTab, selectedCodebaseId, selectedCodebase?.approved_snapshot_id]);
 
   useEffect(() => {
     if (!currentBank || !activeOperationId) return;
@@ -1571,13 +1632,16 @@ export function CodebasesView() {
             value={workspaceTab}
             onValueChange={(value) => setWorkspaceTab(value as WorkspaceTab)}
           >
-            <TabsList className="mb-4 grid w-full grid-cols-5">
-              <TabsTrigger value="review">Review Queue</TabsTrigger>
-              <TabsTrigger value="files">Repo Map</TabsTrigger>
-              <TabsTrigger value="symbols">Symbol Search</TabsTrigger>
-              <TabsTrigger value="impact">Impact</TabsTrigger>
-              <TabsTrigger value="research">Research Queue</TabsTrigger>
-            </TabsList>
+            <div className="mb-4 overflow-x-auto pb-1">
+              <TabsList className="inline-flex min-w-full">
+                <TabsTrigger value="review">Review Queue</TabsTrigger>
+                <TabsTrigger value="files">Repo Map</TabsTrigger>
+                <TabsTrigger value="symbols">Symbol Search</TabsTrigger>
+                <TabsTrigger value="impact">Impact</TabsTrigger>
+                <TabsTrigger value="research">Research Queue</TabsTrigger>
+                <TabsTrigger value="approved">Approved Memory</TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value="review" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-4">
@@ -2488,6 +2552,214 @@ export function CodebasesView() {
                 <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
                   Route chunks to research when you want them staged for follow-up without hydrating
                   them into memory yet.
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="approved" className="space-y-4">
+              {selectedCodebase?.approved_snapshot_id ? (
+                <>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Approved Snapshot
+                      </div>
+                      <div className="mt-2 break-all font-mono text-sm font-semibold text-foreground">
+                        {selectedCodebase.approved_snapshot_id}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Approved Source
+                      </div>
+                      <div className="mt-2 break-all font-mono text-sm font-semibold text-foreground">
+                        {selectedCodebase.approved_source_commit_sha ||
+                          selectedCodebase.approved_source_ref ||
+                          "Not available"}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Loaded Chunks
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-foreground">
+                        {(approvedChunksResult?.items.length || 0).toLocaleString()}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Current page of memory-backed chunk history
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Approved Updated
+                      </div>
+                      <div className="mt-2 text-sm font-semibold text-foreground">
+                        {formatRelative(
+                          selectedCodebase.approved_snapshot_updated_at ||
+                            selectedCodebase.updated_at
+                        )}
+                      </div>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        {formatDateTime(
+                          selectedCodebase.approved_snapshot_updated_at ||
+                            selectedCodebase.updated_at
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-muted-foreground">
+                    These are the chunks currently backing approved codebase memory. Recall and
+                    reflect stay anchored to this snapshot until a newer review queue is explicitly
+                    approved.
+                  </div>
+
+                  <div className="flex justify-end">
+                    <Button
+                      variant="outline"
+                      disabled={
+                        !selectedCodebaseId ||
+                        !selectedCodebase.approved_snapshot_id ||
+                        loadingApprovedChunks
+                      }
+                      onClick={() =>
+                        selectedCodebaseId &&
+                        selectedCodebase.approved_snapshot_id &&
+                        void loadApprovedChunks(
+                          selectedCodebaseId,
+                          selectedCodebase.approved_snapshot_id
+                        )
+                      }
+                    >
+                      {loadingApprovedChunks ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                      )}
+                      Refresh Approved History
+                    </Button>
+                  </div>
+
+                  {approvedChunksResult?.items?.length ? (
+                    <div className="grid gap-4 xl:grid-cols-2">
+                      {approvedChunksResult.items.map((item) => (
+                        <Card key={item.id} className="border-border/70 bg-background/50">
+                          <CardContent className="space-y-4 p-5">
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div className="min-w-0 space-y-1">
+                                <div className="break-words text-base font-semibold text-foreground [overflow-wrap:anywhere]">
+                                  {item.label}
+                                </div>
+                                <div className="line-clamp-3 text-sm text-muted-foreground">
+                                  {item.preview_text}
+                                </div>
+                              </div>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${routeTone(item.route_target)}`}
+                              >
+                                {formatStatusLabel(item.route_target)}
+                              </span>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-2">
+                              <div className="space-y-1">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Path
+                                </div>
+                                <HoverPath
+                                  value={`${item.path}:${item.start_line}-${item.end_line}`}
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Document
+                                </div>
+                                <HoverPath value={item.document_id || "Not hydrated"} />
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Symbol
+                                </div>
+                                <div className="break-words text-sm text-foreground [overflow-wrap:anywhere]">
+                                  {item.parent_symbol || item.container || "-"}
+                                </div>
+                              </div>
+                              <div className="space-y-1">
+                                <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                                  Cluster
+                                </div>
+                                <div className="break-words text-sm text-foreground [overflow-wrap:anywhere]">
+                                  {item.cluster_label || "-"}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                              <span className="rounded-full bg-muted px-2.5 py-1">{item.kind}</span>
+                              <span className="rounded-full bg-muted px-2.5 py-1">
+                                {item.language || "unknown"}
+                              </span>
+                              <span className="rounded-full bg-muted px-2.5 py-1">
+                                {item.related_count} related
+                              </span>
+                              <span className="rounded-full bg-muted px-2.5 py-1">
+                                {(item.parse_confidence * 100).toFixed(0)}% parse confidence
+                              </span>
+                            </div>
+
+                            <div className="flex justify-end">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => void openChunkDetail(item.id)}
+                              >
+                                Details
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : loadingApprovedChunks ? (
+                    <div className="flex items-center gap-3 rounded-lg border border-border/70 p-4 text-sm text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Loading approved chunk history...
+                    </div>
+                  ) : (
+                    <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+                      No approved memory chunks are available yet for this codebase snapshot.
+                    </div>
+                  )}
+
+                  {approvedChunksResult?.has_more && selectedCodebaseId ? (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          selectedCodebase.approved_snapshot_id &&
+                          void loadApprovedChunks(
+                            selectedCodebaseId,
+                            selectedCodebase.approved_snapshot_id,
+                            approvedChunksResult.next_cursor,
+                            true
+                          )
+                        }
+                        disabled={loadingApprovedChunks}
+                      >
+                        {loadingApprovedChunks ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <ChevronsRight className="mr-2 h-4 w-4" />
+                        )}
+                        Load More Approved Chunks
+                      </Button>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+                  Approved chunk history appears here after the first successful memory approval for
+                  this codebase.
                 </div>
               )}
             </TabsContent>

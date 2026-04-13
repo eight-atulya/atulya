@@ -671,6 +671,7 @@ class MemoryEngineInterface(ABC):
         *,
         item_ids: list[str],
         target: str,
+        queue_memory_import: bool = False,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Bulk-route review items."""

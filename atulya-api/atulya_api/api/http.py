@@ -895,6 +895,7 @@ class CodebaseRouteRequest(BaseModel):
 
     item_ids: list[str]
     target: Literal["memory", "research", "dismissed", "unrouted"]
+    queue_memory_import: bool = False
 
 
 class CodebaseRouteResponse(BaseModel):
@@ -904,6 +905,8 @@ class CodebaseRouteResponse(BaseModel):
     snapshot_id: str
     updated_count: int
     target: str
+    operation_id: str | None = None
+    queued_for_memory: bool = False
     review_counts: CodebaseReviewCountsResponse = Field(default_factory=CodebaseReviewCountsResponse)
 
 
@@ -6493,6 +6496,7 @@ def _register_routes(app: FastAPI):
                 codebase_id,
                 item_ids=request.item_ids,
                 target=request.target,
+                queue_memory_import=request.queue_memory_import,
                 request_context=request_context,
             )
             return CodebaseRouteResponse.model_validate(result)

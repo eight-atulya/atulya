@@ -742,6 +742,8 @@ export interface CodebaseRouteResult {
   snapshot_id: string;
   updated_count: number;
   target: string;
+  operation_id?: string | null;
+  queued_for_memory: boolean;
   review_counts: CodebaseReviewCounts;
 }
 
@@ -2268,6 +2270,7 @@ export class ControlPlaneClient {
     params: {
       item_ids: string[];
       target: "memory" | "research" | "dismissed" | "unrouted";
+      queue_memory_import?: boolean;
     }
   ) {
     return this.fetchApi<CodebaseRouteResult>(

@@ -9681,6 +9681,11 @@
               "unrouted"
             ],
             "title": "Target"
+          },
+          "queue_memory_import": {
+            "type": "boolean",
+            "title": "Queue Memory Import",
+            "default": false
           }
         },
         "type": "object",
@@ -9708,6 +9713,22 @@
           "target": {
             "type": "string",
             "title": "Target"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "queued_for_memory": {
+            "type": "boolean",
+            "title": "Queued For Memory",
+            "default": false
           },
           "review_counts": {
             "$ref": "#/components/schemas/CodebaseReviewCountsResponse"

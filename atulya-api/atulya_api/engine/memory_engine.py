@@ -11447,7 +11447,8 @@ class MemoryEngine(MemoryEngineInterface):
                 snapshot_id=target_snapshot_id,
                 source_type=row["source_type"],
             ).to_dict(),
-            dedupe_by_bank=False,
+            dedupe_by_bank=True,
+            dedupe_key=f"codebase_approve:{codebase_id}:{target_snapshot_id}",
         )
         return {
             "codebase_id": codebase_id,
@@ -12054,6 +12055,7 @@ class MemoryEngine(MemoryEngineInterface):
         *,
         item_ids: list[str],
         target: str,
+        queue_memory_import: bool = False,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Route review chunks to memory, research, or dismissed."""
@@ -12102,11 +12104,24 @@ class MemoryEngine(MemoryEngineInterface):
                     codebase_id=codebase_id,
                     snapshot_id=snapshot_id,
                 )
+        operation_id: str | None = None
+        queued_for_memory = False
+        if target == "memory" and queue_memory_import:
+            approval = await self.submit_async_codebase_approval(
+                bank_id,
+                codebase_id,
+                snapshot_id=snapshot_id,
+                request_context=request_context,
+            )
+            operation_id = approval["operation_id"]
+            queued_for_memory = True
         return {
             "codebase_id": codebase_id,
             "snapshot_id": snapshot_id,
             "updated_count": len(item_ids),
             "target": target,
+            "operation_id": operation_id,
+            "queued_for_memory": queued_for_memory,
             "review_counts": review_counts,
         }
 
