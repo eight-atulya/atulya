@@ -6,6 +6,7 @@ import { useBank } from "@/lib/bank-context";
 import {
   client,
   CodebaseChunkDetail,
+  CodebaseFileItem,
   CodebaseChunksResult,
   CodebaseFilesResult,
   CodebaseImpactResult,
@@ -48,7 +49,9 @@ import {
   AlertCircle,
   CheckCircle2,
   ChevronsRight,
+  ChevronRight,
   FileCode2,
+  Files,
   FolderGit2,
   GitBranch,
   Layers3,
@@ -69,6 +72,14 @@ type ParsedGithubSource = {
   owner: string;
   repo: string;
   ref?: string;
+};
+
+type RepoMapGroup = {
+  directory: string;
+  items: CodebaseFileItem[];
+  totalBytes: number;
+  changedCount: number;
+  hydratedCount: number;
 };
 
 function parseGlobs(raw: string): string[] {
@@ -129,6 +140,23 @@ function formatRelative(value: string | null | undefined): string {
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
   return `${days}d ago`;
+}
+
+function formatBytes(value: number): string {
+  if (value < 1024) return `${value} B`;
+  if (value < 1024 * 1024) return `${(value / 1024).toFixed(value < 10 * 1024 ? 1 : 0)} KB`;
+  return `${(value / (1024 * 1024)).toFixed(value < 10 * 1024 * 1024 ? 1 : 0)} MB`;
+}
+
+function fileNameFromPath(path: string): string {
+  const parts = path.split("/").filter(Boolean);
+  return parts[parts.length - 1] || path;
+}
+
+function directoryFromPath(path: string): string {
+  const parts = path.split("/").filter(Boolean);
+  if (parts.length <= 1) return "repo root";
+  return parts.slice(0, -1).join("/");
 }
 
 function statusClasses(status: string | null | undefined): string {
@@ -821,13 +849,77 @@ export function CodebasesView() {
     return Array.from(languages).sort();
   }, [filesResult]);
 
+  const repoMapGroups = useMemo(() => {
+    const groups = new Map<string, RepoMapGroup>();
+
+    for (const item of filesResult?.items || []) {
+      const directory = directoryFromPath(item.path);
+      const existing =
+        groups.get(directory) ||
+        ({
+          directory,
+          items: [],
+          totalBytes: 0,
+          changedCount: 0,
+          hydratedCount: 0,
+        } satisfies RepoMapGroup);
+
+      existing.items.push(item);
+      existing.totalBytes += item.size_bytes;
+      if (item.change_kind !== "unchanged") existing.changedCount += 1;
+      if (item.document_id) existing.hydratedCount += 1;
+      groups.set(directory, existing);
+    }
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        items: [...group.items].sort((left, right) => left.path.localeCompare(right.path)),
+      }))
+      .sort((left, right) => {
+        if (left.directory === "repo root") return -1;
+        if (right.directory === "repo root") return 1;
+        if (right.items.length !== left.items.length) return right.items.length - left.items.length;
+        return left.directory.localeCompare(right.directory);
+      });
+  }, [filesResult]);
+
+  const repoMapSummary = useMemo(() => {
+    const items = filesResult?.items || [];
+    let changedCount = 0;
+    let hydratedCount = 0;
+    let previewOnlyCount = 0;
+    let totalBytes = 0;
+
+    for (const item of items) {
+      totalBytes += item.size_bytes;
+      if (item.change_kind !== "unchanged") changedCount += 1;
+      if (item.document_id) hydratedCount += 1;
+      else previewOnlyCount += 1;
+    }
+
+    return {
+      fileCount: items.length,
+      folderCount: repoMapGroups.length,
+      changedCount,
+      hydratedCount,
+      previewOnlyCount,
+      totalBytes,
+    };
+  }, [filesResult, repoMapGroups]);
+
+  const topRepoMapDirectories = useMemo(
+    () => repoMapGroups.slice(0, 6).map((group) => group.directory),
+    [repoMapGroups]
+  );
+
   const totalIndexedFiles = selectedCodebase?.stats.indexed_files || 0;
   const totalFiles = selectedCodebase?.stats.total_files || 0;
   const canApproveMemory =
     reviewSummary !== null &&
     (reviewSummary.review_counts.memory || 0) > 0 &&
     selectedCodebase?.approval_status !== "parsing" &&
-    Boolean(selectedCodebase.current_snapshot_id);
+    Boolean(selectedCodebase?.current_snapshot_id);
   const operationMetrics = useMemo(() => {
     if (!operationResult?.result || typeof operationResult.result !== "object") return [];
     const result = operationResult.result as Record<string, unknown>;
@@ -908,7 +1000,7 @@ export function CodebasesView() {
                         setGithubOwner((current) => current || parsed.owner);
                         setGithubRepo((current) => current || parsed.repo);
                         if (parsed.ref) {
-                          setGithubRef((current) => current || parsed.ref);
+                          setGithubRef((current) => current || parsed.ref || "");
                         }
                       }
                     }}
@@ -1133,14 +1225,16 @@ export function CodebasesView() {
             ) : selectedCodebase ? (
               <>
                 <div className="rounded-xl border border-border/70 bg-muted/15 p-4">
-                  <div className="mb-3 flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-lg font-semibold text-foreground">
+                  <div className="mb-3 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                      <div className="break-words text-lg font-semibold text-foreground [overflow-wrap:anywhere]">
                         {selectedCodebase.name}
                       </div>
-                      <div className="text-sm text-muted-foreground">{selectedCodebaseSource}</div>
+                      <div className="break-words text-sm text-muted-foreground [overflow-wrap:anywhere]">
+                        {selectedCodebaseSource}
+                      </div>
                     </div>
-                    <div className="flex flex-wrap justify-end gap-2">
+                    <div className="flex min-w-0 flex-wrap gap-2 lg:justify-end">
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(selectedCodebase.snapshot_status)}`}
                       >
@@ -1154,51 +1248,51 @@ export function CodebasesView() {
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Current Snapshot
                       </div>
-                      <div className="mt-1 text-sm font-medium text-foreground">
+                      <div className="mt-1 break-all font-mono text-[13px] font-medium leading-relaxed text-foreground">
                         {selectedCodebase.current_snapshot_id || "Not imported yet"}
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Commit / Ref
                       </div>
-                      <div className="mt-1 text-sm font-medium text-foreground">
+                      <div className="mt-1 break-all font-mono text-[13px] font-medium leading-relaxed text-foreground">
                         {selectedCodebase.source_commit_sha ||
                           selectedCodebase.source_ref ||
                           "Not available"}
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Approved Snapshot
                       </div>
-                      <div className="mt-1 text-sm font-medium text-foreground">
+                      <div className="mt-1 break-all font-mono text-[13px] font-medium leading-relaxed text-foreground">
                         {selectedCodebase.approved_snapshot_id || "Waiting for approval"}
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Indexed Files / Chunks
                       </div>
-                      <div className="mt-1 text-sm font-medium text-foreground">
+                      <div className="mt-1 break-words text-sm font-medium leading-relaxed text-foreground">
                         {totalIndexedFiles} of {totalFiles} files ·{" "}
                         {selectedCodebase.stats.chunk_count || 0} chunks
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Review Queue
                       </div>
-                      <div className="mt-1 text-sm font-medium text-foreground">
+                      <div className="mt-1 break-words text-sm font-medium leading-relaxed text-foreground">
                         {(reviewSummary?.review_counts.unrouted || 0).toLocaleString()} unrouted ·{" "}
                         {(reviewSummary?.review_counts.memory || 0).toLocaleString()} to memory
                       </div>
                     </div>
-                    <div className="rounded-lg border border-border/60 bg-background/70 p-3">
+                    <div className="min-w-0 rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
                         Updated
                       </div>
@@ -1217,17 +1311,19 @@ export function CodebasesView() {
                   snapshot.
                 </div>
 
-                <div className="grid gap-3 lg:grid-cols-[1fr_auto_auto]">
+                <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto_auto]">
                   <Input
                     value={refreshRef}
                     onChange={(event) => setRefreshRef(event.target.value)}
                     placeholder="Optional ref override for refresh"
                     disabled={selectedCodebase.source_type !== "github"}
+                    className="min-w-0"
                   />
                   <Button
                     variant="outline"
                     onClick={handleRefresh}
                     disabled={refreshingCodebase || selectedCodebase.source_type !== "github"}
+                    className="w-full xl:w-auto"
                   >
                     {refreshingCodebase ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -1236,7 +1332,11 @@ export function CodebasesView() {
                     )}
                     Refresh
                   </Button>
-                  <Button onClick={handleApprove} disabled={!canApproveMemory || approvingCodebase}>
+                  <Button
+                    onClick={handleApprove}
+                    disabled={!canApproveMemory || approvingCodebase}
+                    className="w-full xl:w-auto"
+                  >
                     {approvingCodebase ? (
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
@@ -1820,47 +1920,165 @@ export function CodebasesView() {
               </div>
 
               {filesResult?.items?.length ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Path</TableHead>
-                        <TableHead>Language</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Change</TableHead>
-                        <TableHead>Chunks</TableHead>
-                        <TableHead>Size</TableHead>
-                        <TableHead>Document</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filesResult.items.map((item) => (
-                        <TableRow key={`${item.path}-${item.content_hash}`}>
-                          <TableCell className="font-mono text-xs text-card-foreground">
-                            {item.path}
-                          </TableCell>
-                          <TableCell className="text-card-foreground">
-                            {item.language || "unknown"}
-                          </TableCell>
-                          <TableCell>
-                            <span
-                              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(item.status)}`}
-                            >
-                              {item.status}
+                <div className="space-y-4">
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Visible Files
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-foreground">
+                        {repoMapSummary.fileCount.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Active Folders
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-foreground">
+                        {repoMapSummary.folderCount.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Changed Scope
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-foreground">
+                        {repoMapSummary.changedCount.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        In Memory
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-foreground">
+                        {repoMapSummary.hydratedCount.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                      <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Visible Size
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-foreground">
+                        {formatBytes(repoMapSummary.totalBytes)}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                    <div className="flex flex-col gap-2 lg:flex-row lg:items-center lg:justify-between">
+                      <div>
+                        <div className="text-sm font-semibold text-foreground">Explorer View</div>
+                        <div className="text-sm text-muted-foreground">
+                          Grouped by folder so developers can scan real repo boundaries instead of
+                          reading one long flat table.
+                        </div>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {repoMapSummary.previewOnlyCount.toLocaleString()} preview-only file
+                        {repoMapSummary.previewOnlyCount === 1 ? "" : "s"} waiting for memory
+                        hydration
+                      </div>
+                    </div>
+                    {topRepoMapDirectories.length ? (
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {topRepoMapDirectories.map((directory) => (
+                          <span
+                            key={directory}
+                            className="rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground"
+                          >
+                            {directory}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-3">
+                    {repoMapGroups.map((group, index) => (
+                      <details
+                        key={group.directory}
+                        className="group overflow-hidden rounded-xl border border-border/70 bg-background/40"
+                        open={index < 4}
+                      >
+                        <summary className="flex cursor-pointer list-none flex-col gap-3 p-4 transition-colors hover:bg-muted/10 md:flex-row md:items-start md:justify-between">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                              <ChevronRight className="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" />
+                              <FolderGit2 className="h-4 w-4 shrink-0 text-primary" />
+                              <span className="break-words [overflow-wrap:anywhere]">
+                                {group.directory}
+                              </span>
+                            </div>
+                            <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                              <span>{group.items.length.toLocaleString()} files</span>
+                              <span>{formatBytes(group.totalBytes)}</span>
+                              <span>{group.changedCount.toLocaleString()} changed</span>
+                              <span>{group.hydratedCount.toLocaleString()} in memory</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2 md:justify-end">
+                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                              {group.items.filter((item) => item.language).length} typed
                             </span>
-                          </TableCell>
-                          <TableCell className="text-card-foreground">{item.change_kind}</TableCell>
-                          <TableCell className="text-card-foreground">{item.chunk_count}</TableCell>
-                          <TableCell className="text-card-foreground">
-                            {item.size_bytes.toLocaleString()} B
-                          </TableCell>
-                          <TableCell className="font-mono text-xs text-muted-foreground">
-                            {documentStateLabel(item, selectedCodebase)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                            <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                              {group.items.reduce((sum, item) => sum + item.chunk_count, 0)} chunks
+                            </span>
+                          </div>
+                        </summary>
+
+                        <div className="border-t border-border/60">
+                          {group.items.map((item) => (
+                            <div
+                              key={`${item.path}-${item.content_hash}`}
+                              className="flex flex-col gap-3 border-b border-border/50 p-4 last:border-b-0 xl:flex-row xl:items-start xl:justify-between"
+                            >
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <div className="flex min-w-0 items-center gap-2">
+                                    <Files className="h-4 w-4 shrink-0 text-muted-foreground" />
+                                    <span className="break-all font-mono text-sm font-medium text-card-foreground">
+                                      {fileNameFromPath(item.path)}
+                                    </span>
+                                  </div>
+                                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                                    {item.language || "unknown"}
+                                  </span>
+                                </div>
+                                <div className="mt-2 break-all font-mono text-xs text-muted-foreground">
+                                  {item.path}
+                                </div>
+                                {item.reason ? (
+                                  <div className="mt-2 text-xs text-muted-foreground">
+                                    Reason: {item.reason}
+                                  </div>
+                                ) : null}
+                              </div>
+
+                              <div className="flex flex-wrap items-center gap-2 xl:max-w-[52%] xl:justify-end">
+                                <span
+                                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(item.status)}`}
+                                >
+                                  {formatStatusLabel(item.status)}
+                                </span>
+                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {formatStatusLabel(item.change_kind)}
+                                </span>
+                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {item.chunk_count} chunk{item.chunk_count === 1 ? "" : "s"}
+                                </span>
+                                <span className="rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {formatBytes(item.size_bytes)}
+                                </span>
+                                <span className="break-all rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
+                                  {documentStateLabel(item, selectedCodebase)}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </details>
+                    ))}
+                  </div>
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">

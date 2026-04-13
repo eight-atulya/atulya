@@ -1583,15 +1583,36 @@ class MemoryEngine(MemoryEngineInterface):
         """Download a public GitHub repo snapshot as a ZIP archive."""
         config = get_config()
         max_archive_bytes = config.file_conversion_max_batch_size_bytes
-        client = self._http_client or httpx.AsyncClient(timeout=60.0, follow_redirects=True)
+        client = self._http_client or httpx.AsyncClient(timeout=60.0)
         owns_client = self._http_client is None
+        allowed_hosts = {"api.github.com", "codeload.github.com"}
+        current_url = httpx.URL(f"https://api.github.com/repos/{owner}/{repo}/zipball/{commit_sha}")
+        response: httpx.Response | None = None
         try:
-            async with client.stream(
-                "GET",
-                f"https://api.github.com/repos/{owner}/{repo}/zipball/{commit_sha}",
-                headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
-                follow_redirects=True,
-            ) as response:
+            for _ in range(5):
+                request = client.build_request(
+                    "GET",
+                    current_url,
+                    headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
+                )
+                response = await client.send(request, stream=True, follow_redirects=False)
+
+                if response.status_code in {301, 302, 303, 307, 308}:
+                    location = response.headers.get("Location")
+                    if not location:
+                        raise ValueError(
+                            f"GitHub archive redirect missing Location header for {owner}/{repo}@{commit_sha}"
+                        )
+                    next_url = response.request.url.join(location)
+                    if next_url.host not in allowed_hosts:
+                        raise ValueError(
+                            f"GitHub archive redirect target is not allowed: {mask_network_location(str(next_url))}"
+                        )
+                    await response.aclose()
+                    response = None
+                    current_url = next_url
+                    continue
+
                 if response.status_code == 404:
                     raise ValueError(f"Public GitHub archive not found: {owner}/{repo}@{commit_sha}")
                 response.raise_for_status()
@@ -1621,7 +1642,11 @@ class MemoryEngine(MemoryEngineInterface):
                         )
                     chunks.append(chunk)
                 return b"".join(chunks)
+
+            raise ValueError(f"GitHub archive redirect chain exceeded limit for {owner}/{repo}@{commit_sha}")
         finally:
+            if response is not None:
+                await response.aclose()
             if owns_client:
                 await client.aclose()
 

@@ -545,6 +545,31 @@ async def test_public_github_archive_download_follows_redirects(memory_no_llm_ve
 
 
 @pytest.mark.asyncio
+async def test_public_github_archive_download_rejects_unexpected_redirect_host(memory_no_llm_verify):
+    async def mock_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "api.github.com":
+            return httpx.Response(
+                302,
+                headers={"Location": "https://example.com/malicious.zip"},
+                request=request,
+            )
+        return httpx.Response(404, request=request)
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(mock_handler),
+        follow_redirects=False,
+        timeout=10.0,
+    ) as client:
+        memory_no_llm_verify._http_client = client
+        with pytest.raises(ValueError, match="redirect target is not allowed"):
+            await memory_no_llm_verify._download_public_github_archive(
+                "octocat",
+                "hello-world",
+                "sha-v1",
+            )
+
+
+@pytest.mark.asyncio
 async def test_codebase_github_http_import_accepts_repo_url(
     memory_no_llm_verify, request_context, monkeypatch
 ):
