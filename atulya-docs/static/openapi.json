@@ -8078,16 +8078,48 @@
       "CodebaseImportGithubRequest": {
         "properties": {
           "owner": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Owner"
           },
           "repo": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Repo"
           },
           "ref": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Ref"
+          },
+          "repo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo Url"
           },
           "root_path": {
             "anyOf": [
@@ -8123,11 +8155,6 @@
           }
         },
         "type": "object",
-        "required": [
-          "owner",
-          "repo",
-          "ref"
-        ],
         "title": "CodebaseImportGithubRequest",
         "description": "JSON payload for public GitHub-backed codebase import."
       },

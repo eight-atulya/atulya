@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import io
 import json
+import uuid
 import zipfile
 from datetime import datetime, timezone
 
@@ -477,3 +478,167 @@ async def test_codebase_http_endpoints_expose_review_then_approve_flow(
             assert approved_by_path["src/main.py"]["document_id"] == f"codebase:{codebase_id}:src/main.py"
     finally:
         await memory_no_llm_verify.delete_bank(bank_id, request_context=request_context)
+
+
+@pytest.mark.asyncio
+async def test_public_github_archive_download_follows_redirects(memory_no_llm_verify):
+    archive_bytes = _build_repo_zip({"demo-repo/src/main.py": "print('ok')\n"})
+
+    async def mock_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.host == "api.github.com":
+            return httpx.Response(
+                302,
+                headers={"Location": "https://codeload.github.com/octocat/hello-world/legacy.zip/sha-v1"},
+                request=request,
+            )
+        if request.url.host == "codeload.github.com":
+            return httpx.Response(
+                200,
+                content=archive_bytes,
+                headers={"Content-Length": str(len(archive_bytes))},
+                request=request,
+            )
+        return httpx.Response(404, request=request)
+
+    async with httpx.AsyncClient(
+        transport=httpx.MockTransport(mock_handler),
+        follow_redirects=False,
+        timeout=10.0,
+    ) as client:
+        memory_no_llm_verify._http_client = client
+        downloaded = await memory_no_llm_verify._download_public_github_archive(
+            "octocat",
+            "hello-world",
+            "sha-v1",
+        )
+
+    assert downloaded == archive_bytes
+
+
+@pytest.mark.asyncio
+async def test_codebase_github_http_import_accepts_repo_url(
+    memory_no_llm_verify, request_context, monkeypatch
+):
+    bank_id = _bank_id("github_url")
+    archive_bytes = _build_repo_zip(
+        {
+            "demo-repo/src/util.py": "def helper():\n    return 'ok'\n",
+            "demo-repo/src/main.py": "from src.util import helper\n",
+        }
+    )
+    app = create_app(memory_no_llm_verify, initialize_memory=False)
+
+    async def fake_resolve(owner: str, repo: str, ref: str) -> str:
+        assert owner == "octocat"
+        assert repo == "hello-world"
+        assert ref == "main"
+        return "sha-v1"
+
+    async def fake_download(owner: str, repo: str, commit_sha: str) -> bytes:
+        assert owner == "octocat"
+        assert repo == "hello-world"
+        assert commit_sha == "sha-v1"
+        return archive_bytes
+
+    monkeypatch.setattr(memory_no_llm_verify, "_resolve_public_github_commit_sha", fake_resolve)
+    monkeypatch.setattr(memory_no_llm_verify, "_download_public_github_archive", fake_download)
+
+    try:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as client:
+            bank_response = await client.put(f"/v1/default/banks/{bank_id}", json={"name": "GitHub URL Bank"})
+            assert bank_response.status_code in (200, 201)
+
+            import_response = await client.post(
+                f"/v1/default/banks/{bank_id}/codebases/import/github",
+                json={
+                    "repo_url": "https://github.com/octocat/hello-world.git",
+                    "ref": "main",
+                    "refresh_existing": True,
+                },
+            )
+            assert import_response.status_code == 200
+            import_payload = import_response.json()
+
+            codebase = await memory_no_llm_verify.get_codebase(
+                bank_id,
+                import_payload["codebase_id"],
+                request_context=request_context,
+            )
+            assert codebase is not None
+            assert codebase["source_type"] == "github"
+            assert codebase["source_config"]["owner"] == "octocat"
+            assert codebase["source_config"]["repo"] == "hello-world"
+            assert codebase["source_config"]["ref"] == "main"
+    finally:
+        await memory_no_llm_verify.delete_bank(bank_id, request_context=request_context)
+
+
+@pytest.mark.asyncio
+async def test_cancel_pending_codebase_import_cleans_up_staged_snapshot(
+    memory_no_llm_verify, request_context
+):
+    bank_id = _bank_id("cancel_codebase")
+    pool = await memory_no_llm_verify._get_pool()
+    codebase_id = uuid.uuid4()
+    snapshot_id = uuid.uuid4()
+    operation_id = uuid.uuid4()
+
+    await pool.execute(
+        """
+        INSERT INTO codebases (id, bank_id, name, source_type, source_config)
+        VALUES ($1, $2, $3, 'github', $4::jsonb)
+        """,
+        codebase_id,
+        bank_id,
+        "octocat/hello-world",
+        json.dumps({"owner": "octocat", "repo": "hello-world", "ref": "main"}),
+    )
+    await pool.execute(
+        """
+        INSERT INTO codebase_snapshots (id, codebase_id, bank_id, source_ref, source_commit_sha, status)
+        VALUES ($1, $2, $3, 'main', 'sha-v1', 'pending')
+        """,
+        snapshot_id,
+        codebase_id,
+        bank_id,
+    )
+    await pool.execute(
+        """
+        INSERT INTO async_operations (operation_id, bank_id, operation_type, status, result_metadata)
+        VALUES ($1, $2, 'codebase_import', 'pending', $3::jsonb)
+        """,
+        operation_id,
+        bank_id,
+        json.dumps(
+            {
+                "codebase_id": str(codebase_id),
+                "snapshot_id": str(snapshot_id),
+                "source_type": "github",
+                "source_ref": "main",
+            }
+        ),
+    )
+
+    result = await memory_no_llm_verify.cancel_operation(
+        bank_id=bank_id,
+        operation_id=str(operation_id),
+        request_context=request_context,
+    )
+
+    assert result["success"] is True
+    remaining_op = await pool.fetchval(
+        "SELECT COUNT(*) FROM async_operations WHERE operation_id = $1",
+        operation_id,
+    )
+    remaining_snapshot = await pool.fetchval(
+        "SELECT COUNT(*) FROM codebase_snapshots WHERE id = $1",
+        snapshot_id,
+    )
+    remaining_codebase = await pool.fetchval(
+        "SELECT COUNT(*) FROM codebases WHERE id = $1",
+        codebase_id,
+    )
+
+    assert remaining_op == 0
+    assert remaining_snapshot == 0
+    assert remaining_codebase == 0

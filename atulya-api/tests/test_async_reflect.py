@@ -222,3 +222,29 @@ async def test_cancel_operation_rejects_processing_state(reflect_memory, request
             operation_id=str(operation_id),
             request_context=request_context,
         )
+
+
+@pytest.mark.asyncio
+async def test_cancel_operation_rejects_completed_state(reflect_memory, request_context):
+    """Completed operations should remain visible history, not become cancellable."""
+    pool = await reflect_memory._get_pool()
+    operation_id = uuid.uuid4()
+    bank_id = f"async_reflect_completed_{uuid.uuid4().hex[:8]}"
+
+    await pool.execute(
+        """
+        INSERT INTO async_operations
+        (operation_id, bank_id, operation_type, status, result_metadata)
+        VALUES ($1, $2, 'reflect', 'completed', $3::jsonb)
+        """,
+        operation_id,
+        bank_id,
+        '{"operation_stage":"done"}',
+    )
+
+    with pytest.raises(ValueError, match="can no longer be cancelled"):
+        await reflect_memory.cancel_operation(
+            bank_id=bank_id,
+            operation_id=str(operation_id),
+            request_context=request_context,
+        )

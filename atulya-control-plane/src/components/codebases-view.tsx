@@ -44,17 +44,58 @@ import {
   Search,
   Sparkles,
   Upload,
+  X,
 } from "lucide-react";
 
 type ImportTab = "github" | "zip";
 type WorkspaceTab = "files" | "symbols" | "impact";
 type ImpactMode = "path" | "symbol" | "query";
 
+type ParsedGithubSource = {
+  owner: string;
+  repo: string;
+  ref?: string;
+};
+
 function parseGlobs(raw: string): string[] {
   return raw
     .split(/[\n,]/)
     .map((value) => value.trim())
     .filter(Boolean);
+}
+
+function parseGithubRepoUrl(raw: string): ParsedGithubSource | null {
+  const value = raw.trim();
+  if (!value) return null;
+
+  if (value.startsWith("git@github.com:")) {
+    const path = value.split(":", 2)[1] || "";
+    const parts = path.split("/").filter(Boolean);
+    if (parts.length < 2) return null;
+    return {
+      owner: parts[0],
+      repo: parts[1].replace(/\.git$/i, ""),
+    };
+  }
+
+  try {
+    const parsed = new URL(value);
+    if (!["github.com", "www.github.com"].includes(parsed.hostname)) {
+      return null;
+    }
+    const parts = parsed.pathname.split("/").filter(Boolean);
+    if (parts.length < 2) return null;
+    const source: ParsedGithubSource = {
+      owner: parts[0],
+      repo: parts[1].replace(/\.git$/i, ""),
+    };
+    if (parts.length >= 4 && ["tree", "commit", "blob"].includes(parts[2])) {
+      source.ref = parts[3];
+    }
+    return source;
+  } catch {
+    return null;
+  }
 }
 
 function formatDateTime(value: string | null | undefined): string {
@@ -84,6 +125,8 @@ function statusClasses(status: string | null | undefined): string {
     case "retained":
     case "hydrated":
       return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+    case "cancelled":
+      return "bg-slate-500/10 text-slate-700 dark:text-slate-300";
     case "review_required":
     case "pending_approval":
     case "pending":
@@ -143,10 +186,12 @@ export function CodebasesView() {
   const [activeOperationId, setActiveOperationId] = useState<string | null>(null);
   const [operationStatus, setOperationStatus] = useState<OperationStatus | null>(null);
   const [operationResult, setOperationResult] = useState<OperationResult | null>(null);
+  const [cancellingOperation, setCancellingOperation] = useState(false);
 
   const [githubOwner, setGithubOwner] = useState("");
   const [githubRepo, setGithubRepo] = useState("");
   const [githubRef, setGithubRef] = useState("main");
+  const [githubRepoUrl, setGithubRepoUrl] = useState("");
   const [githubRootPath, setGithubRootPath] = useState("");
   const [githubInclude, setGithubInclude] = useState("");
   const [githubExclude, setGithubExclude] = useState("");
@@ -187,6 +232,9 @@ export function CodebasesView() {
     if (!selectedCodebase) return null;
     return sourceLabel(selectedCodebase);
   }, [selectedCodebase]);
+
+  const canCancelActiveOperation =
+    Boolean(activeOperationId) && operationStatus?.status === "pending";
 
   const loadCodebases = async (preserveSelection = true) => {
     if (!currentBank) return;
@@ -295,17 +343,23 @@ export function CodebasesView() {
   };
 
   const handleGithubImport = async () => {
-    if (!currentBank || !githubOwner.trim() || !githubRepo.trim() || !githubRef.trim()) {
-      toast.error("GitHub import needs owner, repo, and ref.");
+    const parsedRepoUrl = parseGithubRepoUrl(githubRepoUrl);
+    const effectiveOwner = githubOwner.trim() || parsedRepoUrl?.owner || "";
+    const effectiveRepo = githubRepo.trim() || parsedRepoUrl?.repo || "";
+    const effectiveRef = githubRef.trim() || parsedRepoUrl?.ref || "";
+
+    if (!currentBank || !effectiveOwner || !effectiveRepo || !effectiveRef) {
+      toast.error("GitHub import needs a repo URL or owner/repo, plus a ref.");
       return;
     }
 
     setSubmittingGithub(true);
     try {
       const response = await client.importCodebaseGithub(currentBank, {
-        owner: githubOwner.trim(),
-        repo: githubRepo.trim(),
-        ref: githubRef.trim(),
+        owner: effectiveOwner,
+        repo: effectiveRepo,
+        ref: effectiveRef,
+        repo_url: githubRepoUrl.trim() || undefined,
         root_path: githubRootPath.trim() || undefined,
         include_globs: parseGlobs(githubInclude),
         exclude_globs: parseGlobs(githubExclude),
@@ -324,7 +378,7 @@ export function CodebasesView() {
         stage: "queued",
       });
       setOperationResult(null);
-      toast.success(`Queued GitHub import for ${githubOwner}/${githubRepo}@${githubRef}.`);
+      toast.success(`Queued GitHub import for ${effectiveOwner}/${effectiveRepo}@${effectiveRef}.`);
       await loadCodebases(false);
     } finally {
       setSubmittingGithub(false);
@@ -443,6 +497,38 @@ export function CodebasesView() {
     }
   };
 
+  const handleCancelActiveOperation = async () => {
+    if (!currentBank || !activeOperationId) return;
+
+    setCancellingOperation(true);
+    try {
+      await client.cancelOperation(currentBank, activeOperationId);
+      setActiveOperationId(null);
+      setOperationResult(null);
+      setOperationStatus((previous) =>
+        previous
+          ? {
+              ...previous,
+              status: "cancelled",
+              completed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              stage: null,
+            }
+          : null
+      );
+      toast.success("Pending codebase job canceled.");
+      await loadCodebases();
+      if (selectedCodebaseId) {
+        await loadSelectedCodebase(selectedCodebaseId);
+        await loadFiles(selectedCodebaseId);
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to cancel the pending job.");
+    } finally {
+      setCancellingOperation(false);
+    }
+  };
+
   useEffect(() => {
     if (!currentBank) return;
     void loadCodebases(false);
@@ -479,6 +565,28 @@ export function CodebasesView() {
         const status = await client.getOperationStatus(currentBank, activeOperationId);
         if (cancelled) return;
         setOperationStatus(status);
+
+        if (status.status === "not_found") {
+          setOperationStatus((previous) =>
+            previous?.status === "pending"
+              ? {
+                  ...previous,
+                  status: "cancelled",
+                  completed_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                  stage: null,
+                }
+              : status
+          );
+          window.clearInterval(interval);
+          setActiveOperationId(null);
+          await loadCodebases();
+          if (selectedCodebaseId) {
+            await loadSelectedCodebase(selectedCodebaseId);
+            await loadFiles(selectedCodebaseId);
+          }
+          return;
+        }
 
         if (status.status === "completed" || status.status === "failed") {
           const result = await client.getOperationResult(currentBank, activeOperationId);
@@ -593,6 +701,31 @@ export function CodebasesView() {
               </TabsList>
 
               <TabsContent value="github" className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="github-repo-url">Repo URL</Label>
+                  <Input
+                    id="github-repo-url"
+                    value={githubRepoUrl}
+                    onChange={(event) => {
+                      const nextValue = event.target.value;
+                      setGithubRepoUrl(nextValue);
+                      const parsed = parseGithubRepoUrl(nextValue);
+                      if (parsed) {
+                        setGithubOwner((current) => current || parsed.owner);
+                        setGithubRepo((current) => current || parsed.repo);
+                        if (parsed.ref) {
+                          setGithubRef((current) => current || parsed.ref);
+                        }
+                      }
+                    }}
+                    placeholder="https://github.com/eight-atulya/atulya.git"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Paste a public GitHub URL and we&apos;ll normalize it into the same
+                    archive-based import flow. No persistent clone required.
+                  </p>
+                </div>
+
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="github-owner">Owner</Label>
@@ -946,6 +1079,8 @@ export function CodebasesView() {
                   <div className="flex items-center gap-2">
                     {operationStatus?.status === "failed" ? (
                       <AlertCircle className="h-4 w-4 text-rose-500" />
+                    ) : operationStatus?.status === "cancelled" ? (
+                      <X className="h-4 w-4 text-slate-500" />
                     ) : operationStatus?.status === "completed" ? (
                       <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     ) : (
@@ -956,11 +1091,28 @@ export function CodebasesView() {
                     </span>
                   </div>
                   {operationStatus && (
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(operationStatus.status)}`}
-                    >
-                      {formatStatusLabel(operationStatus.status)}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(operationStatus.status)}`}
+                      >
+                        {formatStatusLabel(operationStatus.status)}
+                      </span>
+                      {canCancelActiveOperation && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCancelActiveOperation}
+                          disabled={cancellingOperation}
+                        >
+                          {cancellingOperation ? (
+                            <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <X className="mr-2 h-3.5 w-3.5" />
+                          )}
+                          Cancel Job
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
 
