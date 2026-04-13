@@ -84,6 +84,7 @@ PYTHON_INIT_FILES=(
     "atulya-clients/python/atulya_client_api/__init__.py"
     "atulya-integrations/litellm/hindsight_litellm/__init__.py"
     "atulya-integrations/litellm/atulya_litellm/__init__.py"
+    "atulya-integrations/crewai/hindsight_crewai/__init__.py"
     "atulya-integrations/crewai/atulya_crewai/__init__.py"
     "atulya-integrations/pydantic-ai/atulya_pydantic_ai/__init__.py"
 )

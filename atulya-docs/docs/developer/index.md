@@ -68,11 +68,11 @@ That keeps the developer workflow fast and deterministic without silently growin
 
 | If you need to... | Start here |
 |------|----------------|
-| Review repository structure before memory mutation | [Codebases](./codebases) |
-| Understand the full import-to-approval state machine | [Codebases Lifecycle](./codebases-lifecycle) |
-| Learn the workbench and modal review UX | [Codebases Control Plane](./codebases-control-plane) |
-| Optimize workflows for coding agents | [Codebases For Coding Agents](./codebases-for-coding-agents) |
-| Integrate import, review, routing, and approval via API | [Codebases API](./codebases-api) |
+| Review repository structure before memory mutation | [Codebases](/developer/codebases) |
+| Understand the full import-to-approval state machine | [Codebases Lifecycle](/developer/codebases-lifecycle) |
+| Learn the workbench and modal review UX | [Codebases Control Plane](/developer/codebases-control-plane) |
+| Optimize workflows for coding agents | [Codebases For Coding Agents](/developer/codebases-for-coding-agents) |
+| Integrate import, review, routing, and approval via API | [Codebases API](/developer/codebases-api) |
 
 ## Featured: Graph Intelligence
 
@@ -92,7 +92,7 @@ Use it when you want to:
 - spot stale assumptions and conflicting evidence
 - move from a short answer to the exact proof path
 
-See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the full walkthrough.
+See [Control Plane Graph Intelligence](/developer/control-plane-graph-intelligence) for the full walkthrough.
 
 ## Why This Matters For Enterprise Agentic Organizations
 
