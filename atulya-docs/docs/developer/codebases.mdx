@@ -43,9 +43,9 @@ import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
     {
       icon: '/img/icons/codebases-api.svg',
       eyebrow: 'Typed Surfaces',
-      title: 'Built for coders and tools',
+      title: 'Chunk review and routing',
       description:
-        'ZIP import, GitHub import, refresh, files, symbols, impact, and approve are all exposed as typed APIs that fit real developer workflows.',
+        'ZIP import, GitHub import, refresh, review, chunks, files, symbols, impact, routing, research queue, and approve are all exposed as typed APIs that fit real developer workflows.',
     },
     {
       icon: '/img/icons/codebases-control-plane.svg',
@@ -62,17 +62,20 @@ import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
 If you only remember one thing, remember this:
 
 - **ASD** gives immediate structural understanding of the repo
-- **approval** decides when that parsed snapshot becomes memory-backed
+- **review routing** decides which semantic chunks belong in memory versus research
+- **approval** applies only the chunks already routed to memory
 - **Atulya memory** remains stable until a human accepts the new snapshot
 
 ```mermaid
 flowchart LR
     A["Import ZIP or GitHub archive"] --> B["ASD mechanical parse"]
-    B --> C["Reviewable snapshot"]
+    B --> C["Reviewable snapshot + chunk graph"]
     C --> D["Repo map, symbol search, impact analysis"]
-    C --> E["Explicit approval"]
-    E --> F["Memory hydration"]
-    F --> G["recall / reflect use approved codebase documents"]
+    C --> E["Chunk review queue"]
+    E --> F["Route to memory or research"]
+    F --> G["Explicit approval"]
+    G --> H["Batched chunk hydration"]
+    H --> I["recall / reflect use approved codebase documents"]
 ```
 
 ## Why Companies Care

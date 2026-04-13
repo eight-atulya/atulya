@@ -571,10 +571,20 @@ class CodebaseSourceConfigResponse(BaseModel):
 
     owner: str | None = None
     repo: str | None = None
+    repo_url: str | None = None
     ref: str | None = None
     root_path: str | None = None
     include_globs: list[str] = FieldWithDefault(list)
     exclude_globs: list[str] = FieldWithDefault(list)
+
+
+class CodebaseReviewCountsResponse(BaseModel):
+    """Counts of routed review items in the current snapshot."""
+
+    unrouted: int = 0
+    memory: int = 0
+    research: int = 0
+    dismissed: int = 0
 
 
 class CodebaseSnapshotStatsResponse(BaseModel):
@@ -591,6 +601,11 @@ class CodebaseSnapshotStatsResponse(BaseModel):
     changed_files: int = 0
     unchanged_files: int = 0
     deleted_files: int = 0
+    chunk_count: int = 0
+    cluster_count: int = 0
+    related_chunk_count: int = 0
+    parse_coverage: float = 0.0
+    review_counts: CodebaseReviewCountsResponse = Field(default_factory=CodebaseReviewCountsResponse)
     error: str | None = None
 
 
@@ -657,7 +672,6 @@ class CodebaseImportGithubRequest(BaseModel):
 
         if not self.owner or not self.repo or not self.ref:
             raise ValueError("GitHub import requires owner, repo, and ref, or a repo_url plus ref.")
-
         return self
 
 
@@ -729,6 +743,10 @@ class CodebaseResponse(BaseModel):
     approval_status: str | None = None
     memory_status: str | None = None
     stats: CodebaseSnapshotStatsResponse = Field(default_factory=CodebaseSnapshotStatsResponse)
+    review_counts: CodebaseReviewCountsResponse = Field(default_factory=CodebaseReviewCountsResponse)
+    cluster_count: int = 0
+    related_chunk_count: int = 0
+    parse_coverage: float = 0.0
     created_at: str | None = None
     updated_at: str | None = None
     snapshot_created_at: str | None = None
@@ -753,6 +771,7 @@ class CodebaseFileItemResponse(BaseModel):
     status: str
     change_kind: str
     reason: str | None = None
+    chunk_count: int = 0
 
 
 class CodebaseFilesResponse(BaseModel):
@@ -778,6 +797,114 @@ class CodebaseSymbolMatchResponse(BaseModel):
     start_line: int
     end_line: int
     match_mode: str | None = None
+    chunk_ids: list[str] = FieldWithDefault(list)
+
+
+class CodebaseChunkItemResponse(BaseModel):
+    """Single reviewable code chunk."""
+
+    id: str
+    chunk_key: str
+    path: str
+    language: str | None = None
+    kind: str
+    label: str
+    preview_text: str
+    start_line: int
+    end_line: int
+    container: str | None = None
+    parent_symbol: str | None = None
+    parent_fq_name: str | None = None
+    parse_confidence: float = 0.0
+    cluster_id: str | None = None
+    cluster_label: str | None = None
+    route_target: str
+    route_source: str | None = None
+    change_kind: str
+    related_count: int = 0
+    document_id: str | None = None
+
+
+class CodebaseChunksResponse(BaseModel):
+    """Paginated reviewable chunk response."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    items: list[CodebaseChunkItemResponse]
+    next_cursor: str | None = None
+    has_more: bool = False
+
+
+class CodebaseReviewDiagnosticResponse(BaseModel):
+    """A deterministic review diagnostic bucket."""
+
+    reason: str
+    count: int
+
+
+class CodebaseReviewChangedSummaryResponse(BaseModel):
+    """Changed-file summary for the current review snapshot."""
+
+    added_files: int = 0
+    changed_files: int = 0
+    deleted_files: int = 0
+
+
+class CodebaseReviewResponse(BaseModel):
+    """Review summary for the current codebase snapshot."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    snapshot_status: str | None = None
+    approval_status: str | None = None
+    memory_status: str | None = None
+    review_counts: CodebaseReviewCountsResponse = Field(default_factory=CodebaseReviewCountsResponse)
+    cluster_count: int = 0
+    related_chunk_count: int = 0
+    parse_coverage: float = 0.0
+    changed_summary: CodebaseReviewChangedSummaryResponse = Field(default_factory=CodebaseReviewChangedSummaryResponse)
+    diagnostics: list[CodebaseReviewDiagnosticResponse] = FieldWithDefault(list)
+
+
+class CodebaseChunkRelatedItemResponse(BaseModel):
+    """Compact related chunk preview."""
+
+    id: str
+    label: str
+    path: str
+    kind: str
+    start_line: int
+    end_line: int
+    cluster_label: str | None = None
+    score: float = 0.0
+
+
+class CodebaseChunkDetailResponse(CodebaseChunkItemResponse):
+    """Detailed chunk review payload."""
+
+    snapshot_id: str
+    content_text: str
+    related_chunks: list[CodebaseChunkRelatedItemResponse] = FieldWithDefault(list)
+    symbols: list[CodebaseSymbolMatchResponse] = FieldWithDefault(list)
+    impact_edges: list["CodebaseImpactEdgeResponse"] = FieldWithDefault(list)
+    cluster_members: list[CodebaseChunkRelatedItemResponse] = FieldWithDefault(list)
+
+
+class CodebaseRouteRequest(BaseModel):
+    """Bulk review-route update request."""
+
+    item_ids: list[str]
+    target: Literal["memory", "research", "dismissed", "unrouted"]
+
+
+class CodebaseRouteResponse(BaseModel):
+    """Bulk review-route update response."""
+
+    codebase_id: str
+    snapshot_id: str
+    updated_count: int
+    target: str
+    review_counts: CodebaseReviewCountsResponse = Field(default_factory=CodebaseReviewCountsResponse)
 
 
 class CodebaseSymbolsResponse(BaseModel):
@@ -815,6 +942,7 @@ class CodebaseImpactFileResponse(BaseModel):
     document_id: str | None = None
     status: str
     change_kind: str
+    chunk_count: int = 0
     depth: int
 
 
@@ -840,6 +968,9 @@ class CodebaseImpactResponse(BaseModel):
     matched_symbols: list[CodebaseSymbolMatchResponse]
     edges: list[CodebaseImpactEdgeResponse]
     explanation: str
+
+
+CodebaseChunkDetailResponse.model_rebuild()
 
 
 class FactsIncludeOptions(BaseModel):
@@ -6208,6 +6339,217 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/review",
+        response_model=CodebaseReviewResponse,
+        summary="Get codebase review summary",
+        description="Return review queue counts, parse coverage, related chunk counts, and deterministic diagnostics for the current snapshot.",
+        operation_id="get_codebase_review",
+        tags=["Codebases"],
+    )
+    async def api_get_codebase_review(
+        bank_id: str,
+        codebase_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Get review summary for a codebase."""
+        try:
+            result = await app.state.memory.get_codebase_review(
+                bank_id,
+                codebase_id,
+                request_context=request_context,
+            )
+            return CodebaseReviewResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/review: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks",
+        response_model=CodebaseChunksResponse,
+        summary="List codebase review chunks",
+        description="Return cursor-paginated semantic chunks for the current codebase snapshot.",
+        operation_id="list_codebase_chunks",
+        tags=["Codebases"],
+    )
+    async def api_list_codebase_chunks(
+        bank_id: str,
+        codebase_id: str,
+        path_prefix: str | None = Query(default=None),
+        language: str | None = Query(default=None),
+        cluster_id: str | None = Query(default=None),
+        route_target: str | None = Query(default=None),
+        changed_only: bool = Query(default=False),
+        kind: str | None = Query(default=None),
+        q: str | None = Query(default=None),
+        limit: int = Query(default=25, ge=1, le=100),
+        cursor: str | None = Query(default=None),
+        snapshot_id: str | None = Query(default=None),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """List semantic chunks for a codebase snapshot."""
+        try:
+            result = await app.state.memory.list_codebase_chunks(
+                bank_id,
+                codebase_id,
+                path_prefix=path_prefix,
+                language=language,
+                cluster_id=cluster_id,
+                route_target=route_target,
+                changed_only=changed_only,
+                kind=kind,
+                q=q,
+                limit=limit,
+                cursor=cursor,
+                snapshot_id=snapshot_id,
+                request_context=request_context,
+            )
+            return CodebaseChunksResponse.model_validate(
+                {
+                    **result,
+                    "items": [CodebaseChunkItemResponse.model_validate(item) for item in result["items"]],
+                }
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks/{chunk_id}",
+        response_model=CodebaseChunkDetailResponse,
+        summary="Get codebase chunk detail",
+        description="Return detailed code preview, related chunks, symbols, and impact edges for one chunk.",
+        operation_id="get_codebase_chunk_detail",
+        tags=["Codebases"],
+    )
+    async def api_get_codebase_chunk_detail(
+        bank_id: str,
+        codebase_id: str,
+        chunk_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Get one review chunk in detail."""
+        try:
+            result = await app.state.memory.get_codebase_chunk_detail(
+                bank_id,
+                codebase_id,
+                chunk_id,
+                request_context=request_context,
+            )
+            return CodebaseChunkDetailResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(
+                f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks/{chunk_id}: {error_detail}"
+            )
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route",
+        response_model=CodebaseRouteResponse,
+        summary="Route review items",
+        description="Bulk-route chunk review items to memory, research, dismissed, or back to unrouted.",
+        operation_id="route_codebase_review_items",
+        tags=["Codebases"],
+    )
+    async def api_route_codebase_review_items(
+        bank_id: str,
+        codebase_id: str,
+        request: CodebaseRouteRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Route codebase review items in bulk."""
+        try:
+            result = await app.state.memory.route_codebase_review_items(
+                bank_id,
+                codebase_id,
+                item_ids=request.item_ids,
+                target=request.target,
+                request_context=request_context,
+            )
+            return CodebaseRouteResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/research",
+        response_model=CodebaseChunksResponse,
+        summary="List research queue items",
+        description="Return chunks currently routed to the codebase research queue.",
+        operation_id="list_codebase_research_queue",
+        tags=["Codebases"],
+    )
+    async def api_list_codebase_research_queue(
+        bank_id: str,
+        codebase_id: str,
+        cursor: str | None = Query(default=None),
+        limit: int = Query(default=25, ge=1, le=100),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """List research queue items."""
+        try:
+            result = await app.state.memory.list_codebase_research_queue(
+                bank_id,
+                codebase_id,
+                cursor=cursor,
+                limit=limit,
+                request_context=request_context,
+            )
+            return CodebaseChunksResponse.model_validate(
+                {
+                    **result,
+                    "items": [CodebaseChunkItemResponse.model_validate(item) for item in result["items"]],
+                }
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/research: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(

@@ -620,6 +620,76 @@ class MemoryEngineInterface(ABC):
         ...
 
     @abstractmethod
+    async def get_codebase_review(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Get review summary for the current codebase snapshot."""
+        ...
+
+    @abstractmethod
+    async def list_codebase_chunks(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        path_prefix: str | None = None,
+        language: str | None = None,
+        cluster_id: str | None = None,
+        route_target: str | None = None,
+        changed_only: bool = False,
+        kind: str | None = None,
+        q: str | None = None,
+        limit: int = 25,
+        cursor: str | None = None,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """List cursor-paginated code review chunks."""
+        ...
+
+    @abstractmethod
+    async def get_codebase_chunk_detail(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        chunk_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Get detailed review data for one chunk."""
+        ...
+
+    @abstractmethod
+    async def route_codebase_review_items(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        item_ids: list[str],
+        target: str,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Bulk-route review items."""
+        ...
+
+    @abstractmethod
+    async def list_codebase_research_queue(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        cursor: str | None = None,
+        limit: int = 25,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """List research queue items for the current snapshot."""
+        ...
+
+    @abstractmethod
     async def search_codebase_symbols(
         self,
         bank_id: str,

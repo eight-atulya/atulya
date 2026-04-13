@@ -169,6 +169,26 @@ class IndexedEdge:
 
 
 @dataclass(slots=True)
+class IndexedChunk:
+    """Deterministic semantic chunk metadata."""
+
+    chunk_key: str
+    path: str
+    language: str | None
+    kind: str
+    label: str
+    content_hash: str
+    content_text: str
+    preview_text: str
+    start_line: int
+    end_line: int
+    container: str | None = None
+    parent_symbol: str | None = None
+    parent_fq_name: str | None = None
+    parse_confidence: float = 0.5
+
+
+@dataclass(slots=True)
 class IndexedFile:
     """Final normalized file record used for database persistence."""
 
@@ -184,6 +204,7 @@ class IndexedFile:
     change_kind: str = "added"
     symbols: list[IndexedSymbol] = field(default_factory=list)
     edges: list[IndexedEdge] = field(default_factory=list)
+    chunks: list[IndexedChunk] = field(default_factory=list)
 
 
 @dataclass(slots=True)
@@ -195,6 +216,8 @@ class ArchiveIndexResult:
     changed_files: list[str]
     unchanged_files: list[str]
     deleted_files: list[str]
+    chunk_count: int = 0
+    parse_coverage: float = 0.0
 
 
 @dataclass(slots=True)
@@ -335,6 +358,128 @@ def _decode_text(data: bytes) -> str | None:
         except UnicodeDecodeError:
             continue
     return None
+
+
+def _line_slice(text: str, start_line: int, end_line: int) -> str:
+    lines = text.splitlines()
+    start_index = max(0, start_line - 1)
+    end_index = min(len(lines), end_line)
+    return "\n".join(lines[start_index:end_index]).strip()
+
+
+def _compact_preview(text: str, max_chars: int = 220) -> str:
+    single_line = " ".join(text.strip().split())
+    if len(single_line) <= max_chars:
+        return single_line
+    return f"{single_line[: max_chars - 1].rstrip()}..."
+
+
+def _chunk_key(path: str, kind: str, label: str, start_line: int, end_line: int) -> str:
+    raw = f"{path}|{kind}|{label}|{start_line}|{end_line}"
+    return hashlib.sha1(raw.encode("utf-8")).hexdigest()[:24]
+
+
+def _build_chunk(
+    *,
+    path: str,
+    language: str | None,
+    kind: str,
+    label: str,
+    content_text: str,
+    start_line: int,
+    end_line: int,
+    container: str | None,
+    parent_symbol: str | None,
+    parent_fq_name: str | None,
+    parse_confidence: float,
+) -> IndexedChunk | None:
+    normalized_text = content_text.strip()
+    if not normalized_text:
+        return None
+    chunk_key = _chunk_key(path, kind, label, start_line, end_line)
+    return IndexedChunk(
+        chunk_key=chunk_key,
+        path=path,
+        language=language,
+        kind=kind,
+        label=label,
+        content_hash=hashlib.sha256(normalized_text.encode("utf-8")).hexdigest(),
+        content_text=normalized_text,
+        preview_text=_compact_preview(normalized_text),
+        start_line=start_line,
+        end_line=end_line,
+        container=container,
+        parent_symbol=parent_symbol,
+        parent_fq_name=parent_fq_name,
+        parse_confidence=parse_confidence,
+    )
+
+
+def _build_region_chunks(
+    *,
+    path: str,
+    language: str | None,
+    text: str,
+    occupied_ranges: list[tuple[int, int]],
+    label_prefix: str,
+    parse_confidence: float,
+    max_lines: int = 80,
+) -> list[IndexedChunk]:
+    lines = text.splitlines()
+    if not lines:
+        return []
+
+    covered = [False] * len(lines)
+    for start_line, end_line in occupied_ranges:
+        for index in range(max(0, start_line - 1), min(len(lines), end_line)):
+            covered[index] = True
+
+    chunks: list[IndexedChunk] = []
+    start_index: int | None = None
+    region_index = 0
+
+    def flush(end_index: int) -> None:
+        nonlocal start_index, region_index
+        if start_index is None or end_index < start_index:
+            start_index = None
+            return
+        cursor = start_index
+        while cursor <= end_index:
+            chunk_end = min(end_index, cursor + max_lines - 1)
+            segment_lines = lines[cursor : chunk_end + 1]
+            segment_text = "\n".join(segment_lines).strip()
+            if segment_text:
+                region_index += 1
+                chunk = _build_chunk(
+                    path=path,
+                    language=language,
+                    kind="region",
+                    label=f"{label_prefix} section {region_index}",
+                    content_text=segment_text,
+                    start_line=cursor + 1,
+                    end_line=chunk_end + 1,
+                    container=None,
+                    parent_symbol=None,
+                    parent_fq_name=None,
+                    parse_confidence=parse_confidence,
+                )
+                if chunk:
+                    chunks.append(chunk)
+            cursor = chunk_end + 1
+        start_index = None
+
+    for index, is_covered in enumerate(covered):
+        if not is_covered and lines[index].strip():
+            if start_index is None:
+                start_index = index
+            continue
+        if start_index is not None:
+            flush(index - 1)
+
+    if start_index is not None:
+        flush(len(lines) - 1)
+
+    return chunks
 
 
 def _is_excluded_by_default(path: str) -> str | None:
@@ -792,6 +937,73 @@ def _resolve_relative_import(current_path: str, specifier: str, path_set: set[st
     return None
 
 
+def _symbol_chunks_for_text(
+    *,
+    path: str,
+    language: str | None,
+    text: str,
+    symbols: list[IndexedSymbol],
+) -> list[IndexedChunk]:
+    chunks: list[IndexedChunk] = []
+    seen_ranges: set[tuple[int, int, str]] = set()
+    for symbol in sorted(symbols, key=lambda item: (item.start_line, item.end_line, item.fq_name)):
+        key = (symbol.start_line, symbol.end_line, symbol.fq_name)
+        if key in seen_ranges or symbol.end_line < symbol.start_line:
+            continue
+        seen_ranges.add(key)
+        symbol_text = _line_slice(text, symbol.start_line, symbol.end_line)
+        chunk = _build_chunk(
+            path=path,
+            language=language,
+            kind=symbol.kind,
+            label=symbol.fq_name,
+            content_text=symbol_text,
+            start_line=symbol.start_line,
+            end_line=symbol.end_line,
+            container=symbol.container,
+            parent_symbol=symbol.name,
+            parent_fq_name=symbol.fq_name,
+            parse_confidence=1.0,
+        )
+        if chunk:
+            chunks.append(chunk)
+    return chunks
+
+
+def build_semantic_chunks(
+    *,
+    path: str,
+    language: str | None,
+    text: str,
+    symbols: list[IndexedSymbol],
+) -> list[IndexedChunk]:
+    """Build semantic chunks from parsed symbols with deterministic fallback regions."""
+
+    symbol_chunks = _symbol_chunks_for_text(path=path, language=language, text=text, symbols=symbols)
+    occupied = [(chunk.start_line, chunk.end_line) for chunk in symbol_chunks]
+    label_prefix = PurePosixPath(path).name
+
+    if symbol_chunks:
+        fallback_chunks = _build_region_chunks(
+            path=path,
+            language=language,
+            text=text,
+            occupied_ranges=occupied,
+            label_prefix=label_prefix,
+            parse_confidence=0.72,
+        )
+        return [*symbol_chunks, *fallback_chunks]
+
+    return _build_region_chunks(
+        path=path,
+        language=language,
+        text=text,
+        occupied_ranges=[],
+        label_prefix=label_prefix,
+        parse_confidence=0.55,
+    )
+
+
 class ASDIndexer:
     """Mechanical codebase indexer that wraps ASD parsing and diffing."""
 
@@ -809,6 +1021,9 @@ class ASDIndexer:
         added_files: list[str] = []
         changed_files: list[str] = []
         unchanged_files: list[str] = []
+        parse_candidate_count = 0
+        parsed_file_count = 0
+        chunk_count = 0
 
         for source in sorted(source_files, key=lambda item: item.path):
             excluded_reason = _is_excluded_by_default(source.path)
@@ -915,7 +1130,8 @@ class ASDIndexer:
                 change_kind=change_kind,
             )
 
-            if indexed_file.should_parse_symbols and change_kind != "unchanged":
+            if indexed_file.should_parse_symbols:
+                parse_candidate_count += 1
                 try:
                     parsed = ASDParser.parse_file(
                         path=source.path,
@@ -925,11 +1141,19 @@ class ASDIndexer:
                     )
                     indexed_file.symbols = parsed.symbols
                     indexed_file.edges = parsed.edges
+                    parsed_file_count += 1
                 except Exception:
                     indexed_file.status = "retained"
                     indexed_file.reason = "asd_parse_error"
                     indexed_file.should_parse_symbols = False
 
+            indexed_file.chunks = build_semantic_chunks(
+                path=source.path,
+                language=language,
+                text=text,
+                symbols=indexed_file.symbols,
+            )
+            chunk_count += len(indexed_file.chunks)
             indexed_files.append(indexed_file)
             if change_kind == "added":
                 added_files.append(source.path)
@@ -946,6 +1170,8 @@ class ASDIndexer:
             changed_files=changed_files,
             unchanged_files=unchanged_files,
             deleted_files=deleted_files,
+            chunk_count=chunk_count,
+            parse_coverage=(parsed_file_count / parse_candidate_count) if parse_candidate_count else 0.0,
         )
 
 

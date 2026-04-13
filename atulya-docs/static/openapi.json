@@ -6202,6 +6202,543 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/review": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Get codebase review summary",
+        "description": "Return review queue counts, parse coverage, related chunk counts, and deterministic diagnostics for the current snapshot.",
+        "operationId": "get_codebase_review",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseReviewResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "List codebase review chunks",
+        "description": "Return cursor-paginated semantic chunks for the current codebase snapshot.",
+        "operationId": "list_codebase_chunks",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "path_prefix",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Path Prefix"
+            }
+          },
+          {
+            "name": "language",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Language"
+            }
+          },
+          {
+            "name": "cluster_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cluster Id"
+            }
+          },
+          {
+            "name": "route_target",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route Target"
+            }
+          },
+          {
+            "name": "changed_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Changed Only"
+            }
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Q"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseChunksResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks/{chunk_id}": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Get codebase chunk detail",
+        "description": "Return detailed code preview, related chunks, symbols, and impact edges for one chunk.",
+        "operationId": "get_codebase_chunk_detail",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "chunk_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Chunk Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseChunkDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Route review items",
+        "description": "Bulk-route chunk review items to memory, research, dismissed, or back to unrouted.",
+        "operationId": "route_codebase_review_items",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseRouteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseRouteResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/research": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "List research queue items",
+        "description": "Return chunks currently routed to the codebase research queue.",
+        "operationId": "list_codebase_research_queue",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseChunksResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/codebases/{codebase_id}/files": {
       "get": {
         "tags": [
@@ -7636,6 +8173,466 @@
         "title": "CodebaseApproveResponse",
         "description": "Queued codebase approval response."
       },
+      "CodebaseChunkDetailResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "chunk_key": {
+            "type": "string",
+            "title": "Chunk Key"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "preview_text": {
+            "type": "string",
+            "title": "Preview Text"
+          },
+          "start_line": {
+            "type": "integer",
+            "title": "Start Line"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "container": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Container"
+          },
+          "parent_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Symbol"
+          },
+          "parent_fq_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Fq Name"
+          },
+          "parse_confidence": {
+            "type": "number",
+            "title": "Parse Confidence",
+            "default": 0.0
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Label"
+          },
+          "route_target": {
+            "type": "string",
+            "title": "Route Target"
+          },
+          "route_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Source"
+          },
+          "change_kind": {
+            "type": "string",
+            "title": "Change Kind"
+          },
+          "related_count": {
+            "type": "integer",
+            "title": "Related Count",
+            "default": 0
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "content_text": {
+            "type": "string",
+            "title": "Content Text"
+          },
+          "related_chunks": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseChunkRelatedItemResponse"
+            },
+            "type": "array",
+            "title": "Related Chunks",
+            "default": []
+          },
+          "symbols": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseSymbolMatchResponse"
+            },
+            "type": "array",
+            "title": "Symbols",
+            "default": []
+          },
+          "impact_edges": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseImpactEdgeResponse"
+            },
+            "type": "array",
+            "title": "Impact Edges",
+            "default": []
+          },
+          "cluster_members": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseChunkRelatedItemResponse"
+            },
+            "type": "array",
+            "title": "Cluster Members",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chunk_key",
+          "path",
+          "kind",
+          "label",
+          "preview_text",
+          "start_line",
+          "end_line",
+          "route_target",
+          "change_kind",
+          "snapshot_id",
+          "content_text"
+        ],
+        "title": "CodebaseChunkDetailResponse",
+        "description": "Detailed chunk review payload."
+      },
+      "CodebaseChunkItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "chunk_key": {
+            "type": "string",
+            "title": "Chunk Key"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Language"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "preview_text": {
+            "type": "string",
+            "title": "Preview Text"
+          },
+          "start_line": {
+            "type": "integer",
+            "title": "Start Line"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "container": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Container"
+          },
+          "parent_symbol": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Symbol"
+          },
+          "parent_fq_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Fq Name"
+          },
+          "parse_confidence": {
+            "type": "number",
+            "title": "Parse Confidence",
+            "default": 0.0
+          },
+          "cluster_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Label"
+          },
+          "route_target": {
+            "type": "string",
+            "title": "Route Target"
+          },
+          "route_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Source"
+          },
+          "change_kind": {
+            "type": "string",
+            "title": "Change Kind"
+          },
+          "related_count": {
+            "type": "integer",
+            "title": "Related Count",
+            "default": 0
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "chunk_key",
+          "path",
+          "kind",
+          "label",
+          "preview_text",
+          "start_line",
+          "end_line",
+          "route_target",
+          "change_kind"
+        ],
+        "title": "CodebaseChunkItemResponse",
+        "description": "Single reviewable code chunk."
+      },
+      "CodebaseChunkRelatedItemResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "path": {
+            "type": "string",
+            "title": "Path"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "start_line": {
+            "type": "integer",
+            "title": "Start Line"
+          },
+          "end_line": {
+            "type": "integer",
+            "title": "End Line"
+          },
+          "cluster_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Label"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "path",
+          "kind",
+          "start_line",
+          "end_line"
+        ],
+        "title": "CodebaseChunkRelatedItemResponse",
+        "description": "Compact related chunk preview."
+      },
+      "CodebaseChunksResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseChunkItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "items"
+        ],
+        "title": "CodebaseChunksResponse",
+        "description": "Paginated reviewable chunk response."
+      },
       "CodebaseFileItemResponse": {
         "properties": {
           "path": {
@@ -7690,6 +8687,11 @@
               }
             ],
             "title": "Reason"
+          },
+          "chunk_count": {
+            "type": "integer",
+            "title": "Chunk Count",
+            "default": 0
           }
         },
         "type": "object",
@@ -7920,6 +8922,11 @@
           "change_kind": {
             "type": "string",
             "title": "Change Kind"
+          },
+          "chunk_count": {
+            "type": "integer",
+            "title": "Chunk Count",
+            "default": 0
           },
           "depth": {
             "type": "integer",
@@ -8417,6 +9424,24 @@
           "stats": {
             "$ref": "#/components/schemas/CodebaseSnapshotStatsResponse"
           },
+          "review_counts": {
+            "$ref": "#/components/schemas/CodebaseReviewCountsResponse"
+          },
+          "cluster_count": {
+            "type": "integer",
+            "title": "Cluster Count",
+            "default": 0
+          },
+          "related_chunk_count": {
+            "type": "integer",
+            "title": "Related Chunk Count",
+            "default": 0
+          },
+          "parse_coverage": {
+            "type": "number",
+            "title": "Parse Coverage",
+            "default": 0.0
+          },
           "created_at": {
             "anyOf": [
               {
@@ -8483,6 +9508,221 @@
         "title": "CodebaseResponse",
         "description": "Codebase metadata plus current snapshot summary."
       },
+      "CodebaseReviewChangedSummaryResponse": {
+        "properties": {
+          "added_files": {
+            "type": "integer",
+            "title": "Added Files",
+            "default": 0
+          },
+          "changed_files": {
+            "type": "integer",
+            "title": "Changed Files",
+            "default": 0
+          },
+          "deleted_files": {
+            "type": "integer",
+            "title": "Deleted Files",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "CodebaseReviewChangedSummaryResponse",
+        "description": "Changed-file summary for the current review snapshot."
+      },
+      "CodebaseReviewCountsResponse": {
+        "properties": {
+          "unrouted": {
+            "type": "integer",
+            "title": "Unrouted",
+            "default": 0
+          },
+          "memory": {
+            "type": "integer",
+            "title": "Memory",
+            "default": 0
+          },
+          "research": {
+            "type": "integer",
+            "title": "Research",
+            "default": 0
+          },
+          "dismissed": {
+            "type": "integer",
+            "title": "Dismissed",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "CodebaseReviewCountsResponse",
+        "description": "Counts of routed review items in the current snapshot."
+      },
+      "CodebaseReviewDiagnosticResponse": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason",
+          "count"
+        ],
+        "title": "CodebaseReviewDiagnosticResponse",
+        "description": "A deterministic review diagnostic bucket."
+      },
+      "CodebaseReviewResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "snapshot_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Status"
+          },
+          "approval_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Approval Status"
+          },
+          "memory_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Status"
+          },
+          "review_counts": {
+            "$ref": "#/components/schemas/CodebaseReviewCountsResponse"
+          },
+          "cluster_count": {
+            "type": "integer",
+            "title": "Cluster Count",
+            "default": 0
+          },
+          "related_chunk_count": {
+            "type": "integer",
+            "title": "Related Chunk Count",
+            "default": 0
+          },
+          "parse_coverage": {
+            "type": "number",
+            "title": "Parse Coverage",
+            "default": 0.0
+          },
+          "changed_summary": {
+            "$ref": "#/components/schemas/CodebaseReviewChangedSummaryResponse"
+          },
+          "diagnostics": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseReviewDiagnosticResponse"
+            },
+            "type": "array",
+            "title": "Diagnostics",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id"
+        ],
+        "title": "CodebaseReviewResponse",
+        "description": "Review summary for the current codebase snapshot."
+      },
+      "CodebaseRouteRequest": {
+        "properties": {
+          "item_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Item Ids"
+          },
+          "target": {
+            "type": "string",
+            "enum": [
+              "memory",
+              "research",
+              "dismissed",
+              "unrouted"
+            ],
+            "title": "Target"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_ids",
+          "target"
+        ],
+        "title": "CodebaseRouteRequest",
+        "description": "Bulk review-route update request."
+      },
+      "CodebaseRouteResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "updated_count": {
+            "type": "integer",
+            "title": "Updated Count"
+          },
+          "target": {
+            "type": "string",
+            "title": "Target"
+          },
+          "review_counts": {
+            "$ref": "#/components/schemas/CodebaseReviewCountsResponse"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "snapshot_id",
+          "updated_count",
+          "target"
+        ],
+        "title": "CodebaseRouteResponse",
+        "description": "Bulk review-route update response."
+      },
       "CodebaseSnapshotStatsResponse": {
         "properties": {
           "total_files": {
@@ -8540,6 +9780,29 @@
             "title": "Deleted Files",
             "default": 0
           },
+          "chunk_count": {
+            "type": "integer",
+            "title": "Chunk Count",
+            "default": 0
+          },
+          "cluster_count": {
+            "type": "integer",
+            "title": "Cluster Count",
+            "default": 0
+          },
+          "related_chunk_count": {
+            "type": "integer",
+            "title": "Related Chunk Count",
+            "default": 0
+          },
+          "parse_coverage": {
+            "type": "number",
+            "title": "Parse Coverage",
+            "default": 0.0
+          },
+          "review_counts": {
+            "$ref": "#/components/schemas/CodebaseReviewCountsResponse"
+          },
           "error": {
             "anyOf": [
               {
@@ -8579,6 +9842,17 @@
               }
             ],
             "title": "Repo"
+          },
+          "repo_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo Url"
           },
           "ref": {
             "anyOf": [
@@ -8681,6 +9955,14 @@
               }
             ],
             "title": "Match Mode"
+          },
+          "chunk_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Chunk Ids",
+            "default": []
           }
         },
         "type": "object",

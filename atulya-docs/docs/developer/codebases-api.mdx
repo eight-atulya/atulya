@@ -26,8 +26,9 @@ import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
     {
       icon: '/img/icons/codebases-lifecycle.svg',
       eyebrow: 'Query',
-      title: 'Inspect structure',
-      description: 'Files, symbols, and impact read from the current parsed snapshot even before approval.',
+      title: 'Inspect and route structure',
+      description:
+        'Review summary, chunks, files, symbols, impact, and research queue all read from the current parsed snapshot even before approval.',
     },
     {
       icon: '/img/icons/codebases-api.svg',
@@ -81,6 +82,24 @@ Use it when:
 - the latest parsed snapshot looks correct
 - you want `recall` and `reflect` to use that snapshot's code documents
 
+Approval now applies only the chunks already routed to `memory`, in batches, instead of trying to hydrate every parsed file in one step.
+
+## Review Endpoints
+
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/review`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks/{chunk_id}`
+- `POST /v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/research`
+
+These endpoints make the chunk review loop first-class:
+
+- review summary exposes queue counts, diagnostics, parse coverage, and related-chunk counts
+- chunk listing is cursor-paginated so large repos do not dump everything at once
+- chunk detail exposes code preview, related chunks, cluster members, symbol context, and path-level impact edges
+- review routing explicitly sends chunks to `memory`, `research`, `dismissed`, or back to `unrouted`
+- research queue shows staged chunks that should not be hydrated yet
+
 ## Query Endpoints
 
 - `GET /v1/default/banks/{bank_id}/codebases`
@@ -106,8 +125,10 @@ Typical states:
 | Situation | `snapshot_status` | `approval_status` | `memory_status` |
 |---|---|---|---|
 | Fresh parsed snapshot | `review_required` | `pending_approval` | `not_hydrated` |
+| Routed but not yet applied | `review_in_progress` | `review_in_progress` | `not_hydrated` or `hydrated_from_previous_snapshot` |
 | New parsed snapshot while older memory stays active | `review_required` | `pending_approval` | `hydrated_from_previous_snapshot` |
 | Approved current snapshot | `approved` | `approved` | `hydrated` |
+| Current snapshot applied but still has unrouted items | `partially_approved` | `partially_approved` | `hydrated` |
 
 ## Files Endpoint
 
@@ -140,6 +161,8 @@ This endpoint is ideal for:
 - impact seeds
 - codemod planning
 - structural repo review
+
+Every symbol match can also include overlapping chunk IDs, which makes it easy to jump straight into the review queue or chunk detail UI.
 
 ## Impact Endpoint
 

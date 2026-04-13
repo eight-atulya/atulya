@@ -5,8 +5,11 @@ import { toast } from "sonner";
 import { useBank } from "@/lib/bank-context";
 import {
   client,
+  CodebaseChunkDetail,
+  CodebaseChunksResult,
   CodebaseFilesResult,
   CodebaseImpactResult,
+  CodebaseReviewSummary,
   CodebaseSummary,
   CodebaseSymbolsResult,
   OperationResult,
@@ -19,12 +22,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -36,10 +47,13 @@ import {
 import {
   AlertCircle,
   CheckCircle2,
+  ChevronsRight,
   FileCode2,
   FolderGit2,
   GitBranch,
+  Layers3,
   Loader2,
+  Network,
   RefreshCw,
   Search,
   Sparkles,
@@ -48,7 +62,7 @@ import {
 } from "lucide-react";
 
 type ImportTab = "github" | "zip";
-type WorkspaceTab = "files" | "symbols" | "impact";
+type WorkspaceTab = "review" | "files" | "symbols" | "impact" | "research";
 type ImpactMode = "path" | "symbol" | "query";
 
 type ParsedGithubSource = {
@@ -128,12 +142,15 @@ function statusClasses(status: string | null | undefined): string {
     case "cancelled":
       return "bg-slate-500/10 text-slate-700 dark:text-slate-300";
     case "review_required":
+    case "review_in_progress":
     case "pending_approval":
     case "pending":
     case "processing":
     case "parsing":
     case "hydrated_from_previous_snapshot":
       return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+    case "partially_approved":
+      return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
     case "failed":
     case "parse_failed":
     case "excluded":
@@ -167,16 +184,31 @@ function sourceLabel(codebase: CodebaseSummary): string {
   if (codebase.source_type === "github") {
     return codebase.source_config.owner && codebase.source_config.repo
       ? `${codebase.source_config.owner}/${codebase.source_config.repo}`
-      : codebase.name;
+      : codebase.source_config.repo_url
+        ? codebase.source_config.repo_url
+        : codebase.name;
   }
   return codebase.name;
+}
+
+function routeTone(routeTarget: string | null | undefined): string {
+  switch (routeTarget) {
+    case "memory":
+      return "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
+    case "research":
+      return "bg-blue-500/10 text-blue-700 dark:text-blue-300";
+    case "dismissed":
+      return "bg-muted text-muted-foreground";
+    default:
+      return "bg-amber-500/10 text-amber-700 dark:text-amber-300";
+  }
 }
 
 export function CodebasesView() {
   const { currentBank } = useBank();
 
   const [importTab, setImportTab] = useState<ImportTab>("github");
-  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("files");
+  const [workspaceTab, setWorkspaceTab] = useState<WorkspaceTab>("review");
   const [codebases, setCodebases] = useState<CodebaseSummary[]>([]);
   const [loadingCodebases, setLoadingCodebases] = useState(false);
   const [selectedCodebaseId, setSelectedCodebaseId] = useState<string | null>(null);
@@ -188,10 +220,10 @@ export function CodebasesView() {
   const [operationResult, setOperationResult] = useState<OperationResult | null>(null);
   const [cancellingOperation, setCancellingOperation] = useState(false);
 
+  const [githubRepoUrl, setGithubRepoUrl] = useState("");
   const [githubOwner, setGithubOwner] = useState("");
   const [githubRepo, setGithubRepo] = useState("");
   const [githubRef, setGithubRef] = useState("main");
-  const [githubRepoUrl, setGithubRepoUrl] = useState("");
   const [githubRootPath, setGithubRootPath] = useState("");
   const [githubInclude, setGithubInclude] = useState("");
   const [githubExclude, setGithubExclude] = useState("");
@@ -209,6 +241,25 @@ export function CodebasesView() {
   const [refreshRef, setRefreshRef] = useState("");
   const [refreshingCodebase, setRefreshingCodebase] = useState(false);
   const [approvingCodebase, setApprovingCodebase] = useState(false);
+
+  const [reviewSummary, setReviewSummary] = useState<CodebaseReviewSummary | null>(null);
+  const [loadingReviewSummary, setLoadingReviewSummary] = useState(false);
+  const [chunkQuery, setChunkQuery] = useState("");
+  const deferredChunkQuery = useDeferredValue(chunkQuery.trim());
+  const [chunkRouteFilter, setChunkRouteFilter] = useState("all");
+  const [chunkChangeFilter, setChunkChangeFilter] = useState("all");
+  const [chunkKindFilter, setChunkKindFilter] = useState("all");
+  const [chunksResult, setChunksResult] = useState<CodebaseChunksResult | null>(null);
+  const [loadingChunks, setLoadingChunks] = useState(false);
+  const [selectedChunkIds, setSelectedChunkIds] = useState<string[]>([]);
+  const [chunkDetail, setChunkDetail] = useState<CodebaseChunkDetail | null>(null);
+  const [loadingChunkDetail, setLoadingChunkDetail] = useState(false);
+  const [chunkDialogOpen, setChunkDialogOpen] = useState(false);
+  const [routingTarget, setRoutingTarget] = useState<
+    "memory" | "research" | "dismissed" | "unrouted" | null
+  >(null);
+  const [researchResult, setResearchResult] = useState<CodebaseChunksResult | null>(null);
+  const [loadingResearch, setLoadingResearch] = useState(false);
 
   const [filePathPrefix, setFilePathPrefix] = useState("");
   const [fileLanguage, setFileLanguage] = useState("all");
@@ -274,6 +325,87 @@ export function CodebasesView() {
       setSelectedCodebase(null);
     } finally {
       setLoadingSelectedCodebase(false);
+    }
+  };
+
+  const loadReviewSummary = async (codebaseId: string) => {
+    if (!currentBank) return;
+    setLoadingReviewSummary(true);
+    try {
+      const response = await client.getCodebaseReview(currentBank, codebaseId);
+      setReviewSummary(response);
+    } catch {
+      setReviewSummary(null);
+    } finally {
+      setLoadingReviewSummary(false);
+    }
+  };
+
+  const loadChunks = async (codebaseId: string, cursor?: string | null, append = false) => {
+    if (!currentBank) return;
+    setLoadingChunks(true);
+    try {
+      const response = await client.listCodebaseChunks(currentBank, codebaseId, {
+        q: deferredChunkQuery || undefined,
+        route_target: chunkRouteFilter === "all" ? undefined : chunkRouteFilter,
+        changed_only: chunkChangeFilter === "changed",
+        kind: chunkKindFilter === "all" ? undefined : chunkKindFilter,
+        limit: 20,
+        cursor: cursor || undefined,
+      });
+      setChunksResult((current) =>
+        append && current
+          ? {
+              ...response,
+              items: [...current.items, ...response.items],
+            }
+          : response
+      );
+    } catch {
+      setChunksResult(null);
+    } finally {
+      setLoadingChunks(false);
+    }
+  };
+
+  const loadResearchQueue = async (codebaseId: string, cursor?: string | null, append = false) => {
+    if (!currentBank) return;
+    setLoadingResearch(true);
+    try {
+      const response = await client.listCodebaseResearchQueue(currentBank, codebaseId, {
+        limit: 20,
+        cursor: cursor || undefined,
+      });
+      setResearchResult((current) =>
+        append && current
+          ? {
+              ...response,
+              items: [...current.items, ...response.items],
+            }
+          : response
+      );
+    } catch {
+      setResearchResult(null);
+    } finally {
+      setLoadingResearch(false);
+    }
+  };
+
+  const openChunkDetail = async (chunkId: string) => {
+    if (!currentBank || !selectedCodebaseId) return;
+    setChunkDialogOpen(true);
+    setLoadingChunkDetail(true);
+    try {
+      const response = await client.getCodebaseChunkDetail(
+        currentBank,
+        selectedCodebaseId,
+        chunkId
+      );
+      setChunkDetail(response);
+    } catch {
+      setChunkDetail(null);
+    } finally {
+      setLoadingChunkDetail(false);
     }
   };
 
@@ -358,8 +490,8 @@ export function CodebasesView() {
       const response = await client.importCodebaseGithub(currentBank, {
         owner: effectiveOwner,
         repo: effectiveRepo,
-        ref: effectiveRef,
         repo_url: githubRepoUrl.trim() || undefined,
+        ref: effectiveRef,
         root_path: githubRootPath.trim() || undefined,
         include_globs: parseGlobs(githubInclude),
         exclude_globs: parseGlobs(githubExclude),
@@ -529,6 +661,40 @@ export function CodebasesView() {
     }
   };
 
+  const handleRouteItems = async (
+    target: "memory" | "research" | "dismissed" | "unrouted",
+    itemIds: string[]
+  ) => {
+    if (!currentBank || !selectedCodebaseId || itemIds.length === 0) return;
+    setRoutingTarget(target);
+    try {
+      const response = await client.routeCodebaseReviewItems(currentBank, selectedCodebaseId, {
+        item_ids: itemIds,
+        target,
+      });
+      setSelectedChunkIds([]);
+      setReviewSummary((current) =>
+        current
+          ? {
+              ...current,
+              review_counts: response.review_counts,
+            }
+          : current
+      );
+      await Promise.all([
+        loadSelectedCodebase(selectedCodebaseId),
+        loadReviewSummary(selectedCodebaseId),
+        loadChunks(selectedCodebaseId),
+        loadResearchQueue(selectedCodebaseId),
+      ]);
+      toast.success(
+        `Updated ${response.updated_count} chunk${response.updated_count === 1 ? "" : "s"} to ${target}.`
+      );
+    } finally {
+      setRoutingTarget(null);
+    }
+  };
+
   useEffect(() => {
     if (!currentBank) return;
     void loadCodebases(false);
@@ -537,6 +703,10 @@ export function CodebasesView() {
   useEffect(() => {
     if (!currentBank || !selectedCodebaseId) {
       setSelectedCodebase(null);
+      setReviewSummary(null);
+      setChunksResult(null);
+      setResearchResult(null);
+      setSelectedChunkIds([]);
       setFilesResult(null);
       setSymbolsResult(null);
       setImpactResult(null);
@@ -544,6 +714,9 @@ export function CodebasesView() {
     }
 
     void loadSelectedCodebase(selectedCodebaseId);
+    void loadReviewSummary(selectedCodebaseId);
+    void loadChunks(selectedCodebaseId);
+    void loadResearchQueue(selectedCodebaseId);
     void loadFiles(selectedCodebaseId);
     setImpactResult(null);
   }, [currentBank, selectedCodebaseId]);
@@ -555,6 +728,20 @@ export function CodebasesView() {
     }
     void runSymbolSearch(selectedCodebaseId, deferredSymbolQuery);
   }, [selectedCodebaseId, deferredSymbolQuery, symbolKind, symbolPathPrefix]);
+
+  useEffect(() => {
+    if (!selectedCodebaseId) {
+      setChunksResult(null);
+      return;
+    }
+    void loadChunks(selectedCodebaseId);
+  }, [
+    selectedCodebaseId,
+    deferredChunkQuery,
+    chunkRouteFilter,
+    chunkChangeFilter,
+    chunkKindFilter,
+  ]);
 
   useEffect(() => {
     if (!currentBank || !activeOperationId) return;
@@ -596,13 +783,18 @@ export function CodebasesView() {
           setActiveOperationId(null);
           await loadCodebases();
           if (selectedCodebaseId) {
-            await loadSelectedCodebase(selectedCodebaseId);
-            await loadFiles(selectedCodebaseId);
+            await Promise.all([
+              loadSelectedCodebase(selectedCodebaseId),
+              loadReviewSummary(selectedCodebaseId),
+              loadChunks(selectedCodebaseId),
+              loadResearchQueue(selectedCodebaseId),
+              loadFiles(selectedCodebaseId),
+            ]);
           }
           if (status.status === "completed") {
             toast.success(
               status.operation_type === "codebase_approve"
-                ? "Memory hydration completed."
+                ? "Selective memory hydration completed."
                 : "Codebase operation completed."
             );
           } else {
@@ -632,7 +824,9 @@ export function CodebasesView() {
   const totalIndexedFiles = selectedCodebase?.stats.indexed_files || 0;
   const totalFiles = selectedCodebase?.stats.total_files || 0;
   const canApproveMemory =
-    selectedCodebase?.approval_status === "pending_approval" &&
+    reviewSummary !== null &&
+    (reviewSummary.review_counts.memory || 0) > 0 &&
+    selectedCodebase?.approval_status !== "parsing" &&
     Boolean(selectedCodebase.current_snapshot_id);
   const operationMetrics = useMemo(() => {
     if (!operationResult?.result || typeof operationResult.result !== "object") return [];
@@ -725,7 +919,6 @@ export function CodebasesView() {
                     archive-based import flow. No persistent clone required.
                   </p>
                 </div>
-
                 <div className="grid gap-4 md:grid-cols-3">
                   <div className="space-y-2">
                     <Label htmlFor="github-owner">Owner</Label>
@@ -989,18 +1182,20 @@ export function CodebasesView() {
                     </div>
                     <div className="rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Indexed Files
+                        Indexed Files / Chunks
                       </div>
                       <div className="mt-1 text-sm font-medium text-foreground">
-                        {totalIndexedFiles} of {totalFiles}
+                        {totalIndexedFiles} of {totalFiles} files ·{" "}
+                        {selectedCodebase.stats.chunk_count || 0} chunks
                       </div>
                     </div>
                     <div className="rounded-lg border border-border/60 bg-background/70 p-3">
                       <div className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Memory State
+                        Review Queue
                       </div>
                       <div className="mt-1 text-sm font-medium text-foreground">
-                        {formatStatusLabel(selectedCodebase.memory_status)}
+                        {(reviewSummary?.review_counts.unrouted || 0).toLocaleString()} unrouted ·{" "}
+                        {(reviewSummary?.review_counts.memory || 0).toLocaleString()} to memory
                       </div>
                     </div>
                     <div className="rounded-lg border border-border/60 bg-background/70 p-3">
@@ -1061,6 +1256,13 @@ export function CodebasesView() {
                     The current snapshot is already the approved memory source for this codebase.
                   </p>
                 )}
+                {!canApproveMemory &&
+                  selectedCodebase.approval_status !== "parsing" &&
+                  (reviewSummary?.review_counts.memory || 0) === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Route one or more review chunks to memory before approving hydration.
+                    </p>
+                  )}
                 {!canApproveMemory && selectedCodebase.approval_status === "parsing" && (
                   <p className="text-xs text-muted-foreground">
                     Approval unlocks after ASD parsing finishes and the snapshot enters review.
@@ -1244,11 +1446,319 @@ export function CodebasesView() {
             value={workspaceTab}
             onValueChange={(value) => setWorkspaceTab(value as WorkspaceTab)}
           >
-            <TabsList className="mb-4 grid w-full grid-cols-3">
+            <TabsList className="mb-4 grid w-full grid-cols-5">
+              <TabsTrigger value="review">Review Queue</TabsTrigger>
               <TabsTrigger value="files">Repo Map</TabsTrigger>
               <TabsTrigger value="symbols">Symbol Search</TabsTrigger>
               <TabsTrigger value="impact">Impact</TabsTrigger>
+              <TabsTrigger value="research">Research Queue</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="review" className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-4">
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Unrouted
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                    {loadingReviewSummary
+                      ? "..."
+                      : (reviewSummary?.review_counts.unrouted || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    To Memory
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                    {loadingReviewSummary
+                      ? "..."
+                      : (reviewSummary?.review_counts.memory || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Clusters
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                    {loadingReviewSummary
+                      ? "..."
+                      : (reviewSummary?.cluster_count || 0).toLocaleString()}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-4">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Related Edges
+                  </div>
+                  <div className="mt-2 text-2xl font-semibold text-foreground">
+                    {loadingReviewSummary
+                      ? "..."
+                      : (reviewSummary?.related_chunk_count || 0).toLocaleString()}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-[1.2fr_0.9fr_0.8fr_0.8fr_auto]">
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-query">Chunk Query</Label>
+                  <Input
+                    id="chunk-query"
+                    value={chunkQuery}
+                    onChange={(event) => setChunkQuery(event.target.value)}
+                    placeholder="auth middleware, payment flow, render dashboard"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-route-filter">Route</Label>
+                  <Select value={chunkRouteFilter} onValueChange={setChunkRouteFilter}>
+                    <SelectTrigger id="chunk-route-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All routes</SelectItem>
+                      <SelectItem value="unrouted">Unrouted</SelectItem>
+                      <SelectItem value="memory">Memory</SelectItem>
+                      <SelectItem value="research">Research</SelectItem>
+                      <SelectItem value="dismissed">Dismissed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-change-filter">Change Scope</Label>
+                  <Select value={chunkChangeFilter} onValueChange={setChunkChangeFilter}>
+                    <SelectTrigger id="chunk-change-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All chunks</SelectItem>
+                      <SelectItem value="changed">Changed only</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-kind-filter">Kind</Label>
+                  <Select value={chunkKindFilter} onValueChange={setChunkKindFilter}>
+                    <SelectTrigger id="chunk-kind-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All kinds</SelectItem>
+                      <SelectItem value="function">Function</SelectItem>
+                      <SelectItem value="class">Class</SelectItem>
+                      <SelectItem value="interface">Interface</SelectItem>
+                      <SelectItem value="type">Type</SelectItem>
+                      <SelectItem value="variable">Variable</SelectItem>
+                      <SelectItem value="region">Region</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-end">
+                  <Button
+                    variant="outline"
+                    disabled={!selectedCodebaseId || loadingChunks}
+                    onClick={() => selectedCodebaseId && void loadChunks(selectedCodebaseId)}
+                    className="w-full"
+                  >
+                    {loadingChunks ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Layers3 className="mr-2 h-4 w-4" />
+                    )}
+                    Refresh
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border/70 bg-muted/10 p-3">
+                <Button
+                  size="sm"
+                  disabled={!selectedChunkIds.length || routingTarget !== null}
+                  onClick={() => void handleRouteItems("memory", selectedChunkIds)}
+                >
+                  {routingTarget === "memory" ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="mr-2 h-4 w-4" />
+                  )}
+                  Send To Memory
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!selectedChunkIds.length || routingTarget !== null}
+                  onClick={() => void handleRouteItems("research", selectedChunkIds)}
+                >
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Send To Research
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={!selectedChunkIds.length || routingTarget !== null}
+                  onClick={() => void handleRouteItems("dismissed", selectedChunkIds)}
+                >
+                  Dismiss
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  {selectedChunkIds.length
+                    ? `${selectedChunkIds.length} chunk${selectedChunkIds.length === 1 ? "" : "s"} selected`
+                    : "Select chunks to bulk-route them."}
+                </div>
+              </div>
+
+              {chunksResult?.items?.length ? (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto rounded-xl border border-border/70">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <Checkbox
+                              checked={
+                                chunksResult.items.length > 0 &&
+                                chunksResult.items.every((item) =>
+                                  selectedChunkIds.includes(item.id)
+                                )
+                              }
+                              onCheckedChange={(checked) =>
+                                setSelectedChunkIds(
+                                  checked ? chunksResult.items.map((item) => item.id) : []
+                                )
+                              }
+                            />
+                          </TableHead>
+                          <TableHead>Chunk</TableHead>
+                          <TableHead>Path</TableHead>
+                          <TableHead>Kind</TableHead>
+                          <TableHead>Change</TableHead>
+                          <TableHead>Cluster</TableHead>
+                          <TableHead>Related</TableHead>
+                          <TableHead>Route</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {chunksResult.items.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedChunkIds.includes(item.id)}
+                                onCheckedChange={(checked) =>
+                                  setSelectedChunkIds((current) =>
+                                    checked
+                                      ? [...current, item.id]
+                                      : current.filter((value) => value !== item.id)
+                                  )
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <div className="min-w-[220px]">
+                                <div className="font-medium text-card-foreground">{item.label}</div>
+                                <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                  {item.preview_text}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-xs text-card-foreground">
+                              {item.path}:{item.start_line}-{item.end_line}
+                            </TableCell>
+                            <TableCell className="text-card-foreground">{item.kind}</TableCell>
+                            <TableCell className="text-card-foreground">
+                              {item.change_kind}
+                            </TableCell>
+                            <TableCell className="text-card-foreground">
+                              {item.cluster_label || "-"}
+                            </TableCell>
+                            <TableCell className="text-card-foreground">
+                              {item.related_count}
+                            </TableCell>
+                            <TableCell>
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${routeTone(item.route_target)}`}
+                              >
+                                {formatStatusLabel(item.route_target)}
+                              </span>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => void openChunkDetail(item.id)}
+                                >
+                                  Details
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => void handleRouteItems("memory", [item.id])}
+                                  disabled={routingTarget !== null}
+                                >
+                                  Memory
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => void handleRouteItems("research", [item.id])}
+                                  disabled={routingTarget !== null}
+                                >
+                                  Research
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {chunksResult.has_more && (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          selectedCodebaseId &&
+                          void loadChunks(selectedCodebaseId, chunksResult.next_cursor, true)
+                        }
+                        disabled={loadingChunks}
+                      >
+                        {loadingChunks ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <ChevronsRight className="mr-2 h-4 w-4" />
+                        )}
+                        Load More Chunks
+                      </Button>
+                    </div>
+                  )}
+
+                  {reviewSummary?.diagnostics?.length ? (
+                    <div className="rounded-xl border border-border/70 p-4">
+                      <div className="mb-3 text-sm font-semibold text-foreground">
+                        Review Diagnostics
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {reviewSummary.diagnostics.map((item) => (
+                          <span
+                            key={`${item.reason}-${item.count}`}
+                            className="rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground"
+                          >
+                            {item.reason} · {item.count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+                  {selectedCodebaseId
+                    ? "The review queue will show semantic chunks once the current snapshot has been parsed."
+                    : "Select a codebase to load the review queue."}
+                </div>
+              )}
+            </TabsContent>
 
             <TabsContent value="files" className="space-y-4">
               <div className="grid gap-4 lg:grid-cols-[1.3fr_0.9fr_0.7fr_auto]">
@@ -1318,6 +1828,7 @@ export function CodebasesView() {
                         <TableHead>Language</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Change</TableHead>
+                        <TableHead>Chunks</TableHead>
                         <TableHead>Size</TableHead>
                         <TableHead>Document</TableHead>
                       </TableRow>
@@ -1339,6 +1850,7 @@ export function CodebasesView() {
                             </span>
                           </TableCell>
                           <TableCell className="text-card-foreground">{item.change_kind}</TableCell>
+                          <TableCell className="text-card-foreground">{item.chunk_count}</TableCell>
                           <TableCell className="text-card-foreground">
                             {item.size_bytes.toLocaleString()} B
                           </TableCell>
@@ -1415,6 +1927,7 @@ export function CodebasesView() {
                         <TableHead>Path</TableHead>
                         <TableHead>Container</TableHead>
                         <TableHead>Lines</TableHead>
+                        <TableHead>Chunks</TableHead>
                         <TableHead>Match</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1433,6 +1946,9 @@ export function CodebasesView() {
                           </TableCell>
                           <TableCell className="text-card-foreground">
                             {item.start_line}-{item.end_line}
+                          </TableCell>
+                          <TableCell className="text-card-foreground">
+                            {item.chunk_ids.length}
                           </TableCell>
                           <TableCell>
                             <span className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
@@ -1547,6 +2063,7 @@ export function CodebasesView() {
                             <TableRow>
                               <TableHead>Path</TableHead>
                               <TableHead>Depth</TableHead>
+                              <TableHead>Chunks</TableHead>
                               <TableHead>Status</TableHead>
                             </TableRow>
                           </TableHeader>
@@ -1557,6 +2074,9 @@ export function CodebasesView() {
                                   {item.path}
                                 </TableCell>
                                 <TableCell className="text-card-foreground">{item.depth}</TableCell>
+                                <TableCell className="text-card-foreground">
+                                  {item.chunk_count}
+                                </TableCell>
                                 <TableCell>
                                   <span
                                     className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusClasses(item.status)}`}
@@ -1609,9 +2129,295 @@ export function CodebasesView() {
                 </div>
               )}
             </TabsContent>
+
+            <TabsContent value="research" className="space-y-4">
+              <div className="rounded-xl border border-border/70 bg-muted/10 p-4 text-sm text-muted-foreground">
+                Research Queue keeps mechanically-related chunks staged for deeper developer review
+                without hydrating them into memory.
+              </div>
+
+              {researchResult?.items?.length ? (
+                <div className="space-y-4">
+                  <div className="overflow-x-auto rounded-xl border border-border/70">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Chunk</TableHead>
+                          <TableHead>Path</TableHead>
+                          <TableHead>Cluster</TableHead>
+                          <TableHead>Related</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {researchResult.items.map((item) => (
+                          <TableRow key={item.id}>
+                            <TableCell>
+                              <div className="font-medium text-card-foreground">{item.label}</div>
+                              <div className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                                {item.preview_text}
+                              </div>
+                            </TableCell>
+                            <TableCell className="font-mono text-xs text-card-foreground">
+                              {item.path}:{item.start_line}-{item.end_line}
+                            </TableCell>
+                            <TableCell className="text-card-foreground">
+                              {item.cluster_label || "-"}
+                            </TableCell>
+                            <TableCell className="text-card-foreground">
+                              {item.related_count}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => void openChunkDetail(item.id)}
+                                >
+                                  Details
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => void handleRouteItems("memory", [item.id])}
+                                >
+                                  Promote To Memory
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {researchResult.has_more && (
+                    <div className="flex justify-center">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          selectedCodebaseId &&
+                          void loadResearchQueue(
+                            selectedCodebaseId,
+                            researchResult.next_cursor,
+                            true
+                          )
+                        }
+                        disabled={loadingResearch}
+                      >
+                        {loadingResearch ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <Network className="mr-2 h-4 w-4" />
+                        )}
+                        Load More Research
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+                  Route chunks to research when you want them staged for follow-up without hydrating
+                  them into memory yet.
+                </div>
+              )}
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={chunkDialogOpen} onOpenChange={setChunkDialogOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{chunkDetail?.label || "Chunk Detail"}</DialogTitle>
+            <DialogDescription>
+              Inspect the semantic chunk, its symbol context, related chunks, and route actions
+              before deciding whether it belongs in memory or the research queue.
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingChunkDetail ? (
+            <div className="flex items-center gap-3 rounded-lg border border-border/70 p-4 text-sm text-muted-foreground">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading chunk detail...
+            </div>
+          ) : chunkDetail ? (
+            <div className="space-y-6">
+              <div className="grid gap-3 md:grid-cols-4">
+                <div className="rounded-lg border border-border/70 p-3">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">Path</div>
+                  <div className="mt-1 font-mono text-xs text-foreground">
+                    {chunkDetail.path}:{chunkDetail.start_line}-{chunkDetail.end_line}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/70 p-3">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">Route</div>
+                  <div className="mt-1">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${routeTone(chunkDetail.route_target)}`}
+                    >
+                      {formatStatusLabel(chunkDetail.route_target)}
+                    </span>
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/70 p-3">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Cluster
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-foreground">
+                    {chunkDetail.cluster_label || "-"}
+                  </div>
+                </div>
+                <div className="rounded-lg border border-border/70 p-3">
+                  <div className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Parse Confidence
+                  </div>
+                  <div className="mt-1 text-sm font-medium text-foreground">
+                    {(chunkDetail.parse_confidence * 100).toFixed(0)}%
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button onClick={() => void handleRouteItems("memory", [chunkDetail.id])}>
+                  Send To Memory
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => void handleRouteItems("research", [chunkDetail.id])}
+                >
+                  Send To Research
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => void handleRouteItems("dismissed", [chunkDetail.id])}
+                >
+                  Dismiss
+                </Button>
+              </div>
+
+              <div className="rounded-xl border border-border/70 bg-muted/20 p-4">
+                <div className="mb-2 text-sm font-semibold text-foreground">Code Preview</div>
+                <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-foreground">
+                  {chunkDetail.content_text}
+                </pre>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div className="rounded-xl border border-border/70 p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">
+                    Top Related Chunks
+                  </div>
+                  <div className="space-y-2">
+                    {chunkDetail.related_chunks.length ? (
+                      chunkDetail.related_chunks.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="w-full rounded-lg border border-border/60 bg-background/70 p-3 text-left hover:bg-muted/20"
+                          onClick={() => void openChunkDetail(item.id)}
+                        >
+                          <div className="font-medium text-foreground">{item.label}</div>
+                          <div className="mt-1 font-mono text-xs text-muted-foreground">
+                            {item.path}:{item.start_line}-{item.end_line}
+                          </div>
+                          <div className="mt-2 text-xs text-muted-foreground">
+                            Similarity {(item.score * 100).toFixed(0)}%
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No related chunks were precomputed.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">Symbol Context</div>
+                  <div className="space-y-2">
+                    {chunkDetail.symbols.length ? (
+                      chunkDetail.symbols.map((item) => (
+                        <div
+                          key={`${item.fq_name}-${item.start_line}`}
+                          className="rounded-lg border border-border/60 p-3"
+                        >
+                          <div className="font-medium text-foreground">{item.name}</div>
+                          <div className="mt-1 text-xs text-muted-foreground">
+                            {item.kind} · {item.path}:{item.start_line}-{item.end_line}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No symbols overlap this chunk.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div className="rounded-xl border border-border/70 p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">Impact Edges</div>
+                  <div className="space-y-2">
+                    {chunkDetail.impact_edges.length ? (
+                      chunkDetail.impact_edges.map((edge, index) => (
+                        <div
+                          key={`${edge.from_path}-${edge.to_path}-${index}`}
+                          className="rounded-lg border border-border/60 p-3"
+                        >
+                          <div className="font-mono text-xs text-foreground">{edge.from_path}</div>
+                          <div className="my-1 text-xs uppercase tracking-wide text-muted-foreground">
+                            {edge.edge_type}
+                          </div>
+                          <div className="font-mono text-xs text-foreground">
+                            {edge.to_path || edge.target_ref || "external target"}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        No impact edges touch this chunk path.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 p-4">
+                  <div className="mb-3 text-sm font-semibold text-foreground">Cluster Members</div>
+                  <div className="space-y-2">
+                    {chunkDetail.cluster_members.length ? (
+                      chunkDetail.cluster_members.map((item) => (
+                        <button
+                          key={item.id}
+                          type="button"
+                          className="w-full rounded-lg border border-border/60 bg-background/70 p-3 text-left hover:bg-muted/20"
+                          onClick={() => void openChunkDetail(item.id)}
+                        >
+                          <div className="font-medium text-foreground">{item.label}</div>
+                          <div className="mt-1 font-mono text-xs text-muted-foreground">
+                            {item.path}:{item.start_line}-{item.end_line}
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="text-sm text-muted-foreground">
+                        This chunk does not have additional cluster members.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
+              Pick a chunk from the review queue to inspect its detail surface.
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

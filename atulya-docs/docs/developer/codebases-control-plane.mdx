@@ -28,9 +28,9 @@ import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
     {
       icon: '/img/icons/codebases-control-plane.svg',
       eyebrow: 'Workbench',
-      title: 'Repo map, symbol search, impact',
+      title: 'Review queue, repo map, symbol search, impact',
       description:
-        'The structural tools are usable before approval so review is meaningful instead of blind.',
+        'The structural tools are usable before approval so review is meaningful instead of blind, and the chunk queue stays progressively loaded for large repos.',
     },
     {
       icon: '/img/icons/codebases-lifecycle.svg',
@@ -44,12 +44,13 @@ import FeatureCardGrid from '@site/src/components/FeatureCardGrid';
 
 ## What The Page Is Optimized For
 
-The page is built around four developer questions:
+The page is built around five developer questions:
 
 1. what repo snapshot am I looking at
 2. what changed
-3. what symbols and files matter
-4. should this snapshot become the memory-backed source of truth
+3. which semantic chunks matter enough for memory
+4. what symbols and files matter
+5. should this snapshot become the memory-backed source of truth
 
 ## The Main Areas
 
@@ -91,26 +92,39 @@ not:
 
 That distinction helps developers trust what the button actually does.
 
+The important nuance in the updated UI is that approval no longer means "hydrate everything."
+
+It means:
+
+- apply the chunks already routed to memory
+- keep research-routed chunks staged but out of memory
+- preserve clean review state for anything still unrouted
+
 ### Workbench Tabs
 
 The workbench is split into:
 
+- `Review Queue`
 - `Repo Map`
 - `Symbol Search`
 - `Impact`
+- `Research Queue`
 
-Those three tabs map well to how developers think during code review and refactor planning:
+Those tabs map well to how developers think during code review and refactor planning:
 
+- triage the important chunks
 - browse the shape
 - search the name
 - trace the blast radius
+- stage deeper follow-up without polluting memory
 
 ## Before Approval Versus After Approval
 
 | State | What the developer sees |
 |---|---|
-| Before approval | Parsed snapshot is visible, `document_id` may still be empty for source files |
-| After approval | Stable codebase documents exist and memory-backed flows can rely on the snapshot |
+| Before approval | Parsed snapshot is visible, chunk routes are editable, and `document_id` stays empty |
+| During review | The queue can send chunks to memory, research, dismissed, or back to unrouted |
+| After approval | Stable chunk-backed codebase documents exist and memory-backed flows can rely on the applied snapshot |
 
 This is one of the most important UX details: the page is useful even before approval, so review becomes a real workflow rather than a ceremonial click.
 

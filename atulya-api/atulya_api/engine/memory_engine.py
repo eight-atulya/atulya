@@ -10,7 +10,9 @@ This implements a sophisticated memory architecture that combines:
 """
 
 import asyncio
+import base64
 import contextvars
+import hashlib
 import json
 import logging
 import time
@@ -237,18 +239,17 @@ def validate_sql_schema(sql: str) -> None:
 
 
 import asyncpg
-import numpy as np
 from pydantic import BaseModel, Field
 
 from .codebase_index import (
-    ArchiveIndexResult,
+    IndexedChunk,
     IndexedEdge,
     IndexedFile,
-    IndexedSymbol,
     build_archive_index,
     load_zip_archive,
 )
 from .cross_encoder import CrossEncoderModel
+from .embedding_similarity import cosine_similarity
 from .embeddings import Embeddings, create_embeddings_from_env
 from .interface import MemoryEngineInterface
 
@@ -926,6 +927,245 @@ class MemoryEngine(MemoryEngineInterface):
             start = max(end - overlap, start + 1)
         return chunks
 
+    @staticmethod
+    def _encode_codebase_cursor(offset: int) -> str:
+        payload = json.dumps({"offset": max(0, offset)}, separators=(",", ":")).encode("utf-8")
+        return base64.urlsafe_b64encode(payload).decode("ascii")
+
+    @staticmethod
+    def _decode_codebase_cursor(cursor: str | None) -> int:
+        if not cursor:
+            return 0
+        try:
+            payload = json.loads(base64.urlsafe_b64decode(cursor.encode("ascii")).decode("utf-8"))
+        except Exception:
+            return 0
+        try:
+            return max(0, int(payload.get("offset", 0)))
+        except (TypeError, ValueError, AttributeError):
+            return 0
+
+    async def _build_codebase_chunk_graph(
+        self,
+        *,
+        indexed_files: list[IndexedFile],
+        file_edges: list[IndexedEdge],
+    ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+        """Build cluster and related-chunk metadata from deterministic chunks."""
+        chunk_rows: list[dict[str, Any]] = []
+        chunks_by_path: dict[str, list[IndexedChunk]] = {}
+
+        for indexed_file in indexed_files:
+            for chunk in indexed_file.chunks:
+                chunks_by_path.setdefault(chunk.path, []).append(chunk)
+                chunk_rows.append(
+                    {
+                        "chunk_key": chunk.chunk_key,
+                        "path": chunk.path,
+                        "language": chunk.language,
+                        "kind": chunk.kind,
+                        "label": chunk.label,
+                        "content_hash": chunk.content_hash,
+                        "content_text": chunk.content_text,
+                        "preview_text": chunk.preview_text,
+                        "start_line": chunk.start_line,
+                        "end_line": chunk.end_line,
+                        "container": chunk.container,
+                        "parent_symbol": chunk.parent_symbol,
+                        "parent_fq_name": chunk.parent_fq_name,
+                        "parse_confidence": chunk.parse_confidence,
+                        "cluster_id": None,
+                        "cluster_label": None,
+                    }
+                )
+
+        if not chunk_rows:
+            return [], []
+
+        file_neighbors: dict[str, set[str]] = {}
+        for edge in file_edges:
+            if edge.edge_type != "imports" or not edge.to_path:
+                continue
+            file_neighbors.setdefault(edge.from_path, set()).add(edge.to_path)
+            file_neighbors.setdefault(edge.to_path, set()).add(edge.from_path)
+
+        texts = [row["content_text"] for row in chunk_rows]
+        embeddings: list[list[float]] = []
+        try:
+            from .retain import embedding_processing
+
+            embeddings = await embedding_processing.generate_embeddings_batch(self.embeddings, texts)
+        except Exception:
+            embeddings = []
+
+        row_by_key = {row["chunk_key"]: row for row in chunk_rows}
+        cluster_members: dict[str, list[str]] = {}
+        chunk_edges: list[dict[str, Any]] = []
+        seen_edge_keys: set[tuple[str, str, str]] = set()
+
+        for chunk in chunk_rows:
+            path_prefix = "/".join(chunk["path"].split("/")[:2]) if "/" in chunk["path"] else chunk["path"]
+            cluster_id = hashlib.sha1(
+                f"{chunk['language'] or 'unknown'}|{path_prefix}|{chunk['container'] or chunk['path']}".encode("utf-8")
+            ).hexdigest()[:16]
+            cluster_label = chunk["container"] or path_prefix or chunk["path"]
+            chunk["cluster_id"] = cluster_id
+            chunk["cluster_label"] = cluster_label
+            cluster_members.setdefault(cluster_id, []).append(chunk["chunk_key"])
+
+        def add_edge(edge_type: str, from_key: str, to_key: str, score: float | None, label: str | None) -> None:
+            if from_key == to_key:
+                return
+            ordered = tuple(sorted((from_key, to_key)))
+            dedupe_key = (edge_type, ordered[0], ordered[1])
+            if dedupe_key in seen_edge_keys:
+                return
+            seen_edge_keys.add(dedupe_key)
+            chunk_edges.append(
+                {
+                    "edge_type": edge_type,
+                    "from_chunk_key": from_key,
+                    "to_chunk_key": to_key,
+                    "score": score,
+                    "label": label,
+                }
+            )
+
+        for path, path_chunks in chunks_by_path.items():
+            ordered = sorted(path_chunks, key=lambda item: (item.start_line, item.end_line))
+            for left, right in zip(ordered, ordered[1:], strict=False):
+                add_edge("adjacent", left.chunk_key, right.chunk_key, None, "same-file")
+            for neighbor_path in file_neighbors.get(path, set()):
+                for left in ordered:
+                    for right in chunks_by_path.get(neighbor_path, [])[:4]:
+                        add_edge("file_import", left.chunk_key, right.chunk_key, None, neighbor_path)
+
+        if embeddings and len(embeddings) == len(chunk_rows):
+            embedding_index_by_key = {row["chunk_key"]: index for index, row in enumerate(chunk_rows)}
+            candidate_keys: dict[str, list[str]] = {}
+            for row in chunk_rows:
+                candidates: list[str] = []
+                for same_path_chunk in chunks_by_path.get(row["path"], []):
+                    if same_path_chunk.chunk_key != row["chunk_key"]:
+                        candidates.append(same_path_chunk.chunk_key)
+                for neighbor_path in file_neighbors.get(row["path"], set()):
+                    candidates.extend(chunk.chunk_key for chunk in chunks_by_path.get(neighbor_path, [])[:8])
+                if len(chunk_rows) <= 160:
+                    candidates.extend(
+                        other_row["chunk_key"]
+                        for other_row in chunk_rows
+                        if other_row["language"] == row["language"] and other_row["chunk_key"] != row["chunk_key"]
+                    )
+                candidate_keys[row["chunk_key"]] = list(dict.fromkeys(candidates))
+
+            top_related: dict[str, list[tuple[str, float]]] = {}
+            for index, row in enumerate(chunk_rows):
+                scores: list[tuple[str, float]] = []
+                for candidate_key in candidate_keys[row["chunk_key"]]:
+                    candidate_index = embedding_index_by_key.get(candidate_key)
+                    if candidate_index is None:
+                        continue
+                    score = cosine_similarity(embeddings[index], embeddings[candidate_index])
+                    if score is None or score < 0.48:
+                        continue
+                    scores.append((candidate_key, score))
+                scores.sort(key=lambda item: item[1], reverse=True)
+                top_related[row["chunk_key"]] = scores[:4]
+
+            for chunk_key, matches in top_related.items():
+                for related_key, score in matches:
+                    add_edge("related", chunk_key, related_key, score, "semantic")
+
+        cluster_label_by_id = {
+            cluster_id: (
+                sorted(
+                    members,
+                    key=lambda member_key: (
+                        row_by_key[member_key]["path"],
+                        row_by_key[member_key]["start_line"],
+                    ),
+                )[0]
+            )
+            for cluster_id, members in cluster_members.items()
+        }
+        for cluster_id, member_key in cluster_label_by_id.items():
+            row = row_by_key[member_key]
+            label = row["cluster_label"] or row["label"]
+            for chunk_key in cluster_members[cluster_id]:
+                row_by_key[chunk_key]["cluster_label"] = label
+
+        return chunk_rows, chunk_edges
+
+    async def _upsert_codebase_memory_chunk(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        chunk_key: str,
+        path: str,
+        language: str | None,
+        text: str,
+        label: str,
+    ) -> str:
+        """Store one reviewed code chunk as a stable memory-backed document."""
+        from .retain import chunk_storage, embedding_processing, fact_storage
+        from .retain.types import ChunkMetadata, ProcessedFact
+
+        document_id = f"codebase:{codebase_id}:chunk:{chunk_key}"
+        tags = ["scope:codebase", f"codebase:{codebase_id}"]
+        if language:
+            tags.append(f"language:{language}")
+
+        await fact_storage.ensure_bank_exists(conn, bank_id)
+        await fact_storage.handle_document_tracking(
+            conn,
+            bank_id,
+            document_id,
+            text,
+            True,
+            retain_params={"context": f"{path}::{label}"},
+            document_tags=tags,
+        )
+
+        chunk_meta = [ChunkMetadata(chunk_text=text, fact_count=1, content_index=0, chunk_index=0)]
+        chunk_id_map = await chunk_storage.store_chunks_batch(conn, bank_id, document_id, chunk_meta)
+        embedding = (await embedding_processing.generate_embeddings_batch(self.embeddings, [text]))[0]
+        now = datetime.now(UTC)
+        fact = ProcessedFact(
+            fact_text=text,
+            fact_type="world",
+            embedding=embedding,
+            occurred_start=now,
+            occurred_end=None,
+            mentioned_at=now,
+            timeline_anchor_kind="recorded_only",
+            temporal_direction="atemporal",
+            temporal_confidence=None,
+            temporal_reference_text=None,
+            context=f"{path}::{label}",
+            metadata={},
+            chunk_id=chunk_id_map[0],
+            document_id=document_id,
+            tags=tags,
+        )
+        await fact_storage.insert_facts_batch(conn, bank_id, [fact], document_id=document_id)
+        return document_id
+
+    async def _delete_codebase_memory_chunk(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        document_id: str,
+    ) -> None:
+        """Delete a chunk-backed codebase memory document if it exists."""
+        await conn.execute(
+            f"DELETE FROM {fq_table('documents')} WHERE id = $1 AND bank_id = $2",
+            document_id,
+            bank_id,
+        )
+
     async def _upsert_codebase_memory_document(
         self,
         conn: asyncpg.Connection,
@@ -1160,124 +1400,162 @@ class MemoryEngine(MemoryEngineInterface):
 
     async def _hydrate_codebase_snapshot_memory(
         self,
-        conn: asyncpg.Connection,
         *,
         bank_id: str,
         codebase_id: str,
         snapshot_id: str,
-        archive_bytes: bytes,
-        root_path: str | None,
-        include_globs: list[str] | None,
-        exclude_globs: list[str] | None,
         operation_id: str | None = None,
+        batch_size: int = 20,
     ) -> dict[str, int]:
-        """Hydrate approved snapshot file text into stable codebase documents."""
-        snapshot_uuid = uuid.UUID(snapshot_id)
+        """Hydrate routed memory chunks into stable memory documents in small batches."""
         codebase_uuid = uuid.UUID(codebase_id)
+        snapshot_uuid = uuid.UUID(snapshot_id)
 
-        approved_snapshot_row = await conn.fetchrow(
-            f"""
-            SELECT approved_snapshot_id
-            FROM {fq_table("codebases")}
-            WHERE id = $1 AND bank_id = $2
-            """,
-            codebase_uuid,
-            bank_id,
-        )
-        approved_snapshot_id = (
-            str(approved_snapshot_row["approved_snapshot_id"])
-            if approved_snapshot_row and approved_snapshot_row["approved_snapshot_id"]
-            else None
-        )
-
-        previous_files_rows = []
-        if approved_snapshot_id:
-            previous_files_rows = await conn.fetch(
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            approved_snapshot_row = await conn.fetchrow(
                 f"""
-                SELECT path, content_hash, document_id
-                FROM {fq_table("codebase_files")}
-                WHERE snapshot_id = $1 AND bank_id = $2
+                SELECT approved_snapshot_id
+                FROM {fq_table("codebases")}
+                WHERE id = $1 AND bank_id = $2
                 """,
-                uuid.UUID(approved_snapshot_id),
+                codebase_uuid,
                 bank_id,
             )
-        previous_hashes = {row["path"]: row["content_hash"] for row in previous_files_rows}
-        previous_documents = {row["path"]: row["document_id"] for row in previous_files_rows if row["document_id"]}
-
-        if operation_id:
-            await self._set_operation_stage(
-                operation_id,
-                "hydrating_memory",
-                {"snapshot_id": snapshot_id, "codebase_id": codebase_id},
+            approved_snapshot_id = (
+                str(approved_snapshot_row["approved_snapshot_id"])
+                if approved_snapshot_row and approved_snapshot_row["approved_snapshot_id"]
+                else None
             )
 
-        normalized_files = load_zip_archive(
-            archive_bytes,
-            root_path=root_path,
-            include_globs=include_globs,
-            exclude_globs=exclude_globs,
-        )
-        index_result = build_archive_index(normalized_files, previous_hashes=previous_hashes)
+            current_rows = await conn.fetch(
+                f"""
+                SELECT c.id, c.chunk_key, c.path, c.language, c.label, c.content_hash, c.content_text, c.document_id,
+                       r.route_target
+                FROM {fq_table("codebase_chunks")} c
+                JOIN {fq_table("codebase_review_routes")} r
+                  ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
+                WHERE c.snapshot_id = $1 AND c.bank_id = $2 AND c.codebase_id = $3
+                ORDER BY c.path ASC, c.start_line ASC
+                """,
+                snapshot_uuid,
+                bank_id,
+                codebase_uuid,
+            )
+
+            previous_rows = []
+            if approved_snapshot_id:
+                previous_rows = await conn.fetch(
+                    f"""
+                    SELECT c.chunk_key, c.content_hash, c.document_id, r.route_target
+                    FROM {fq_table("codebase_chunks")} c
+                    JOIN {fq_table("codebase_review_routes")} r
+                      ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
+                    WHERE c.snapshot_id = $1 AND c.bank_id = $2 AND c.codebase_id = $3
+                    """,
+                    uuid.UUID(approved_snapshot_id),
+                    bank_id,
+                    codebase_uuid,
+                )
+
+        previous_memory_chunks = {
+            row["chunk_key"]: {"content_hash": row["content_hash"], "document_id": row["document_id"]}
+            for row in previous_rows
+            if row["route_target"] == "memory" and row["document_id"]
+        }
+        current_memory_rows = [row for row in current_rows if row["route_target"] == "memory"]
+        current_memory_keys = {row["chunk_key"] for row in current_memory_rows}
 
         hydrated_files = 0
         reused_files = 0
         deleted_files = 0
 
-        for indexed_file in index_result.files:
-            stable_document_id = f"codebase:{codebase_id}:{indexed_file.path}"
-            document_id: str | None = None
-            previous_document_id = previous_documents.get(indexed_file.path)
-
-            if indexed_file.retain_text is not None:
-                document_id = stable_document_id
-                if indexed_file.change_kind == "unchanged" and previous_document_id:
-                    reused_files += 1
-                else:
-                    await self._upsert_codebase_memory_document(
-                        conn,
-                        bank_id=bank_id,
-                        codebase_id=codebase_id,
-                        path=indexed_file.path,
-                        language=indexed_file.language,
-                        text=indexed_file.retain_text,
-                    )
-                    hydrated_files += 1
-            elif previous_document_id:
-                await self._delete_codebase_memory_document(
-                    conn,
-                    bank_id=bank_id,
-                    document_id=previous_document_id,
-                )
-                deleted_files += 1
-
-            await conn.execute(
-                f"""
-                UPDATE {fq_table("codebase_files")}
-                SET document_id = $4
-                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND path = $5
-                """,
-                snapshot_uuid,
-                bank_id,
-                codebase_uuid,
-                document_id,
-                indexed_file.path,
+        if operation_id:
+            await self._set_operation_stage(
+                operation_id,
+                "batching",
+                {
+                    "snapshot_id": snapshot_id,
+                    "codebase_id": codebase_id,
+                    "total_items": len(current_memory_rows),
+                    "batch_size": batch_size,
+                },
             )
 
-        for deleted_path in index_result.deleted_files:
-            previous_document_id = previous_documents.get(deleted_path)
+        for start in range(0, len(current_memory_rows), batch_size):
+            batch = current_memory_rows[start : start + batch_size]
+            async with acquire_with_retry(pool) as conn:
+                async with conn.transaction():
+                    if operation_id:
+                        await self._set_operation_stage(
+                            operation_id,
+                            "hydrating",
+                            {
+                                "snapshot_id": snapshot_id,
+                                "codebase_id": codebase_id,
+                                "processed": start,
+                                "batch_size": len(batch),
+                            },
+                        )
+
+                    for row in batch:
+                        stable_document_id = f"codebase:{codebase_id}:chunk:{row['chunk_key']}"
+                        previous = previous_memory_chunks.get(row["chunk_key"])
+                        document_id = stable_document_id
+                        if previous and previous["content_hash"] == row["content_hash"]:
+                            reused_files += 1
+                        else:
+                            await self._upsert_codebase_memory_chunk(
+                                conn,
+                                bank_id=bank_id,
+                                codebase_id=codebase_id,
+                                chunk_key=row["chunk_key"],
+                                path=row["path"],
+                                language=row["language"],
+                                text=row["content_text"],
+                                label=row["label"],
+                            )
+                            hydrated_files += 1
+
+                        await conn.execute(
+                            f"""
+                            UPDATE {fq_table("codebase_chunks")}
+                            SET document_id = $4
+                            WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND id = $5
+                            """,
+                            snapshot_uuid,
+                            bank_id,
+                            codebase_uuid,
+                            document_id,
+                            row["id"],
+                        )
+
+        stale_chunk_keys = set(previous_memory_chunks) - current_memory_keys
+        for stale_key in stale_chunk_keys:
+            previous_document_id = cast(str | None, previous_memory_chunks[stale_key]["document_id"])
             if not previous_document_id:
                 continue
-            await self._delete_codebase_memory_document(
-                conn,
-                bank_id=bank_id,
-                document_id=previous_document_id,
+            async with acquire_with_retry(pool) as conn:
+                async with conn.transaction():
+                    await self._delete_codebase_memory_chunk(
+                        conn,
+                        bank_id=bank_id,
+                        document_id=previous_document_id,
+                    )
+                    deleted_files += 1
+
+        if operation_id:
+            await self._set_operation_stage(
+                operation_id,
+                "pruning_removed_items",
+                {"snapshot_id": snapshot_id, "codebase_id": codebase_id, "deleted": deleted_files},
             )
-            deleted_files += 1
 
         return {
             "hydrated_files": hydrated_files,
             "reused_files": reused_files,
             "deleted_files": deleted_files,
+            "applied_routes": len(current_memory_rows),
         }
 
     async def _resolve_public_github_commit_sha(self, owner: str, repo: str, ref: str) -> str:
@@ -1396,6 +1674,7 @@ class MemoryEngine(MemoryEngineInterface):
                     str(codebase_row["current_snapshot_id"]) if codebase_row["current_snapshot_id"] else None
                 )
                 previous_files_rows = []
+                previous_chunk_route_rows = []
                 if previous_snapshot_id:
                     previous_files_rows = await conn.fetch(
                         f"""
@@ -1405,8 +1684,33 @@ class MemoryEngine(MemoryEngineInterface):
                         """,
                         uuid.UUID(previous_snapshot_id),
                     )
+                    previous_chunk_route_rows = await conn.fetch(
+                        f"""
+                        SELECT c.chunk_key, c.content_hash, r.route_target
+                        FROM {fq_table("codebase_chunks")} c
+                        JOIN {fq_table("codebase_review_routes")} r
+                          ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
+                        WHERE c.snapshot_id = $1 AND c.bank_id = $2 AND c.codebase_id = $3
+                        """,
+                        uuid.UUID(previous_snapshot_id),
+                        bank_id,
+                        uuid.UUID(codebase_id),
+                    )
                 previous_hashes = {row["path"]: row["content_hash"] for row in previous_files_rows}
+                previous_routes = {
+                    row["chunk_key"]: {"content_hash": row["content_hash"], "route_target": row["route_target"]}
+                    for row in previous_chunk_route_rows
+                }
 
+                await conn.execute(
+                    f"DELETE FROM {fq_table('codebase_review_routes')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
+                )
+                await conn.execute(
+                    f"DELETE FROM {fq_table('codebase_chunk_edges')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
+                )
+                await conn.execute(
+                    f"DELETE FROM {fq_table('codebase_chunks')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
+                )
                 await conn.execute(
                     f"DELETE FROM {fq_table('codebase_edges')} WHERE snapshot_id = $1", uuid.UUID(snapshot_id)
                 )
@@ -1424,7 +1728,11 @@ class MemoryEngine(MemoryEngineInterface):
                     exclude_globs=exclude_globs,
                 )
                 index_result = build_archive_index(normalized_files, previous_hashes=previous_hashes)
-                valid_paths = {indexed_file.path for indexed_file in index_result.files}
+                file_edges = [edge for indexed_file in index_result.files for edge in indexed_file.edges]
+                chunk_rows, chunk_edge_rows = await self._build_codebase_chunk_graph(
+                    indexed_files=index_result.files,
+                    file_edges=file_edges,
+                )
 
                 if operation_id:
                     await self._set_operation_stage(
@@ -1432,6 +1740,7 @@ class MemoryEngine(MemoryEngineInterface):
                         "asd_indexing",
                         {
                             "total_files": len(index_result.files),
+                            "total_chunks": len(chunk_rows),
                             "changed_files": len(index_result.changed_files),
                             "deleted_files": len(index_result.deleted_files),
                         },
@@ -1445,57 +1754,43 @@ class MemoryEngine(MemoryEngineInterface):
                 excluded_count = 0
 
                 for indexed_file in index_result.files:
-                    document_id: str | None = None
-
-                    if indexed_file.change_kind == "unchanged" and previous_snapshot_id:
-                        if indexed_file.status == "indexed":
-                            await self._copy_codebase_path_graph(
-                                conn,
-                                bank_id=bank_id,
-                                codebase_id=codebase_id,
-                                source_snapshot_id=previous_snapshot_id,
-                                target_snapshot_id=snapshot_id,
-                                path=indexed_file.path,
-                                valid_paths=valid_paths,
-                            )
-                    else:
-                        for symbol in indexed_file.symbols:
-                            await conn.execute(
-                                f"""
-                                INSERT INTO {fq_table("codebase_symbols")}
-                                    (codebase_id, snapshot_id, bank_id, path, language, name, kind, fq_name, container, start_line, end_line)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-                                """,
-                                uuid.UUID(codebase_id),
-                                uuid.UUID(snapshot_id),
-                                bank_id,
-                                symbol.path,
-                                symbol.language,
-                                symbol.name,
-                                symbol.kind,
-                                symbol.fq_name,
-                                symbol.container,
-                                symbol.start_line,
-                                symbol.end_line,
-                            )
-                        for edge in indexed_file.edges:
-                            await conn.execute(
-                                f"""
-                                INSERT INTO {fq_table("codebase_edges")}
-                                    (codebase_id, snapshot_id, bank_id, edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label)
-                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                                """,
-                                uuid.UUID(codebase_id),
-                                uuid.UUID(snapshot_id),
-                                bank_id,
-                                edge.edge_type,
-                                edge.from_path,
-                                edge.from_symbol,
-                                edge.to_path,
-                                edge.to_symbol,
-                                edge.target_ref,
-                                edge.label,
-                            )
+                    for symbol in indexed_file.symbols:
+                        await conn.execute(
+                            f"""
+                            INSERT INTO {fq_table("codebase_symbols")}
+                                (codebase_id, snapshot_id, bank_id, path, language, name, kind, fq_name, container, start_line, end_line)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                            """,
+                            uuid.UUID(codebase_id),
+                            uuid.UUID(snapshot_id),
+                            bank_id,
+                            symbol.path,
+                            symbol.language,
+                            symbol.name,
+                            symbol.kind,
+                            symbol.fq_name,
+                            symbol.container,
+                            symbol.start_line,
+                            symbol.end_line,
+                        )
+                    for edge in indexed_file.edges:
+                        await conn.execute(
+                            f"""
+                            INSERT INTO {fq_table("codebase_edges")}
+                                (codebase_id, snapshot_id, bank_id, edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            """,
+                            uuid.UUID(codebase_id),
+                            uuid.UUID(snapshot_id),
+                            bank_id,
+                            edge.edge_type,
+                            edge.from_path,
+                            edge.from_symbol,
+                            edge.to_path,
+                            edge.to_symbol,
+                            edge.target_ref,
+                            edge.label,
+                        )
 
                     await conn.execute(
                         f"""
@@ -1510,7 +1805,7 @@ class MemoryEngine(MemoryEngineInterface):
                         indexed_file.language,
                         indexed_file.size_bytes,
                         indexed_file.content_hash,
-                        document_id,
+                        None,
                         indexed_file.status,
                         indexed_file.change_kind,
                         indexed_file.reason,
@@ -1527,6 +1822,88 @@ class MemoryEngine(MemoryEngineInterface):
                     elif indexed_file.status == "excluded":
                         excluded_count += 1
 
+                chunk_id_map: dict[str, uuid.UUID] = {}
+                route_counts = {"unrouted": 0, "memory": 0, "research": 0, "dismissed": 0}
+                for chunk_row in chunk_rows:
+                    inserted = await conn.fetchrow(
+                        f"""
+                        INSERT INTO {fq_table("codebase_chunks")}
+                            (codebase_id, snapshot_id, bank_id, chunk_key, document_id, path, language, kind, label,
+                             content_hash, preview_text, content_text, start_line, end_line, container,
+                             parent_symbol, parent_fq_name, parse_confidence, cluster_id, cluster_label)
+                        VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                        RETURNING id
+                        """,
+                        uuid.UUID(codebase_id),
+                        uuid.UUID(snapshot_id),
+                        bank_id,
+                        chunk_row["chunk_key"],
+                        chunk_row["path"],
+                        chunk_row["language"],
+                        chunk_row["kind"],
+                        chunk_row["label"],
+                        chunk_row["content_hash"],
+                        chunk_row["preview_text"],
+                        chunk_row["content_text"],
+                        chunk_row["start_line"],
+                        chunk_row["end_line"],
+                        chunk_row["container"],
+                        chunk_row["parent_symbol"],
+                        chunk_row["parent_fq_name"],
+                        chunk_row["parse_confidence"],
+                        chunk_row["cluster_id"],
+                        chunk_row["cluster_label"],
+                    )
+                    chunk_id = inserted["id"]
+                    chunk_id_map[chunk_row["chunk_key"]] = chunk_id
+                    previous_route = previous_routes.get(chunk_row["chunk_key"])
+                    inherited_route = (
+                        previous_route["route_target"]
+                        if previous_route and previous_route["content_hash"] == chunk_row["content_hash"]
+                        else "unrouted"
+                    )
+                    route_source = "inherited" if inherited_route != "unrouted" else "system"
+                    route_counts[inherited_route] = route_counts.get(inherited_route, 0) + 1
+                    await conn.execute(
+                        f"""
+                        INSERT INTO {fq_table("codebase_review_routes")}
+                            (codebase_id, snapshot_id, chunk_id, bank_id, route_target, route_source)
+                        VALUES ($1, $2, $3, $4, $5, $6)
+                        """,
+                        uuid.UUID(codebase_id),
+                        uuid.UUID(snapshot_id),
+                        chunk_id,
+                        bank_id,
+                        inherited_route,
+                        route_source,
+                    )
+
+                related_chunk_count = 0
+                for chunk_edge in chunk_edge_rows:
+                    from_chunk_id = chunk_id_map.get(chunk_edge["from_chunk_key"])
+                    to_chunk_id = chunk_id_map.get(chunk_edge["to_chunk_key"])
+                    if not from_chunk_id or not to_chunk_id:
+                        continue
+                    await conn.execute(
+                        f"""
+                        INSERT INTO {fq_table("codebase_chunk_edges")}
+                            (codebase_id, snapshot_id, bank_id, edge_type, from_chunk_id, to_chunk_id, score, label)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                        """,
+                        uuid.UUID(codebase_id),
+                        uuid.UUID(snapshot_id),
+                        bank_id,
+                        chunk_edge["edge_type"],
+                        from_chunk_id,
+                        to_chunk_id,
+                        chunk_edge["score"],
+                        chunk_edge["label"],
+                    )
+                    if chunk_edge["edge_type"] == "related":
+                        related_chunk_count += 1
+
+                cluster_count = len({row["cluster_id"] for row in chunk_rows if row["cluster_id"]})
+
                 stats = {
                     "total_files": len(index_result.files),
                     "indexed_files": indexed_count,
@@ -1539,6 +1916,11 @@ class MemoryEngine(MemoryEngineInterface):
                     "changed_files": len(index_result.changed_files),
                     "unchanged_files": len(index_result.unchanged_files),
                     "deleted_files": len(index_result.deleted_files),
+                    "chunk_count": index_result.chunk_count,
+                    "cluster_count": cluster_count,
+                    "related_chunk_count": related_chunk_count,
+                    "parse_coverage": round(index_result.parse_coverage, 4),
+                    "review_counts": route_counts,
                 }
                 await conn.execute(
                     f"""
@@ -1572,6 +1954,7 @@ class MemoryEngine(MemoryEngineInterface):
             "deleted_files": len(index_result.deleted_files),
             "noop": False,
             "stats": stats,
+            "review_counts": route_counts,
         }
 
     async def _handle_codebase_import_zip(self, task_dict: dict[str, Any]) -> dict[str, Any]:
@@ -1631,9 +2014,8 @@ class MemoryEngine(MemoryEngineInterface):
         async with acquire_with_retry(pool) as conn:
             snapshot_row = await conn.fetchrow(
                 f"""
-                SELECT s.id, s.status, s.source_archive_storage_key, c.source_config
+                SELECT s.id, s.status
                 FROM {fq_table("codebase_snapshots")} s
-                JOIN {fq_table("codebases")} c ON c.id = s.codebase_id
                 WHERE s.id = $1 AND s.codebase_id = $2 AND s.bank_id = $3
                 """,
                 uuid.UUID(snapshot_id),
@@ -1642,37 +2024,63 @@ class MemoryEngine(MemoryEngineInterface):
             )
             if not snapshot_row:
                 raise ValueError(f"Snapshot {snapshot_id} not found for codebase {codebase_id}")
-            if snapshot_row["status"] not in {"review_required", "approved"}:
+            if snapshot_row["status"] not in {
+                "review_required",
+                "review_in_progress",
+                "partially_approved",
+                "approved",
+            }:
                 raise ValueError(f"Snapshot {snapshot_id} is not ready for approval.")
-            source_config = decode_jsonb(snapshot_row["source_config"], {})
-            storage_key = snapshot_row["source_archive_storage_key"]
 
-        if not storage_key:
-            raise ValueError(f"Snapshot {snapshot_id} is missing archive evidence for approval.")
+        hydration = await self._hydrate_codebase_snapshot_memory(
+            bank_id=bank_id,
+            codebase_id=codebase_id,
+            snapshot_id=snapshot_id,
+            operation_id=operation_id,
+        )
 
-        archive_bytes = await self._file_storage.retrieve(storage_key)
         async with acquire_with_retry(pool) as conn:
+            route_counts = await conn.fetchrow(
+                f"""
+                SELECT
+                    COUNT(*) FILTER (WHERE route_target = 'unrouted') AS unrouted_count,
+                    COUNT(*) FILTER (WHERE route_target = 'memory') AS memory_count,
+                    COUNT(*) FILTER (WHERE route_target = 'research') AS research_count,
+                    COUNT(*) FILTER (WHERE route_target = 'dismissed') AS dismissed_count
+                FROM {fq_table("codebase_review_routes")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3
+                """,
+                uuid.UUID(snapshot_id),
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
+            snapshot_status = (
+                "approved" if not route_counts or not route_counts["unrouted_count"] else "partially_approved"
+            )
+            stats_row = await conn.fetchrow(
+                f"SELECT stats FROM {fq_table('codebase_snapshots')} WHERE id = $1",
+                uuid.UUID(snapshot_id),
+            )
+            stats = decode_jsonb(stats_row["stats"] if stats_row else None, {})
+            stats["review_counts"] = {
+                "unrouted": int(route_counts["unrouted_count"] or 0) if route_counts else 0,
+                "memory": int(route_counts["memory_count"] or 0) if route_counts else 0,
+                "research": int(route_counts["research_count"] or 0) if route_counts else 0,
+                "dismissed": int(route_counts["dismissed_count"] or 0) if route_counts else 0,
+            }
             async with conn.transaction():
-                hydration = await self._hydrate_codebase_snapshot_memory(
-                    conn,
-                    bank_id=bank_id,
-                    codebase_id=codebase_id,
-                    snapshot_id=snapshot_id,
-                    archive_bytes=archive_bytes,
-                    root_path=source_config.get("root_path"),
-                    include_globs=source_config.get("include_globs") or [],
-                    exclude_globs=source_config.get("exclude_globs") or [],
-                    operation_id=operation_id,
-                )
                 await conn.execute(
                     f"""
                     UPDATE {fq_table("codebase_snapshots")}
-                    SET status = 'approved',
+                    SET status = $2,
                         approved_at = NOW(),
+                        stats = $3::jsonb,
                         updated_at = NOW()
                     WHERE id = $1
                     """,
                     uuid.UUID(snapshot_id),
+                    snapshot_status,
+                    json.dumps(stats),
                 )
                 await conn.execute(
                     f"""
@@ -1687,7 +2095,7 @@ class MemoryEngine(MemoryEngineInterface):
         return {
             "codebase_id": codebase_id,
             "snapshot_id": snapshot_id,
-            "status": "approved",
+            "status": snapshot_status,
             **hydration,
         }
 
@@ -10986,8 +11394,20 @@ class MemoryEngine(MemoryEngineInterface):
                 raise ValueError(f"Snapshot {target_snapshot_id} not found for codebase {codebase_id}")
             if snapshot_row["status"] == "approved":
                 raise ValueError("Current snapshot is already approved for memory hydration.")
-            if snapshot_row["status"] != "review_required":
+            if snapshot_row["status"] not in {"review_required", "review_in_progress", "partially_approved"}:
                 raise ValueError("Only review-required snapshots can be approved.")
+            memory_route_count = await conn.fetchval(
+                f"""
+                SELECT COUNT(*)
+                FROM {fq_table("codebase_review_routes")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND route_target = 'memory'
+                """,
+                uuid.UUID(target_snapshot_id),
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
+            if not memory_route_count:
+                raise ValueError("Route at least one chunk to memory before approving.")
 
         operation = await self._submit_async_operation(
             bank_id=bank_id,
@@ -11023,6 +11443,23 @@ class MemoryEngine(MemoryEngineInterface):
             return "not_ready", "not_hydrated"
         if snapshot_status == "failed":
             return "parse_failed", "not_hydrated" if not approved_snapshot_id else "hydrated_from_previous_snapshot"
+        if snapshot_status in {"review_in_progress"}:
+            if not approved_snapshot_id:
+                memory_state = "not_hydrated"
+            elif approved_snapshot_id == current_snapshot_id:
+                memory_state = "hydrated"
+            else:
+                memory_state = "hydrated_from_previous_snapshot"
+            return (
+                "review_in_progress",
+                memory_state,
+            )
+        if (
+            snapshot_status == "partially_approved"
+            and approved_snapshot_id
+            and current_snapshot_id == approved_snapshot_id
+        ):
+            return "partially_approved", "hydrated"
         if approved_snapshot_id and current_snapshot_id == approved_snapshot_id:
             return "approved", "hydrated"
         if snapshot_status == "review_required":
@@ -11065,6 +11502,10 @@ class MemoryEngine(MemoryEngineInterface):
             "approval_status": approval_status,
             "memory_status": memory_status,
             "stats": decode_jsonb(row["stats"], {}),
+            "review_counts": decode_jsonb(row["stats"], {}).get("review_counts", {}),
+            "cluster_count": decode_jsonb(row["stats"], {}).get("cluster_count", 0),
+            "related_chunk_count": decode_jsonb(row["stats"], {}).get("related_chunk_count", 0),
+            "parse_coverage": decode_jsonb(row["stats"], {}).get("parse_coverage", 0.0),
             "created_at": row["created_at"].isoformat() if row["created_at"] else None,
             "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
             "snapshot_created_at": row["snapshot_created_at"].isoformat() if row["snapshot_created_at"] else None,
@@ -11146,6 +11587,523 @@ class MemoryEngine(MemoryEngineInterface):
             return None
         return self._serialize_codebase_row(row)
 
+    async def _refresh_codebase_review_stats(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str,
+    ) -> dict[str, int]:
+        counts_row = await conn.fetchrow(
+            f"""
+            SELECT
+                COUNT(*) FILTER (WHERE route_target = 'unrouted') AS unrouted_count,
+                COUNT(*) FILTER (WHERE route_target = 'memory') AS memory_count,
+                COUNT(*) FILTER (WHERE route_target = 'research') AS research_count,
+                COUNT(*) FILTER (WHERE route_target = 'dismissed') AS dismissed_count
+            FROM {fq_table("codebase_review_routes")}
+            WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3
+            """,
+            uuid.UUID(snapshot_id),
+            bank_id,
+            uuid.UUID(codebase_id),
+        )
+        counts = {
+            "unrouted": int(counts_row["unrouted_count"] or 0) if counts_row else 0,
+            "memory": int(counts_row["memory_count"] or 0) if counts_row else 0,
+            "research": int(counts_row["research_count"] or 0) if counts_row else 0,
+            "dismissed": int(counts_row["dismissed_count"] or 0) if counts_row else 0,
+        }
+        stats_row = await conn.fetchrow(
+            f"SELECT stats FROM {fq_table('codebase_snapshots')} WHERE id = $1",
+            uuid.UUID(snapshot_id),
+        )
+        stats = decode_jsonb(stats_row["stats"] if stats_row else None, {})
+        stats["review_counts"] = counts
+        snapshot_status = (
+            "review_required"
+            if counts["memory"] == 0 and counts["research"] == 0 and counts["dismissed"] == 0
+            else "review_in_progress"
+        )
+        await conn.execute(
+            f"""
+            UPDATE {fq_table("codebase_snapshots")}
+            SET status = $2,
+                stats = $3::jsonb,
+                updated_at = NOW()
+            WHERE id = $1
+            """,
+            uuid.UUID(snapshot_id),
+            snapshot_status,
+            json.dumps(stats),
+        )
+        return counts
+
+    async def get_codebase_review(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Return review-oriented summary for the current codebase snapshot."""
+        codebase = await self.get_codebase(bank_id, codebase_id, request_context=request_context)
+        if not codebase:
+            raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+        snapshot_id = codebase.get("current_snapshot_id")
+        if not snapshot_id:
+            return {
+                "codebase_id": codebase_id,
+                "snapshot_id": None,
+                "snapshot_status": None,
+                "approval_status": codebase.get("approval_status"),
+                "memory_status": codebase.get("memory_status"),
+                "review_counts": {},
+                "cluster_count": 0,
+                "related_chunk_count": 0,
+                "parse_coverage": 0.0,
+                "changed_summary": {"added_files": 0, "changed_files": 0, "deleted_files": 0},
+                "diagnostics": [],
+            }
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT reason, COUNT(*) AS count
+                FROM {fq_table("codebase_files")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND reason IS NOT NULL
+                GROUP BY reason
+                ORDER BY count DESC, reason ASC
+                LIMIT 10
+                """,
+                uuid.UUID(snapshot_id),
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
+        stats = cast(dict[str, Any], codebase.get("stats") or {})
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "snapshot_status": codebase.get("snapshot_status"),
+            "approval_status": codebase.get("approval_status"),
+            "memory_status": codebase.get("memory_status"),
+            "review_counts": codebase.get("review_counts") or {},
+            "cluster_count": codebase.get("cluster_count") or 0,
+            "related_chunk_count": codebase.get("related_chunk_count") or 0,
+            "parse_coverage": codebase.get("parse_coverage") or 0.0,
+            "changed_summary": {
+                "added_files": stats.get("added_files", 0),
+                "changed_files": stats.get("changed_files", 0),
+                "deleted_files": stats.get("deleted_files", 0),
+            },
+            "diagnostics": [{"reason": row["reason"], "count": int(row["count"] or 0)} for row in rows],
+        }
+
+    async def list_codebase_chunks(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        path_prefix: str | None = None,
+        language: str | None = None,
+        cluster_id: str | None = None,
+        route_target: str | None = None,
+        changed_only: bool = False,
+        kind: str | None = None,
+        q: str | None = None,
+        limit: int = 25,
+        cursor: str | None = None,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """List reviewable codebase chunks with cursor-based pagination."""
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="list_codebase_chunks", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            codebase = await conn.fetchrow(
+                f"SELECT current_snapshot_id FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not codebase:
+                raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+            effective_snapshot_id = snapshot_id or (
+                str(codebase["current_snapshot_id"]) if codebase["current_snapshot_id"] else None
+            )
+            if not effective_snapshot_id:
+                return {
+                    "codebase_id": codebase_id,
+                    "snapshot_id": None,
+                    "items": [],
+                    "next_cursor": None,
+                    "has_more": False,
+                }
+
+            where_clauses = ["c.snapshot_id = $1", "c.bank_id = $2", "c.codebase_id = $3"]
+            params: list[Any] = [uuid.UUID(effective_snapshot_id), bank_id, uuid.UUID(codebase_id)]
+            if path_prefix:
+                where_clauses.append(f"c.path LIKE ${len(params) + 1}")
+                params.append(f"{path_prefix}%")
+            if language:
+                where_clauses.append(f"c.language = ${len(params) + 1}")
+                params.append(language)
+            if cluster_id:
+                where_clauses.append(f"c.cluster_id = ${len(params) + 1}")
+                params.append(cluster_id)
+            if route_target:
+                where_clauses.append(f"r.route_target = ${len(params) + 1}")
+                params.append(route_target)
+            if changed_only:
+                where_clauses.append("f.change_kind != 'unchanged'")
+            if kind:
+                where_clauses.append(f"c.kind = ${len(params) + 1}")
+                params.append(kind)
+            if q:
+                where_clauses.append(f"(c.label ILIKE ${len(params) + 1} OR c.preview_text ILIKE ${len(params) + 1})")
+                params.append(f"%{q}%")
+
+            offset = self._decode_codebase_cursor(cursor)
+            rows = await conn.fetch(
+                f"""
+                SELECT c.id, c.chunk_key, c.path, c.language, c.kind, c.label, c.preview_text,
+                       c.start_line, c.end_line, c.container, c.parent_symbol, c.parent_fq_name,
+                       c.parse_confidence, c.cluster_id, c.cluster_label, c.document_id,
+                       r.route_target, r.route_source, f.change_kind,
+                       (
+                           SELECT COUNT(*)
+                           FROM {fq_table("codebase_chunk_edges")} e
+                           WHERE e.snapshot_id = c.snapshot_id
+                             AND e.edge_type = 'related'
+                             AND (e.from_chunk_id = c.id OR e.to_chunk_id = c.id)
+                       ) AS related_count
+                FROM {fq_table("codebase_chunks")} c
+                JOIN {fq_table("codebase_review_routes")} r
+                  ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
+                JOIN {fq_table("codebase_files")} f
+                  ON f.snapshot_id = c.snapshot_id AND f.codebase_id = c.codebase_id AND f.bank_id = c.bank_id AND f.path = c.path
+                WHERE {" AND ".join(where_clauses)}
+                ORDER BY
+                    CASE r.route_target
+                        WHEN 'unrouted' THEN 0
+                        WHEN 'memory' THEN 1
+                        WHEN 'research' THEN 2
+                        ELSE 3
+                    END,
+                    CASE f.change_kind
+                        WHEN 'modified' THEN 0
+                        WHEN 'added' THEN 1
+                        ELSE 2
+                    END,
+                    c.path ASC,
+                    c.start_line ASC
+                OFFSET ${len(params) + 1}
+                LIMIT ${len(params) + 2}
+                """,
+                *params,
+                offset,
+                limit + 1,
+            )
+        has_more = len(rows) > limit
+        page = rows[:limit]
+        next_cursor = self._encode_codebase_cursor(offset + limit) if has_more else None
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective_snapshot_id,
+            "items": [
+                {
+                    "id": str(row["id"]),
+                    "chunk_key": row["chunk_key"],
+                    "path": row["path"],
+                    "language": row["language"],
+                    "kind": row["kind"],
+                    "label": row["label"],
+                    "preview_text": row["preview_text"],
+                    "start_line": row["start_line"],
+                    "end_line": row["end_line"],
+                    "container": row["container"],
+                    "parent_symbol": row["parent_symbol"],
+                    "parent_fq_name": row["parent_fq_name"],
+                    "parse_confidence": float(row["parse_confidence"] or 0.0),
+                    "cluster_id": row["cluster_id"],
+                    "cluster_label": row["cluster_label"],
+                    "route_target": row["route_target"],
+                    "route_source": row["route_source"],
+                    "change_kind": row["change_kind"],
+                    "related_count": int(row["related_count"] or 0),
+                    "document_id": row["document_id"],
+                }
+                for row in page
+            ],
+            "next_cursor": next_cursor,
+            "has_more": has_more,
+        }
+
+    async def get_codebase_chunk_detail(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        chunk_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Return detailed review data for one chunk."""
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="get_codebase_chunk_detail", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT c.id, c.snapshot_id, c.chunk_key, c.path, c.language, c.kind, c.label,
+                       c.content_text, c.preview_text, c.start_line, c.end_line, c.container,
+                       c.parent_symbol, c.parent_fq_name, c.parse_confidence, c.cluster_id, c.cluster_label,
+                       c.document_id, r.route_target, r.route_source, f.change_kind
+                FROM {fq_table("codebase_chunks")} c
+                JOIN {fq_table("codebase_review_routes")} r
+                  ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
+                JOIN {fq_table("codebase_files")} f
+                  ON f.snapshot_id = c.snapshot_id AND f.codebase_id = c.codebase_id AND f.bank_id = c.bank_id AND f.path = c.path
+                WHERE c.id = $1 AND c.codebase_id = $2 AND c.bank_id = $3
+                """,
+                uuid.UUID(chunk_id),
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not row:
+                raise ValueError(f"Chunk {chunk_id} not found for codebase {codebase_id}")
+
+            related_rows = await conn.fetch(
+                f"""
+                SELECT other.id, other.label, other.path, other.kind, other.start_line, other.end_line,
+                       other.cluster_label, e.edge_type, e.score
+                FROM {fq_table("codebase_chunk_edges")} e
+                JOIN {fq_table("codebase_chunks")} other
+                  ON (
+                       (e.from_chunk_id = $1 AND other.id = e.to_chunk_id)
+                    OR (e.to_chunk_id = $1 AND other.id = e.from_chunk_id)
+                  )
+                WHERE e.snapshot_id = $2 AND e.edge_type = 'related'
+                ORDER BY e.score DESC NULLS LAST, other.path ASC, other.start_line ASC
+                LIMIT 4
+                """,
+                uuid.UUID(chunk_id),
+                row["snapshot_id"],
+            )
+            symbol_rows = await conn.fetch(
+                f"""
+                SELECT name, kind, fq_name, path, language, container, start_line, end_line
+                FROM {fq_table("codebase_symbols")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND path = $4
+                  AND start_line <= $5 AND end_line >= $6
+                ORDER BY start_line ASC
+                LIMIT 8
+                """,
+                row["snapshot_id"],
+                bank_id,
+                uuid.UUID(codebase_id),
+                row["path"],
+                row["end_line"],
+                row["start_line"],
+            )
+            impact_rows = await conn.fetch(
+                f"""
+                SELECT edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label
+                FROM {fq_table("codebase_edges")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3
+                  AND (from_path = $4 OR to_path = $4)
+                ORDER BY from_path ASC, to_path ASC NULLS LAST
+                LIMIT 20
+                """,
+                row["snapshot_id"],
+                bank_id,
+                uuid.UUID(codebase_id),
+                row["path"],
+            )
+            cluster_rows = []
+            if row["cluster_id"]:
+                cluster_rows = await conn.fetch(
+                    f"""
+                    SELECT id, label, path, kind, start_line, end_line
+                    FROM {fq_table("codebase_chunks")}
+                    WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND cluster_id = $4 AND id != $5
+                    ORDER BY path ASC, start_line ASC
+                    LIMIT 8
+                    """,
+                    row["snapshot_id"],
+                    bank_id,
+                    uuid.UUID(codebase_id),
+                    row["cluster_id"],
+                    uuid.UUID(chunk_id),
+                )
+        return {
+            "id": str(row["id"]),
+            "snapshot_id": str(row["snapshot_id"]),
+            "chunk_key": row["chunk_key"],
+            "path": row["path"],
+            "language": row["language"],
+            "kind": row["kind"],
+            "label": row["label"],
+            "content_text": row["content_text"],
+            "preview_text": row["preview_text"],
+            "start_line": row["start_line"],
+            "end_line": row["end_line"],
+            "container": row["container"],
+            "parent_symbol": row["parent_symbol"],
+            "parent_fq_name": row["parent_fq_name"],
+            "parse_confidence": float(row["parse_confidence"] or 0.0),
+            "cluster_id": row["cluster_id"],
+            "cluster_label": row["cluster_label"],
+            "route_target": row["route_target"],
+            "route_source": row["route_source"],
+            "change_kind": row["change_kind"],
+            "document_id": row["document_id"],
+            "related_chunks": [
+                {
+                    "id": str(related["id"]),
+                    "label": related["label"],
+                    "path": related["path"],
+                    "kind": related["kind"],
+                    "start_line": related["start_line"],
+                    "end_line": related["end_line"],
+                    "cluster_label": related["cluster_label"],
+                    "score": float(related["score"] or 0.0),
+                }
+                for related in related_rows
+            ],
+            "symbols": [
+                {
+                    "name": symbol["name"],
+                    "kind": symbol["kind"],
+                    "fq_name": symbol["fq_name"],
+                    "path": symbol["path"],
+                    "language": symbol["language"],
+                    "container": symbol["container"],
+                    "start_line": symbol["start_line"],
+                    "end_line": symbol["end_line"],
+                }
+                for symbol in symbol_rows
+            ],
+            "impact_edges": [
+                {
+                    "edge_type": edge["edge_type"],
+                    "from_path": edge["from_path"],
+                    "from_symbol": edge["from_symbol"],
+                    "to_path": edge["to_path"],
+                    "to_symbol": edge["to_symbol"],
+                    "target_ref": edge["target_ref"],
+                    "label": edge["label"],
+                }
+                for edge in impact_rows
+            ],
+            "cluster_members": [
+                {
+                    "id": str(item["id"]),
+                    "label": item["label"],
+                    "path": item["path"],
+                    "kind": item["kind"],
+                    "start_line": item["start_line"],
+                    "end_line": item["end_line"],
+                }
+                for item in cluster_rows
+            ],
+        }
+
+    async def route_codebase_review_items(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        item_ids: list[str],
+        target: str,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Route review chunks to memory, research, or dismissed."""
+        from atulya_api.extensions import BankWriteContext
+
+        if target not in {"memory", "research", "dismissed", "unrouted"}:
+            raise ValueError("target must be one of memory, research, dismissed, or unrouted")
+        if not item_ids:
+            raise ValueError("item_ids is required")
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(
+                bank_id=bank_id, operation="route_codebase_review_items", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            snapshot_row = await conn.fetchrow(
+                f"SELECT current_snapshot_id FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+            if not snapshot_row or not snapshot_row["current_snapshot_id"]:
+                raise ValueError(f"Codebase {codebase_id} has no active snapshot")
+            snapshot_id = str(snapshot_row["current_snapshot_id"])
+            async with conn.transaction():
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebase_review_routes")}
+                    SET route_target = $4,
+                        route_source = 'manual',
+                        updated_at = NOW()
+                    WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3 AND chunk_id = ANY($5::uuid[])
+                    """,
+                    uuid.UUID(snapshot_id),
+                    bank_id,
+                    uuid.UUID(codebase_id),
+                    target,
+                    [uuid.UUID(item_id) for item_id in item_ids],
+                )
+                review_counts = await self._refresh_codebase_review_stats(
+                    conn,
+                    bank_id=bank_id,
+                    codebase_id=codebase_id,
+                    snapshot_id=snapshot_id,
+                )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "updated_count": len(item_ids),
+            "target": target,
+            "review_counts": review_counts,
+        }
+
+    async def list_codebase_research_queue(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        cursor: str | None = None,
+        limit: int = 25,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Return chunks routed to the research queue."""
+        return await self.list_codebase_chunks(
+            bank_id,
+            codebase_id,
+            route_target="research",
+            cursor=cursor,
+            limit=limit,
+            request_context=request_context,
+        )
+
     async def list_codebase_files(
         self,
         bank_id: str,
@@ -11210,7 +12168,15 @@ class MemoryEngine(MemoryEngineInterface):
 
             rows = await conn.fetch(
                 f"""
-                SELECT path, language, size_bytes, content_hash, document_id, status, change_kind, reason
+                SELECT path, language, size_bytes, content_hash, document_id, status, change_kind, reason,
+                       (
+                           SELECT COUNT(*)
+                           FROM {fq_table("codebase_chunks")} c
+                           WHERE c.snapshot_id = {fq_table("codebase_files")}.snapshot_id
+                             AND c.bank_id = {fq_table("codebase_files")}.bank_id
+                             AND c.codebase_id = {fq_table("codebase_files")}.codebase_id
+                             AND c.path = {fq_table("codebase_files")}.path
+                       ) AS chunk_count
                 FROM {fq_table("codebase_files")}
                 WHERE {" AND ".join(where_clauses)}
                 ORDER BY path ASC
@@ -11233,6 +12199,7 @@ class MemoryEngine(MemoryEngineInterface):
                     "status": row["status"],
                     "change_kind": row["change_kind"],
                     "reason": row["reason"],
+                    "chunk_count": int(row["chunk_count"] or 0),
                 }
                 for row in rows
             ],
@@ -11284,6 +12251,16 @@ class MemoryEngine(MemoryEngineInterface):
             params.extend([q, f"{q}%", f"%{q}%"])
             query = f"""
                 SELECT path, language, name, kind, fq_name, container, start_line, end_line,
+                       (
+                           SELECT array_agg(c.id::text ORDER BY c.start_line ASC)
+                           FROM {fq_table("codebase_chunks")} c
+                           WHERE c.snapshot_id = {fq_table("codebase_symbols")}.snapshot_id
+                             AND c.bank_id = {fq_table("codebase_symbols")}.bank_id
+                             AND c.codebase_id = {fq_table("codebase_symbols")}.codebase_id
+                             AND c.path = {fq_table("codebase_symbols")}.path
+                             AND c.start_line <= {fq_table("codebase_symbols")}.end_line
+                             AND c.end_line >= {fq_table("codebase_symbols")}.start_line
+                       ) AS chunk_ids,
                        CASE
                            WHEN name = ${len(params) - 2} OR fq_name = ${len(params) - 2} THEN 'exact'
                            WHEN name LIKE ${len(params) - 1} OR fq_name LIKE ${len(params) - 1} THEN 'prefix'
@@ -11323,6 +12300,7 @@ class MemoryEngine(MemoryEngineInterface):
                     "start_line": row["start_line"],
                     "end_line": row["end_line"],
                     "match_mode": row["match_mode"],
+                    "chunk_ids": list(row["chunk_ids"] or []),
                 }
                 for row in rows
             ],
@@ -11393,7 +12371,19 @@ class MemoryEngine(MemoryEngineInterface):
                 bank_id,
                 uuid.UUID(codebase_id),
             )
+            chunk_count_rows = await conn.fetch(
+                f"""
+                SELECT path, COUNT(*) AS chunk_count
+                FROM {fq_table("codebase_chunks")}
+                WHERE snapshot_id = $1 AND bank_id = $2 AND codebase_id = $3
+                GROUP BY path
+                """,
+                snapshot_id,
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
             file_map = {row["path"]: row for row in file_rows}
+            chunk_count_by_path = {row["path"]: int(row["chunk_count"] or 0) for row in chunk_count_rows}
 
             matched_symbols: list[dict[str, Any]] = []
             seed_paths: list[str] = []
@@ -11529,6 +12519,7 @@ class MemoryEngine(MemoryEngineInterface):
                     "document_id": file_map[path_value]["document_id"],
                     "status": file_map[path_value]["status"],
                     "change_kind": file_map[path_value]["change_kind"],
+                    "chunk_count": chunk_count_by_path.get(path_value, 0),
                     "depth": visited_depth[path_value],
                 }
                 for path_value in ordered_paths[:limit]

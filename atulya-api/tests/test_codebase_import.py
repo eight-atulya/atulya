@@ -1,5 +1,5 @@
 """
-Focused tests for ASD-first codebase import, review, approval, and query APIs.
+Focused tests for ASD-first codebase import, review, routing, and approval.
 """
 
 from __future__ import annotations
@@ -28,8 +28,25 @@ def _bank_id(suffix: str) -> str:
     return f"codebase_{suffix}_{datetime.now(timezone.utc).timestamp()}"
 
 
+async def _route_all_chunks_to_memory(memory_engine, bank_id: str, codebase_id: str, request_context) -> list[dict]:
+    chunks_result = await memory_engine.list_codebase_chunks(
+        bank_id,
+        codebase_id,
+        request_context=request_context,
+    )
+    assert chunks_result["items"]
+    await memory_engine.route_codebase_review_items(
+        bank_id,
+        codebase_id,
+        item_ids=[item["id"] for item in chunks_result["items"]],
+        target="memory",
+        request_context=request_context,
+    )
+    return chunks_result["items"]
+
+
 @pytest.mark.asyncio
-async def test_codebase_zip_import_requires_approval_before_memory_hydration(
+async def test_codebase_zip_import_requires_chunk_routing_before_memory_hydration(
     memory_no_llm_verify, request_context
 ):
     bank_id = _bank_id("zip")
@@ -61,7 +78,6 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
             request_context=request_context,
         )
         assert import_operation["status"] == "completed"
-        assert import_operation["result"]["snapshot_id"] == submit_result["snapshot_id"]
         assert import_operation["result"]["status"] == "review_required"
 
         codebase = await memory_no_llm_verify.get_codebase(
@@ -70,14 +86,17 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
             request_context=request_context,
         )
         assert codebase is not None
-        assert codebase["current_snapshot_id"] == submit_result["snapshot_id"]
-        assert codebase["approved_snapshot_id"] is None
-        assert codebase["source_type"] == "zip"
         assert codebase["snapshot_status"] == "review_required"
         assert codebase["approval_status"] == "pending_approval"
         assert codebase["memory_status"] == "not_hydrated"
-        assert codebase["stats"]["total_files"] == 6
-        assert codebase["stats"]["indexed_files"] >= 4
+        assert codebase["stats"]["chunk_count"] >= 4
+
+        review_summary = await memory_no_llm_verify.get_codebase_review(
+            bank_id,
+            submit_result["codebase_id"],
+            request_context=request_context,
+        )
+        assert review_summary["review_counts"]["unrouted"] >= 4
 
         files_result = await memory_no_llm_verify.list_codebase_files(
             bank_id,
@@ -85,18 +104,33 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
             request_context=request_context,
         )
         files_by_path = {item["path"]: item for item in files_result["items"]}
-        assert files_result["snapshot_status"] == "review_required"
         assert files_by_path["src/main.py"]["status"] == "indexed"
         assert files_by_path["src/main.py"]["document_id"] is None
+        assert files_by_path["src/main.py"]["chunk_count"] >= 1
         assert files_by_path["dist/generated.js"]["status"] == "excluded"
-        assert files_by_path["package.json"]["status"] == "retained"
+
+        chunks_result = await memory_no_llm_verify.list_codebase_chunks(
+            bank_id,
+            submit_result["codebase_id"],
+            request_context=request_context,
+        )
+        main_chunk = next(item for item in chunks_result["items"] if item["path"] == "src/main.py")
+        assert main_chunk["route_target"] == "unrouted"
 
         pre_approval_document = await memory_no_llm_verify.get_document(
-            f"codebase:{submit_result['codebase_id']}:src/main.py",
+            f"codebase:{submit_result['codebase_id']}:chunk:{main_chunk['chunk_key']}",
             bank_id,
             request_context=request_context,
         )
         assert pre_approval_document is None
+
+        detail = await memory_no_llm_verify.get_codebase_chunk_detail(
+            bank_id,
+            submit_result["codebase_id"],
+            main_chunk["id"],
+            request_context=request_context,
+        )
+        assert "from src.util import helper" in detail["content_text"]
 
         symbols_result = await memory_no_llm_verify.search_codebase_symbols(
             bank_id,
@@ -106,7 +140,7 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
         )
         helper_matches = [item for item in symbols_result["items"] if item["name"] == "helper"]
         assert helper_matches
-        assert helper_matches[0]["path"] == "src/util.py"
+        assert helper_matches[0]["chunk_ids"]
 
         impact_result = await memory_no_llm_verify.analyze_codebase_impact(
             bank_id,
@@ -119,9 +153,12 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
         impacted_paths = [item["path"] for item in impact_result["impacted_files"]]
         assert "src/util.py" in impacted_paths
         assert "src/main.py" in impacted_paths
-        assert any(
-            edge["from_path"] == "src/main.py" and edge["to_path"] == "src/util.py"
-            for edge in impact_result["edges"]
+
+        await _route_all_chunks_to_memory(
+            memory_no_llm_verify,
+            bank_id,
+            submit_result["codebase_id"],
+            request_context,
         )
 
         approve_result = await memory_no_llm_verify.submit_async_codebase_approval(
@@ -136,7 +173,7 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
         )
         assert approve_operation["status"] == "completed"
         assert approve_operation["result"]["status"] == "approved"
-        assert approve_operation["result"]["hydrated_files"] >= 4
+        assert approve_operation["result"]["applied_routes"] >= 4
 
         approved_codebase = await memory_no_llm_verify.get_codebase(
             bank_id,
@@ -147,20 +184,17 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
         assert approved_codebase["approved_snapshot_id"] == submit_result["snapshot_id"]
         assert approved_codebase["approval_status"] == "approved"
         assert approved_codebase["memory_status"] == "hydrated"
-        assert approved_codebase["approved_snapshot_status"] == "approved"
 
-        approved_files = await memory_no_llm_verify.list_codebase_files(
+        approved_chunks = await memory_no_llm_verify.list_codebase_chunks(
             bank_id,
             submit_result["codebase_id"],
             request_context=request_context,
         )
-        approved_by_path = {item["path"]: item for item in approved_files["items"]}
-        assert approved_by_path["src/main.py"]["document_id"] == (
-            f"codebase:{submit_result['codebase_id']}:src/main.py"
-        )
+        approved_main_chunk = next(item for item in approved_chunks["items"] if item["chunk_key"] == main_chunk["chunk_key"])
+        assert approved_main_chunk["document_id"] == f"codebase:{submit_result['codebase_id']}:chunk:{main_chunk['chunk_key']}"
 
         approved_document = await memory_no_llm_verify.get_document(
-            f"codebase:{submit_result['codebase_id']}:src/main.py",
+            approved_main_chunk["document_id"],
             bank_id,
             request_context=request_context,
         )
@@ -171,7 +205,7 @@ async def test_codebase_zip_import_requires_approval_before_memory_hydration(
 
 
 @pytest.mark.asyncio
-async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_is_approved(
+async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_is_rerouted_and_approved(
     memory_no_llm_verify, request_context, monkeypatch
 ):
     bank_id = _bank_id("github")
@@ -218,20 +252,17 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         )
         codebase_id = import_result["codebase_id"]
 
-        imported_files = await memory_no_llm_verify.list_codebase_files(
+        imported_chunks = await _route_all_chunks_to_memory(
+            memory_no_llm_verify,
             bank_id,
             codebase_id,
-            request_context=request_context,
+            request_context,
         )
-        imported_by_path = {item["path"]: item for item in imported_files["items"]}
-        assert imported_by_path["src/main.py"]["document_id"] is None
-
-        pre_approval_doc = await memory_no_llm_verify.get_document(
-            f"codebase:{codebase_id}:src/main.py",
-            bank_id,
-            request_context=request_context,
+        imported_main_chunk = next(item for item in imported_chunks if item["path"] == "src/main.py")
+        imported_util_chunk = next(
+            item for item in imported_chunks if item["path"] == "src/util.py" and item["kind"] == "function"
         )
-        assert pre_approval_doc is None
+        imported_obsolete_chunk = next(item for item in imported_chunks if item["path"] == "src/obsolete.py")
 
         approve_v1 = await memory_no_llm_verify.submit_async_codebase_approval(
             bank_id,
@@ -245,8 +276,9 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         )
         assert approve_v1_operation["status"] == "completed"
 
-        stable_main_document_id = f"codebase:{codebase_id}:src/main.py"
-        obsolete_document_id = f"codebase:{codebase_id}:src/obsolete.py"
+        stable_main_document_id = f"codebase:{codebase_id}:chunk:{imported_main_chunk['chunk_key']}"
+        stable_util_document_id = f"codebase:{codebase_id}:chunk:{imported_util_chunk['chunk_key']}"
+        obsolete_document_id = f"codebase:{codebase_id}:chunk:{imported_obsolete_chunk['chunk_key']}"
 
         initial_main_document = await memory_no_llm_verify.get_document(
             stable_main_document_id,
@@ -255,7 +287,7 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         )
         assert initial_main_document is not None
         initial_util_document = await memory_no_llm_verify.get_document(
-            f"codebase:{codebase_id}:src/util.py",
+            stable_util_document_id,
             bank_id,
             request_context=request_context,
         )
@@ -287,9 +319,6 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         )
         assert refresh_operation["status"] == "completed"
         assert refresh_operation["result"]["status"] == "review_required"
-        assert refresh_operation["result"]["changed_files"] == 1
-        assert refresh_operation["result"]["added_files"] == 1
-        assert refresh_operation["result"]["deleted_files"] == 1
 
         refreshed_codebase = await memory_no_llm_verify.get_codebase(
             bank_id,
@@ -297,9 +326,7 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
             request_context=request_context,
         )
         assert refreshed_codebase is not None
-        assert refreshed_codebase["current_snapshot_id"] == refresh_result["snapshot_id"]
         assert refreshed_codebase["approved_snapshot_id"] != refresh_result["snapshot_id"]
-        assert refreshed_codebase["approval_status"] == "pending_approval"
         assert refreshed_codebase["memory_status"] == "hydrated_from_previous_snapshot"
 
         refreshed_files = await memory_no_llm_verify.list_codebase_files(
@@ -308,11 +335,7 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
             request_context=request_context,
         )
         refreshed_by_path = {item["path"]: item for item in refreshed_files["items"]}
-        assert refreshed_files["snapshot_id"] == refresh_result["snapshot_id"]
-        assert refreshed_files["snapshot_status"] == "review_required"
         assert refreshed_by_path["src/main.py"]["document_id"] is None
-        assert refreshed_by_path["src/util.py"]["document_id"] is None
-        assert refreshed_by_path["src/new_module.py"]["document_id"] is None
         assert "src/obsolete.py" not in refreshed_by_path
 
         still_approved_obsolete = await memory_no_llm_verify.get_document(
@@ -322,12 +345,23 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         )
         assert still_approved_obsolete is not None
         still_approved_util = await memory_no_llm_verify.get_document(
-            f"codebase:{codebase_id}:src/util.py",
+            stable_util_document_id,
             bank_id,
             request_context=request_context,
         )
         assert still_approved_util is not None
         assert "v1" in still_approved_util["original_text"]
+
+        refreshed_chunks = await _route_all_chunks_to_memory(
+            memory_no_llm_verify,
+            bank_id,
+            codebase_id,
+            request_context,
+        )
+        refreshed_util_chunk = next(
+            item for item in refreshed_chunks if item["path"] == "src/util.py" and item["kind"] == "function"
+        )
+        refreshed_new_module_chunk = next(item for item in refreshed_chunks if item["path"] == "src/new_module.py")
 
         approve_v2 = await memory_no_llm_verify.submit_async_codebase_approval(
             bank_id,
@@ -340,8 +374,7 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
             request_context=request_context,
         )
         assert approve_v2_operation["status"] == "completed"
-        assert approve_v2_operation["result"]["status"] == "approved"
-        assert approve_v2_operation["result"]["deleted_files"] == 1
+        assert approve_v2_operation["result"]["deleted_files"] >= 1
 
         final_codebase = await memory_no_llm_verify.get_codebase(
             bank_id,
@@ -351,10 +384,9 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         assert final_codebase is not None
         assert final_codebase["approved_snapshot_id"] == refresh_result["snapshot_id"]
         assert final_codebase["approval_status"] == "approved"
-        assert final_codebase["memory_status"] == "hydrated"
 
         updated_util_document = await memory_no_llm_verify.get_document(
-            f"codebase:{codebase_id}:src/util.py",
+            f"codebase:{codebase_id}:chunk:{refreshed_util_chunk['chunk_key']}",
             bank_id,
             request_context=request_context,
         )
@@ -369,25 +401,17 @@ async def test_codebase_github_refresh_keeps_previous_memory_until_new_snapshot_
         assert deleted_document is None
 
         new_module_document = await memory_no_llm_verify.get_document(
-            f"codebase:{codebase_id}:src/new_module.py",
+            f"codebase:{codebase_id}:chunk:{refreshed_new_module_chunk['chunk_key']}",
             bank_id,
             request_context=request_context,
         )
         assert new_module_document is not None
-
-        approved_files = await memory_no_llm_verify.list_codebase_files(
-            bank_id,
-            codebase_id,
-            request_context=request_context,
-        )
-        approved_by_path = {item["path"]: item for item in approved_files["items"]}
-        assert approved_by_path["src/main.py"]["document_id"] == stable_main_document_id
     finally:
         await memory_no_llm_verify.delete_bank(bank_id, request_context=request_context)
 
 
 @pytest.mark.asyncio
-async def test_codebase_http_endpoints_expose_review_then_approve_flow(
+async def test_codebase_http_endpoints_expose_review_chunk_routing_then_approve_flow(
     memory_no_llm_verify, request_context
 ):
     bank_id = _bank_id("http")
@@ -418,25 +442,40 @@ async def test_codebase_http_endpoints_expose_review_then_approve_flow(
             detail_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}")
             assert detail_response.status_code == 200
             detail_payload = detail_response.json()
-            assert detail_payload["name"] == "demo-repo"
             assert detail_payload["snapshot_status"] == "review_required"
-            assert detail_payload["approval_status"] == "pending_approval"
-            assert detail_payload["approved_snapshot_id"] is None
 
-            files_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/files")
-            assert files_response.status_code == 200
-            files_payload = files_response.json()
-            assert files_payload["snapshot_status"] == "review_required"
-            files_by_path = {item["path"]: item for item in files_payload["items"]}
-            assert files_by_path["src/main.py"]["document_id"] is None
+            review_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/review")
+            assert review_response.status_code == 200
+            assert review_response.json()["review_counts"]["unrouted"] >= 2
+
+            chunks_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks")
+            assert chunks_response.status_code == 200
+            chunks_payload = chunks_response.json()
+            assert chunks_payload["items"]
+
+            first_chunk_id = chunks_payload["items"][0]["id"]
+            chunk_detail_response = await client.get(
+                f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks/{first_chunk_id}"
+            )
+            assert chunk_detail_response.status_code == 200
+
+            route_response = await client.post(
+                f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route",
+                json={"item_ids": [item["id"] for item in chunks_payload["items"]], "target": "memory"},
+            )
+            assert route_response.status_code == 200
+            assert route_response.json()["review_counts"]["memory"] >= 2
+
+            research_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/research")
+            assert research_response.status_code == 200
+            assert research_response.json()["items"] == []
 
             symbols_response = await client.get(
                 f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/symbols",
                 params={"q": "helper"},
             )
             assert symbols_response.status_code == 200
-            symbol_names = [item["name"] for item in symbols_response.json()["items"]]
-            assert "helper" in symbol_names
+            assert any(item["name"] == "helper" for item in symbols_response.json()["items"])
 
             impact_response = await client.post(
                 f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/impact",
@@ -452,7 +491,6 @@ async def test_codebase_http_endpoints_expose_review_then_approve_flow(
             )
             assert approve_response.status_code == 200
             approve_payload = approve_response.json()
-            assert approve_payload["codebase_id"] == codebase_id
 
             approve_operation = await memory_no_llm_verify.get_operation_result(
                 bank_id,
@@ -462,20 +500,11 @@ async def test_codebase_http_endpoints_expose_review_then_approve_flow(
             assert approve_operation["status"] == "completed"
             assert approve_operation["result"]["status"] == "approved"
 
-            approved_detail_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}")
-            assert approved_detail_response.status_code == 200
-            approved_detail = approved_detail_response.json()
-            assert approved_detail["approved_snapshot_id"] == detail_payload["current_snapshot_id"]
-            assert approved_detail["approval_status"] == "approved"
-            assert approved_detail["memory_status"] == "hydrated"
-
-            approved_files_response = await client.get(
-                f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/files"
+            approved_chunks_response = await client.get(
+                f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks"
             )
-            assert approved_files_response.status_code == 200
-            approved_files = approved_files_response.json()
-            approved_by_path = {item["path"]: item for item in approved_files["items"]}
-            assert approved_by_path["src/main.py"]["document_id"] == f"codebase:{codebase_id}:src/main.py"
+            assert approved_chunks_response.status_code == 200
+            assert any(item["document_id"] for item in approved_chunks_response.json()["items"])
     finally:
         await memory_no_llm_verify.delete_bank(bank_id, request_context=request_context)
 

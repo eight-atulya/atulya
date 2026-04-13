@@ -535,10 +535,18 @@ export interface OperationResult extends OperationStatus {
 export interface CodebaseSourceConfig {
   owner?: string | null;
   repo?: string | null;
+  repo_url?: string | null;
   ref?: string | null;
   root_path?: string | null;
   include_globs: string[];
   exclude_globs: string[];
+}
+
+export interface CodebaseReviewCounts {
+  unrouted: number;
+  memory: number;
+  research: number;
+  dismissed: number;
 }
 
 export interface CodebaseSnapshotStats {
@@ -553,6 +561,11 @@ export interface CodebaseSnapshotStats {
   changed_files: number;
   unchanged_files: number;
   deleted_files: number;
+  chunk_count: number;
+  cluster_count: number;
+  related_chunk_count: number;
+  parse_coverage: number;
+  review_counts: CodebaseReviewCounts;
   error?: string | null;
 }
 
@@ -573,6 +586,10 @@ export interface CodebaseSummary {
   approval_status?: string | null;
   memory_status?: string | null;
   stats: CodebaseSnapshotStats;
+  review_counts: CodebaseReviewCounts;
+  cluster_count: number;
+  related_chunk_count: number;
+  parse_coverage: number;
   created_at: string | null;
   updated_at: string | null;
   snapshot_created_at: string | null;
@@ -617,6 +634,7 @@ export interface CodebaseFileItem {
   status: string;
   change_kind: string;
   reason: string | null;
+  chunk_count: number;
 }
 
 export interface CodebaseFilesResult {
@@ -638,12 +656,93 @@ export interface CodebaseSymbolMatch {
   start_line: number;
   end_line: number;
   match_mode?: string | null;
+  chunk_ids: string[];
 }
 
 export interface CodebaseSymbolsResult {
   codebase_id: string;
   snapshot_id: string | null;
   items: CodebaseSymbolMatch[];
+}
+
+export interface CodebaseReviewSummary {
+  codebase_id: string;
+  snapshot_id: string | null;
+  snapshot_status: string | null;
+  approval_status: string | null;
+  memory_status: string | null;
+  review_counts: CodebaseReviewCounts;
+  cluster_count: number;
+  related_chunk_count: number;
+  parse_coverage: number;
+  changed_summary: {
+    added_files: number;
+    changed_files: number;
+    deleted_files: number;
+  };
+  diagnostics: Array<{
+    reason: string;
+    count: number;
+  }>;
+}
+
+export interface CodebaseChunkItem {
+  id: string;
+  chunk_key: string;
+  path: string;
+  language: string | null;
+  kind: string;
+  label: string;
+  preview_text: string;
+  start_line: number;
+  end_line: number;
+  container: string | null;
+  parent_symbol: string | null;
+  parent_fq_name: string | null;
+  parse_confidence: number;
+  cluster_id: string | null;
+  cluster_label: string | null;
+  route_target: string;
+  route_source: string | null;
+  change_kind: string;
+  related_count: number;
+  document_id: string | null;
+}
+
+export interface CodebaseChunksResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  items: CodebaseChunkItem[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+export interface CodebaseChunkRelatedItem {
+  id: string;
+  label: string;
+  path: string;
+  kind: string;
+  start_line: number;
+  end_line: number;
+  cluster_label: string | null;
+  score: number;
+}
+
+export interface CodebaseChunkDetail extends CodebaseChunkItem {
+  snapshot_id: string;
+  content_text: string;
+  related_chunks: CodebaseChunkRelatedItem[];
+  symbols: CodebaseSymbolMatch[];
+  impact_edges: CodebaseImpactEdge[];
+  cluster_members: CodebaseChunkRelatedItem[];
+}
+
+export interface CodebaseRouteResult {
+  codebase_id: string;
+  snapshot_id: string;
+  updated_count: number;
+  target: string;
+  review_counts: CodebaseReviewCounts;
 }
 
 export interface CodebaseImpactSeed {
@@ -659,6 +758,7 @@ export interface CodebaseImpactFile {
   document_id: string | null;
   status: string;
   change_kind: string;
+  chunk_count: number;
   depth: number;
 }
 
@@ -1993,8 +2093,8 @@ export class ControlPlaneClient {
     params: {
       owner?: string;
       repo?: string;
-      ref?: string;
       repo_url?: string;
+      ref?: string;
       root_path?: string;
       include_globs?: string[];
       exclude_globs?: string[];
@@ -2065,6 +2165,15 @@ export class ControlPlaneClient {
     });
   }
 
+  async getCodebaseReview(bankId: string, codebaseId: string) {
+    return this.fetchApi<CodebaseReviewSummary>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/review`,
+      {
+        cache: "no-store" as RequestCache,
+      }
+    );
+  }
+
   async listCodebaseFiles(
     bankId: string,
     codebaseId: string,
@@ -2108,6 +2217,82 @@ export class ControlPlaneClient {
     if (params.limit) queryParams.set("limit", String(params.limit));
     return this.fetchApi<CodebaseSymbolsResult>(
       `/api/banks/${bankId}/codebases/${codebaseId}/symbols?${queryParams.toString()}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async listCodebaseChunks(
+    bankId: string,
+    codebaseId: string,
+    params?: {
+      path_prefix?: string;
+      language?: string;
+      cluster_id?: string;
+      route_target?: string;
+      changed_only?: boolean;
+      kind?: string;
+      q?: string;
+      limit?: number;
+      cursor?: string;
+      snapshot_id?: string;
+    }
+  ) {
+    const queryParams = new URLSearchParams();
+    if (params?.path_prefix) queryParams.set("path_prefix", params.path_prefix);
+    if (params?.language) queryParams.set("language", params.language);
+    if (params?.cluster_id) queryParams.set("cluster_id", params.cluster_id);
+    if (params?.route_target) queryParams.set("route_target", params.route_target);
+    if (params?.changed_only) queryParams.set("changed_only", "true");
+    if (params?.kind) queryParams.set("kind", params.kind);
+    if (params?.q) queryParams.set("q", params.q);
+    if (params?.limit) queryParams.set("limit", String(params.limit));
+    if (params?.cursor) queryParams.set("cursor", params.cursor);
+    if (params?.snapshot_id) queryParams.set("snapshot_id", params.snapshot_id);
+    const suffix = queryParams.toString() ? `?${queryParams.toString()}` : "";
+    return this.fetchApi<CodebaseChunksResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/chunks${suffix}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async getCodebaseChunkDetail(bankId: string, codebaseId: string, chunkId: string) {
+    return this.fetchApi<CodebaseChunkDetail>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/chunks/${chunkId}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async routeCodebaseReviewItems(
+    bankId: string,
+    codebaseId: string,
+    params: {
+      item_ids: string[];
+      target: "memory" | "research" | "dismissed" | "unrouted";
+    }
+  ) {
+    return this.fetchApi<CodebaseRouteResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/review/route`,
+      {
+        method: "POST",
+        body: JSON.stringify(params),
+      }
+    );
+  }
+
+  async listCodebaseResearchQueue(
+    bankId: string,
+    codebaseId: string,
+    params?: {
+      limit?: number;
+      cursor?: string;
+    }
+  ) {
+    const queryParams = new URLSearchParams();
+    if (params?.limit) queryParams.set("limit", String(params.limit));
+    if (params?.cursor) queryParams.set("cursor", params.cursor);
+    const suffix = queryParams.toString() ? `?${queryParams.toString()}` : "";
+    return this.fetchApi<CodebaseChunksResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/research${suffix}`,
       { cache: "no-store" as RequestCache }
     );
   }
