@@ -73,7 +73,7 @@ ensure_js_release_dependencies() {
     fi
 
     print_info "Installing JavaScript workspace dependencies for release..."
-    npm install --no-fund --no-audit
+    npm install --no-fund --no-audit --package-lock=false
 }
 
 # Check if version is provided
@@ -92,8 +92,6 @@ if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 print_info "Starting release process for version $VERSION"
-
-ensure_js_release_dependencies
 
 # Check if we're on main branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -119,6 +117,8 @@ if git rev-parse "v$VERSION" >/dev/null 2>&1; then
     print_error "Tag v$VERSION already exists"
     exit 1
 fi
+
+ensure_js_release_dependencies
 
 print_info "Updating version in all components..."
 
