@@ -4,14 +4,14 @@ build-backend = "hatchling.build"
 
 [project]
 name = "atulya-all"
-version = "0.8.1"
+version = "0.8.2"
 description = "Atulya: A living algorithm for machine intelligence (MI) - All-in-One Bundle"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "atulya-api>=0.8.1",
-    "atulya-client>=0.8.1",
-    "atulya-embed>=0.8.1",
+    "atulya-api>=0.8.2",
+    "atulya-client>=0.8.2",
+    "atulya-embed>=0.8.2",
 ]
 
 [tool.uv.sources]

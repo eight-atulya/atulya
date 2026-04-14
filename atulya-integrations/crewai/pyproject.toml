@@ -1,6 +1,6 @@
 [project]
 name = "atulya-crewai"
-version = "0.8.1"
+version = "0.8.2"
 description = "CrewAI memory integration via Atulya - persistent memory for AI agent crews"
 readme = "README.md"
 requires-python = ">=3.10"

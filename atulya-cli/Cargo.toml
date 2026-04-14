@@ -1,6 +1,6 @@
 [package]
 name = "atulya-cli"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2021"
 authors = ["Atulya Team"]
 description = "A beautiful CLI for Atulya — a living algorithm for machine intelligence (MI)."
