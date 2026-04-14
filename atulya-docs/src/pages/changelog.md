@@ -12,6 +12,12 @@ For full release details, see [GitHub Releases](https://github.com/eight-atulya/
 
 No unreleased entries yet.
 
+## [0.8.2](https://github.com/eight-atulya/atulya/releases/tag/v0.8.2)
+
+**Bug Fixes**
+
+- Fixed the LiteLLM and CrewAI Python integration package layout so released artifacts line up with the documented `atulya_litellm` and `atulya_crewai` import names.
+
 ## [0.8.1](https://github.com/eight-atulya/atulya/releases/tag/v0.8.1)
 
 **Features**

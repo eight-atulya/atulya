@@ -8,7 +8,7 @@ The script still assumed the `v0.8.x` line should contain exactly one Alembic mi
 
 ## Why it happened
 
-The release preflight encoded the starting point of the `0.8.x` migration line as if it were the permanent shape of the branch.
+The release preflight encoded the *starting point* of the `0.8.x` migration line as if it were the permanent shape of the branch.
 
 That caused two forms of drift:
 
@@ -17,7 +17,7 @@ That caused two forms of drift:
 
 ## The durable rule
 
-Patch-release preflight scripts for a live version line must validate the current head chain and the current schema outcome, not the original baseline snapshot alone.
+Patch-release preflight scripts for a live version line must validate the **current head chain** and the **current schema outcome**, not the original baseline snapshot alone.
 
 For `v0.8.x`, the correct checks are:
 
