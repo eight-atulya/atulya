@@ -373,9 +373,9 @@ rm -rf "$TYPESCRIPT_CLIENT_DIR/models"
 rm -rf "$TYPESCRIPT_CLIENT_DIR/services"
 rm -f "$TYPESCRIPT_CLIENT_DIR/index.ts"
 
-# Generate new client using @hey-api/openapi-ts
-# Use npm run generate to use the locally installed version (pinned in package.json)
-# instead of npx --yes which would fetch the latest version
+# Generate new client using the package-local wrapper. That wrapper invokes a
+# pinned openapi-ts release from an isolated temp prefix so generation remains
+# reproducible even when workspace node_modules differs across machines.
 echo "Generating from $OPENAPI_SPEC..."
 cd "$TYPESCRIPT_CLIENT_DIR"
 npm run generate

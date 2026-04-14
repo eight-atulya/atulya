@@ -7,7 +7,7 @@
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist",
-    "generate": "npx --yes @hey-api/openapi-ts@0.88.0",
+    "generate": "./scripts/generate-openapi-client.sh",
     "prepublishOnly": "npm run build",
     "test": "jest"
   },
