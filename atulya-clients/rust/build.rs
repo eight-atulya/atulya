@@ -126,9 +126,8 @@ fn convert_anyof_to_nullable(value: &mut serde_json::Value) {
 }
 
 fn main() {
-    // Get the OpenAPI spec path from atulya-docs/static (single source of truth)
     let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").unwrap());
-    let openapi_path = manifest_dir
+    let default_openapi_path = manifest_dir
         .parent()
         .unwrap()
         .parent()
@@ -136,6 +135,9 @@ fn main() {
         .join("atulya-docs")
         .join("static")
         .join("openapi.json");
+    let openapi_path = env::var("ATULYA_OPENAPI_SPEC_PATH")
+        .map(PathBuf::from)
+        .unwrap_or(default_openapi_path);
 
     // Tell Cargo to rebuild if the OpenAPI spec changes
     println!("cargo:rerun-if-changed={}", openapi_path.display());

@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PACKAGE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_ROOT="$(cd "$PACKAGE_DIR/../.." && pwd)"
-OPENAPI_SPEC="$PROJECT_ROOT/atulya-docs/static/openapi.json"
+OPENAPI_SPEC="${ATULYA_OPENAPI_SPEC_PATH:-$PROJECT_ROOT/atulya-docs/static/openapi.json}"
 OUTPUT_DIR="$PACKAGE_DIR/generated"
 OPENAPI_TS_VERSION="${OPENAPI_TS_VERSION:-0.88.0}"
 TEMP_PREFIX="$(mktemp -d)"

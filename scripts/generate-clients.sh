@@ -12,6 +12,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CLIENTS_DIR="$PROJECT_ROOT/atulya-clients"
 OPENAPI_SPEC="$PROJECT_ROOT/atulya-docs/static/openapi.json"
+CLIENT_OPENAPI_SPEC=""
 
 echo "=================================================="
 echo "Atulya API Client Generator"
@@ -76,7 +77,16 @@ run_openapi_generator() {
         return 0
     fi
 
-    "$OPENAPI_GENERATOR_BIN" generate "$@" -i "$OPENAPI_SPEC" -g "$generator"
+    "$OPENAPI_GENERATOR_BIN" generate "$@" -i "$CLIENT_OPENAPI_SPEC" -g "$generator"
+}
+
+prepare_client_openapi_spec() {
+    CLIENT_OPENAPI_SPEC="$(mktemp "${TMPDIR:-/tmp}/atulya-openapi-client-spec.XXXXXX.json")"
+    trap 'rm -f "$CLIENT_OPENAPI_SPEC"' EXIT
+
+    python3 "$SCRIPT_DIR/sanitize-openapi-for-clients.py" "$OPENAPI_SPEC" "$CLIENT_OPENAPI_SPEC"
+    export ATULYA_OPENAPI_SPEC_PATH="$CLIENT_OPENAPI_SPEC"
+    echo "✓ Client-generation spec prepared: $CLIENT_OPENAPI_SPEC"
 }
 
 # Check if OpenAPI spec exists
@@ -88,6 +98,7 @@ echo "✓ OpenAPI spec found"
 echo ""
 
 resolve_openapi_generator_backend
+prepare_client_openapi_spec
 echo ""
 
 # Generate Rust client
