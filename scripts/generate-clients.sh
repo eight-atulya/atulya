@@ -29,6 +29,7 @@ echo ""
 
 OPENAPI_GENERATOR_MODE=""
 OPENAPI_GENERATOR_BIN=""
+STRICT_CLIENT_GENERATION="${ATULYA_GENERATE_CLIENTS_STRICT:-0}"
 
 resolve_openapi_generator_backend() {
     if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
@@ -390,6 +391,11 @@ echo "=================================================="
 GO_CLIENT_DIR="$CLIENTS_DIR/go"
 
 if ! command -v go &> /dev/null; then
+    if [ "$STRICT_CLIENT_GENERATION" = "1" ]; then
+        echo "❌ Error: Go not found. Release-mode client generation requires Go."
+        echo "   Install Go 1.25+ from https://go.dev/dl/"
+        exit 1
+    fi
     echo "⚠ Go not found, skipping Go client generation"
     echo "  Install Go 1.25+ from https://go.dev/dl/"
 else

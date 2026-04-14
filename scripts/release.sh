@@ -265,7 +265,7 @@ fi
 
 # Regenerate OpenAPI spec and clients with new version
 print_info "Regenerating OpenAPI spec and client SDKs..."
-if ./scripts/generate-openapi.sh && ./scripts/generate-clients.sh; then
+if ./scripts/generate-openapi.sh && ATULYA_GENERATE_CLIENTS_STRICT=1 ./scripts/generate-clients.sh; then
     print_info "✓ OpenAPI spec and clients regenerated"
 else
     print_error "Failed to regenerate clients"
