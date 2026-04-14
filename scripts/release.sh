@@ -66,6 +66,16 @@ update_integration_package_versions() {
     fi
 }
 
+ensure_js_release_dependencies() {
+    if [ -d "node_modules/@docusaurus/core" ]; then
+        print_info "JavaScript workspace dependencies already available"
+        return 0
+    fi
+
+    print_info "Installing JavaScript workspace dependencies for release..."
+    npm install --no-fund --no-audit
+}
+
 # Check if version is provided
 if [ -z "$1" ]; then
     print_error "Usage: $0 <version>"
@@ -82,6 +92,8 @@ if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 print_info "Starting release process for version $VERSION"
+
+ensure_js_release_dependencies
 
 # Check if we're on main branch
 CURRENT_BRANCH=$(git branch --show-current)
