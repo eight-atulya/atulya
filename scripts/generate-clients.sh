@@ -81,7 +81,7 @@ run_openapi_generator() {
 }
 
 prepare_client_openapi_spec() {
-    CLIENT_OPENAPI_SPEC="$(mktemp "${TMPDIR:-/tmp}/atulya-openapi-client-spec.XXXXXX.json")"
+    CLIENT_OPENAPI_SPEC="$(mktemp -t atulya-openapi-client-spec)"
     trap 'rm -f "$CLIENT_OPENAPI_SPEC"' EXIT
 
     python3 "$SCRIPT_DIR/sanitize-openapi-for-clients.py" "$OPENAPI_SPEC" "$CLIENT_OPENAPI_SPEC"
