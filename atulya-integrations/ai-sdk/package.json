@@ -1,6 +1,6 @@
 {
   "name": "@eight-atulya/atulya-ai-sdk",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Atulya memory integration for Vercel AI SDK - Give your AI agents persistent, human-like memory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

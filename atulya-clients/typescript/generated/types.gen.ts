@@ -11,13 +11,13 @@ export type ClientOptions = {
  */
 export type AddBackgroundRequest = {
     /**
-     * Content
+     * AddBackgroundRequestContent
      *
      * New background information to add or merge
      */
     content: string;
     /**
-     * Update Disposition
+     * AddBackgroundRequestUpdateDisposition
      *
      * Deprecated - disposition is no longer auto-inferred from mission
      */
@@ -31,11 +31,11 @@ export type AddBackgroundRequest = {
  */
 export type AsyncOperationSubmitResponse = {
     /**
-     * Operation Id
+     * AsyncOperationSubmitResponseOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * AsyncOperationSubmitResponseStatus
      */
     status: string;
 };
@@ -47,11 +47,11 @@ export type AsyncOperationSubmitResponse = {
  */
 export type BackgroundResponse = {
     /**
-     * Mission
+     * BackgroundResponseMission
      */
     mission: string;
     /**
-     * Background
+     * BackgroundResponseBackground
      *
      * Deprecated: same as mission
      */
@@ -66,13 +66,13 @@ export type BackgroundResponse = {
  */
 export type BankConfigResponse = {
     /**
-     * Bank Id
+     * BankConfigResponseBankId
      *
      * Bank identifier
      */
     bank_id: string;
     /**
-     * Config
+     * BankConfigResponseConfig
      *
      * Fully resolved configuration with all hierarchical overrides applied (Python field names)
      */
@@ -80,7 +80,7 @@ export type BankConfigResponse = {
         [key: string]: unknown;
     };
     /**
-     * Overrides
+     * BankConfigResponseOverrides
      *
      * Bank-specific configuration overrides only (Python field names)
      */
@@ -96,7 +96,7 @@ export type BankConfigResponse = {
  */
 export type BankConfigUpdate = {
     /**
-     * Updates
+     * BankConfigUpdateUpdates
      *
      * Configuration overrides. Keys can be in Python field format (llm_provider) or environment variable format (ATULYA_API_LLM_PROVIDER). Only hierarchical fields can be overridden per-bank.
      */
@@ -112,24 +112,24 @@ export type BankConfigUpdate = {
  */
 export type BankListItem = {
     /**
-     * Bank Id
+     * BankListItemBankId
      */
     bank_id: string;
     /**
-     * Name
+     * BankListItemName
      */
     name?: string | null;
     disposition: DispositionTraits;
     /**
-     * Mission
+     * BankListItemMission
      */
     mission?: string | null;
     /**
-     * Created At
+     * BankListItemCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * BankListItemUpdatedAt
      */
     updated_at?: string | null;
 };
@@ -141,7 +141,7 @@ export type BankListItem = {
  */
 export type BankListResponse = {
     /**
-     * Banks
+     * BankListResponseBanks
      */
     banks: Array<BankListItem>;
 };
@@ -153,22 +153,22 @@ export type BankListResponse = {
  */
 export type BankProfileResponse = {
     /**
-     * Bank Id
+     * BankProfileResponseBankId
      */
     bank_id: string;
     /**
-     * Name
+     * BankProfileResponseName
      */
     name: string;
     disposition: DispositionTraits;
     /**
-     * Mission
+     * BankProfileResponseMission
      *
      * The agent's mission - who they are and what they're trying to accomplish
      */
     mission: string;
     /**
-     * Background
+     * BankProfileResponseBackground
      *
      * Deprecated: use mission instead
      */
@@ -182,41 +182,41 @@ export type BankProfileResponse = {
  */
 export type BankStatsResponse = {
     /**
-     * Bank Id
+     * BankStatsResponseBankId
      */
     bank_id: string;
     /**
-     * Total Nodes
+     * BankStatsResponseTotalNodes
      */
     total_nodes: number;
     /**
-     * Total Links
+     * BankStatsResponseTotalLinks
      */
     total_links: number;
     /**
-     * Total Documents
+     * BankStatsResponseTotalDocuments
      */
     total_documents: number;
     /**
-     * Nodes By Fact Type
+     * BankStatsResponseNodesByFactType
      */
     nodes_by_fact_type: {
         [key: string]: number;
     };
     /**
-     * Links By Link Type
+     * BankStatsResponseLinksByLinkType
      */
     links_by_link_type: {
         [key: string]: number;
     };
     /**
-     * Links By Fact Type
+     * BankStatsResponseLinksByFactType
      */
     links_by_fact_type: {
         [key: string]: number;
     };
     /**
-     * Links Breakdown
+     * BankStatsResponseLinksBreakdown
      */
     links_breakdown: {
         [key: string]: {
@@ -224,27 +224,27 @@ export type BankStatsResponse = {
         };
     };
     /**
-     * Pending Operations
+     * BankStatsResponsePendingOperations
      */
     pending_operations: number;
     /**
-     * Failed Operations
+     * BankStatsResponseFailedOperations
      */
     failed_operations: number;
     /**
-     * Last Consolidated At
+     * BankStatsResponseLastConsolidatedAt
      *
      * When consolidation last ran (ISO format)
      */
     last_consolidated_at?: string | null;
     /**
-     * Pending Consolidation
+     * BankStatsResponsePendingConsolidation
      *
      * Number of memories not yet processed into observations
      */
     pending_consolidation?: number;
     /**
-     * Total Observations
+     * BankStatsResponseTotalObservations
      *
      * Total number of observations
      */
@@ -256,13 +256,13 @@ export type BankStatsResponse = {
  */
 export type BodyFileRetain = {
     /**
-     * Files
+     * BodyFileRetainFiles
      *
      * Files to upload and convert
      */
     files: Array<Blob | File>;
     /**
-     * Request
+     * BodyFileRetainRequest
      *
      * JSON string with FileRetainRequest model
      */
@@ -274,7 +274,7 @@ export type BodyFileRetain = {
  */
 export type BodyImportBrainSnapshot = {
     /**
-     * File
+     * BodyImportBrainSnapshotFile
      *
      * Brain snapshot payload
      */
@@ -286,13 +286,13 @@ export type BodyImportBrainSnapshot = {
  */
 export type BodyImportCodebaseZip = {
     /**
-     * Archive
+     * BodyImportCodebaseZipArchive
      *
      * Repository ZIP archive
      */
     archive: Blob | File;
     /**
-     * Request
+     * BodyImportCodebaseZipRequest
      *
      * JSON string with CodebaseImportZipRequest model
      */
@@ -304,7 +304,7 @@ export type BodyImportCodebaseZip = {
  */
 export type BodyValidateBrainImport = {
     /**
-     * File
+     * BodyValidateBrainImportFile
      *
      * Brain snapshot payload
      */
@@ -316,19 +316,19 @@ export type BodyValidateBrainImport = {
  */
 export type BrainImportResponse = {
     /**
-     * Bank Id
+     * BrainImportResponseBankId
      */
     bank_id: string;
     /**
-     * File Path
+     * BrainImportResponseFilePath
      */
     file_path: string;
     /**
-     * Size Bytes
+     * BrainImportResponseSizeBytes
      */
     size_bytes: number;
     /**
-     * Format Version
+     * BrainImportResponseFormatVersion
      */
     format_version?: number | null;
 };
@@ -338,15 +338,15 @@ export type BrainImportResponse = {
  */
 export type BrainImportValidationResponse = {
     /**
-     * Valid
+     * BrainImportValidationResponseValid
      */
     valid: boolean;
     /**
-     * Version
+     * BrainImportValidationResponseVersion
      */
     version?: number | null;
     /**
-     * Reason
+     * BrainImportValidationResponseReason
      */
     reason?: string | null;
 };
@@ -356,37 +356,37 @@ export type BrainImportValidationResponse = {
  */
 export type BrainInfluenceResponse = {
     /**
-     * Bank Id
+     * BrainInfluenceResponseBankId
      */
     bank_id: string;
     /**
-     * Window Days
+     * BrainInfluenceResponseWindowDays
      */
     window_days: number;
     /**
-     * Entity Type
+     * BrainInfluenceResponseEntityType
      */
     entity_type: string;
     /**
-     * Leaderboard
+     * BrainInfluenceResponseLeaderboard
      */
     leaderboard: Array<InfluenceRow>;
     /**
-     * Heatmap
+     * BrainInfluenceResponseHeatmap
      */
     heatmap: Array<InfluenceHeatmapPoint>;
     /**
-     * Trend
+     * BrainInfluenceResponseTrend
      */
     trend: Array<InfluenceTrendPoint>;
     /**
-     * Anomalies
+     * BrainInfluenceResponseAnomalies
      */
     anomalies: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Summary
+     * BrainInfluenceResponseSummary
      */
     summary: {
         [key: string]: unknown;
@@ -398,33 +398,33 @@ export type BrainInfluenceResponse = {
  */
 export type BrainLearnRequest = {
     /**
-     * Remote Endpoint
+     * BrainLearnRequestRemoteEndpoint
      *
      * URL of the remote Atulya API (e.g. http://host:8888)
      */
     remote_endpoint: string;
     /**
-     * Remote Bank Id
+     * BrainLearnRequestRemoteBankId
      *
      * Bank ID on the remote instance to learn from
      */
     remote_bank_id: string;
     /**
-     * Remote Api Key
+     * BrainLearnRequestRemoteApiKey
      *
      * Optional API key for the remote instance
      */
     remote_api_key?: string;
     /**
-     * Learning Type
+     * BrainLearnRequestLearningType
      */
     learning_type?: 'auto' | 'distilled' | 'structured' | 'raw_mirror';
     /**
-     * Mode
+     * BrainLearnRequestMode
      */
     mode?: 'incremental' | 'full_copy';
     /**
-     * Horizon Hours
+     * BrainLearnRequestHorizonHours
      */
     horizon_hours?: number;
 };
@@ -434,11 +434,11 @@ export type BrainLearnRequest = {
  */
 export type BrainLearnResponse = {
     /**
-     * Operation Id
+     * BrainLearnResponseOperationId
      */
     operation_id: string;
     /**
-     * Deduplicated
+     * BrainLearnResponseDeduplicated
      */
     deduplicated?: boolean;
 };
@@ -448,63 +448,63 @@ export type BrainLearnResponse = {
  */
 export type BrainRuntimeStatusResponse = {
     /**
-     * Enabled
+     * BrainRuntimeStatusResponseEnabled
      */
     enabled: boolean;
     /**
-     * Circuit Open
+     * BrainRuntimeStatusResponseCircuitOpen
      */
     circuit_open: boolean;
     /**
-     * Failure Count
+     * BrainRuntimeStatusResponseFailureCount
      */
     failure_count: number;
     /**
-     * Bank Id
+     * BrainRuntimeStatusResponseBankId
      */
     bank_id: string;
     /**
-     * File Path
+     * BrainRuntimeStatusResponseFilePath
      */
     file_path: string;
     /**
-     * Exists
+     * BrainRuntimeStatusResponseExists
      */
     exists: boolean;
     /**
-     * Size Bytes
+     * BrainRuntimeStatusResponseSizeBytes
      */
     size_bytes: number;
     /**
-     * Last Modified At
+     * BrainRuntimeStatusResponseLastModifiedAt
      */
     last_modified_at?: string | null;
     /**
-     * Source Snapshot Id
+     * BrainRuntimeStatusResponseSourceSnapshotId
      */
     source_snapshot_id?: string | null;
     /**
-     * Generated At
+     * BrainRuntimeStatusResponseGeneratedAt
      */
     generated_at?: string | null;
     /**
-     * Native Library Loaded
+     * BrainRuntimeStatusResponseNativeLibraryLoaded
      */
     native_library_loaded: boolean;
     /**
-     * Format Version
+     * BrainRuntimeStatusResponseFormatVersion
      */
     format_version?: number | null;
     /**
-     * Model Signature
+     * BrainRuntimeStatusResponseModelSignature
      */
     model_signature?: string | null;
     /**
-     * Compatibility Reason
+     * BrainRuntimeStatusResponseCompatibilityReason
      */
     compatibility_reason?: string | null;
     /**
-     * Metrics
+     * BrainRuntimeStatusResponseMetrics
      */
     metrics?: {
         [key: string]: number;
@@ -525,15 +525,15 @@ export type Budget = 'low' | 'mid' | 'high';
  */
 export type CancelOperationResponse = {
     /**
-     * Success
+     * CancelOperationResponseSuccess
      */
     success: boolean;
     /**
-     * Message
+     * CancelOperationResponseMessage
      */
     message: string;
     /**
-     * Operation Id
+     * CancelOperationResponseOperationId
      */
     operation_id: string;
 };
@@ -545,23 +545,23 @@ export type CancelOperationResponse = {
  */
 export type ChildOperationStatus = {
     /**
-     * Operation Id
+     * ChildOperationStatusOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * ChildOperationStatusStatus
      */
     status: string;
     /**
-     * Sub Batch Index
+     * ChildOperationStatusSubBatchIndex
      */
     sub_batch_index?: number | null;
     /**
-     * Items Count
+     * ChildOperationStatusItemsCount
      */
     items_count?: number | null;
     /**
-     * Error Message
+     * ChildOperationStatusErrorMessage
      */
     error_message?: string | null;
 };
@@ -573,19 +573,19 @@ export type ChildOperationStatus = {
  */
 export type ChunkData = {
     /**
-     * Id
+     * ChunkDataId
      */
     id: string;
     /**
-     * Text
+     * ChunkDataText
      */
     text: string;
     /**
-     * Chunk Index
+     * ChunkDataChunkIndex
      */
     chunk_index: number;
     /**
-     * Truncated
+     * ChunkDataTruncated
      *
      * Whether the chunk text was truncated due to token limits
      */
@@ -599,7 +599,7 @@ export type ChunkData = {
  */
 export type ChunkIncludeOptions = {
     /**
-     * Max Tokens
+     * ChunkIncludeOptionsMaxTokens
      *
      * Maximum tokens for chunks (chunks may be truncated)
      */
@@ -613,27 +613,27 @@ export type ChunkIncludeOptions = {
  */
 export type ChunkResponse = {
     /**
-     * Chunk Id
+     * ChunkResponseChunkId
      */
     chunk_id: string;
     /**
-     * Document Id
+     * ChunkResponseDocumentId
      */
     document_id: string;
     /**
-     * Bank Id
+     * ChunkResponseBankId
      */
     bank_id: string;
     /**
-     * Chunk Index
+     * ChunkResponseChunkIndex
      */
     chunk_index: number;
     /**
-     * Chunk Text
+     * ChunkResponseChunkText
      */
     chunk_text: string;
     /**
-     * Created At
+     * ChunkResponseCreatedAt
      */
     created_at: string;
 };
@@ -645,7 +645,7 @@ export type ChunkResponse = {
  */
 export type ClearMemoryObservationsResponse = {
     /**
-     * Deleted Count
+     * ClearMemoryObservationsResponseDeletedCount
      */
     deleted_count: number;
 };
@@ -657,11 +657,11 @@ export type ClearMemoryObservationsResponse = {
  */
 export type CodebaseApproveRequest = {
     /**
-     * Snapshot Id
+     * CodebaseApproveRequestSnapshotId
      */
     snapshot_id?: string | null;
     /**
-     * Memory Ingest Mode
+     * CodebaseApproveRequestMemoryIngestMode
      */
     memory_ingest_mode?: 'direct' | 'retain';
 };
@@ -673,23 +673,23 @@ export type CodebaseApproveRequest = {
  */
 export type CodebaseApproveResponse = {
     /**
-     * Codebase Id
+     * CodebaseApproveResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseApproveResponseSnapshotId
      */
     snapshot_id: string;
     /**
-     * Operation Id
+     * CodebaseApproveResponseOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * CodebaseApproveResponseStatus
      */
     status: string;
     /**
-     * Memory Ingest Mode
+     * CodebaseApproveResponseMemoryIngestMode
      */
     memory_ingest_mode?: 'direct' | 'retain';
 };
@@ -701,107 +701,107 @@ export type CodebaseApproveResponse = {
  */
 export type CodebaseChunkDetailResponse = {
     /**
-     * Id
+     * CodebaseChunkDetailResponseId
      */
     id: string;
     /**
-     * Chunk Key
+     * CodebaseChunkDetailResponseChunkKey
      */
     chunk_key: string;
     /**
-     * Path
+     * CodebaseChunkDetailResponsePath
      */
     path: string;
     /**
-     * Language
+     * CodebaseChunkDetailResponseLanguage
      */
     language?: string | null;
     /**
-     * Kind
+     * CodebaseChunkDetailResponseKind
      */
     kind: string;
     /**
-     * Label
+     * CodebaseChunkDetailResponseLabel
      */
     label: string;
     /**
-     * Preview Text
+     * CodebaseChunkDetailResponsePreviewText
      */
     preview_text: string;
     /**
-     * Start Line
+     * CodebaseChunkDetailResponseStartLine
      */
     start_line: number;
     /**
-     * End Line
+     * CodebaseChunkDetailResponseEndLine
      */
     end_line: number;
     /**
-     * Container
+     * CodebaseChunkDetailResponseContainer
      */
     container?: string | null;
     /**
-     * Parent Symbol
+     * CodebaseChunkDetailResponseParentSymbol
      */
     parent_symbol?: string | null;
     /**
-     * Parent Fq Name
+     * CodebaseChunkDetailResponseParentFqName
      */
     parent_fq_name?: string | null;
     /**
-     * Parse Confidence
+     * CodebaseChunkDetailResponseParseConfidence
      */
     parse_confidence?: number;
     /**
-     * Cluster Id
+     * CodebaseChunkDetailResponseClusterId
      */
     cluster_id?: string | null;
     /**
-     * Cluster Label
+     * CodebaseChunkDetailResponseClusterLabel
      */
     cluster_label?: string | null;
     /**
-     * Route Target
+     * CodebaseChunkDetailResponseRouteTarget
      */
     route_target: string;
     /**
-     * Route Source
+     * CodebaseChunkDetailResponseRouteSource
      */
     route_source?: string | null;
     /**
-     * Change Kind
+     * CodebaseChunkDetailResponseChangeKind
      */
     change_kind: string;
     /**
-     * Related Count
+     * CodebaseChunkDetailResponseRelatedCount
      */
     related_count?: number;
     /**
-     * Document Id
+     * CodebaseChunkDetailResponseDocumentId
      */
     document_id?: string | null;
     /**
-     * Snapshot Id
+     * CodebaseChunkDetailResponseSnapshotId
      */
     snapshot_id: string;
     /**
-     * Content Text
+     * CodebaseChunkDetailResponseContentText
      */
     content_text: string;
     /**
-     * Related Chunks
+     * CodebaseChunkDetailResponseRelatedChunks
      */
     related_chunks?: Array<CodebaseChunkRelatedItemResponse>;
     /**
-     * Symbols
+     * CodebaseChunkDetailResponseSymbols
      */
     symbols?: Array<CodebaseSymbolMatchResponse>;
     /**
-     * Impact Edges
+     * CodebaseChunkDetailResponseImpactEdges
      */
     impact_edges?: Array<CodebaseImpactEdgeResponse>;
     /**
-     * Cluster Members
+     * CodebaseChunkDetailResponseClusterMembers
      */
     cluster_members?: Array<CodebaseChunkRelatedItemResponse>;
 };
@@ -813,83 +813,83 @@ export type CodebaseChunkDetailResponse = {
  */
 export type CodebaseChunkItemResponse = {
     /**
-     * Id
+     * CodebaseChunkItemResponseId
      */
     id: string;
     /**
-     * Chunk Key
+     * CodebaseChunkItemResponseChunkKey
      */
     chunk_key: string;
     /**
-     * Path
+     * CodebaseChunkItemResponsePath
      */
     path: string;
     /**
-     * Language
+     * CodebaseChunkItemResponseLanguage
      */
     language?: string | null;
     /**
-     * Kind
+     * CodebaseChunkItemResponseKind
      */
     kind: string;
     /**
-     * Label
+     * CodebaseChunkItemResponseLabel
      */
     label: string;
     /**
-     * Preview Text
+     * CodebaseChunkItemResponsePreviewText
      */
     preview_text: string;
     /**
-     * Start Line
+     * CodebaseChunkItemResponseStartLine
      */
     start_line: number;
     /**
-     * End Line
+     * CodebaseChunkItemResponseEndLine
      */
     end_line: number;
     /**
-     * Container
+     * CodebaseChunkItemResponseContainer
      */
     container?: string | null;
     /**
-     * Parent Symbol
+     * CodebaseChunkItemResponseParentSymbol
      */
     parent_symbol?: string | null;
     /**
-     * Parent Fq Name
+     * CodebaseChunkItemResponseParentFqName
      */
     parent_fq_name?: string | null;
     /**
-     * Parse Confidence
+     * CodebaseChunkItemResponseParseConfidence
      */
     parse_confidence?: number;
     /**
-     * Cluster Id
+     * CodebaseChunkItemResponseClusterId
      */
     cluster_id?: string | null;
     /**
-     * Cluster Label
+     * CodebaseChunkItemResponseClusterLabel
      */
     cluster_label?: string | null;
     /**
-     * Route Target
+     * CodebaseChunkItemResponseRouteTarget
      */
     route_target: string;
     /**
-     * Route Source
+     * CodebaseChunkItemResponseRouteSource
      */
     route_source?: string | null;
     /**
-     * Change Kind
+     * CodebaseChunkItemResponseChangeKind
      */
     change_kind: string;
     /**
-     * Related Count
+     * CodebaseChunkItemResponseRelatedCount
      */
     related_count?: number;
     /**
-     * Document Id
+     * CodebaseChunkItemResponseDocumentId
      */
     document_id?: string | null;
 };
@@ -901,35 +901,35 @@ export type CodebaseChunkItemResponse = {
  */
 export type CodebaseChunkRelatedItemResponse = {
     /**
-     * Id
+     * CodebaseChunkRelatedItemResponseId
      */
     id: string;
     /**
-     * Label
+     * CodebaseChunkRelatedItemResponseLabel
      */
     label: string;
     /**
-     * Path
+     * CodebaseChunkRelatedItemResponsePath
      */
     path: string;
     /**
-     * Kind
+     * CodebaseChunkRelatedItemResponseKind
      */
     kind: string;
     /**
-     * Start Line
+     * CodebaseChunkRelatedItemResponseStartLine
      */
     start_line: number;
     /**
-     * End Line
+     * CodebaseChunkRelatedItemResponseEndLine
      */
     end_line: number;
     /**
-     * Cluster Label
+     * CodebaseChunkRelatedItemResponseClusterLabel
      */
     cluster_label?: string | null;
     /**
-     * Score
+     * CodebaseChunkRelatedItemResponseScore
      */
     score?: number;
 };
@@ -941,23 +941,23 @@ export type CodebaseChunkRelatedItemResponse = {
  */
 export type CodebaseChunksResponse = {
     /**
-     * Codebase Id
+     * CodebaseChunksResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseChunksResponseSnapshotId
      */
     snapshot_id?: string | null;
     /**
-     * Items
+     * CodebaseChunksResponseItems
      */
     items: Array<CodebaseChunkItemResponse>;
     /**
-     * Next Cursor
+     * CodebaseChunksResponseNextCursor
      */
     next_cursor?: string | null;
     /**
-     * Has More
+     * CodebaseChunksResponseHasMore
      */
     has_more?: boolean;
 };
@@ -969,39 +969,39 @@ export type CodebaseChunksResponse = {
  */
 export type CodebaseFileItemResponse = {
     /**
-     * Path
+     * CodebaseFileItemResponsePath
      */
     path: string;
     /**
-     * Language
+     * CodebaseFileItemResponseLanguage
      */
     language?: string | null;
     /**
-     * Size Bytes
+     * CodebaseFileItemResponseSizeBytes
      */
     size_bytes: number;
     /**
-     * Content Hash
+     * CodebaseFileItemResponseContentHash
      */
     content_hash: string;
     /**
-     * Document Id
+     * CodebaseFileItemResponseDocumentId
      */
     document_id?: string | null;
     /**
-     * Status
+     * CodebaseFileItemResponseStatus
      */
     status: string;
     /**
-     * Change Kind
+     * CodebaseFileItemResponseChangeKind
      */
     change_kind: string;
     /**
-     * Reason
+     * CodebaseFileItemResponseReason
      */
     reason?: string | null;
     /**
-     * Chunk Count
+     * CodebaseFileItemResponseChunkCount
      */
     chunk_count?: number;
 };
@@ -1013,27 +1013,27 @@ export type CodebaseFileItemResponse = {
  */
 export type CodebaseFilesResponse = {
     /**
-     * Codebase Id
+     * CodebaseFilesResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseFilesResponseSnapshotId
      */
     snapshot_id?: string | null;
     /**
-     * Source Ref
+     * CodebaseFilesResponseSourceRef
      */
     source_ref?: string | null;
     /**
-     * Source Commit Sha
+     * CodebaseFilesResponseSourceCommitSha
      */
     source_commit_sha?: string | null;
     /**
-     * Snapshot Status
+     * CodebaseFilesResponseSnapshotStatus
      */
     snapshot_status?: string | null;
     /**
-     * Items
+     * CodebaseFilesResponseItems
      */
     items: Array<CodebaseFileItemResponse>;
 };
@@ -1045,23 +1045,23 @@ export type CodebaseFilesResponse = {
  */
 export type CodebaseGithubImportResponse = {
     /**
-     * Codebase Id
+     * CodebaseGithubImportResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseGithubImportResponseSnapshotId
      */
     snapshot_id: string;
     /**
-     * Operation Id
+     * CodebaseGithubImportResponseOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * CodebaseGithubImportResponseStatus
      */
     status: string;
     /**
-     * Resolved Commit Sha
+     * CodebaseGithubImportResponseResolvedCommitSha
      */
     resolved_commit_sha: string;
 };
@@ -1073,31 +1073,31 @@ export type CodebaseGithubImportResponse = {
  */
 export type CodebaseImpactEdgeResponse = {
     /**
-     * Edge Type
+     * CodebaseImpactEdgeResponseEdgeType
      */
     edge_type: string;
     /**
-     * From Path
+     * CodebaseImpactEdgeResponseFromPath
      */
     from_path: string;
     /**
-     * From Symbol
+     * CodebaseImpactEdgeResponseFromSymbol
      */
     from_symbol?: string | null;
     /**
-     * To Path
+     * CodebaseImpactEdgeResponseToPath
      */
     to_path?: string | null;
     /**
-     * To Symbol
+     * CodebaseImpactEdgeResponseToSymbol
      */
     to_symbol?: string | null;
     /**
-     * Target Ref
+     * CodebaseImpactEdgeResponseTargetRef
      */
     target_ref?: string | null;
     /**
-     * Label
+     * CodebaseImpactEdgeResponseLabel
      */
     label?: string | null;
 };
@@ -1109,39 +1109,39 @@ export type CodebaseImpactEdgeResponse = {
  */
 export type CodebaseImpactFileResponse = {
     /**
-     * Path
+     * CodebaseImpactFileResponsePath
      */
     path: string;
     /**
-     * Language
+     * CodebaseImpactFileResponseLanguage
      */
     language?: string | null;
     /**
-     * Size Bytes
+     * CodebaseImpactFileResponseSizeBytes
      */
     size_bytes: number;
     /**
-     * Content Hash
+     * CodebaseImpactFileResponseContentHash
      */
     content_hash: string;
     /**
-     * Document Id
+     * CodebaseImpactFileResponseDocumentId
      */
     document_id?: string | null;
     /**
-     * Status
+     * CodebaseImpactFileResponseStatus
      */
     status: string;
     /**
-     * Change Kind
+     * CodebaseImpactFileResponseChangeKind
      */
     change_kind: string;
     /**
-     * Chunk Count
+     * CodebaseImpactFileResponseChunkCount
      */
     chunk_count?: number;
     /**
-     * Depth
+     * CodebaseImpactFileResponseDepth
      */
     depth: number;
 };
@@ -1153,23 +1153,23 @@ export type CodebaseImpactFileResponse = {
  */
 export type CodebaseImpactRequest = {
     /**
-     * Path
+     * CodebaseImpactRequestPath
      */
     path?: string | null;
     /**
-     * Symbol
+     * CodebaseImpactRequestSymbol
      */
     symbol?: string | null;
     /**
-     * Query
+     * CodebaseImpactRequestQuery
      */
     query?: string | null;
     /**
-     * Max Depth
+     * CodebaseImpactRequestMaxDepth
      */
     max_depth?: number;
     /**
-     * Limit
+     * CodebaseImpactRequestLimit
      */
     limit?: number;
 };
@@ -1181,28 +1181,28 @@ export type CodebaseImpactRequest = {
  */
 export type CodebaseImpactResponse = {
     /**
-     * Codebase Id
+     * CodebaseImpactResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseImpactResponseSnapshotId
      */
     snapshot_id?: string | null;
     seed?: CodebaseImpactSeedResponse | null;
     /**
-     * Impacted Files
+     * CodebaseImpactResponseImpactedFiles
      */
     impacted_files: Array<CodebaseImpactFileResponse>;
     /**
-     * Matched Symbols
+     * CodebaseImpactResponseMatchedSymbols
      */
     matched_symbols: Array<CodebaseSymbolMatchResponse>;
     /**
-     * Edges
+     * CodebaseImpactResponseEdges
      */
     edges: Array<CodebaseImpactEdgeResponse>;
     /**
-     * Explanation
+     * CodebaseImpactResponseExplanation
      */
     explanation: string;
 };
@@ -1214,11 +1214,11 @@ export type CodebaseImpactResponse = {
  */
 export type CodebaseImpactSeedResponse = {
     /**
-     * Type
+     * CodebaseImpactSeedResponseType
      */
     type: string;
     /**
-     * Value
+     * CodebaseImpactSeedResponseValue
      */
     value: string;
 };
@@ -1230,35 +1230,35 @@ export type CodebaseImpactSeedResponse = {
  */
 export type CodebaseImportGithubRequest = {
     /**
-     * Owner
+     * CodebaseImportGithubRequestOwner
      */
     owner?: string | null;
     /**
-     * Repo
+     * CodebaseImportGithubRequestRepo
      */
     repo?: string | null;
     /**
-     * Ref
+     * CodebaseImportGithubRequestRef
      */
     ref?: string | null;
     /**
-     * Repo Url
+     * CodebaseImportGithubRequestRepoUrl
      */
     repo_url?: string | null;
     /**
-     * Root Path
+     * CodebaseImportGithubRequestRootPath
      */
     root_path?: string | null;
     /**
-     * Include Globs
+     * CodebaseImportGithubRequestIncludeGlobs
      */
     include_globs?: Array<string>;
     /**
-     * Exclude Globs
+     * CodebaseImportGithubRequestExcludeGlobs
      */
     exclude_globs?: Array<string>;
     /**
-     * Refresh Existing
+     * CodebaseImportGithubRequestRefreshExisting
      */
     refresh_existing?: boolean;
 };
@@ -1270,19 +1270,19 @@ export type CodebaseImportGithubRequest = {
  */
 export type CodebaseImportResponse = {
     /**
-     * Codebase Id
+     * CodebaseImportResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseImportResponseSnapshotId
      */
     snapshot_id: string;
     /**
-     * Operation Id
+     * CodebaseImportResponseOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * CodebaseImportResponseStatus
      */
     status: string;
 };
@@ -1294,7 +1294,7 @@ export type CodebaseImportResponse = {
  */
 export type CodebaseListResponse = {
     /**
-     * Items
+     * CodebaseListResponseItems
      */
     items: Array<CodebaseResponse>;
 };
@@ -1306,11 +1306,11 @@ export type CodebaseListResponse = {
  */
 export type CodebaseRefreshRequest = {
     /**
-     * Ref
+     * CodebaseRefreshRequestRef
      */
     ref?: string | null;
     /**
-     * Full Rebuild
+     * CodebaseRefreshRequestFullRebuild
      */
     full_rebuild?: boolean;
 };
@@ -1322,31 +1322,31 @@ export type CodebaseRefreshRequest = {
  */
 export type CodebaseRefreshResponse = {
     /**
-     * Snapshot Id
+     * CodebaseRefreshResponseSnapshotId
      */
     snapshot_id?: string | null;
     /**
-     * Operation Id
+     * CodebaseRefreshResponseOperationId
      */
     operation_id?: string | null;
     /**
-     * Status
+     * CodebaseRefreshResponseStatus
      */
     status: string;
     /**
-     * Changed Files
+     * CodebaseRefreshResponseChangedFiles
      */
     changed_files?: number;
     /**
-     * Added Files
+     * CodebaseRefreshResponseAddedFiles
      */
     added_files?: number;
     /**
-     * Deleted Files
+     * CodebaseRefreshResponseDeletedFiles
      */
     deleted_files?: number;
     /**
-     * Noop
+     * CodebaseRefreshResponseNoop
      */
     noop?: boolean;
 };
@@ -1358,94 +1358,94 @@ export type CodebaseRefreshResponse = {
  */
 export type CodebaseResponse = {
     /**
-     * Id
+     * CodebaseResponseId
      */
     id: string;
     /**
-     * Bank Id
+     * CodebaseResponseBankId
      */
     bank_id: string;
     /**
-     * Name
+     * CodebaseResponseName
      */
     name: string;
     /**
-     * Source Type
+     * CodebaseResponseSourceType
      */
     source_type: string;
     source_config?: CodebaseSourceConfigResponse;
     /**
-     * Current Snapshot Id
+     * CodebaseResponseCurrentSnapshotId
      */
     current_snapshot_id?: string | null;
     /**
-     * Approved Snapshot Id
+     * CodebaseResponseApprovedSnapshotId
      */
     approved_snapshot_id?: string | null;
     /**
-     * Source Ref
+     * CodebaseResponseSourceRef
      */
     source_ref?: string | null;
     /**
-     * Source Commit Sha
+     * CodebaseResponseSourceCommitSha
      */
     source_commit_sha?: string | null;
     /**
-     * Snapshot Status
+     * CodebaseResponseSnapshotStatus
      */
     snapshot_status?: string | null;
     /**
-     * Approved Source Ref
+     * CodebaseResponseApprovedSourceRef
      */
     approved_source_ref?: string | null;
     /**
-     * Approved Source Commit Sha
+     * CodebaseResponseApprovedSourceCommitSha
      */
     approved_source_commit_sha?: string | null;
     /**
-     * Approved Snapshot Status
+     * CodebaseResponseApprovedSnapshotStatus
      */
     approved_snapshot_status?: string | null;
     /**
-     * Approval Status
+     * CodebaseResponseApprovalStatus
      */
     approval_status?: string | null;
     /**
-     * Memory Status
+     * CodebaseResponseMemoryStatus
      */
     memory_status?: string | null;
     stats?: CodebaseSnapshotStatsResponse;
     review_counts?: CodebaseReviewCountsResponse;
     /**
-     * Cluster Count
+     * CodebaseResponseClusterCount
      */
     cluster_count?: number;
     /**
-     * Related Chunk Count
+     * CodebaseResponseRelatedChunkCount
      */
     related_chunk_count?: number;
     /**
-     * Parse Coverage
+     * CodebaseResponseParseCoverage
      */
     parse_coverage?: number;
     /**
-     * Created At
+     * CodebaseResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * CodebaseResponseUpdatedAt
      */
     updated_at?: string | null;
     /**
-     * Snapshot Created At
+     * CodebaseResponseSnapshotCreatedAt
      */
     snapshot_created_at?: string | null;
     /**
-     * Snapshot Updated At
+     * CodebaseResponseSnapshotUpdatedAt
      */
     snapshot_updated_at?: string | null;
     /**
-     * Approved Snapshot Updated At
+     * CodebaseResponseApprovedSnapshotUpdatedAt
      */
     approved_snapshot_updated_at?: string | null;
 };
@@ -1457,15 +1457,15 @@ export type CodebaseResponse = {
  */
 export type CodebaseReviewChangedSummaryResponse = {
     /**
-     * Added Files
+     * CodebaseReviewChangedSummaryResponseAddedFiles
      */
     added_files?: number;
     /**
-     * Changed Files
+     * CodebaseReviewChangedSummaryResponseChangedFiles
      */
     changed_files?: number;
     /**
-     * Deleted Files
+     * CodebaseReviewChangedSummaryResponseDeletedFiles
      */
     deleted_files?: number;
 };
@@ -1477,19 +1477,19 @@ export type CodebaseReviewChangedSummaryResponse = {
  */
 export type CodebaseReviewCountsResponse = {
     /**
-     * Unrouted
+     * CodebaseReviewCountsResponseUnrouted
      */
     unrouted?: number;
     /**
-     * Memory
+     * CodebaseReviewCountsResponseMemory
      */
     memory?: number;
     /**
-     * Research
+     * CodebaseReviewCountsResponseResearch
      */
     research?: number;
     /**
-     * Dismissed
+     * CodebaseReviewCountsResponseDismissed
      */
     dismissed?: number;
 };
@@ -1501,11 +1501,11 @@ export type CodebaseReviewCountsResponse = {
  */
 export type CodebaseReviewDiagnosticResponse = {
     /**
-     * Reason
+     * CodebaseReviewDiagnosticResponseReason
      */
     reason: string;
     /**
-     * Count
+     * CodebaseReviewDiagnosticResponseCount
      */
     count: number;
 };
@@ -1517,41 +1517,41 @@ export type CodebaseReviewDiagnosticResponse = {
  */
 export type CodebaseReviewResponse = {
     /**
-     * Codebase Id
+     * CodebaseReviewResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseReviewResponseSnapshotId
      */
     snapshot_id?: string | null;
     /**
-     * Snapshot Status
+     * CodebaseReviewResponseSnapshotStatus
      */
     snapshot_status?: string | null;
     /**
-     * Approval Status
+     * CodebaseReviewResponseApprovalStatus
      */
     approval_status?: string | null;
     /**
-     * Memory Status
+     * CodebaseReviewResponseMemoryStatus
      */
     memory_status?: string | null;
     review_counts?: CodebaseReviewCountsResponse;
     /**
-     * Cluster Count
+     * CodebaseReviewResponseClusterCount
      */
     cluster_count?: number;
     /**
-     * Related Chunk Count
+     * CodebaseReviewResponseRelatedChunkCount
      */
     related_chunk_count?: number;
     /**
-     * Parse Coverage
+     * CodebaseReviewResponseParseCoverage
      */
     parse_coverage?: number;
     changed_summary?: CodebaseReviewChangedSummaryResponse;
     /**
-     * Diagnostics
+     * CodebaseReviewResponseDiagnostics
      */
     diagnostics?: Array<CodebaseReviewDiagnosticResponse>;
 };
@@ -1563,19 +1563,19 @@ export type CodebaseReviewResponse = {
  */
 export type CodebaseRouteRequest = {
     /**
-     * Item Ids
+     * CodebaseRouteRequestItemIds
      */
     item_ids: Array<string>;
     /**
-     * Target
+     * CodebaseRouteRequestTarget
      */
     target: 'memory' | 'research' | 'dismissed' | 'unrouted';
     /**
-     * Queue Memory Import
+     * CodebaseRouteRequestQueueMemoryImport
      */
     queue_memory_import?: boolean;
     /**
-     * Memory Ingest Mode
+     * CodebaseRouteRequestMemoryIngestMode
      */
     memory_ingest_mode?: 'direct' | 'retain';
 };
@@ -1587,31 +1587,31 @@ export type CodebaseRouteRequest = {
  */
 export type CodebaseRouteResponse = {
     /**
-     * Codebase Id
+     * CodebaseRouteResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseRouteResponseSnapshotId
      */
     snapshot_id: string;
     /**
-     * Updated Count
+     * CodebaseRouteResponseUpdatedCount
      */
     updated_count: number;
     /**
-     * Target
+     * CodebaseRouteResponseTarget
      */
     target: string;
     /**
-     * Operation Id
+     * CodebaseRouteResponseOperationId
      */
     operation_id?: string | null;
     /**
-     * Queued For Memory
+     * CodebaseRouteResponseQueuedForMemory
      */
     queued_for_memory?: boolean;
     /**
-     * Memory Ingest Mode
+     * CodebaseRouteResponseMemoryIngestMode
      */
     memory_ingest_mode?: 'direct' | 'retain';
     review_counts?: CodebaseReviewCountsResponse;
@@ -1624,68 +1624,68 @@ export type CodebaseRouteResponse = {
  */
 export type CodebaseSnapshotStatsResponse = {
     /**
-     * Total Files
+     * CodebaseSnapshotStatsResponseTotalFiles
      */
     total_files?: number;
     /**
-     * Indexed Files
+     * CodebaseSnapshotStatsResponseIndexedFiles
      */
     indexed_files?: number;
     /**
-     * Retained Files
+     * CodebaseSnapshotStatsResponseRetainedFiles
      */
     retained_files?: number;
     /**
-     * Manifest Only Files
+     * CodebaseSnapshotStatsResponseManifestOnlyFiles
      */
     manifest_only_files?: number;
     /**
-     * Excluded Files
+     * CodebaseSnapshotStatsResponseExcludedFiles
      */
     excluded_files?: number;
     /**
-     * Symbol Count
+     * CodebaseSnapshotStatsResponseSymbolCount
      */
     symbol_count?: number;
     /**
-     * Edge Count
+     * CodebaseSnapshotStatsResponseEdgeCount
      */
     edge_count?: number;
     /**
-     * Added Files
+     * CodebaseSnapshotStatsResponseAddedFiles
      */
     added_files?: number;
     /**
-     * Changed Files
+     * CodebaseSnapshotStatsResponseChangedFiles
      */
     changed_files?: number;
     /**
-     * Unchanged Files
+     * CodebaseSnapshotStatsResponseUnchangedFiles
      */
     unchanged_files?: number;
     /**
-     * Deleted Files
+     * CodebaseSnapshotStatsResponseDeletedFiles
      */
     deleted_files?: number;
     /**
-     * Chunk Count
+     * CodebaseSnapshotStatsResponseChunkCount
      */
     chunk_count?: number;
     /**
-     * Cluster Count
+     * CodebaseSnapshotStatsResponseClusterCount
      */
     cluster_count?: number;
     /**
-     * Related Chunk Count
+     * CodebaseSnapshotStatsResponseRelatedChunkCount
      */
     related_chunk_count?: number;
     /**
-     * Parse Coverage
+     * CodebaseSnapshotStatsResponseParseCoverage
      */
     parse_coverage?: number;
     review_counts?: CodebaseReviewCountsResponse;
     /**
-     * Error
+     * CodebaseSnapshotStatsResponseError
      */
     error?: string | null;
 };
@@ -1697,31 +1697,31 @@ export type CodebaseSnapshotStatsResponse = {
  */
 export type CodebaseSourceConfigResponse = {
     /**
-     * Owner
+     * CodebaseSourceConfigResponseOwner
      */
     owner?: string | null;
     /**
-     * Repo
+     * CodebaseSourceConfigResponseRepo
      */
     repo?: string | null;
     /**
-     * Repo Url
+     * CodebaseSourceConfigResponseRepoUrl
      */
     repo_url?: string | null;
     /**
-     * Ref
+     * CodebaseSourceConfigResponseRef
      */
     ref?: string | null;
     /**
-     * Root Path
+     * CodebaseSourceConfigResponseRootPath
      */
     root_path?: string | null;
     /**
-     * Include Globs
+     * CodebaseSourceConfigResponseIncludeGlobs
      */
     include_globs?: Array<string>;
     /**
-     * Exclude Globs
+     * CodebaseSourceConfigResponseExcludeGlobs
      */
     exclude_globs?: Array<string>;
 };
@@ -1733,43 +1733,43 @@ export type CodebaseSourceConfigResponse = {
  */
 export type CodebaseSymbolMatchResponse = {
     /**
-     * Name
+     * CodebaseSymbolMatchResponseName
      */
     name: string;
     /**
-     * Kind
+     * CodebaseSymbolMatchResponseKind
      */
     kind: string;
     /**
-     * Fq Name
+     * CodebaseSymbolMatchResponseFqName
      */
     fq_name: string;
     /**
-     * Path
+     * CodebaseSymbolMatchResponsePath
      */
     path: string;
     /**
-     * Language
+     * CodebaseSymbolMatchResponseLanguage
      */
     language?: string | null;
     /**
-     * Container
+     * CodebaseSymbolMatchResponseContainer
      */
     container?: string | null;
     /**
-     * Start Line
+     * CodebaseSymbolMatchResponseStartLine
      */
     start_line: number;
     /**
-     * End Line
+     * CodebaseSymbolMatchResponseEndLine
      */
     end_line: number;
     /**
-     * Match Mode
+     * CodebaseSymbolMatchResponseMatchMode
      */
     match_mode?: string | null;
     /**
-     * Chunk Ids
+     * CodebaseSymbolMatchResponseChunkIds
      */
     chunk_ids?: Array<string>;
 };
@@ -1781,15 +1781,15 @@ export type CodebaseSymbolMatchResponse = {
  */
 export type CodebaseSymbolsResponse = {
     /**
-     * Codebase Id
+     * CodebaseSymbolsResponseCodebaseId
      */
     codebase_id: string;
     /**
-     * Snapshot Id
+     * CodebaseSymbolsResponseSnapshotId
      */
     snapshot_id?: string | null;
     /**
-     * Items
+     * CodebaseSymbolsResponseItems
      */
     items: Array<CodebaseSymbolMatchResponse>;
 };
@@ -1801,13 +1801,13 @@ export type CodebaseSymbolsResponse = {
  */
 export type ConsolidationResponse = {
     /**
-     * Operation Id
+     * ConsolidationResponseOperationId
      *
      * ID of the async consolidation operation
      */
     operation_id: string;
     /**
-     * Deduplicated
+     * ConsolidationResponseDeduplicated
      *
      * True if an existing pending task was reused
      */
@@ -1821,7 +1821,7 @@ export type ConsolidationResponse = {
  */
 export type CreateBankRequest = {
     /**
-     * Name
+     * CreateBankRequestName
      *
      * Deprecated: display label only, not advertised
      */
@@ -1831,73 +1831,73 @@ export type CreateBankRequest = {
      */
     disposition?: DispositionTraits | null;
     /**
-     * Disposition Skepticism
+     * CreateBankRequestDispositionSkepticism
      *
      * Deprecated: use update_bank_config instead
      */
     disposition_skepticism?: number | null;
     /**
-     * Disposition Literalism
+     * CreateBankRequestDispositionLiteralism
      *
      * Deprecated: use update_bank_config instead
      */
     disposition_literalism?: number | null;
     /**
-     * Disposition Empathy
+     * CreateBankRequestDispositionEmpathy
      *
      * Deprecated: use update_bank_config instead
      */
     disposition_empathy?: number | null;
     /**
-     * Mission
+     * CreateBankRequestMission
      *
      * Deprecated: use update_bank_config with reflect_mission instead
      */
     mission?: string | null;
     /**
-     * Background
+     * CreateBankRequestBackground
      *
      * Deprecated: use update_bank_config with reflect_mission instead
      */
     background?: string | null;
     /**
-     * Reflect Mission
+     * CreateBankRequestReflectMission
      *
      * Mission/context for Reflect operations. Guides how Reflect interprets and uses memories.
      */
     reflect_mission?: string | null;
     /**
-     * Retain Mission
+     * CreateBankRequestRetainMission
      *
      * Steers what gets extracted during retain(). Injected alongside built-in extraction rules.
      */
     retain_mission?: string | null;
     /**
-     * Retain Extraction Mode
+     * CreateBankRequestRetainExtractionMode
      *
      * Fact extraction mode: 'concise' (default), 'verbose', or 'custom'.
      */
     retain_extraction_mode?: string | null;
     /**
-     * Retain Custom Instructions
+     * CreateBankRequestRetainCustomInstructions
      *
      * Custom extraction prompt. Only active when retain_extraction_mode is 'custom'.
      */
     retain_custom_instructions?: string | null;
     /**
-     * Retain Chunk Size
+     * CreateBankRequestRetainChunkSize
      *
      * Maximum token size for each content chunk during retain.
      */
     retain_chunk_size?: number | null;
     /**
-     * Enable Observations
+     * CreateBankRequestEnableObservations
      *
      * Toggle automatic observation consolidation after retain().
      */
     enable_observations?: boolean | null;
     /**
-     * Observations Mission
+     * CreateBankRequestObservationsMission
      *
      * Controls what gets synthesised into observations. Replaces built-in consolidation rules entirely.
      */
@@ -1911,31 +1911,31 @@ export type CreateBankRequest = {
  */
 export type CreateDirectiveRequest = {
     /**
-     * Name
+     * CreateDirectiveRequestName
      *
      * Human-readable name for the directive
      */
     name: string;
     /**
-     * Content
+     * CreateDirectiveRequestContent
      *
      * The directive text to inject into prompts
      */
     content: string;
     /**
-     * Priority
+     * CreateDirectiveRequestPriority
      *
      * Higher priority directives are injected first
      */
     priority?: number;
     /**
-     * Is Active
+     * CreateDirectiveRequestIsActive
      *
      * Whether this directive is active
      */
     is_active?: boolean;
     /**
-     * Tags
+     * CreateDirectiveRequestTags
      *
      * Tags for filtering
      */
@@ -1949,31 +1949,31 @@ export type CreateDirectiveRequest = {
  */
 export type CreateMentalModelRequest = {
     /**
-     * Id
+     * CreateMentalModelRequestId
      *
      * Optional custom ID for the mental model (alphanumeric lowercase with hyphens)
      */
     id?: string | null;
     /**
-     * Name
+     * CreateMentalModelRequestName
      *
      * Human-readable name for the mental model
      */
     name: string;
     /**
-     * Source Query
+     * CreateMentalModelRequestSourceQuery
      *
      * The query to run to generate content
      */
     source_query: string;
     /**
-     * Tags
+     * CreateMentalModelRequestTags
      *
      * Tags for scoped visibility
      */
     tags?: Array<string>;
     /**
-     * Max Tokens
+     * CreateMentalModelRequestMaxTokens
      *
      * Maximum tokens for generated content
      */
@@ -1991,13 +1991,13 @@ export type CreateMentalModelRequest = {
  */
 export type CreateMentalModelResponse = {
     /**
-     * Mental Model Id
+     * CreateMentalModelResponseMentalModelId
      *
      * ID of the created mental model
      */
     mental_model_id?: string | null;
     /**
-     * Operation Id
+     * CreateMentalModelResponseOperationId
      *
      * Operation ID to track refresh progress
      */
@@ -2011,25 +2011,25 @@ export type CreateMentalModelResponse = {
  */
 export type CreateWebhookRequest = {
     /**
-     * Url
+     * CreateWebhookRequestUrl
      *
      * HTTP(S) endpoint URL to deliver events to
      */
     url: string;
     /**
-     * Secret
+     * CreateWebhookRequestSecret
      *
      * HMAC-SHA256 signing secret (optional)
      */
     secret?: string | null;
     /**
-     * Event Types
+     * CreateWebhookRequestEventTypes
      *
      * List of event types to deliver. Currently supported: 'consolidation.completed'
      */
     event_types?: Array<string>;
     /**
-     * Enabled
+     * CreateWebhookRequestEnabled
      *
      * Whether this webhook is active
      */
@@ -2047,19 +2047,19 @@ export type CreateWebhookRequest = {
  */
 export type DeleteDocumentResponse = {
     /**
-     * Success
+     * DeleteDocumentResponseSuccess
      */
     success: boolean;
     /**
-     * Message
+     * DeleteDocumentResponseMessage
      */
     message: string;
     /**
-     * Document Id
+     * DeleteDocumentResponseDocumentId
      */
     document_id: string;
     /**
-     * Memory Units Deleted
+     * DeleteDocumentResponseMemoryUnitsDeleted
      */
     memory_units_deleted: number;
 };
@@ -2071,15 +2071,15 @@ export type DeleteDocumentResponse = {
  */
 export type DeleteResponse = {
     /**
-     * Success
+     * DeleteResponseSuccess
      */
     success: boolean;
     /**
-     * Message
+     * DeleteResponseMessage
      */
     message?: string | null;
     /**
-     * Deleted Count
+     * DeleteResponseDeletedCount
      */
     deleted_count?: number | null;
 };
@@ -2091,7 +2091,7 @@ export type DeleteResponse = {
  */
 export type DirectiveListResponse = {
     /**
-     * Items
+     * DirectiveListResponseItems
      */
     items: Array<DirectiveResponse>;
 };
@@ -2103,39 +2103,39 @@ export type DirectiveListResponse = {
  */
 export type DirectiveResponse = {
     /**
-     * Id
+     * DirectiveResponseId
      */
     id: string;
     /**
-     * Bank Id
+     * DirectiveResponseBankId
      */
     bank_id: string;
     /**
-     * Name
+     * DirectiveResponseName
      */
     name: string;
     /**
-     * Content
+     * DirectiveResponseContent
      */
     content: string;
     /**
-     * Priority
+     * DirectiveResponsePriority
      */
     priority?: number;
     /**
-     * Is Active
+     * DirectiveResponseIsActive
      */
     is_active?: boolean;
     /**
-     * Tags
+     * DirectiveResponseTags
      */
     tags?: Array<string>;
     /**
-     * Created At
+     * DirectiveResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * DirectiveResponseUpdatedAt
      */
     updated_at?: string | null;
 };
@@ -2147,19 +2147,19 @@ export type DirectiveResponse = {
  */
 export type DispositionTraits = {
     /**
-     * Skepticism
+     * DispositionTraitsSkepticism
      *
      * How skeptical vs trusting (1=trusting, 5=skeptical)
      */
     skepticism: number;
     /**
-     * Literalism
+     * DispositionTraitsLiteralism
      *
      * How literally to interpret information (1=flexible, 5=literal)
      */
     literalism: number;
     /**
-     * Empathy
+     * DispositionTraitsEmpathy
      *
      * How much to consider emotional context (1=detached, 5=empathetic)
      */
@@ -2173,35 +2173,35 @@ export type DispositionTraits = {
  */
 export type DocumentResponse = {
     /**
-     * Id
+     * DocumentResponseId
      */
     id: string;
     /**
-     * Bank Id
+     * DocumentResponseBankId
      */
     bank_id: string;
     /**
-     * Original Text
+     * DocumentResponseOriginalText
      */
     original_text: string;
     /**
-     * Content Hash
+     * DocumentResponseContentHash
      */
     content_hash: string | null;
     /**
-     * Created At
+     * DocumentResponseCreatedAt
      */
     created_at: string;
     /**
-     * Updated At
+     * DocumentResponseUpdatedAt
      */
     updated_at: string;
     /**
-     * Memory Unit Count
+     * DocumentResponseMemoryUnitCount
      */
     memory_unit_count: number;
     /**
-     * Tags
+     * DocumentResponseTags
      *
      * Tags associated with this document
      */
@@ -2213,15 +2213,15 @@ export type DocumentResponse = {
  */
 export type DreamPredictionOutcomeRequest = {
     /**
-     * Status
+     * DreamPredictionOutcomeRequestStatus
      */
     status: 'confirmed' | 'contradicted' | 'request_more_evidence';
     /**
-     * Note
+     * DreamPredictionOutcomeRequestNote
      */
     note?: string | null;
     /**
-     * Evidence Ids
+     * DreamPredictionOutcomeRequestEvidenceIds
      */
     evidence_ids?: Array<string>;
 };
@@ -2231,11 +2231,11 @@ export type DreamPredictionOutcomeRequest = {
  */
 export type DreamProposalReviewRequest = {
     /**
-     * Action
+     * DreamProposalReviewRequestAction
      */
     action: 'approve' | 'reject' | 'request_more_evidence';
     /**
-     * Note
+     * DreamProposalReviewRequestNote
      */
     note?: string | null;
 };
@@ -2245,7 +2245,7 @@ export type DreamProposalReviewRequest = {
  */
 export type DreamRunListResponse = {
     /**
-     * Items
+     * DreamRunListResponseItems
      */
     items: Array<DreamRunResponse>;
 };
@@ -2255,105 +2255,105 @@ export type DreamRunListResponse = {
  */
 export type DreamRunResponse = {
     /**
-     * Run Id
+     * DreamRunResponseRunId
      */
     run_id: string;
     /**
-     * Bank Id
+     * DreamRunResponseBankId
      */
     bank_id: string;
     /**
-     * Status
+     * DreamRunResponseStatus
      */
     status: string;
     /**
-     * Run Type
+     * DreamRunResponseRunType
      */
     run_type: string;
     /**
-     * Trigger Source
+     * DreamRunResponseTriggerSource
      */
     trigger_source: string;
     /**
-     * Created At
+     * DreamRunResponseCreatedAt
      */
     created_at: string;
     /**
-     * Updated At
+     * DreamRunResponseUpdatedAt
      */
     updated_at?: string | null;
     /**
-     * Narrative Html
+     * DreamRunResponseNarrativeHtml
      */
     narrative_html?: string | null;
     /**
-     * Summary
+     * DreamRunResponseSummary
      */
     summary?: string | null;
     /**
-     * Evidence Basis
+     * DreamRunResponseEvidenceBasis
      */
     evidence_basis?: {
         [key: string]: unknown;
     };
     /**
-     * Signals
+     * DreamRunResponseSignals
      */
     signals?: {
         [key: string]: unknown;
     };
     /**
-     * Predictions
+     * DreamRunResponsePredictions
      */
     predictions?: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Growth Hypotheses
+     * DreamRunResponseGrowthHypotheses
      */
     growth_hypotheses?: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Promotion Proposals
+     * DreamRunResponsePromotionProposals
      */
     promotion_proposals?: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Validation Outcomes
+     * DreamRunResponseValidationOutcomes
      */
     validation_outcomes?: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Confidence
+     * DreamRunResponseConfidence
      */
     confidence?: {
         [key: string]: unknown;
     };
     /**
-     * Novelty Score
+     * DreamRunResponseNoveltyScore
      */
     novelty_score?: number;
     /**
-     * Maturity Tier
+     * DreamRunResponseMaturityTier
      */
     maturity_tier?: string;
     /**
-     * Failure Reason
+     * DreamRunResponseFailureReason
      */
     failure_reason?: string | null;
     /**
-     * Quality Score
+     * DreamRunResponseQualityScore
      */
     quality_score?: number;
     /**
-     * Legacy Run
+     * DreamRunResponseLegacyRun
      */
     legacy_run?: boolean;
     /**
-     * Source Artifact Id
+     * DreamRunResponseSourceArtifactId
      */
     source_artifact_id?: string | null;
 };
@@ -2363,59 +2363,59 @@ export type DreamRunResponse = {
  */
 export type DreamStatsResponse = {
     /**
-     * Bank Id
+     * DreamStatsResponseBankId
      */
     bank_id: string;
     /**
-     * Total Runs
+     * DreamStatsResponseTotalRuns
      */
     total_runs: number;
     /**
-     * Last Run At
+     * DreamStatsResponseLastRunAt
      */
     last_run_at: string | null;
     /**
-     * Avg Quality
+     * DreamStatsResponseAvgQuality
      */
     avg_quality: number;
     /**
-     * Avg Tokens
+     * DreamStatsResponseAvgTokens
      */
     avg_tokens: number;
     /**
-     * Avg Output Tokens
+     * DreamStatsResponseAvgOutputTokens
      */
     avg_output_tokens: number;
     /**
-     * Distillation Pass Rate
+     * DreamStatsResponseDistillationPassRate
      */
     distillation_pass_rate: number;
     /**
-     * Distilled Count
+     * DreamStatsResponseDistilledCount
      */
     distilled_count: number;
     /**
-     * Validation Rate
+     * DreamStatsResponseValidationRate
      */
     validation_rate?: number;
     /**
-     * Avg Novelty
+     * DreamStatsResponseAvgNovelty
      */
     avg_novelty?: number;
     /**
-     * Failed Run Count
+     * DreamStatsResponseFailedRunCount
      */
     failed_run_count?: number;
     /**
-     * Duplicate Suppression Count
+     * DreamStatsResponseDuplicateSuppressionCount
      */
     duplicate_suppression_count?: number;
     /**
-     * Prediction Confirmation Rate
+     * DreamStatsResponsePredictionConfirmationRate
      */
     prediction_confirmation_rate?: number;
     /**
-     * Unresolved Prediction Backlog
+     * DreamStatsResponseUnresolvedPredictionBacklog
      */
     unresolved_prediction_backlog?: number;
 };
@@ -2425,13 +2425,13 @@ export type DreamStatsResponse = {
  */
 export type DreamSubmitRequest = {
     /**
-     * Trigger Source
+     * DreamSubmitRequestTriggerSource
      *
      * manual | event | cron
      */
     trigger_source?: string;
     /**
-     * Run Type
+     * DreamSubmitRequestRunType
      *
      * dream | trance
      */
@@ -2445,33 +2445,33 @@ export type DreamSubmitRequest = {
  */
 export type EntityDetailResponse = {
     /**
-     * Id
+     * EntityDetailResponseId
      */
     id: string;
     /**
-     * Canonical Name
+     * EntityDetailResponseCanonicalName
      */
     canonical_name: string;
     /**
-     * Mention Count
+     * EntityDetailResponseMentionCount
      */
     mention_count: number;
     /**
-     * First Seen
+     * EntityDetailResponseFirstSeen
      */
     first_seen?: string | null;
     /**
-     * Last Seen
+     * EntityDetailResponseLastSeen
      */
     last_seen?: string | null;
     /**
-     * Metadata
+     * EntityDetailResponseMetadata
      */
     metadata?: {
         [key: string]: unknown;
     } | null;
     /**
-     * Observations
+     * EntityDetailResponseObservations
      */
     observations: Array<EntityObservationResponse>;
 };
@@ -2483,7 +2483,7 @@ export type EntityDetailResponse = {
  */
 export type EntityIncludeOptions = {
     /**
-     * Max Tokens
+     * EntityIncludeOptionsMaxTokens
      *
      * Maximum tokens for entity observations
      */
@@ -2497,13 +2497,13 @@ export type EntityIncludeOptions = {
  */
 export type EntityInput = {
     /**
-     * Text
+     * EntityInputText
      *
      * The entity name/text
      */
     text: string;
     /**
-     * Type
+     * EntityInputType
      *
      * Optional entity type (e.g., 'PERSON', 'ORG', 'CONCEPT')
      */
@@ -2517,27 +2517,27 @@ export type EntityInput = {
  */
 export type EntityListItem = {
     /**
-     * Id
+     * EntityListItemId
      */
     id: string;
     /**
-     * Canonical Name
+     * EntityListItemCanonicalName
      */
     canonical_name: string;
     /**
-     * Mention Count
+     * EntityListItemMentionCount
      */
     mention_count: number;
     /**
-     * First Seen
+     * EntityListItemFirstSeen
      */
     first_seen?: string | null;
     /**
-     * Last Seen
+     * EntityListItemLastSeen
      */
     last_seen?: string | null;
     /**
-     * Metadata
+     * EntityListItemMetadata
      */
     metadata?: {
         [key: string]: unknown;
@@ -2551,19 +2551,19 @@ export type EntityListItem = {
  */
 export type EntityListResponse = {
     /**
-     * Items
+     * EntityListResponseItems
      */
     items: Array<EntityListItem>;
     /**
-     * Total
+     * EntityListResponseTotal
      */
     total: number;
     /**
-     * Limit
+     * EntityListResponseLimit
      */
     limit: number;
     /**
-     * Offset
+     * EntityListResponseOffset
      */
     offset: number;
 };
@@ -2575,11 +2575,11 @@ export type EntityListResponse = {
  */
 export type EntityObservationResponse = {
     /**
-     * Text
+     * EntityObservationResponseText
      */
     text: string;
     /**
-     * Mentioned At
+     * EntityObservationResponseMentionedAt
      */
     mentioned_at?: string | null;
 };
@@ -2591,15 +2591,15 @@ export type EntityObservationResponse = {
  */
 export type EntityStateResponse = {
     /**
-     * Entity Id
+     * EntityStateResponseEntityId
      */
     entity_id: string;
     /**
-     * Canonical Name
+     * EntityStateResponseCanonicalName
      */
     canonical_name: string;
     /**
-     * Observations
+     * EntityStateResponseObservations
      */
     observations: Array<EntityObservationResponse>;
 };
@@ -2620,55 +2620,55 @@ export type FactsIncludeOptions = {
  */
 export type FeaturesInfo = {
     /**
-     * Observations
+     * FeaturesInfoObservations
      *
      * Whether observations (auto-consolidation) are enabled
      */
     observations: boolean;
     /**
-     * Timeline V2
+     * FeaturesInfoTimelineV2
      *
      * Whether the git-style timeline API/UI is enabled
      */
     timeline_v2: boolean;
     /**
-     * Mcp
+     * FeaturesInfoMcp
      *
      * Whether MCP (Model Context Protocol) server is enabled
      */
     mcp: boolean;
     /**
-     * Worker
+     * FeaturesInfoWorker
      *
      * Whether the background worker is enabled
      */
     worker: boolean;
     /**
-     * Bank Config Api
+     * FeaturesInfoBankConfigApi
      *
      * Whether per-bank configuration API is enabled
      */
     bank_config_api: boolean;
     /**
-     * File Upload Api
+     * FeaturesInfoFileUploadApi
      *
      * Whether file upload/conversion API is enabled
      */
     file_upload_api: boolean;
     /**
-     * Brain Runtime
+     * FeaturesInfoBrainRuntime
      *
      * Whether atulya-brain runtime is enabled
      */
     brain_runtime: boolean;
     /**
-     * Sub Routine
+     * FeaturesInfoSubRoutine
      *
      * Whether sub_routine operations are enabled
      */
     sub_routine: boolean;
     /**
-     * Brain Import Export
+     * FeaturesInfoBrainImportExport
      *
      * Whether .brain import/export APIs are enabled
      */
@@ -2682,7 +2682,7 @@ export type FeaturesInfo = {
  */
 export type FileRetainResponse = {
     /**
-     * Operation Ids
+     * FileRetainResponseOperationIds
      *
      * Operation IDs for tracking file conversion operations. Use GET /v1/default/banks/{bank_id}/operations to list operations.
      */
@@ -2694,39 +2694,39 @@ export type FileRetainResponse = {
  */
 export type GraphChangeEventResponse = {
     /**
-     * Id
+     * GraphChangeEventResponseId
      */
     id: string;
     /**
-     * Node Id
+     * GraphChangeEventResponseNodeId
      */
     node_id: string;
     /**
-     * Change Type
+     * GraphChangeEventResponseChangeType
      */
     change_type: 'change' | 'contradiction' | 'stale';
     /**
-     * Before State
+     * GraphChangeEventResponseBeforeState
      */
     before_state?: string | null;
     /**
-     * After State
+     * GraphChangeEventResponseAfterState
      */
     after_state: string;
     /**
-     * Confidence
+     * GraphChangeEventResponseConfidence
      */
     confidence: number;
     /**
-     * Time Window
+     * GraphChangeEventResponseTimeWindow
      */
     time_window?: string | null;
     /**
-     * Evidence Ids
+     * GraphChangeEventResponseEvidenceIds
      */
     evidence_ids?: Array<string>;
     /**
-     * Summary
+     * GraphChangeEventResponseSummary
      */
     summary: string;
 };
@@ -2738,29 +2738,29 @@ export type GraphChangeEventResponse = {
  */
 export type GraphDataResponse = {
     /**
-     * Nodes
+     * GraphDataResponseNodes
      */
     nodes: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Edges
+     * GraphDataResponseEdges
      */
     edges: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Table Rows
+     * GraphDataResponseTableRows
      */
     table_rows: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Total Units
+     * GraphDataResponseTotalUnits
      */
     total_units: number;
     /**
-     * Limit
+     * GraphDataResponseLimit
      */
     limit: number;
 };
@@ -2770,19 +2770,19 @@ export type GraphDataResponse = {
  */
 export type GraphEvidencePathStepResponse = {
     /**
-     * Kind
+     * GraphEvidencePathStepResponseKind
      */
     kind: 'node' | 'event' | 'memory';
     /**
-     * Id
+     * GraphEvidencePathStepResponseId
      */
     id: string;
     /**
-     * Label
+     * GraphEvidencePathStepResponseLabel
      */
     label: string;
     /**
-     * Timestamp
+     * GraphEvidencePathStepResponseTimestamp
      */
     timestamp?: string | null;
 };
@@ -2792,27 +2792,27 @@ export type GraphEvidencePathStepResponse = {
  */
 export type GraphIntelligenceResponse = {
     /**
-     * Nodes
+     * GraphIntelligenceResponseNodes
      */
     nodes: Array<GraphStateNodeResponse>;
     /**
-     * Edges
+     * GraphIntelligenceResponseEdges
      */
     edges: Array<GraphRelationEdgeResponse>;
     /**
-     * Change Events
+     * GraphIntelligenceResponseChangeEvents
      */
     change_events: Array<GraphChangeEventResponse>;
     /**
-     * Total Nodes
+     * GraphIntelligenceResponseTotalNodes
      */
     total_nodes: number;
     /**
-     * Generated At
+     * GraphIntelligenceResponseGeneratedAt
      */
     generated_at: string;
     /**
-     * Cached
+     * GraphIntelligenceResponseCached
      */
     cached?: boolean;
 };
@@ -2822,35 +2822,35 @@ export type GraphIntelligenceResponse = {
  */
 export type GraphInvestigationRequest = {
     /**
-     * Query
+     * GraphInvestigationRequestQuery
      */
     query: string;
     /**
-     * Type
+     * GraphInvestigationRequestType
      */
     type?: string | null;
     /**
-     * Tags
+     * GraphInvestigationRequestTags
      */
     tags?: Array<string> | null;
     /**
-     * Tags Match
+     * GraphInvestigationRequestTagsMatch
      */
     tags_match?: 'any' | 'all' | 'any_strict' | 'all_strict';
     /**
-     * Confidence Min
+     * GraphInvestigationRequestConfidenceMin
      */
     confidence_min?: number;
     /**
-     * Node Kind
+     * GraphInvestigationRequestNodeKind
      */
     node_kind?: 'all' | 'entity' | 'topic';
     /**
-     * Window Days
+     * GraphInvestigationRequestWindowDays
      */
     window_days?: number | null;
     /**
-     * Limit
+     * GraphInvestigationRequestLimit
      */
     limit?: number;
 };
@@ -2860,27 +2860,27 @@ export type GraphInvestigationRequest = {
  */
 export type GraphInvestigationResponse = {
     /**
-     * Answer
+     * GraphInvestigationResponseAnswer
      */
     answer: string;
     /**
-     * Focal Node Ids
+     * GraphInvestigationResponseFocalNodeIds
      */
     focal_node_ids?: Array<string>;
     /**
-     * Focal Edge Ids
+     * GraphInvestigationResponseFocalEdgeIds
      */
     focal_edge_ids?: Array<string>;
     /**
-     * Change Events
+     * GraphInvestigationResponseChangeEvents
      */
     change_events?: Array<GraphChangeEventResponse>;
     /**
-     * Evidence Path
+     * GraphInvestigationResponseEvidencePath
      */
     evidence_path?: Array<GraphEvidencePathStepResponse>;
     /**
-     * Recommended Checks
+     * GraphInvestigationResponseRecommendedChecks
      */
     recommended_checks?: Array<string>;
 };
@@ -2890,43 +2890,43 @@ export type GraphInvestigationResponse = {
  */
 export type GraphNeighborhoodEdgeResponse = {
     /**
-     * Id
+     * GraphNeighborhoodEdgeResponseId
      */
     id: string;
     /**
-     * Source
+     * GraphNeighborhoodEdgeResponseSource
      */
     source: string;
     /**
-     * Target
+     * GraphNeighborhoodEdgeResponseTarget
      */
     target: string;
     /**
-     * Kind
+     * GraphNeighborhoodEdgeResponseKind
      */
     kind?: 'relation' | 'event' | 'evidence';
     /**
-     * Label
+     * GraphNeighborhoodEdgeResponseLabel
      */
     label?: string | null;
     /**
-     * Stroke
+     * GraphNeighborhoodEdgeResponseStroke
      */
     stroke?: string | null;
     /**
-     * Dashed
+     * GraphNeighborhoodEdgeResponseDashed
      */
     dashed?: boolean;
     /**
-     * Width
+     * GraphNeighborhoodEdgeResponseWidth
      */
     width?: number;
     /**
-     * Animated
+     * GraphNeighborhoodEdgeResponseAnimated
      */
     animated?: boolean;
     /**
-     * Priority
+     * GraphNeighborhoodEdgeResponsePriority
      */
     priority?: number;
 };
@@ -2936,75 +2936,75 @@ export type GraphNeighborhoodEdgeResponse = {
  */
 export type GraphNeighborhoodNodeResponse = {
     /**
-     * Id
+     * GraphNeighborhoodNodeResponseId
      */
     id: string;
     /**
-     * Node Type
+     * GraphNeighborhoodNodeResponseNodeType
      */
     node_type: 'state' | 'event' | 'evidence';
     /**
-     * Title
+     * GraphNeighborhoodNodeResponseTitle
      */
     title: string;
     /**
-     * Subtitle
+     * GraphNeighborhoodNodeResponseSubtitle
      */
     subtitle?: string | null;
     /**
-     * Preview
+     * GraphNeighborhoodNodeResponsePreview
      */
     preview?: string | null;
     /**
-     * Status Label
+     * GraphNeighborhoodNodeResponseStatusLabel
      */
     status_label?: string | null;
     /**
-     * Status Tone
+     * GraphNeighborhoodNodeResponseStatusTone
      */
     status_tone?: 'stable' | 'changed' | 'contradictory' | 'stale' | 'neutral';
     /**
-     * Confidence
+     * GraphNeighborhoodNodeResponseConfidence
      */
     confidence?: number | null;
     /**
-     * Evidence Count
+     * GraphNeighborhoodNodeResponseEvidenceCount
      */
     evidence_count?: number | null;
     /**
-     * Kind Label
+     * GraphNeighborhoodNodeResponseKindLabel
      */
     kind_label?: string | null;
     /**
-     * Meta
+     * GraphNeighborhoodNodeResponseMeta
      */
     meta?: string | null;
     /**
-     * Timestamp Label
+     * GraphNeighborhoodNodeResponseTimestampLabel
      */
     timestamp_label?: string | null;
     /**
-     * Reason
+     * GraphNeighborhoodNodeResponseReason
      */
     reason?: string | null;
     /**
-     * Accent Color
+     * GraphNeighborhoodNodeResponseAccentColor
      */
     accent_color?: string | null;
     /**
-     * Display Priority
+     * GraphNeighborhoodNodeResponseDisplayPriority
      */
     display_priority?: number;
     /**
-     * Node Density Hint
+     * GraphNeighborhoodNodeResponseNodeDensityHint
      */
     node_density_hint?: number;
     /**
-     * Cluster Membership
+     * GraphNeighborhoodNodeResponseClusterMembership
      */
     cluster_membership?: string | null;
     /**
-     * Render Mode Hint
+     * GraphNeighborhoodNodeResponseRenderModeHint
      */
     render_mode_hint?: 'detail' | 'compact' | 'overview';
 };
@@ -3014,47 +3014,47 @@ export type GraphNeighborhoodNodeResponse = {
  */
 export type GraphNeighborhoodResponse = {
     /**
-     * Surface
+     * GraphNeighborhoodResponseSurface
      */
     surface: 'state' | 'evidence';
     /**
-     * Mode Hint
+     * GraphNeighborhoodResponseModeHint
      */
     mode_hint: 'detail' | 'compact' | 'overview';
     /**
-     * Focus Ids
+     * GraphNeighborhoodResponseFocusIds
      */
     focus_ids?: Array<string>;
     /**
-     * Nodes
+     * GraphNeighborhoodResponseNodes
      */
     nodes?: Array<GraphNeighborhoodNodeResponse>;
     /**
-     * Edges
+     * GraphNeighborhoodResponseEdges
      */
     edges?: Array<GraphNeighborhoodEdgeResponse>;
     /**
-     * Total Nodes
+     * GraphNeighborhoodResponseTotalNodes
      */
     total_nodes: number;
     /**
-     * Total Edges
+     * GraphNeighborhoodResponseTotalEdges
      */
     total_edges: number;
     /**
-     * Has More
+     * GraphNeighborhoodResponseHasMore
      */
     has_more?: boolean;
     /**
-     * Cursor
+     * GraphNeighborhoodResponseCursor
      */
     cursor?: string | null;
     /**
-     * Generated At
+     * GraphNeighborhoodResponseGeneratedAt
      */
     generated_at: string;
     /**
-     * Cached
+     * GraphNeighborhoodResponseCached
      */
     cached?: boolean;
 };
@@ -3064,27 +3064,27 @@ export type GraphNeighborhoodResponse = {
  */
 export type GraphRelationEdgeResponse = {
     /**
-     * Id
+     * GraphRelationEdgeResponseId
      */
     id: string;
     /**
-     * Source Id
+     * GraphRelationEdgeResponseSourceId
      */
     source_id: string;
     /**
-     * Target Id
+     * GraphRelationEdgeResponseTargetId
      */
     target_id: string;
     /**
-     * Relation Type
+     * GraphRelationEdgeResponseRelationType
      */
     relation_type: string;
     /**
-     * Strength
+     * GraphRelationEdgeResponseStrength
      */
     strength: number;
     /**
-     * Evidence Count
+     * GraphRelationEdgeResponseEvidenceCount
      */
     evidence_count: number;
 };
@@ -3094,59 +3094,59 @@ export type GraphRelationEdgeResponse = {
  */
 export type GraphStateNodeResponse = {
     /**
-     * Id
+     * GraphStateNodeResponseId
      */
     id: string;
     /**
-     * Title
+     * GraphStateNodeResponseTitle
      */
     title: string;
     /**
-     * Kind
+     * GraphStateNodeResponseKind
      */
     kind: 'entity' | 'topic';
     /**
-     * Subtitle
+     * GraphStateNodeResponseSubtitle
      */
     subtitle?: string | null;
     /**
-     * Current State
+     * GraphStateNodeResponseCurrentState
      */
     current_state: string;
     /**
-     * Status
+     * GraphStateNodeResponseStatus
      */
     status: 'stable' | 'changed' | 'contradictory' | 'stale';
     /**
-     * Status Reason
+     * GraphStateNodeResponseStatusReason
      */
     status_reason: string;
     /**
-     * Confidence
+     * GraphStateNodeResponseConfidence
      */
     confidence: number;
     /**
-     * Change Score
+     * GraphStateNodeResponseChangeScore
      */
     change_score: number;
     /**
-     * Last Changed At
+     * GraphStateNodeResponseLastChangedAt
      */
     last_changed_at?: string | null;
     /**
-     * Primary Timestamp
+     * GraphStateNodeResponsePrimaryTimestamp
      */
     primary_timestamp?: string | null;
     /**
-     * Evidence Count
+     * GraphStateNodeResponseEvidenceCount
      */
     evidence_count: number;
     /**
-     * Tags
+     * GraphStateNodeResponseTags
      */
     tags?: Array<string>;
     /**
-     * Evidence Ids
+     * GraphStateNodeResponseEvidenceIds
      */
     evidence_ids?: Array<string>;
 };
@@ -3156,23 +3156,23 @@ export type GraphStateNodeResponse = {
  */
 export type GraphSummaryEdgeResponse = {
     /**
-     * Id
+     * GraphSummaryEdgeResponseId
      */
     id: string;
     /**
-     * Source Id
+     * GraphSummaryEdgeResponseSourceId
      */
     source_id: string;
     /**
-     * Target Id
+     * GraphSummaryEdgeResponseTargetId
      */
     target_id: string;
     /**
-     * Weight
+     * GraphSummaryEdgeResponseWeight
      */
     weight: number;
     /**
-     * Label
+     * GraphSummaryEdgeResponseLabel
      */
     label?: string | null;
 };
@@ -3182,47 +3182,47 @@ export type GraphSummaryEdgeResponse = {
  */
 export type GraphSummaryItemResponse = {
     /**
-     * Id
+     * GraphSummaryItemResponseId
      */
     id: string;
     /**
-     * Kind
+     * GraphSummaryItemResponseKind
      */
     kind: 'cluster' | 'node';
     /**
-     * Title
+     * GraphSummaryItemResponseTitle
      */
     title: string;
     /**
-     * Subtitle
+     * GraphSummaryItemResponseSubtitle
      */
     subtitle?: string | null;
     /**
-     * Preview Labels
+     * GraphSummaryItemResponsePreviewLabels
      */
     preview_labels?: Array<string>;
     /**
-     * Member Count
+     * GraphSummaryItemResponseMemberCount
      */
     member_count: number;
     /**
-     * Status Tone
+     * GraphSummaryItemResponseStatusTone
      */
     status_tone?: 'stable' | 'changed' | 'contradictory' | 'stale' | 'neutral';
     /**
-     * Display Priority
+     * GraphSummaryItemResponseDisplayPriority
      */
     display_priority: number;
     /**
-     * Render Mode Hint
+     * GraphSummaryItemResponseRenderModeHint
      */
     render_mode_hint: 'detail' | 'compact' | 'overview';
     /**
-     * Cluster Membership
+     * GraphSummaryItemResponseClusterMembership
      */
     cluster_membership?: Array<string>;
     /**
-     * Node Ref
+     * GraphSummaryItemResponseNodeRef
      */
     node_ref?: string | null;
 };
@@ -3232,43 +3232,43 @@ export type GraphSummaryItemResponse = {
  */
 export type GraphSummaryResponse = {
     /**
-     * Surface
+     * GraphSummaryResponseSurface
      */
     surface: 'state' | 'evidence';
     /**
-     * Mode Hint
+     * GraphSummaryResponseModeHint
      */
     mode_hint: 'detail' | 'compact' | 'overview';
     /**
-     * Total Nodes
+     * GraphSummaryResponseTotalNodes
      */
     total_nodes: number;
     /**
-     * Total Edges
+     * GraphSummaryResponseTotalEdges
      */
     total_edges: number;
     /**
-     * Clusters
+     * GraphSummaryResponseClusters
      */
     clusters?: Array<GraphSummaryItemResponse>;
     /**
-     * Top Nodes
+     * GraphSummaryResponseTopNodes
      */
     top_nodes?: Array<GraphSummaryItemResponse>;
     /**
-     * Bundled Edges
+     * GraphSummaryResponseBundledEdges
      */
     bundled_edges?: Array<GraphSummaryEdgeResponse>;
     /**
-     * Initial Focus Ids
+     * GraphSummaryResponseInitialFocusIds
      */
     initial_focus_ids?: Array<string>;
     /**
-     * Generated At
+     * GraphSummaryResponseGeneratedAt
      */
     generated_at: string;
     /**
-     * Cached
+     * GraphSummaryResponseCached
      */
     cached?: boolean;
 };
@@ -3278,7 +3278,7 @@ export type GraphSummaryResponse = {
  */
 export type HttpValidationError = {
     /**
-     * Detail
+     * HTTPValidationErrorDetail
      */
     detail?: Array<ValidationError>;
 };
@@ -3308,23 +3308,23 @@ export type IncludeOptions = {
  */
 export type InfluenceContribution = {
     /**
-     * Recency
+     * InfluenceContributionRecency
      */
     recency: number;
     /**
-     * Freq
+     * InfluenceContributionFreq
      */
     freq: number;
     /**
-     * Graph
+     * InfluenceContributionGraph
      */
     graph: number;
     /**
-     * Rerank
+     * InfluenceContributionRerank
      */
     rerank: number;
     /**
-     * Dream
+     * InfluenceContributionDream
      */
     dream: number;
 };
@@ -3334,19 +3334,19 @@ export type InfluenceContribution = {
  */
 export type InfluenceHeatmapPoint = {
     /**
-     * Weekday
+     * InfluenceHeatmapPointWeekday
      */
     weekday: number;
     /**
-     * Hour Utc
+     * InfluenceHeatmapPointHourUtc
      */
     hour_utc: number;
     /**
-     * Count
+     * InfluenceHeatmapPointCount
      */
     count: number;
     /**
-     * Score
+     * InfluenceHeatmapPointScore
      */
     score: number;
 };
@@ -3356,28 +3356,28 @@ export type InfluenceHeatmapPoint = {
  */
 export type InfluenceRow = {
     /**
-     * Id
+     * InfluenceRowId
      */
     id: string;
     /**
-     * Type
+     * InfluenceRowType
      */
     type: string;
     /**
-     * Text
+     * InfluenceRowText
      */
     text: string;
     /**
-     * Access Count
+     * InfluenceRowAccessCount
      */
     access_count: number;
     /**
-     * Influence Score
+     * InfluenceRowInfluenceScore
      */
     influence_score: number;
     contribution: InfluenceContribution;
     /**
-     * Last Accessed At
+     * InfluenceRowLastAccessedAt
      */
     last_accessed_at?: string | null;
 };
@@ -3387,23 +3387,23 @@ export type InfluenceRow = {
  */
 export type InfluenceTrendPoint = {
     /**
-     * Index
+     * InfluenceTrendPointIndex
      */
     index: number;
     /**
-     * Raw
+     * InfluenceTrendPointRaw
      */
     raw: number;
     /**
-     * Ewma
+     * InfluenceTrendPointEwma
      */
     ewma: number;
     /**
-     * Lower
+     * InfluenceTrendPointLower
      */
     lower: number;
     /**
-     * Upper
+     * InfluenceTrendPointUpper
      */
     upper: number;
 };
@@ -3415,21 +3415,21 @@ export type InfluenceTrendPoint = {
  */
 export type ListDocumentsResponse = {
     /**
-     * Items
+     * ListDocumentsResponseItems
      */
     items: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Total
+     * ListDocumentsResponseTotal
      */
     total: number;
     /**
-     * Limit
+     * ListDocumentsResponseLimit
      */
     limit: number;
     /**
-     * Offset
+     * ListDocumentsResponseOffset
      */
     offset: number;
 };
@@ -3441,21 +3441,21 @@ export type ListDocumentsResponse = {
  */
 export type ListMemoryUnitsResponse = {
     /**
-     * Items
+     * ListMemoryUnitsResponseItems
      */
     items: Array<{
         [key: string]: unknown;
     }>;
     /**
-     * Total
+     * ListMemoryUnitsResponseTotal
      */
     total: number;
     /**
-     * Limit
+     * ListMemoryUnitsResponseLimit
      */
     limit: number;
     /**
-     * Offset
+     * ListMemoryUnitsResponseOffset
      */
     offset: number;
 };
@@ -3467,19 +3467,19 @@ export type ListMemoryUnitsResponse = {
  */
 export type ListTagsResponse = {
     /**
-     * Items
+     * ListTagsResponseItems
      */
     items: Array<TagItem>;
     /**
-     * Total
+     * ListTagsResponseTotal
      */
     total: number;
     /**
-     * Limit
+     * ListTagsResponseLimit
      */
     limit: number;
     /**
-     * Offset
+     * ListTagsResponseOffset
      */
     offset: number;
 };
@@ -3491,45 +3491,45 @@ export type ListTagsResponse = {
  */
 export type MemoryItem = {
     /**
-     * Content
+     * MemoryItemContent
      */
     content: string;
     /**
-     * Timestamp
+     * MemoryItemTimestamp
      *
      * When the content occurred. Accepts an ISO 8601 datetime string (e.g. '2024-01-15T10:30:00Z'), null/omitted (defaults to now), or the special string 'unset' to explicitly store without any timestamp (use this for timeless content such as fictional documents or static reference material).
      */
     timestamp?: string | null;
     /**
-     * Context
+     * MemoryItemContext
      */
     context?: string | null;
     /**
-     * Metadata
+     * MemoryItemMetadata
      */
     metadata?: {
         [key: string]: string;
     } | null;
     /**
-     * Document Id
+     * MemoryItemDocumentId
      *
      * Optional document ID for this memory item.
      */
     document_id?: string | null;
     /**
-     * Entities
+     * MemoryItemEntities
      *
      * Optional entities to combine with auto-extracted entities.
      */
     entities?: Array<EntityInput> | null;
     /**
-     * Tags
+     * MemoryItemTags
      *
      * Optional tags for visibility scoping. Memories with tags can be filtered during recall.
      */
     tags?: Array<string> | null;
     /**
-     * ObservationScopes
+     * MemoryItemObservationScopes
      *
      * How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
      */
@@ -3543,7 +3543,7 @@ export type MemoryItem = {
  */
 export type MentalModelListResponse = {
     /**
-     * Items
+     * MentalModelListResponseItems
      */
     items: Array<MentalModelResponse>;
 };
@@ -3555,46 +3555,46 @@ export type MentalModelListResponse = {
  */
 export type MentalModelResponse = {
     /**
-     * Id
+     * MentalModelResponseId
      */
     id: string;
     /**
-     * Bank Id
+     * MentalModelResponseBankId
      */
     bank_id: string;
     /**
-     * Name
+     * MentalModelResponseName
      */
     name: string;
     /**
-     * Source Query
+     * MentalModelResponseSourceQuery
      */
     source_query: string;
     /**
-     * Content
+     * MentalModelResponseContent
      *
      * The mental model content as well-formatted markdown (auto-generated from reflect endpoint)
      */
     content: string;
     /**
-     * Tags
+     * MentalModelResponseTags
      */
     tags?: Array<string>;
     /**
-     * Max Tokens
+     * MentalModelResponseMaxTokens
      */
     max_tokens?: number;
     trigger?: MentalModelTrigger;
     /**
-     * Last Refreshed At
+     * MentalModelResponseLastRefreshedAt
      */
     last_refreshed_at?: string | null;
     /**
-     * Created At
+     * MentalModelResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Reflect Response
+     * MentalModelResponseReflectResponse
      *
      * Full reflect API response payload including based_on facts and observations
      */
@@ -3610,7 +3610,7 @@ export type MentalModelResponse = {
  */
 export type MentalModelTrigger = {
     /**
-     * Refresh After Consolidation
+     * MentalModelTriggerRefreshAfterConsolidation
      *
      * If true, refresh this mental model after observations consolidation (real-time mode)
      */
@@ -3624,31 +3624,31 @@ export type MentalModelTrigger = {
  */
 export type OperationResponse = {
     /**
-     * Id
+     * OperationResponseId
      */
     id: string;
     /**
-     * Task Type
+     * OperationResponseTaskType
      */
     task_type: string;
     /**
-     * Items Count
+     * OperationResponseItemsCount
      */
     items_count: number;
     /**
-     * Document Id
+     * OperationResponseDocumentId
      */
     document_id?: string | null;
     /**
-     * Created At
+     * OperationResponseCreatedAt
      */
     created_at: string;
     /**
-     * Status
+     * OperationResponseStatus
      */
     status: string;
     /**
-     * Error Message
+     * OperationResponseErrorMessage
      */
     error_message: string | null;
 };
@@ -3660,39 +3660,39 @@ export type OperationResponse = {
  */
 export type OperationResultResponse = {
     /**
-     * Operation Id
+     * OperationResultResponseOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * OperationResultResponseStatus
      */
     status: 'pending' | 'completed' | 'failed' | 'not_found';
     /**
-     * Operation Type
+     * OperationResultResponseOperationType
      */
     operation_type?: string | null;
     /**
-     * Created At
+     * OperationResultResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * OperationResultResponseUpdatedAt
      */
     updated_at?: string | null;
     /**
-     * Completed At
+     * OperationResultResponseCompletedAt
      */
     completed_at?: string | null;
     /**
-     * Error Message
+     * OperationResultResponseErrorMessage
      */
     error_message?: string | null;
     /**
-     * Stage
+     * OperationResultResponseStage
      */
     stage?: string | null;
     /**
-     * Result
+     * OperationResultResponseResult
      */
     result?: ReflectResponse | {
         [key: string]: unknown;
@@ -3706,41 +3706,41 @@ export type OperationResultResponse = {
  */
 export type OperationStatusResponse = {
     /**
-     * Operation Id
+     * OperationStatusResponseOperationId
      */
     operation_id: string;
     /**
-     * Status
+     * OperationStatusResponseStatus
      */
     status: 'pending' | 'completed' | 'failed' | 'not_found';
     /**
-     * Operation Type
+     * OperationStatusResponseOperationType
      */
     operation_type?: string | null;
     /**
-     * Created At
+     * OperationStatusResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * OperationStatusResponseUpdatedAt
      */
     updated_at?: string | null;
     /**
-     * Completed At
+     * OperationStatusResponseCompletedAt
      */
     completed_at?: string | null;
     /**
-     * Error Message
+     * OperationStatusResponseErrorMessage
      */
     error_message?: string | null;
     /**
-     * Stage
+     * OperationStatusResponseStage
      *
      * High-level progress stage for pending async work, derived from result_metadata.operation_stage.
      */
     stage?: string | null;
     /**
-     * Result Metadata
+     * OperationStatusResponseResultMetadata
      *
      * Internal metadata for debugging. Structure may change without notice. Not for production use.
      */
@@ -3748,7 +3748,7 @@ export type OperationStatusResponse = {
         [key: string]: unknown;
     } | null;
     /**
-     * Child Operations
+     * OperationStatusResponseChildOperations
      *
      * Child operations for batch operations (if applicable)
      */
@@ -3762,23 +3762,23 @@ export type OperationStatusResponse = {
  */
 export type OperationsListResponse = {
     /**
-     * Bank Id
+     * OperationsListResponseBankId
      */
     bank_id: string;
     /**
-     * Total
+     * OperationsListResponseTotal
      */
     total: number;
     /**
-     * Limit
+     * OperationsListResponseLimit
      */
     limit: number;
     /**
-     * Offset
+     * OperationsListResponseOffset
      */
     offset: number;
     /**
-     * Operations
+     * OperationsListResponseOperations
      */
     operations: Array<OperationResponse>;
 };
@@ -3788,11 +3788,11 @@ export type OperationsListResponse = {
  */
 export type PredictionPoint = {
     /**
-     * Hour Utc
+     * PredictionPointHourUtc
      */
     hour_utc: number;
     /**
-     * Score
+     * PredictionPointScore
      */
     score: number;
 };
@@ -3804,26 +3804,26 @@ export type PredictionPoint = {
  */
 export type RecallRequest = {
     /**
-     * Query
+     * RecallRequestQuery
      */
     query: string;
     /**
-     * Types
+     * RecallRequestTypes
      *
      * List of fact types to recall: 'world', 'experience', 'observation'. Defaults to world and experience if not specified.
      */
     types?: Array<string> | null;
     budget?: Budget;
     /**
-     * Max Tokens
+     * RecallRequestMaxTokens
      */
     max_tokens?: number;
     /**
-     * Trace
+     * RecallRequestTrace
      */
     trace?: boolean;
     /**
-     * Query Timestamp
+     * RecallRequestQueryTimestamp
      *
      * ISO format date string (e.g., '2023-05-30T23:40:00')
      */
@@ -3833,13 +3833,13 @@ export type RecallRequest = {
      */
     include?: IncludeOptions;
     /**
-     * Tags
+     * RecallRequestTags
      *
      * Filter memories by tags. If not specified, all memories are returned.
      */
     tags?: Array<string> | null;
     /**
-     * Tags Match
+     * RecallRequestTagsMatch
      *
      * How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
      */
@@ -3853,17 +3853,17 @@ export type RecallRequest = {
  */
 export type RecallResponse = {
     /**
-     * Results
+     * RecallResponseResults
      */
     results: Array<RecallResult>;
     /**
-     * Trace
+     * RecallResponseTrace
      */
     trace?: {
         [key: string]: unknown;
     } | null;
     /**
-     * Entities
+     * RecallResponseEntities
      *
      * Entity states for entities mentioned in results
      */
@@ -3871,7 +3871,7 @@ export type RecallResponse = {
         [key: string]: EntityStateResponse;
     } | null;
     /**
-     * Chunks
+     * RecallResponseChunks
      *
      * Chunks for facts, keyed by chunk_id
      */
@@ -3879,7 +3879,7 @@ export type RecallResponse = {
         [key: string]: ChunkData;
     } | null;
     /**
-     * Source Facts
+     * RecallResponseSourceFacts
      *
      * Source facts for observation-type results, keyed by fact ID
      */
@@ -3895,57 +3895,57 @@ export type RecallResponse = {
  */
 export type RecallResult = {
     /**
-     * Id
+     * RecallResultId
      */
     id: string;
     /**
-     * Text
+     * RecallResultText
      */
     text: string;
     /**
-     * Type
+     * RecallResultType
      */
     type?: string | null;
     /**
-     * Entities
+     * RecallResultEntities
      */
     entities?: Array<string> | null;
     /**
-     * Context
+     * RecallResultContext
      */
     context?: string | null;
     /**
-     * Occurred Start
+     * RecallResultOccurredStart
      */
     occurred_start?: string | null;
     /**
-     * Occurred End
+     * RecallResultOccurredEnd
      */
     occurred_end?: string | null;
     /**
-     * Mentioned At
+     * RecallResultMentionedAt
      */
     mentioned_at?: string | null;
     /**
-     * Document Id
+     * RecallResultDocumentId
      */
     document_id?: string | null;
     /**
-     * Metadata
+     * RecallResultMetadata
      */
     metadata?: {
         [key: string]: string;
     } | null;
     /**
-     * Chunk Id
+     * RecallResultChunkId
      */
     chunk_id?: string | null;
     /**
-     * Tags
+     * RecallResultTags
      */
     tags?: Array<string> | null;
     /**
-     * Source Fact Ids
+     * RecallResultSourceFactIds
      */
     source_fact_ids?: Array<string> | null;
 };
@@ -3957,19 +3957,19 @@ export type RecallResult = {
  */
 export type ReflectBasedOn = {
     /**
-     * Memories
+     * ReflectBasedOnMemories
      *
      * Memory facts used to generate the response
      */
     memories?: Array<ReflectFact>;
     /**
-     * Mental Models
+     * ReflectBasedOnMentalModels
      *
      * Mental models used during reflection
      */
     mental_models?: Array<ReflectMentalModel>;
     /**
-     * Directives
+     * ReflectBasedOnDirectives
      *
      * Directives applied during reflection
      */
@@ -3983,19 +3983,19 @@ export type ReflectBasedOn = {
  */
 export type ReflectDirective = {
     /**
-     * Id
+     * ReflectDirectiveId
      *
      * Directive ID
      */
     id: string;
     /**
-     * Name
+     * ReflectDirectiveName
      *
      * Directive name
      */
     name: string;
     /**
-     * Content
+     * ReflectDirectiveContent
      *
      * Directive content
      */
@@ -4009,29 +4009,29 @@ export type ReflectDirective = {
  */
 export type ReflectFact = {
     /**
-     * Id
+     * ReflectFactId
      */
     id?: string | null;
     /**
-     * Text
+     * ReflectFactText
      *
      * Fact text. When type='observation', this contains markdown-formatted consolidated knowledge
      */
     text: string;
     /**
-     * Type
+     * ReflectFactType
      */
     type?: string | null;
     /**
-     * Context
+     * ReflectFactContext
      */
     context?: string | null;
     /**
-     * Occurred Start
+     * ReflectFactOccurredStart
      */
     occurred_start?: string | null;
     /**
-     * Occurred End
+     * ReflectFactOccurredEnd
      */
     occurred_end?: string | null;
 };
@@ -4059,13 +4059,13 @@ export type ReflectIncludeOptions = {
  */
 export type ReflectLlmCall = {
     /**
-     * Scope
+     * ReflectLLMCallScope
      *
      * Call scope: agent_1, agent_2, final, etc.
      */
     scope: string;
     /**
-     * Duration Ms
+     * ReflectLLMCallDurationMs
      *
      * Execution time in milliseconds
      */
@@ -4079,19 +4079,19 @@ export type ReflectLlmCall = {
  */
 export type ReflectMentalModel = {
     /**
-     * Id
+     * ReflectMentalModelId
      *
      * Mental model ID
      */
     id: string;
     /**
-     * Text
+     * ReflectMentalModelText
      *
      * Mental model content
      */
     text: string;
     /**
-     * Context
+     * ReflectMentalModelContext
      *
      * Additional context
      */
@@ -4105,12 +4105,12 @@ export type ReflectMentalModel = {
  */
 export type ReflectRequest = {
     /**
-     * Query
+     * ReflectRequestQuery
      */
     query: string;
     budget?: Budget;
     /**
-     * Context
+     * ReflectRequestContext
      *
      * DEPRECATED: Additional context is now concatenated with the query. Pass context directly in the query field instead. If provided, it will be appended to the query for backward compatibility.
      *
@@ -4118,7 +4118,7 @@ export type ReflectRequest = {
      */
     context?: string | null;
     /**
-     * Max Tokens
+     * ReflectRequestMaxTokens
      *
      * Maximum tokens for the response
      */
@@ -4128,7 +4128,7 @@ export type ReflectRequest = {
      */
     include?: ReflectIncludeOptions;
     /**
-     * Response Schema
+     * ReflectRequestResponseSchema
      *
      * Optional JSON Schema for structured output. When provided, the response will include a 'structured_output' field with the LLM response parsed according to this schema.
      */
@@ -4136,13 +4136,13 @@ export type ReflectRequest = {
         [key: string]: unknown;
     } | null;
     /**
-     * Tags
+     * ReflectRequestTags
      *
      * Filter memories by tags during reflection. If not specified, all memories are considered.
      */
     tags?: Array<string> | null;
     /**
-     * Tags Match
+     * ReflectRequestTagsMatch
      *
      * How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
      */
@@ -4156,7 +4156,7 @@ export type ReflectRequest = {
  */
 export type ReflectResponse = {
     /**
-     * Text
+     * ReflectResponseText
      *
      * The reflect response as well-formatted markdown (headers, lists, bold/italic, code blocks, etc.)
      */
@@ -4166,7 +4166,7 @@ export type ReflectResponse = {
      */
     based_on?: ReflectBasedOn | null;
     /**
-     * Structured Output
+     * ReflectResponseStructuredOutput
      *
      * Structured output parsed according to the request's response_schema. Only present when response_schema was provided in the request.
      */
@@ -4190,13 +4190,13 @@ export type ReflectResponse = {
  */
 export type ReflectToolCall = {
     /**
-     * Tool
+     * ReflectToolCallTool
      *
      * Tool name: lookup, recall, learn, expand
      */
     tool: string;
     /**
-     * Input
+     * ReflectToolCallInput
      *
      * Tool input parameters
      */
@@ -4204,7 +4204,7 @@ export type ReflectToolCall = {
         [key: string]: unknown;
     };
     /**
-     * Output
+     * ReflectToolCallOutput
      *
      * Tool output (only included when include.tool_calls.output is true)
      */
@@ -4212,13 +4212,13 @@ export type ReflectToolCall = {
         [key: string]: unknown;
     } | null;
     /**
-     * Duration Ms
+     * ReflectToolCallDurationMs
      *
      * Execution time in milliseconds
      */
     duration_ms: number;
     /**
-     * Iteration
+     * ReflectToolCallIteration
      *
      * Iteration number (1-based) when this tool was called
      */
@@ -4232,13 +4232,13 @@ export type ReflectToolCall = {
  */
 export type ReflectTrace = {
     /**
-     * Tool Calls
+     * ReflectTraceToolCalls
      *
      * Tool calls made during reflection
      */
     tool_calls?: Array<ReflectToolCall>;
     /**
-     * Llm Calls
+     * ReflectTraceLlmCalls
      *
      * LLM calls made during reflection
      */
@@ -4252,17 +4252,17 @@ export type ReflectTrace = {
  */
 export type RetainRequest = {
     /**
-     * Items
+     * RetainRequestItems
      */
     items: Array<MemoryItem>;
     /**
-     * Async
+     * RetainRequestAsync
      *
      * If true, process asynchronously in background. If false, wait for completion (default: false)
      */
     async?: boolean;
     /**
-     * Document Tags
+     * RetainRequestDocumentTags
      *
      * Deprecated. Use item-level tags instead.
      *
@@ -4278,25 +4278,25 @@ export type RetainRequest = {
  */
 export type RetainResponse = {
     /**
-     * Success
+     * RetainResponseSuccess
      */
     success: boolean;
     /**
-     * Bank Id
+     * RetainResponseBankId
      */
     bank_id: string;
     /**
-     * Items Count
+     * RetainResponseItemsCount
      */
     items_count: number;
     /**
-     * Async
+     * RetainResponseAsync
      *
      * Whether the operation was processed asynchronously
      */
     async: boolean;
     /**
-     * Operation Id
+     * RetainResponseOperationId
      *
      * Operation ID for tracking async operations. Use GET /v1/default/banks/{bank_id}/operations to list operations. Only present when async=true.
      */
@@ -4314,13 +4314,13 @@ export type RetainResponse = {
  */
 export type SourceFactsIncludeOptions = {
     /**
-     * Max Tokens
+     * SourceFactsIncludeOptionsMaxTokens
      *
      * Maximum total tokens for source facts across all observations (-1 = unlimited)
      */
     max_tokens?: number;
     /**
-     * Max Tokens Per Observation
+     * SourceFactsIncludeOptionsMaxTokensPerObservation
      *
      * Maximum tokens of source facts per observation (-1 = unlimited)
      */
@@ -4332,23 +4332,23 @@ export type SourceFactsIncludeOptions = {
  */
 export type SubRoutineHistogramResponse = {
     /**
-     * Bank Id
+     * SubRoutineHistogramResponseBankId
      */
     bank_id: string;
     /**
-     * Histogram
+     * SubRoutineHistogramResponseHistogram
      */
     histogram: Array<PredictionPoint>;
     /**
-     * Sample Count
+     * SubRoutineHistogramResponseSampleCount
      */
     sample_count?: number;
     /**
-     * Source Snapshot Id
+     * SubRoutineHistogramResponseSourceSnapshotId
      */
     source_snapshot_id?: string | null;
     /**
-     * Model Signature
+     * SubRoutineHistogramResponseModelSignature
      */
     model_signature?: string | null;
 };
@@ -4358,27 +4358,27 @@ export type SubRoutineHistogramResponse = {
  */
 export type SubRoutinePredictionResponse = {
     /**
-     * Bank Id
+     * SubRoutinePredictionResponseBankId
      */
     bank_id: string;
     /**
-     * Horizon Hours
+     * SubRoutinePredictionResponseHorizonHours
      */
     horizon_hours: number;
     /**
-     * Predictions
+     * SubRoutinePredictionResponsePredictions
      */
     predictions: Array<PredictionPoint>;
     /**
-     * Sample Count
+     * SubRoutinePredictionResponseSampleCount
      */
     sample_count?: number;
     /**
-     * Source Snapshot Id
+     * SubRoutinePredictionResponseSourceSnapshotId
      */
     source_snapshot_id?: string | null;
     /**
-     * Model Signature
+     * SubRoutinePredictionResponseModelSignature
      */
     model_signature?: string | null;
 };
@@ -4388,15 +4388,15 @@ export type SubRoutinePredictionResponse = {
  */
 export type SubRoutineSubmitRequest = {
     /**
-     * Mode
+     * SubRoutineSubmitRequestMode
      */
     mode?: 'warmup' | 'incremental' | 'full_copy';
     /**
-     * Horizon Hours
+     * SubRoutineSubmitRequestHorizonHours
      */
     horizon_hours?: number;
     /**
-     * Force Rebuild
+     * SubRoutineSubmitRequestForceRebuild
      */
     force_rebuild?: boolean;
 };
@@ -4408,13 +4408,13 @@ export type SubRoutineSubmitRequest = {
  */
 export type TagItem = {
     /**
-     * Tag
+     * TagItemTag
      *
      * The tag value
      */
     tag: string;
     /**
-     * Count
+     * TagItemCount
      *
      * Number of memories with this tag
      */
@@ -4426,19 +4426,19 @@ export type TagItem = {
  */
 export type TimelineEdgeResponse = {
     /**
-     * Source
+     * TimelineEdgeResponseSource
      */
     source: string;
     /**
-     * Target
+     * TimelineEdgeResponseTarget
      */
     target: string;
     /**
-     * Edge Kind
+     * TimelineEdgeResponseEdgeKind
      */
     edge_kind: 'chronological' | 'temporal' | 'semantic' | 'entity' | 'causal' | 'source' | 'derived';
     /**
-     * Weight
+     * TimelineEdgeResponseWeight
      */
     weight?: number;
 };
@@ -4448,76 +4448,76 @@ export type TimelineEdgeResponse = {
  */
 export type TimelineItemResponse = {
     /**
-     * Id
+     * TimelineItemResponseId
      */
     id: string;
     /**
-     * Kind
+     * TimelineItemResponseKind
      */
     kind: 'fact' | 'observation' | 'mental_model';
     /**
-     * Fact Type
+     * TimelineItemResponseFactType
      */
     fact_type: string;
     /**
-     * Text
+     * TimelineItemResponseText
      */
     text: string;
     /**
-     * Context
+     * TimelineItemResponseContext
      */
     context?: string | null;
     /**
-     * Title
+     * TimelineItemResponseTitle
      */
     title?: string | null;
     /**
-     * Anchor At
+     * TimelineItemResponseAnchorAt
      */
     anchor_at?: string | null;
     /**
-     * Anchor Kind
+     * TimelineItemResponseAnchorKind
      */
     anchor_kind: string;
     /**
-     * Recorded At
+     * TimelineItemResponseRecordedAt
      */
     recorded_at?: string | null;
     /**
-     * Occurred Start
+     * TimelineItemResponseOccurredStart
      */
     occurred_start?: string | null;
     /**
-     * Occurred End
+     * TimelineItemResponseOccurredEnd
      */
     occurred_end?: string | null;
     /**
-     * Temporal Direction
+     * TimelineItemResponseTemporalDirection
      */
     temporal_direction: string;
     /**
-     * Temporal Confidence
+     * TimelineItemResponseTemporalConfidence
      */
     temporal_confidence?: number | null;
     /**
-     * Temporal Reference Text
+     * TimelineItemResponseTemporalReferenceText
      */
     temporal_reference_text?: string | null;
     temporal: TimelineTemporalResponse;
     /**
-     * Entities
+     * TimelineItemResponseEntities
      */
     entities?: Array<string>;
     /**
-     * Tags
+     * TimelineItemResponseTags
      */
     tags?: Array<string>;
     /**
-     * Source Memory Ids
+     * TimelineItemResponseSourceMemoryIds
      */
     source_memory_ids?: Array<string>;
     /**
-     * Proof Count
+     * TimelineItemResponseProofCount
      */
     proof_count?: number;
 };
@@ -4527,19 +4527,19 @@ export type TimelineItemResponse = {
  */
 export type TimelineResponse = {
     /**
-     * Items
+     * TimelineResponseItems
      */
     items?: Array<TimelineItemResponse>;
     /**
-     * Edges
+     * TimelineResponseEdges
      */
     edges?: Array<TimelineEdgeResponse>;
     /**
-     * Total Items
+     * TimelineResponseTotalItems
      */
     total_items: number;
     /**
-     * Limit
+     * TimelineResponseLimit
      */
     limit: number;
 };
@@ -4549,27 +4549,27 @@ export type TimelineResponse = {
  */
 export type TimelineTemporalResponse = {
     /**
-     * Anchor At
+     * TimelineTemporalResponseAnchorAt
      */
     anchor_at?: string | null;
     /**
-     * Anchor Kind
+     * TimelineTemporalResponseAnchorKind
      */
     anchor_kind: string;
     /**
-     * Recorded At
+     * TimelineTemporalResponseRecordedAt
      */
     recorded_at?: string | null;
     /**
-     * Direction
+     * TimelineTemporalResponseDirection
      */
     direction: string;
     /**
-     * Confidence
+     * TimelineTemporalResponseConfidence
      */
     confidence?: number | null;
     /**
-     * Reference Text
+     * TimelineTemporalResponseReferenceText
      */
     reference_text?: string | null;
 };
@@ -4584,19 +4584,19 @@ export type TimelineTemporalResponse = {
  */
 export type TokenUsage = {
     /**
-     * Input Tokens
+     * TokenUsageInputTokens
      *
      * Number of input/prompt tokens consumed
      */
     input_tokens?: number;
     /**
-     * Output Tokens
+     * TokenUsageOutputTokens
      *
      * Number of output/completion tokens generated
      */
     output_tokens?: number;
     /**
-     * Total Tokens
+     * TokenUsageTotalTokens
      *
      * Total tokens (input + output)
      */
@@ -4610,7 +4610,7 @@ export type TokenUsage = {
  */
 export type ToolCallsIncludeOptions = {
     /**
-     * Output
+     * ToolCallsIncludeOptionsOutput
      *
      * Include tool outputs in the trace. Set to false to only include inputs (smaller payload).
      */
@@ -4624,31 +4624,31 @@ export type ToolCallsIncludeOptions = {
  */
 export type UpdateDirectiveRequest = {
     /**
-     * Name
+     * UpdateDirectiveRequestName
      *
      * New name
      */
     name?: string | null;
     /**
-     * Content
+     * UpdateDirectiveRequestContent
      *
      * New content
      */
     content?: string | null;
     /**
-     * Priority
+     * UpdateDirectiveRequestPriority
      *
      * New priority
      */
     priority?: number | null;
     /**
-     * Is Active
+     * UpdateDirectiveRequestIsActive
      *
      * New active status
      */
     is_active?: boolean | null;
     /**
-     * Tags
+     * UpdateDirectiveRequestTags
      *
      * New tags
      */
@@ -4671,25 +4671,25 @@ export type UpdateDispositionRequest = {
  */
 export type UpdateMentalModelRequest = {
     /**
-     * Name
+     * UpdateMentalModelRequestName
      *
      * New name for the mental model
      */
     name?: string | null;
     /**
-     * Source Query
+     * UpdateMentalModelRequestSourceQuery
      *
      * New source query for the mental model
      */
     source_query?: string | null;
     /**
-     * Max Tokens
+     * UpdateMentalModelRequestMaxTokens
      *
      * Maximum tokens for generated content
      */
     max_tokens?: number | null;
     /**
-     * Tags
+     * UpdateMentalModelRequestTags
      *
      * Tags for scoped visibility
      */
@@ -4707,25 +4707,25 @@ export type UpdateMentalModelRequest = {
  */
 export type UpdateWebhookRequest = {
     /**
-     * Url
+     * UpdateWebhookRequestUrl
      *
      * HTTP(S) endpoint URL
      */
     url?: string | null;
     /**
-     * Secret
+     * UpdateWebhookRequestSecret
      *
      * HMAC-SHA256 signing secret. Omit to keep existing; send null to clear.
      */
     secret?: string | null;
     /**
-     * Event Types
+     * UpdateWebhookRequestEventTypes
      *
      * List of event types
      */
     event_types?: Array<string> | null;
     /**
-     * Enabled
+     * UpdateWebhookRequestEnabled
      *
      * Whether this webhook is active
      */
@@ -4741,15 +4741,15 @@ export type UpdateWebhookRequest = {
  */
 export type ValidationError = {
     /**
-     * Location
+     * ValidationErrorLoc
      */
     loc: Array<string | number>;
     /**
-     * Message
+     * ValidationErrorMsg
      */
     msg: string;
     /**
-     * Error Type
+     * ValidationErrorType
      */
     type: string;
 };
@@ -4761,7 +4761,7 @@ export type ValidationError = {
  */
 export type VersionResponse = {
     /**
-     * Api Version
+     * VersionResponseApiVersion
      *
      * API version string
      */
@@ -4779,11 +4779,11 @@ export type VersionResponse = {
  */
 export type WebhookDeliveryListResponse = {
     /**
-     * Items
+     * WebhookDeliveryListResponseItems
      */
     items: Array<WebhookDeliveryResponse>;
     /**
-     * Next Cursor
+     * WebhookDeliveryListResponseNextCursor
      */
     next_cursor?: string | null;
 };
@@ -4795,55 +4795,55 @@ export type WebhookDeliveryListResponse = {
  */
 export type WebhookDeliveryResponse = {
     /**
-     * Id
+     * WebhookDeliveryResponseId
      */
     id: string;
     /**
-     * Webhook Id
+     * WebhookDeliveryResponseWebhookId
      */
     webhook_id: string | null;
     /**
-     * Url
+     * WebhookDeliveryResponseUrl
      */
     url: string;
     /**
-     * Event Type
+     * WebhookDeliveryResponseEventType
      */
     event_type: string;
     /**
-     * Status
+     * WebhookDeliveryResponseStatus
      */
     status: string;
     /**
-     * Attempts
+     * WebhookDeliveryResponseAttempts
      */
     attempts: number;
     /**
-     * Next Retry At
+     * WebhookDeliveryResponseNextRetryAt
      */
     next_retry_at?: string | null;
     /**
-     * Last Error
+     * WebhookDeliveryResponseLastError
      */
     last_error?: string | null;
     /**
-     * Last Response Status
+     * WebhookDeliveryResponseLastResponseStatus
      */
     last_response_status?: number | null;
     /**
-     * Last Response Body
+     * WebhookDeliveryResponseLastResponseBody
      */
     last_response_body?: string | null;
     /**
-     * Last Attempt At
+     * WebhookDeliveryResponseLastAttemptAt
      */
     last_attempt_at?: string | null;
     /**
-     * Created At
+     * WebhookDeliveryResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * WebhookDeliveryResponseUpdatedAt
      */
     updated_at?: string | null;
 };
@@ -4855,19 +4855,19 @@ export type WebhookDeliveryResponse = {
  */
 export type WebhookHttpConfig = {
     /**
-     * Method
+     * WebhookHttpConfigMethod
      *
      * HTTP method: GET or POST
      */
     method?: string;
     /**
-     * Timeout Seconds
+     * WebhookHttpConfigTimeoutSeconds
      *
      * HTTP request timeout in seconds
      */
     timeout_seconds?: number;
     /**
-     * Headers
+     * WebhookHttpConfigHeaders
      *
      * Custom HTTP headers
      */
@@ -4875,7 +4875,7 @@ export type WebhookHttpConfig = {
         [key: string]: string;
     };
     /**
-     * Params
+     * WebhookHttpConfigParams
      *
      * Custom HTTP query parameters
      */
@@ -4891,7 +4891,7 @@ export type WebhookHttpConfig = {
  */
 export type WebhookListResponse = {
     /**
-     * Items
+     * WebhookListResponseItems
      */
     items: Array<WebhookResponse>;
 };
@@ -4903,38 +4903,38 @@ export type WebhookListResponse = {
  */
 export type WebhookResponse = {
     /**
-     * Id
+     * WebhookResponseId
      */
     id: string;
     /**
-     * Bank Id
+     * WebhookResponseBankId
      */
     bank_id: string | null;
     /**
-     * Url
+     * WebhookResponseUrl
      */
     url: string;
     /**
-     * Secret
+     * WebhookResponseSecret
      *
      * Signing secret (redacted in responses)
      */
     secret?: string | null;
     /**
-     * Event Types
+     * WebhookResponseEventTypes
      */
     event_types: Array<string>;
     /**
-     * Enabled
+     * WebhookResponseEnabled
      */
     enabled: boolean;
     http_config?: WebhookHttpConfig;
     /**
-     * Created At
+     * WebhookResponseCreatedAt
      */
     created_at?: string | null;
     /**
-     * Updated At
+     * WebhookResponseUpdatedAt
      */
     updated_at?: string | null;
 };

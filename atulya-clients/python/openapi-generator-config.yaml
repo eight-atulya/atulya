@@ -1,6 +1,6 @@
 packageName: atulya_client_api
 projectName: atulya-client
-packageVersion: 0.8.2
+packageVersion: 0.8.3
 library: asyncio
 generateSourceCodeOnly: true
 # Don't generate auto tests or docs - we have our own

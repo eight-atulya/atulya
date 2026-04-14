@@ -29,7 +29,7 @@ from .config import (
 from .errors import AtulyaError
 from .tools import create_atulya_tools, memory_instructions
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 __all__ = [
     "configure",

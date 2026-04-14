@@ -1,6 +1,6 @@
 {
   "name": "@eight-atulya/atulya-openclaw",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Atulya memory plugin for OpenClaw - biomimetic long-term memory with fact extraction",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

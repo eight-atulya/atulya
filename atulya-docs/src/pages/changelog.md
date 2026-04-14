@@ -12,6 +12,17 @@ For full release details, see [GitHub Releases](https://github.com/eight-atulya/
 
 No unreleased entries yet.
 
+## [0.8.3](https://github.com/eight-atulya/atulya/releases/tag/v0.8.3)
+
+**Bug Fixes**
+
+- Fixed Rust CLI compatibility with regenerated Rust client models by handling optional fields and status enums safely, preventing release-lane build breaks.
+
+**Release Reliability**
+
+- Hardened Rust client OpenAPI sanitization by namespacing inline schema titles to avoid typify enum collisions during code generation.
+- Added Rust CLI contract checks to client generation and release preflight so SDK regeneration failures are caught before tagging.
+
 ## [0.8.2](https://github.com/eight-atulya/atulya/releases/tag/v0.8.2)
 
 **Bug Fixes**

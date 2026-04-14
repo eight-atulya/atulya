@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   title: Atulya HTTP API
-  version: 0.8.2
+  version: 0.8.3
 servers:
 - url: /
 paths:
@@ -4709,11 +4709,11 @@ components:
       properties:
         content:
           description: New background information to add or merge
-          title: Content
+          title: AddBackgroundRequestContent
           type: string
         update_disposition:
           description: Deprecated - disposition is no longer auto-inferred from mission
-          title: Update Disposition
+          title: AddBackgroundRequestUpdateDisposition
           type: boolean
       required:
       - content
@@ -4725,10 +4725,10 @@ components:
         status: queued
       properties:
         operation_id:
-          title: Operation Id
+          title: AsyncOperationSubmitResponseOperationId
           type: string
         status:
-          title: Status
+          title: AsyncOperationSubmitResponseStatus
           type: string
       required:
       - operation_id
@@ -4741,7 +4741,7 @@ components:
         mission: I was born in Texas. I am a software engineer with 10 years of experience.
       properties:
         mission:
-          title: Mission
+          title: BackgroundResponseMission
           type: string
         background:
           nullable: true
@@ -4767,18 +4767,18 @@ components:
       properties:
         bank_id:
           description: Bank identifier
-          title: Bank Id
+          title: BankConfigResponseBankId
           type: string
         config:
           additionalProperties: true
           description: Fully resolved configuration with all hierarchical overrides
             applied (Python field names)
-          title: Config
+          title: BankConfigResponseConfig
           type: object
         overrides:
           additionalProperties: true
           description: Bank-specific configuration overrides only (Python field names)
-          title: Overrides
+          title: BankConfigResponseOverrides
           type: object
       required:
       - bank_id
@@ -4798,7 +4798,7 @@ components:
           description: Configuration overrides. Keys can be in Python field format
             (llm_provider) or environment variable format (ATULYA_API_LLM_PROVIDER).
             Only hierarchical fields can be overridden per-bank.
-          title: Updates
+          title: BankConfigUpdateUpdates
           type: object
       required:
       - updates
@@ -4807,7 +4807,7 @@ components:
       description: Bank list item with profile summary.
       properties:
         bank_id:
-          title: Bank Id
+          title: BankListItemBankId
           type: string
         name:
           nullable: true
@@ -4844,7 +4844,7 @@ components:
         banks:
           items:
             $ref: "#/components/schemas/BankListItem"
-          title: Banks
+          title: BankListResponseBanks
           type: array
       required:
       - banks
@@ -4862,17 +4862,17 @@ components:
         name: Alice
       properties:
         bank_id:
-          title: Bank Id
+          title: BankProfileResponseBankId
           type: string
         name:
-          title: Name
+          title: BankProfileResponseName
           type: string
         disposition:
           $ref: "#/components/schemas/DispositionTraits"
         mission:
           description: The agent's mission - who they are and what they're trying
             to accomplish
-          title: Mission
+          title: BankProfileResponseMission
           type: string
         background:
           nullable: true
@@ -4914,50 +4914,50 @@ components:
         total_observations: 45
       properties:
         bank_id:
-          title: Bank Id
+          title: BankStatsResponseBankId
           type: string
         total_nodes:
-          title: Total Nodes
+          title: BankStatsResponseTotalNodes
           type: integer
         total_links:
-          title: Total Links
+          title: BankStatsResponseTotalLinks
           type: integer
         total_documents:
-          title: Total Documents
+          title: BankStatsResponseTotalDocuments
           type: integer
         nodes_by_fact_type:
           additionalProperties:
             type: integer
-          title: Nodes By Fact Type
+          title: BankStatsResponseNodesByFactType
         links_by_link_type:
           additionalProperties:
             type: integer
-          title: Links By Link Type
+          title: BankStatsResponseLinksByLinkType
         links_by_fact_type:
           additionalProperties:
             type: integer
-          title: Links By Fact Type
+          title: BankStatsResponseLinksByFactType
         links_breakdown:
           additionalProperties:
             additionalProperties:
               type: integer
-          title: Links Breakdown
+          title: BankStatsResponseLinksBreakdown
         pending_operations:
-          title: Pending Operations
+          title: BankStatsResponsePendingOperations
           type: integer
         failed_operations:
-          title: Failed Operations
+          title: BankStatsResponseFailedOperations
           type: integer
         last_consolidated_at:
           nullable: true
           type: string
         pending_consolidation:
           description: Number of memories not yet processed into observations
-          title: Pending Consolidation
+          title: BankStatsResponsePendingConsolidation
           type: integer
         total_observations:
           description: Total number of observations
-          title: Total Observations
+          title: BankStatsResponseTotalObservations
           type: integer
       required:
       - bank_id
@@ -4978,11 +4978,11 @@ components:
           items:
             format: binary
             type: string
-          title: Files
+          title: BodyFileRetainFiles
           type: array
         request:
           description: JSON string with FileRetainRequest model
-          title: Request
+          title: BodyFileRetainRequest
           type: string
       required:
       - files
@@ -4993,7 +4993,7 @@ components:
         file:
           description: Brain snapshot payload
           format: binary
-          title: File
+          title: BodyImportBrainSnapshotFile
           type: string
       required:
       - file
@@ -5003,11 +5003,11 @@ components:
         archive:
           description: Repository ZIP archive
           format: binary
-          title: Archive
+          title: BodyImportCodebaseZipArchive
           type: string
         request:
           description: JSON string with CodebaseImportZipRequest model
-          title: Request
+          title: BodyImportCodebaseZipRequest
           type: string
       required:
       - archive
@@ -5018,7 +5018,7 @@ components:
         file:
           description: Brain snapshot payload
           format: binary
-          title: File
+          title: BodyValidateBrainImportFile
           type: string
       required:
       - file
@@ -5031,13 +5031,13 @@ components:
         bank_id: bank_id
       properties:
         bank_id:
-          title: Bank Id
+          title: BrainImportResponseBankId
           type: string
         file_path:
-          title: File Path
+          title: BrainImportResponseFilePath
           type: string
         size_bytes:
-          title: Size Bytes
+          title: BrainImportResponseSizeBytes
           type: integer
         format_version:
           nullable: true
@@ -5054,7 +5054,7 @@ components:
         version: 0
       properties:
         valid:
-          title: Valid
+          title: BrainImportValidationResponseValid
           type: boolean
         version:
           nullable: true
@@ -5122,38 +5122,38 @@ components:
         window_days: 0
       properties:
         bank_id:
-          title: Bank Id
+          title: BrainInfluenceResponseBankId
           type: string
         window_days:
-          title: Window Days
+          title: BrainInfluenceResponseWindowDays
           type: integer
         entity_type:
-          title: Entity Type
+          title: BrainInfluenceResponseEntityType
           type: string
         leaderboard:
           items:
             $ref: "#/components/schemas/InfluenceRow"
-          title: Leaderboard
+          title: BrainInfluenceResponseLeaderboard
           type: array
         heatmap:
           items:
             $ref: "#/components/schemas/InfluenceHeatmapPoint"
-          title: Heatmap
+          title: BrainInfluenceResponseHeatmap
           type: array
         trend:
           items:
             $ref: "#/components/schemas/InfluenceTrendPoint"
-          title: Trend
+          title: BrainInfluenceResponseTrend
           type: array
         anomalies:
           items:
             additionalProperties: true
             type: object
-          title: Anomalies
+          title: BrainInfluenceResponseAnomalies
           type: array
         summary:
           additionalProperties: true
-          title: Summary
+          title: BrainInfluenceResponseSummary
           type: object
       required:
       - anomalies
@@ -5176,15 +5176,15 @@ components:
       properties:
         remote_endpoint:
           description: URL of the remote Atulya API (e.g. http://host:8888)
-          title: Remote Endpoint
+          title: BrainLearnRequestRemoteEndpoint
           type: string
         remote_bank_id:
           description: Bank ID on the remote instance to learn from
-          title: Remote Bank Id
+          title: BrainLearnRequestRemoteBankId
           type: string
         remote_api_key:
           description: Optional API key for the remote instance
-          title: Remote Api Key
+          title: BrainLearnRequestRemoteApiKey
           type: string
         learning_type:
           enum:
@@ -5192,18 +5192,18 @@ components:
           - distilled
           - structured
           - raw_mirror
-          title: Learning Type
+          title: BrainLearnRequestLearningType
           type: string
         mode:
           enum:
           - incremental
           - full_copy
-          title: Mode
+          title: BrainLearnRequestMode
           type: string
         horizon_hours:
           maximum: 168.0
           minimum: 1.0
-          title: Horizon Hours
+          title: BrainLearnRequestHorizonHours
           type: integer
       required:
       - remote_bank_id
@@ -5215,10 +5215,10 @@ components:
         operation_id: operation_id
       properties:
         operation_id:
-          title: Operation Id
+          title: BrainLearnResponseOperationId
           type: string
         deduplicated:
-          title: Deduplicated
+          title: BrainLearnResponseDeduplicated
           type: boolean
       required:
       - operation_id
@@ -5243,25 +5243,25 @@ components:
           key: 5
       properties:
         enabled:
-          title: Enabled
+          title: BrainRuntimeStatusResponseEnabled
           type: boolean
         circuit_open:
-          title: Circuit Open
+          title: BrainRuntimeStatusResponseCircuitOpen
           type: boolean
         failure_count:
-          title: Failure Count
+          title: BrainRuntimeStatusResponseFailureCount
           type: integer
         bank_id:
-          title: Bank Id
+          title: BrainRuntimeStatusResponseBankId
           type: string
         file_path:
-          title: File Path
+          title: BrainRuntimeStatusResponseFilePath
           type: string
         exists:
-          title: Exists
+          title: BrainRuntimeStatusResponseExists
           type: boolean
         size_bytes:
-          title: Size Bytes
+          title: BrainRuntimeStatusResponseSizeBytes
           type: integer
         last_modified_at:
           nullable: true
@@ -5273,7 +5273,7 @@ components:
           nullable: true
           type: string
         native_library_loaded:
-          title: Native Library Loaded
+          title: BrainRuntimeStatusResponseNativeLibraryLoaded
           type: boolean
         format_version:
           nullable: true
@@ -5287,7 +5287,7 @@ components:
         metrics:
           additionalProperties:
             type: integer
-          title: Metrics
+          title: BrainRuntimeStatusResponseMetrics
       required:
       - bank_id
       - circuit_open
@@ -5314,13 +5314,13 @@ components:
         success: true
       properties:
         success:
-          title: Success
+          title: CancelOperationResponseSuccess
           type: boolean
         message:
-          title: Message
+          title: CancelOperationResponseMessage
           type: string
         operation_id:
-          title: Operation Id
+          title: CancelOperationResponseOperationId
           type: string
       required:
       - message
@@ -5331,10 +5331,10 @@ components:
       description: Status of a child operation (for batch operations).
       properties:
         operation_id:
-          title: Operation Id
+          title: ChildOperationStatusOperationId
           type: string
         status:
-          title: Status
+          title: ChildOperationStatusStatus
           type: string
         sub_batch_index:
           nullable: true
@@ -5353,17 +5353,17 @@ components:
       description: Chunk data for a single chunk.
       properties:
         id:
-          title: Id
+          title: ChunkDataId
           type: string
         text:
-          title: Text
+          title: ChunkDataText
           type: string
         chunk_index:
-          title: Chunk Index
+          title: ChunkDataChunkIndex
           type: integer
         truncated:
           description: Whether the chunk text was truncated due to token limits
-          title: Truncated
+          title: ChunkDataTruncated
           type: boolean
       required:
       - chunk_index
@@ -5375,7 +5375,7 @@ components:
       properties:
         max_tokens:
           description: Maximum tokens for chunks (chunks may be truncated)
-          title: Max Tokens
+          title: ChunkIncludeOptionsMaxTokens
           type: integer
       title: ChunkIncludeOptions
     ChunkResponse:
@@ -5389,22 +5389,22 @@ components:
         document_id: session_1
       properties:
         chunk_id:
-          title: Chunk Id
+          title: ChunkResponseChunkId
           type: string
         document_id:
-          title: Document Id
+          title: ChunkResponseDocumentId
           type: string
         bank_id:
-          title: Bank Id
+          title: ChunkResponseBankId
           type: string
         chunk_index:
-          title: Chunk Index
+          title: ChunkResponseChunkIndex
           type: integer
         chunk_text:
-          title: Chunk Text
+          title: ChunkResponseChunkText
           type: string
         created_at:
-          title: Created At
+          title: ChunkResponseCreatedAt
           type: string
       required:
       - bank_id
@@ -5420,7 +5420,7 @@ components:
         deleted_count: 3
       properties:
         deleted_count:
-          title: Deleted Count
+          title: ClearMemoryObservationsResponseDeletedCount
           type: integer
       required:
       - deleted_count
@@ -5438,7 +5438,7 @@ components:
           enum:
           - direct
           - retain
-          title: Memory Ingest Mode
+          title: CodebaseApproveRequestMemoryIngestMode
           type: string
       title: CodebaseApproveRequest
     CodebaseApproveResponse:
@@ -5451,22 +5451,22 @@ components:
         status: status
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseApproveResponseCodebaseId
           type: string
         snapshot_id:
-          title: Snapshot Id
+          title: CodebaseApproveResponseSnapshotId
           type: string
         operation_id:
-          title: Operation Id
+          title: CodebaseApproveResponseOperationId
           type: string
         status:
-          title: Status
+          title: CodebaseApproveResponseStatus
           type: string
         memory_ingest_mode:
           enum:
           - direct
           - retain
-          title: Memory Ingest Mode
+          title: CodebaseApproveResponseMemoryIngestMode
           type: string
       required:
       - codebase_id
@@ -5575,31 +5575,31 @@ components:
         route_source: route_source
       properties:
         id:
-          title: Id
+          title: CodebaseChunkDetailResponseId
           type: string
         chunk_key:
-          title: Chunk Key
+          title: CodebaseChunkDetailResponseChunkKey
           type: string
         path:
-          title: Path
+          title: CodebaseChunkDetailResponsePath
           type: string
         language:
           nullable: true
           type: string
         kind:
-          title: Kind
+          title: CodebaseChunkDetailResponseKind
           type: string
         label:
-          title: Label
+          title: CodebaseChunkDetailResponseLabel
           type: string
         preview_text:
-          title: Preview Text
+          title: CodebaseChunkDetailResponsePreviewText
           type: string
         start_line:
-          title: Start Line
+          title: CodebaseChunkDetailResponseStartLine
           type: integer
         end_line:
-          title: End Line
+          title: CodebaseChunkDetailResponseEndLine
           type: integer
         container:
           nullable: true
@@ -5611,7 +5611,7 @@ components:
           nullable: true
           type: string
         parse_confidence:
-          title: Parse Confidence
+          title: CodebaseChunkDetailResponseParseConfidence
           type: number
         cluster_id:
           nullable: true
@@ -5620,45 +5620,45 @@ components:
           nullable: true
           type: string
         route_target:
-          title: Route Target
+          title: CodebaseChunkDetailResponseRouteTarget
           type: string
         route_source:
           nullable: true
           type: string
         change_kind:
-          title: Change Kind
+          title: CodebaseChunkDetailResponseChangeKind
           type: string
         related_count:
-          title: Related Count
+          title: CodebaseChunkDetailResponseRelatedCount
           type: integer
         document_id:
           nullable: true
           type: string
         snapshot_id:
-          title: Snapshot Id
+          title: CodebaseChunkDetailResponseSnapshotId
           type: string
         content_text:
-          title: Content Text
+          title: CodebaseChunkDetailResponseContentText
           type: string
         related_chunks:
           items:
             $ref: "#/components/schemas/CodebaseChunkRelatedItemResponse"
-          title: Related Chunks
+          title: CodebaseChunkDetailResponseRelatedChunks
           type: array
         symbols:
           items:
             $ref: "#/components/schemas/CodebaseSymbolMatchResponse"
-          title: Symbols
+          title: CodebaseChunkDetailResponseSymbols
           type: array
         impact_edges:
           items:
             $ref: "#/components/schemas/CodebaseImpactEdgeResponse"
-          title: Impact Edges
+          title: CodebaseChunkDetailResponseImpactEdges
           type: array
         cluster_members:
           items:
             $ref: "#/components/schemas/CodebaseChunkRelatedItemResponse"
-          title: Cluster Members
+          title: CodebaseChunkDetailResponseClusterMembers
           type: array
       required:
       - change_kind
@@ -5699,31 +5699,31 @@ components:
         route_source: route_source
       properties:
         id:
-          title: Id
+          title: CodebaseChunkItemResponseId
           type: string
         chunk_key:
-          title: Chunk Key
+          title: CodebaseChunkItemResponseChunkKey
           type: string
         path:
-          title: Path
+          title: CodebaseChunkItemResponsePath
           type: string
         language:
           nullable: true
           type: string
         kind:
-          title: Kind
+          title: CodebaseChunkItemResponseKind
           type: string
         label:
-          title: Label
+          title: CodebaseChunkItemResponseLabel
           type: string
         preview_text:
-          title: Preview Text
+          title: CodebaseChunkItemResponsePreviewText
           type: string
         start_line:
-          title: Start Line
+          title: CodebaseChunkItemResponseStartLine
           type: integer
         end_line:
-          title: End Line
+          title: CodebaseChunkItemResponseEndLine
           type: integer
         container:
           nullable: true
@@ -5735,7 +5735,7 @@ components:
           nullable: true
           type: string
         parse_confidence:
-          title: Parse Confidence
+          title: CodebaseChunkItemResponseParseConfidence
           type: number
         cluster_id:
           nullable: true
@@ -5744,16 +5744,16 @@ components:
           nullable: true
           type: string
         route_target:
-          title: Route Target
+          title: CodebaseChunkItemResponseRouteTarget
           type: string
         route_source:
           nullable: true
           type: string
         change_kind:
-          title: Change Kind
+          title: CodebaseChunkItemResponseChangeKind
           type: string
         related_count:
-          title: Related Count
+          title: CodebaseChunkItemResponseRelatedCount
           type: integer
         document_id:
           nullable: true
@@ -5783,28 +5783,28 @@ components:
         end_line: 2
       properties:
         id:
-          title: Id
+          title: CodebaseChunkRelatedItemResponseId
           type: string
         label:
-          title: Label
+          title: CodebaseChunkRelatedItemResponseLabel
           type: string
         path:
-          title: Path
+          title: CodebaseChunkRelatedItemResponsePath
           type: string
         kind:
-          title: Kind
+          title: CodebaseChunkRelatedItemResponseKind
           type: string
         start_line:
-          title: Start Line
+          title: CodebaseChunkRelatedItemResponseStartLine
           type: integer
         end_line:
-          title: End Line
+          title: CodebaseChunkRelatedItemResponseEndLine
           type: integer
         cluster_label:
           nullable: true
           type: string
         score:
-          title: Score
+          title: CodebaseChunkRelatedItemResponseScore
           type: number
       required:
       - end_line
@@ -5864,7 +5864,7 @@ components:
           route_source: route_source
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseChunksResponseCodebaseId
           type: string
         snapshot_id:
           nullable: true
@@ -5872,13 +5872,13 @@ components:
         items:
           items:
             $ref: "#/components/schemas/CodebaseChunkItemResponse"
-          title: Items
+          title: CodebaseChunksResponseItems
           type: array
         next_cursor:
           nullable: true
           type: string
         has_more:
-          title: Has More
+          title: CodebaseChunksResponseHasMore
           type: boolean
       required:
       - codebase_id
@@ -5898,31 +5898,31 @@ components:
         status: status
       properties:
         path:
-          title: Path
+          title: CodebaseFileItemResponsePath
           type: string
         language:
           nullable: true
           type: string
         size_bytes:
-          title: Size Bytes
+          title: CodebaseFileItemResponseSizeBytes
           type: integer
         content_hash:
-          title: Content Hash
+          title: CodebaseFileItemResponseContentHash
           type: string
         document_id:
           nullable: true
           type: string
         status:
-          title: Status
+          title: CodebaseFileItemResponseStatus
           type: string
         change_kind:
-          title: Change Kind
+          title: CodebaseFileItemResponseChangeKind
           type: string
         reason:
           nullable: true
           type: string
         chunk_count:
-          title: Chunk Count
+          title: CodebaseFileItemResponseChunkCount
           type: integer
       required:
       - change_kind
@@ -5960,7 +5960,7 @@ components:
           status: status
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseFilesResponseCodebaseId
           type: string
         snapshot_id:
           nullable: true
@@ -5977,7 +5977,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/CodebaseFileItemResponse"
-          title: Items
+          title: CodebaseFilesResponseItems
           type: array
       required:
       - codebase_id
@@ -5993,19 +5993,19 @@ components:
         status: status
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseGithubImportResponseCodebaseId
           type: string
         snapshot_id:
-          title: Snapshot Id
+          title: CodebaseGithubImportResponseSnapshotId
           type: string
         operation_id:
-          title: Operation Id
+          title: CodebaseGithubImportResponseOperationId
           type: string
         status:
-          title: Status
+          title: CodebaseGithubImportResponseStatus
           type: string
         resolved_commit_sha:
-          title: Resolved Commit Sha
+          title: CodebaseGithubImportResponseResolvedCommitSha
           type: string
       required:
       - codebase_id
@@ -6026,10 +6026,10 @@ components:
         edge_type: edge_type
       properties:
         edge_type:
-          title: Edge Type
+          title: CodebaseImpactEdgeResponseEdgeType
           type: string
         from_path:
-          title: From Path
+          title: CodebaseImpactEdgeResponseFromPath
           type: string
         from_symbol:
           nullable: true
@@ -6064,31 +6064,31 @@ components:
         status: status
       properties:
         path:
-          title: Path
+          title: CodebaseImpactFileResponsePath
           type: string
         language:
           nullable: true
           type: string
         size_bytes:
-          title: Size Bytes
+          title: CodebaseImpactFileResponseSizeBytes
           type: integer
         content_hash:
-          title: Content Hash
+          title: CodebaseImpactFileResponseContentHash
           type: string
         document_id:
           nullable: true
           type: string
         status:
-          title: Status
+          title: CodebaseImpactFileResponseStatus
           type: string
         change_kind:
-          title: Change Kind
+          title: CodebaseImpactFileResponseChangeKind
           type: string
         chunk_count:
-          title: Chunk Count
+          title: CodebaseImpactFileResponseChunkCount
           type: integer
         depth:
-          title: Depth
+          title: CodebaseImpactFileResponseDepth
           type: integer
       required:
       - change_kind
@@ -6119,12 +6119,12 @@ components:
         max_depth:
           maximum: 8.0
           minimum: 1.0
-          title: Max Depth
+          title: CodebaseImpactRequestMaxDepth
           type: integer
         limit:
           maximum: 200.0
           minimum: 1.0
-          title: Limit
+          title: CodebaseImpactRequestLimit
           type: integer
       title: CodebaseImpactRequest
     CodebaseImpactResponse:
@@ -6195,7 +6195,7 @@ components:
         explanation: explanation
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseImpactResponseCodebaseId
           type: string
         snapshot_id:
           nullable: true
@@ -6207,20 +6207,20 @@ components:
         impacted_files:
           items:
             $ref: "#/components/schemas/CodebaseImpactFileResponse"
-          title: Impacted Files
+          title: CodebaseImpactResponseImpactedFiles
           type: array
         matched_symbols:
           items:
             $ref: "#/components/schemas/CodebaseSymbolMatchResponse"
-          title: Matched Symbols
+          title: CodebaseImpactResponseMatchedSymbols
           type: array
         edges:
           items:
             $ref: "#/components/schemas/CodebaseImpactEdgeResponse"
-          title: Edges
+          title: CodebaseImpactResponseEdges
           type: array
         explanation:
-          title: Explanation
+          title: CodebaseImpactResponseExplanation
           type: string
       required:
       - codebase_id
@@ -6233,10 +6233,10 @@ components:
       description: Seed used to start deterministic impact analysis.
       properties:
         type:
-          title: Type
+          title: CodebaseImpactSeedResponseType
           type: string
         value:
-          title: Value
+          title: CodebaseImpactSeedResponseValue
           type: string
       required:
       - type
@@ -6276,15 +6276,15 @@ components:
         include_globs:
           items:
             type: string
-          title: Include Globs
+          title: CodebaseImportGithubRequestIncludeGlobs
           type: array
         exclude_globs:
           items:
             type: string
-          title: Exclude Globs
+          title: CodebaseImportGithubRequestExcludeGlobs
           type: array
         refresh_existing:
-          title: Refresh Existing
+          title: CodebaseImportGithubRequestRefreshExisting
           type: boolean
       title: CodebaseImportGithubRequest
     CodebaseImportResponse:
@@ -6296,16 +6296,16 @@ components:
         status: status
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseImportResponseCodebaseId
           type: string
         snapshot_id:
-          title: Snapshot Id
+          title: CodebaseImportResponseSnapshotId
           type: string
         operation_id:
-          title: Operation Id
+          title: CodebaseImportResponseOperationId
           type: string
         status:
-          title: Status
+          title: CodebaseImportResponseStatus
           type: string
       required:
       - codebase_id
@@ -6443,7 +6443,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/CodebaseResponse"
-          title: Items
+          title: CodebaseListResponseItems
           type: array
       required:
       - items
@@ -6458,7 +6458,7 @@ components:
           nullable: true
           type: string
         full_rebuild:
-          title: Full Rebuild
+          title: CodebaseRefreshRequestFullRebuild
           type: boolean
       title: CodebaseRefreshRequest
     CodebaseRefreshResponse:
@@ -6479,19 +6479,19 @@ components:
           nullable: true
           type: string
         status:
-          title: Status
+          title: CodebaseRefreshResponseStatus
           type: string
         changed_files:
-          title: Changed Files
+          title: CodebaseRefreshResponseChangedFiles
           type: integer
         added_files:
-          title: Added Files
+          title: CodebaseRefreshResponseAddedFiles
           type: integer
         deleted_files:
-          title: Deleted Files
+          title: CodebaseRefreshResponseDeletedFiles
           type: integer
         noop:
-          title: Noop
+          title: CodebaseRefreshResponseNoop
           type: boolean
       required:
       - status
@@ -6562,16 +6562,16 @@ components:
           - include_globs
       properties:
         id:
-          title: Id
+          title: CodebaseResponseId
           type: string
         bank_id:
-          title: Bank Id
+          title: CodebaseResponseBankId
           type: string
         name:
-          title: Name
+          title: CodebaseResponseName
           type: string
         source_type:
-          title: Source Type
+          title: CodebaseResponseSourceType
           type: string
         source_config:
           $ref: "#/components/schemas/CodebaseSourceConfigResponse"
@@ -6610,13 +6610,13 @@ components:
         review_counts:
           $ref: "#/components/schemas/CodebaseReviewCountsResponse"
         cluster_count:
-          title: Cluster Count
+          title: CodebaseResponseClusterCount
           type: integer
         related_chunk_count:
-          title: Related Chunk Count
+          title: CodebaseResponseRelatedChunkCount
           type: integer
         parse_coverage:
-          title: Parse Coverage
+          title: CodebaseResponseParseCoverage
           type: number
         created_at:
           nullable: true
@@ -6647,13 +6647,13 @@ components:
         deleted_files: 2
       properties:
         added_files:
-          title: Added Files
+          title: CodebaseReviewChangedSummaryResponseAddedFiles
           type: integer
         changed_files:
-          title: Changed Files
+          title: CodebaseReviewChangedSummaryResponseChangedFiles
           type: integer
         deleted_files:
-          title: Deleted Files
+          title: CodebaseReviewChangedSummaryResponseDeletedFiles
           type: integer
       title: CodebaseReviewChangedSummaryResponse
     CodebaseReviewCountsResponse:
@@ -6665,16 +6665,16 @@ components:
         research: 1
       properties:
         unrouted:
-          title: Unrouted
+          title: CodebaseReviewCountsResponseUnrouted
           type: integer
         memory:
-          title: Memory
+          title: CodebaseReviewCountsResponseMemory
           type: integer
         research:
-          title: Research
+          title: CodebaseReviewCountsResponseResearch
           type: integer
         dismissed:
-          title: Dismissed
+          title: CodebaseReviewCountsResponseDismissed
           type: integer
       title: CodebaseReviewCountsResponse
     CodebaseReviewDiagnosticResponse:
@@ -6684,10 +6684,10 @@ components:
         count: 7
       properties:
         reason:
-          title: Reason
+          title: CodebaseReviewDiagnosticResponseReason
           type: string
         count:
-          title: Count
+          title: CodebaseReviewDiagnosticResponseCount
           type: integer
       required:
       - count
@@ -6720,7 +6720,7 @@ components:
         memory_status: memory_status
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseReviewResponseCodebaseId
           type: string
         snapshot_id:
           nullable: true
@@ -6737,20 +6737,20 @@ components:
         review_counts:
           $ref: "#/components/schemas/CodebaseReviewCountsResponse"
         cluster_count:
-          title: Cluster Count
+          title: CodebaseReviewResponseClusterCount
           type: integer
         related_chunk_count:
-          title: Related Chunk Count
+          title: CodebaseReviewResponseRelatedChunkCount
           type: integer
         parse_coverage:
-          title: Parse Coverage
+          title: CodebaseReviewResponseParseCoverage
           type: number
         changed_summary:
           $ref: "#/components/schemas/CodebaseReviewChangedSummaryResponse"
         diagnostics:
           items:
             $ref: "#/components/schemas/CodebaseReviewDiagnosticResponse"
-          title: Diagnostics
+          title: CodebaseReviewResponseDiagnostics
           type: array
       required:
       - codebase_id
@@ -6768,7 +6768,7 @@ components:
         item_ids:
           items:
             type: string
-          title: Item Ids
+          title: CodebaseRouteRequestItemIds
           type: array
         target:
           enum:
@@ -6776,16 +6776,16 @@ components:
           - research
           - dismissed
           - unrouted
-          title: Target
+          title: CodebaseRouteRequestTarget
           type: string
         queue_memory_import:
-          title: Queue Memory Import
+          title: CodebaseRouteRequestQueueMemoryImport
           type: boolean
         memory_ingest_mode:
           enum:
           - direct
           - retain
-          title: Memory Ingest Mode
+          title: CodebaseRouteRequestMemoryIngestMode
           type: string
       required:
       - item_ids
@@ -6808,28 +6808,28 @@ components:
         target: target
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseRouteResponseCodebaseId
           type: string
         snapshot_id:
-          title: Snapshot Id
+          title: CodebaseRouteResponseSnapshotId
           type: string
         updated_count:
-          title: Updated Count
+          title: CodebaseRouteResponseUpdatedCount
           type: integer
         target:
-          title: Target
+          title: CodebaseRouteResponseTarget
           type: string
         operation_id:
           nullable: true
           type: string
         queued_for_memory:
-          title: Queued For Memory
+          title: CodebaseRouteResponseQueuedForMemory
           type: boolean
         memory_ingest_mode:
           enum:
           - direct
           - retain
-          title: Memory Ingest Mode
+          title: CodebaseRouteResponseMemoryIngestMode
           type: string
         review_counts:
           $ref: "#/components/schemas/CodebaseReviewCountsResponse"
@@ -6865,49 +6865,49 @@ components:
           research: 1
       properties:
         total_files:
-          title: Total Files
+          title: CodebaseSnapshotStatsResponseTotalFiles
           type: integer
         indexed_files:
-          title: Indexed Files
+          title: CodebaseSnapshotStatsResponseIndexedFiles
           type: integer
         retained_files:
-          title: Retained Files
+          title: CodebaseSnapshotStatsResponseRetainedFiles
           type: integer
         manifest_only_files:
-          title: Manifest Only Files
+          title: CodebaseSnapshotStatsResponseManifestOnlyFiles
           type: integer
         excluded_files:
-          title: Excluded Files
+          title: CodebaseSnapshotStatsResponseExcludedFiles
           type: integer
         symbol_count:
-          title: Symbol Count
+          title: CodebaseSnapshotStatsResponseSymbolCount
           type: integer
         edge_count:
-          title: Edge Count
+          title: CodebaseSnapshotStatsResponseEdgeCount
           type: integer
         added_files:
-          title: Added Files
+          title: CodebaseSnapshotStatsResponseAddedFiles
           type: integer
         changed_files:
-          title: Changed Files
+          title: CodebaseSnapshotStatsResponseChangedFiles
           type: integer
         unchanged_files:
-          title: Unchanged Files
+          title: CodebaseSnapshotStatsResponseUnchangedFiles
           type: integer
         deleted_files:
-          title: Deleted Files
+          title: CodebaseSnapshotStatsResponseDeletedFiles
           type: integer
         chunk_count:
-          title: Chunk Count
+          title: CodebaseSnapshotStatsResponseChunkCount
           type: integer
         cluster_count:
-          title: Cluster Count
+          title: CodebaseSnapshotStatsResponseClusterCount
           type: integer
         related_chunk_count:
-          title: Related Chunk Count
+          title: CodebaseSnapshotStatsResponseRelatedChunkCount
           type: integer
         parse_coverage:
-          title: Parse Coverage
+          title: CodebaseSnapshotStatsResponseParseCoverage
           type: number
         review_counts:
           $ref: "#/components/schemas/CodebaseReviewCountsResponse"
@@ -6948,12 +6948,12 @@ components:
         include_globs:
           items:
             type: string
-          title: Include Globs
+          title: CodebaseSourceConfigResponseIncludeGlobs
           type: array
         exclude_globs:
           items:
             type: string
-          title: Exclude Globs
+          title: CodebaseSourceConfigResponseExcludeGlobs
           type: array
       title: CodebaseSourceConfigResponse
     CodebaseSymbolMatchResponse:
@@ -6973,16 +6973,16 @@ components:
         end_line: 3
       properties:
         name:
-          title: Name
+          title: CodebaseSymbolMatchResponseName
           type: string
         kind:
-          title: Kind
+          title: CodebaseSymbolMatchResponseKind
           type: string
         fq_name:
-          title: Fq Name
+          title: CodebaseSymbolMatchResponseFqName
           type: string
         path:
-          title: Path
+          title: CodebaseSymbolMatchResponsePath
           type: string
         language:
           nullable: true
@@ -6991,10 +6991,10 @@ components:
           nullable: true
           type: string
         start_line:
-          title: Start Line
+          title: CodebaseSymbolMatchResponseStartLine
           type: integer
         end_line:
-          title: End Line
+          title: CodebaseSymbolMatchResponseEndLine
           type: integer
         match_mode:
           nullable: true
@@ -7002,7 +7002,7 @@ components:
         chunk_ids:
           items:
             type: string
-          title: Chunk Ids
+          title: CodebaseSymbolMatchResponseChunkIds
           type: array
       required:
       - end_line
@@ -7044,7 +7044,7 @@ components:
           end_line: 3
       properties:
         codebase_id:
-          title: Codebase Id
+          title: CodebaseSymbolsResponseCodebaseId
           type: string
         snapshot_id:
           nullable: true
@@ -7052,7 +7052,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/CodebaseSymbolMatchResponse"
-          title: Items
+          title: CodebaseSymbolsResponseItems
           type: array
       required:
       - codebase_id
@@ -7066,11 +7066,11 @@ components:
       properties:
         operation_id:
           description: ID of the async consolidation operation
-          title: Operation Id
+          title: ConsolidationResponseOperationId
           type: string
         deduplicated:
           description: True if an existing pending task was reused
-          title: Deduplicated
+          title: ConsolidationResponseDeduplicated
           type: boolean
       required:
       - operation_id
@@ -7146,25 +7146,25 @@ components:
       properties:
         name:
           description: Human-readable name for the directive
-          title: Name
+          title: CreateDirectiveRequestName
           type: string
         content:
           description: The directive text to inject into prompts
-          title: Content
+          title: CreateDirectiveRequestContent
           type: string
         priority:
           description: Higher priority directives are injected first
-          title: Priority
+          title: CreateDirectiveRequestPriority
           type: integer
         is_active:
           description: Whether this directive is active
-          title: Is Active
+          title: CreateDirectiveRequestIsActive
           type: boolean
         tags:
           description: Tags for filtering
           items:
             type: string
-          title: Tags
+          title: CreateDirectiveRequestTags
           type: array
       required:
       - content
@@ -7187,23 +7187,23 @@ components:
           type: string
         name:
           description: Human-readable name for the mental model
-          title: Name
+          title: CreateMentalModelRequestName
           type: string
         source_query:
           description: The query to run to generate content
-          title: Source Query
+          title: CreateMentalModelRequestSourceQuery
           type: string
         tags:
           description: Tags for scoped visibility
           items:
             type: string
-          title: Tags
+          title: CreateMentalModelRequestTags
           type: array
         max_tokens:
           description: Maximum tokens for generated content
           maximum: 8192.0
           minimum: 256.0
-          title: Max Tokens
+          title: CreateMentalModelRequestMaxTokens
           type: integer
         trigger:
           allOf:
@@ -7224,7 +7224,7 @@ components:
           type: string
         operation_id:
           description: Operation ID to track refresh progress
-          title: Operation Id
+          title: CreateMentalModelResponseOperationId
           type: string
       required:
       - operation_id
@@ -7242,7 +7242,7 @@ components:
       properties:
         url:
           description: HTTP(S) endpoint URL to deliver events to
-          title: Url
+          title: CreateWebhookRequestUrl
           type: string
         secret:
           nullable: true
@@ -7251,11 +7251,11 @@ components:
           description: "List of event types to deliver. Currently supported: 'consolidation.completed'"
           items:
             type: string
-          title: Event Types
+          title: CreateWebhookRequestEventTypes
           type: array
         enabled:
           description: Whether this webhook is active
-          title: Enabled
+          title: CreateWebhookRequestEnabled
           type: boolean
         http_config:
           allOf:
@@ -7273,16 +7273,16 @@ components:
         success: true
       properties:
         success:
-          title: Success
+          title: DeleteDocumentResponseSuccess
           type: boolean
         message:
-          title: Message
+          title: DeleteDocumentResponseMessage
           type: string
         document_id:
-          title: Document Id
+          title: DeleteDocumentResponseDocumentId
           type: string
         memory_units_deleted:
-          title: Memory Units Deleted
+          title: DeleteDocumentResponseMemoryUnitsDeleted
           type: integer
       required:
       - document_id
@@ -7298,7 +7298,7 @@ components:
         success: true
       properties:
         success:
-          title: Success
+          title: DeleteResponseSuccess
           type: boolean
         message:
           nullable: true
@@ -7339,7 +7339,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/DirectiveResponse"
-          title: Items
+          title: DirectiveListResponseItems
           type: array
       required:
       - items
@@ -7360,27 +7360,27 @@ components:
         - tags
       properties:
         id:
-          title: Id
+          title: DirectiveResponseId
           type: string
         bank_id:
-          title: Bank Id
+          title: DirectiveResponseBankId
           type: string
         name:
-          title: Name
+          title: DirectiveResponseName
           type: string
         content:
-          title: Content
+          title: DirectiveResponseContent
           type: string
         priority:
-          title: Priority
+          title: DirectiveResponsePriority
           type: integer
         is_active:
-          title: Is Active
+          title: DirectiveResponseIsActive
           type: boolean
         tags:
           items:
             type: string
-          title: Tags
+          title: DirectiveResponseTags
           type: array
         created_at:
           nullable: true
@@ -7405,19 +7405,19 @@ components:
           description: "How skeptical vs trusting (1=trusting, 5=skeptical)"
           maximum: 5.0
           minimum: 1.0
-          title: Skepticism
+          title: DispositionTraitsSkepticism
           type: integer
         literalism:
           description: "How literally to interpret information (1=flexible, 5=literal)"
           maximum: 5.0
           minimum: 1.0
-          title: Literalism
+          title: DispositionTraitsLiteralism
           type: integer
         empathy:
           description: "How much to consider emotional context (1=detached, 5=empathetic)"
           maximum: 5.0
           minimum: 1.0
-          title: Empathy
+          title: DispositionTraitsEmpathy
           type: integer
       required:
       - empathy
@@ -7439,31 +7439,31 @@ components:
         updated_at: 2024-01-15T10:30:00Z
       properties:
         id:
-          title: Id
+          title: DocumentResponseId
           type: string
         bank_id:
-          title: Bank Id
+          title: DocumentResponseBankId
           type: string
         original_text:
-          title: Original Text
+          title: DocumentResponseOriginalText
           type: string
         content_hash:
           nullable: true
           type: string
         created_at:
-          title: Created At
+          title: DocumentResponseCreatedAt
           type: string
         updated_at:
-          title: Updated At
+          title: DocumentResponseUpdatedAt
           type: string
         memory_unit_count:
-          title: Memory Unit Count
+          title: DocumentResponseMemoryUnitCount
           type: integer
         tags:
           description: Tags associated with this document
           items:
             type: string
-          title: Tags
+          title: DocumentResponseTags
           type: array
       required:
       - bank_id
@@ -7487,7 +7487,7 @@ components:
           - confirmed
           - contradicted
           - request_more_evidence
-          title: Status
+          title: DreamPredictionOutcomeRequestStatus
           type: string
         note:
           nullable: true
@@ -7495,7 +7495,7 @@ components:
         evidence_ids:
           items:
             type: string
-          title: Evidence Ids
+          title: DreamPredictionOutcomeRequestEvidenceIds
           type: array
       required:
       - status
@@ -7510,7 +7510,7 @@ components:
           - approve
           - reject
           - request_more_evidence
-          title: Action
+          title: DreamProposalReviewRequestAction
           type: string
         note:
           nullable: true
@@ -7591,7 +7591,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/DreamRunResponse"
-          title: Items
+          title: DreamRunListResponseItems
           type: array
       required:
       - items
@@ -7633,22 +7633,22 @@ components:
         status: status
       properties:
         run_id:
-          title: Run Id
+          title: DreamRunResponseRunId
           type: string
         bank_id:
-          title: Bank Id
+          title: DreamRunResponseBankId
           type: string
         status:
-          title: Status
+          title: DreamRunResponseStatus
           type: string
         run_type:
-          title: Run Type
+          title: DreamRunResponseRunType
           type: string
         trigger_source:
-          title: Trigger Source
+          title: DreamRunResponseTriggerSource
           type: string
         created_at:
-          title: Created At
+          title: DreamRunResponseCreatedAt
           type: string
         updated_at:
           nullable: true
@@ -7661,54 +7661,54 @@ components:
           type: string
         evidence_basis:
           additionalProperties: true
-          title: Evidence Basis
+          title: DreamRunResponseEvidenceBasis
           type: object
         signals:
           additionalProperties: true
-          title: Signals
+          title: DreamRunResponseSignals
           type: object
         predictions:
           items:
             additionalProperties: true
             type: object
-          title: Predictions
+          title: DreamRunResponsePredictions
           type: array
         growth_hypotheses:
           items:
             additionalProperties: true
             type: object
-          title: Growth Hypotheses
+          title: DreamRunResponseGrowthHypotheses
           type: array
         promotion_proposals:
           items:
             additionalProperties: true
             type: object
-          title: Promotion Proposals
+          title: DreamRunResponsePromotionProposals
           type: array
         validation_outcomes:
           items:
             additionalProperties: true
             type: object
-          title: Validation Outcomes
+          title: DreamRunResponseValidationOutcomes
           type: array
         confidence:
           additionalProperties: true
-          title: Confidence
+          title: DreamRunResponseConfidence
           type: object
         novelty_score:
-          title: Novelty Score
+          title: DreamRunResponseNoveltyScore
           type: number
         maturity_tier:
-          title: Maturity Tier
+          title: DreamRunResponseMaturityTier
           type: string
         failure_reason:
           nullable: true
           type: string
         quality_score:
-          title: Quality Score
+          title: DreamRunResponseQualityScore
           type: number
         legacy_run:
-          title: Legacy Run
+          title: DreamRunResponseLegacyRun
           type: boolean
         source_artifact_id:
           nullable: true
@@ -7739,46 +7739,46 @@ components:
         avg_output_tokens: 5.962133916683182
       properties:
         bank_id:
-          title: Bank Id
+          title: DreamStatsResponseBankId
           type: string
         total_runs:
-          title: Total Runs
+          title: DreamStatsResponseTotalRuns
           type: integer
         last_run_at:
           nullable: true
           type: string
         avg_quality:
-          title: Avg Quality
+          title: DreamStatsResponseAvgQuality
           type: number
         avg_tokens:
-          title: Avg Tokens
+          title: DreamStatsResponseAvgTokens
           type: number
         avg_output_tokens:
-          title: Avg Output Tokens
+          title: DreamStatsResponseAvgOutputTokens
           type: number
         distillation_pass_rate:
-          title: Distillation Pass Rate
+          title: DreamStatsResponseDistillationPassRate
           type: number
         distilled_count:
-          title: Distilled Count
+          title: DreamStatsResponseDistilledCount
           type: integer
         validation_rate:
-          title: Validation Rate
+          title: DreamStatsResponseValidationRate
           type: number
         avg_novelty:
-          title: Avg Novelty
+          title: DreamStatsResponseAvgNovelty
           type: number
         failed_run_count:
-          title: Failed Run Count
+          title: DreamStatsResponseFailedRunCount
           type: integer
         duplicate_suppression_count:
-          title: Duplicate Suppression Count
+          title: DreamStatsResponseDuplicateSuppressionCount
           type: integer
         prediction_confirmation_rate:
-          title: Prediction Confirmation Rate
+          title: DreamStatsResponsePredictionConfirmationRate
           type: number
         unresolved_prediction_backlog:
-          title: Unresolved Prediction Backlog
+          title: DreamStatsResponseUnresolvedPredictionBacklog
           type: integer
       required:
       - avg_output_tokens
@@ -7797,11 +7797,11 @@ components:
       properties:
         trigger_source:
           description: manual | event | cron
-          title: Trigger Source
+          title: DreamSubmitRequestTriggerSource
           type: string
         run_type:
           description: dream | trance
-          title: Run Type
+          title: DreamSubmitRequestRunType
           type: string
       title: DreamSubmitRequest
     EntityDetailResponse:
@@ -7817,13 +7817,13 @@ components:
           text: John works at Google
       properties:
         id:
-          title: Id
+          title: EntityDetailResponseId
           type: string
         canonical_name:
-          title: Canonical Name
+          title: EntityDetailResponseCanonicalName
           type: string
         mention_count:
-          title: Mention Count
+          title: EntityDetailResponseMentionCount
           type: integer
         first_seen:
           nullable: true
@@ -7838,7 +7838,7 @@ components:
         observations:
           items:
             $ref: "#/components/schemas/EntityObservationResponse"
-          title: Observations
+          title: EntityDetailResponseObservations
           type: array
       required:
       - canonical_name
@@ -7851,7 +7851,7 @@ components:
       properties:
         max_tokens:
           description: Maximum tokens for entity observations
-          title: Max Tokens
+          title: EntityIncludeOptionsMaxTokens
           type: integer
       title: EntityIncludeOptions
     EntityInput:
@@ -7859,7 +7859,7 @@ components:
       properties:
         text:
           description: The entity name/text
-          title: Text
+          title: EntityInputText
           type: string
         type:
           nullable: true
@@ -7877,13 +7877,13 @@ components:
         mention_count: 15
       properties:
         id:
-          title: Id
+          title: EntityListItemId
           type: string
         canonical_name:
-          title: Canonical Name
+          title: EntityListItemCanonicalName
           type: string
         mention_count:
-          title: Mention Count
+          title: EntityListItemMentionCount
           type: integer
         first_seen:
           nullable: true
@@ -7916,16 +7916,16 @@ components:
         items:
           items:
             $ref: "#/components/schemas/EntityListItem"
-          title: Items
+          title: EntityListResponseItems
           type: array
         total:
-          title: Total
+          title: EntityListResponseTotal
           type: integer
         limit:
-          title: Limit
+          title: EntityListResponseLimit
           type: integer
         offset:
-          title: Offset
+          title: EntityListResponseOffset
           type: integer
       required:
       - items
@@ -7937,7 +7937,7 @@ components:
       description: An observation about an entity.
       properties:
         text:
-          title: Text
+          title: EntityObservationResponseText
           type: string
         mentioned_at:
           nullable: true
@@ -7949,15 +7949,15 @@ components:
       description: Current mental model of an entity.
       properties:
         entity_id:
-          title: Entity Id
+          title: EntityStateResponseEntityId
           type: string
         canonical_name:
-          title: Canonical Name
+          title: EntityStateResponseCanonicalName
           type: string
         observations:
           items:
             $ref: "#/components/schemas/EntityObservationResponse"
-          title: Observations
+          title: EntityStateResponseObservations
           type: array
       required:
       - canonical_name
@@ -7974,39 +7974,39 @@ components:
       properties:
         observations:
           description: Whether observations (auto-consolidation) are enabled
-          title: Observations
+          title: FeaturesInfoObservations
           type: boolean
         timeline_v2:
           description: Whether the git-style timeline API/UI is enabled
-          title: Timeline V2
+          title: FeaturesInfoTimelineV2
           type: boolean
         mcp:
           description: Whether MCP (Model Context Protocol) server is enabled
-          title: Mcp
+          title: FeaturesInfoMcp
           type: boolean
         worker:
           description: Whether the background worker is enabled
-          title: Worker
+          title: FeaturesInfoWorker
           type: boolean
         bank_config_api:
           description: Whether per-bank configuration API is enabled
-          title: Bank Config Api
+          title: FeaturesInfoBankConfigApi
           type: boolean
         file_upload_api:
           description: Whether file upload/conversion API is enabled
-          title: File Upload Api
+          title: FeaturesInfoFileUploadApi
           type: boolean
         brain_runtime:
           description: Whether atulya-brain runtime is enabled
-          title: Brain Runtime
+          title: FeaturesInfoBrainRuntime
           type: boolean
         sub_routine:
           description: Whether sub_routine operations are enabled
-          title: Sub Routine
+          title: FeaturesInfoSubRoutine
           type: boolean
         brain_import_export:
           description: Whether .brain import/export APIs are enabled
-          title: Brain Import Export
+          title: FeaturesInfoBrainImportExport
           type: boolean
       required:
       - bank_config_api
@@ -8032,7 +8032,7 @@ components:
             \ GET /v1/default/banks/{bank_id}/operations to list operations."
           items:
             type: string
-          title: Operation Ids
+          title: FileRetainResponseOperationIds
           type: array
       required:
       - operation_ids
@@ -8052,26 +8052,26 @@ components:
         after_state: after_state
       properties:
         id:
-          title: Id
+          title: GraphChangeEventResponseId
           type: string
         node_id:
-          title: Node Id
+          title: GraphChangeEventResponseNodeId
           type: string
         change_type:
           enum:
           - change
           - contradiction
           - stale
-          title: Change Type
+          title: GraphChangeEventResponseChangeType
           type: string
         before_state:
           nullable: true
           type: string
         after_state:
-          title: After State
+          title: GraphChangeEventResponseAfterState
           type: string
         confidence:
-          title: Confidence
+          title: GraphChangeEventResponseConfidence
           type: number
         time_window:
           nullable: true
@@ -8079,10 +8079,10 @@ components:
         evidence_ids:
           items:
             type: string
-          title: Evidence Ids
+          title: GraphChangeEventResponseEvidenceIds
           type: array
         summary:
-          title: Summary
+          title: GraphChangeEventResponseSummary
           type: string
       required:
       - after_state
@@ -8120,25 +8120,25 @@ components:
           items:
             additionalProperties: true
             type: object
-          title: Nodes
+          title: GraphDataResponseNodes
           type: array
         edges:
           items:
             additionalProperties: true
             type: object
-          title: Edges
+          title: GraphDataResponseEdges
           type: array
         table_rows:
           items:
             additionalProperties: true
             type: object
-          title: Table Rows
+          title: GraphDataResponseTableRows
           type: array
         total_units:
-          title: Total Units
+          title: GraphDataResponseTotalUnits
           type: integer
         limit:
-          title: Limit
+          title: GraphDataResponseLimit
           type: integer
       required:
       - edges
@@ -8159,13 +8159,13 @@ components:
           - node
           - event
           - memory
-          title: Kind
+          title: GraphEvidencePathStepResponseKind
           type: string
         id:
-          title: Id
+          title: GraphEvidencePathStepResponseId
           type: string
         label:
-          title: Label
+          title: GraphEvidencePathStepResponseLabel
           type: string
         timestamp:
           nullable: true
@@ -8257,26 +8257,26 @@ components:
         nodes:
           items:
             $ref: "#/components/schemas/GraphStateNodeResponse"
-          title: Nodes
+          title: GraphIntelligenceResponseNodes
           type: array
         edges:
           items:
             $ref: "#/components/schemas/GraphRelationEdgeResponse"
-          title: Edges
+          title: GraphIntelligenceResponseEdges
           type: array
         change_events:
           items:
             $ref: "#/components/schemas/GraphChangeEventResponse"
-          title: Change Events
+          title: GraphIntelligenceResponseChangeEvents
           type: array
         total_nodes:
-          title: Total Nodes
+          title: GraphIntelligenceResponseTotalNodes
           type: integer
         generated_at:
-          title: Generated At
+          title: GraphIntelligenceResponseGeneratedAt
           type: string
         cached:
-          title: Cached
+          title: GraphIntelligenceResponseCached
           type: boolean
       required:
       - change_events
@@ -8299,7 +8299,7 @@ components:
         window_days: 1
       properties:
         query:
-          title: Query
+          title: GraphInvestigationRequestQuery
           type: string
         type:
           nullable: true
@@ -8315,19 +8315,19 @@ components:
           - all
           - any_strict
           - all_strict
-          title: Tags Match
+          title: GraphInvestigationRequestTagsMatch
           type: string
         confidence_min:
           maximum: 1.0
           minimum: 0.0
-          title: Confidence Min
+          title: GraphInvestigationRequestConfidenceMin
           type: number
         node_kind:
           enum:
           - all
           - entity
           - topic
-          title: Node Kind
+          title: GraphInvestigationRequestNodeKind
           type: string
         window_days:
           minimum: 1.0
@@ -8336,7 +8336,7 @@ components:
         limit:
           maximum: 100.0
           minimum: 1.0
-          title: Limit
+          title: GraphInvestigationRequestLimit
           type: integer
       required:
       - query
@@ -8387,32 +8387,32 @@ components:
           timestamp: timestamp
       properties:
         answer:
-          title: Answer
+          title: GraphInvestigationResponseAnswer
           type: string
         focal_node_ids:
           items:
             type: string
-          title: Focal Node Ids
+          title: GraphInvestigationResponseFocalNodeIds
           type: array
         focal_edge_ids:
           items:
             type: string
-          title: Focal Edge Ids
+          title: GraphInvestigationResponseFocalEdgeIds
           type: array
         change_events:
           items:
             $ref: "#/components/schemas/GraphChangeEventResponse"
-          title: Change Events
+          title: GraphInvestigationResponseChangeEvents
           type: array
         evidence_path:
           items:
             $ref: "#/components/schemas/GraphEvidencePathStepResponse"
-          title: Evidence Path
+          title: GraphInvestigationResponseEvidencePath
           type: array
         recommended_checks:
           items:
             type: string
-          title: Recommended Checks
+          title: GraphInvestigationResponseRecommendedChecks
           type: array
       required:
       - answer
@@ -8431,20 +8431,20 @@ components:
         target: target
       properties:
         id:
-          title: Id
+          title: GraphNeighborhoodEdgeResponseId
           type: string
         source:
-          title: Source
+          title: GraphNeighborhoodEdgeResponseSource
           type: string
         target:
-          title: Target
+          title: GraphNeighborhoodEdgeResponseTarget
           type: string
         kind:
           enum:
           - relation
           - event
           - evidence
-          title: Kind
+          title: GraphNeighborhoodEdgeResponseKind
           type: string
         label:
           nullable: true
@@ -8453,16 +8453,16 @@ components:
           nullable: true
           type: string
         dashed:
-          title: Dashed
+          title: GraphNeighborhoodEdgeResponseDashed
           type: boolean
         width:
-          title: Width
+          title: GraphNeighborhoodEdgeResponseWidth
           type: number
         animated:
-          title: Animated
+          title: GraphNeighborhoodEdgeResponseAnimated
           type: boolean
         priority:
-          title: Priority
+          title: GraphNeighborhoodEdgeResponsePriority
           type: number
       required:
       - id
@@ -8491,17 +8491,17 @@ components:
         status_tone: stable
       properties:
         id:
-          title: Id
+          title: GraphNeighborhoodNodeResponseId
           type: string
         node_type:
           enum:
           - state
           - event
           - evidence
-          title: Node Type
+          title: GraphNeighborhoodNodeResponseNodeType
           type: string
         title:
-          title: Title
+          title: GraphNeighborhoodNodeResponseTitle
           type: string
         subtitle:
           nullable: true
@@ -8519,7 +8519,7 @@ components:
           - contradictory
           - stale
           - neutral
-          title: Status Tone
+          title: GraphNeighborhoodNodeResponseStatusTone
           type: string
         confidence:
           nullable: true
@@ -8543,10 +8543,10 @@ components:
           nullable: true
           type: string
         display_priority:
-          title: Display Priority
+          title: GraphNeighborhoodNodeResponseDisplayPriority
           type: number
         node_density_hint:
-          title: Node Density Hint
+          title: GraphNeighborhoodNodeResponseNodeDensityHint
           type: number
         cluster_membership:
           nullable: true
@@ -8556,7 +8556,7 @@ components:
           - detail
           - compact
           - overview
-          title: Render Mode Hint
+          title: GraphNeighborhoodNodeResponseRenderModeHint
           type: string
       required:
       - id
@@ -8639,47 +8639,47 @@ components:
           enum:
           - state
           - evidence
-          title: Surface
+          title: GraphNeighborhoodResponseSurface
           type: string
         mode_hint:
           enum:
           - detail
           - compact
           - overview
-          title: Mode Hint
+          title: GraphNeighborhoodResponseModeHint
           type: string
         focus_ids:
           items:
             type: string
-          title: Focus Ids
+          title: GraphNeighborhoodResponseFocusIds
           type: array
         nodes:
           items:
             $ref: "#/components/schemas/GraphNeighborhoodNodeResponse"
-          title: Nodes
+          title: GraphNeighborhoodResponseNodes
           type: array
         edges:
           items:
             $ref: "#/components/schemas/GraphNeighborhoodEdgeResponse"
-          title: Edges
+          title: GraphNeighborhoodResponseEdges
           type: array
         total_nodes:
-          title: Total Nodes
+          title: GraphNeighborhoodResponseTotalNodes
           type: integer
         total_edges:
-          title: Total Edges
+          title: GraphNeighborhoodResponseTotalEdges
           type: integer
         has_more:
-          title: Has More
+          title: GraphNeighborhoodResponseHasMore
           type: boolean
         cursor:
           nullable: true
           type: string
         generated_at:
-          title: Generated At
+          title: GraphNeighborhoodResponseGeneratedAt
           type: string
         cached:
-          title: Cached
+          title: GraphNeighborhoodResponseCached
           type: boolean
       required:
       - generated_at
@@ -8698,22 +8698,22 @@ components:
         relation_type: relation_type
       properties:
         id:
-          title: Id
+          title: GraphRelationEdgeResponseId
           type: string
         source_id:
-          title: Source Id
+          title: GraphRelationEdgeResponseSourceId
           type: string
         target_id:
-          title: Target Id
+          title: GraphRelationEdgeResponseTargetId
           type: string
         relation_type:
-          title: Relation Type
+          title: GraphRelationEdgeResponseRelationType
           type: string
         strength:
-          title: Strength
+          title: GraphRelationEdgeResponseStrength
           type: number
         evidence_count:
-          title: Evidence Count
+          title: GraphRelationEdgeResponseEvidenceCount
           type: integer
       required:
       - evidence_count
@@ -8745,22 +8745,22 @@ components:
         status: stable
       properties:
         id:
-          title: Id
+          title: GraphStateNodeResponseId
           type: string
         title:
-          title: Title
+          title: GraphStateNodeResponseTitle
           type: string
         kind:
           enum:
           - entity
           - topic
-          title: Kind
+          title: GraphStateNodeResponseKind
           type: string
         subtitle:
           nullable: true
           type: string
         current_state:
-          title: Current State
+          title: GraphStateNodeResponseCurrentState
           type: string
         status:
           enum:
@@ -8768,16 +8768,16 @@ components:
           - changed
           - contradictory
           - stale
-          title: Status
+          title: GraphStateNodeResponseStatus
           type: string
         status_reason:
-          title: Status Reason
+          title: GraphStateNodeResponseStatusReason
           type: string
         confidence:
-          title: Confidence
+          title: GraphStateNodeResponseConfidence
           type: number
         change_score:
-          title: Change Score
+          title: GraphStateNodeResponseChangeScore
           type: number
         last_changed_at:
           nullable: true
@@ -8786,17 +8786,17 @@ components:
           nullable: true
           type: string
         evidence_count:
-          title: Evidence Count
+          title: GraphStateNodeResponseEvidenceCount
           type: integer
         tags:
           items:
             type: string
-          title: Tags
+          title: GraphStateNodeResponseTags
           type: array
         evidence_ids:
           items:
             type: string
-          title: Evidence Ids
+          title: GraphStateNodeResponseEvidenceIds
           type: array
       required:
       - change_score
@@ -8818,16 +8818,16 @@ components:
         label: label
       properties:
         id:
-          title: Id
+          title: GraphSummaryEdgeResponseId
           type: string
         source_id:
-          title: Source Id
+          title: GraphSummaryEdgeResponseSourceId
           type: string
         target_id:
-          title: Target Id
+          title: GraphSummaryEdgeResponseTargetId
           type: string
         weight:
-          title: Weight
+          title: GraphSummaryEdgeResponseWeight
           type: number
         label:
           nullable: true
@@ -8857,16 +8857,16 @@ components:
         status_tone: stable
       properties:
         id:
-          title: Id
+          title: GraphSummaryItemResponseId
           type: string
         kind:
           enum:
           - cluster
           - node
-          title: Kind
+          title: GraphSummaryItemResponseKind
           type: string
         title:
-          title: Title
+          title: GraphSummaryItemResponseTitle
           type: string
         subtitle:
           nullable: true
@@ -8874,10 +8874,10 @@ components:
         preview_labels:
           items:
             type: string
-          title: Preview Labels
+          title: GraphSummaryItemResponsePreviewLabels
           type: array
         member_count:
-          title: Member Count
+          title: GraphSummaryItemResponseMemberCount
           type: integer
         status_tone:
           enum:
@@ -8886,22 +8886,22 @@ components:
           - contradictory
           - stale
           - neutral
-          title: Status Tone
+          title: GraphSummaryItemResponseStatusTone
           type: string
         display_priority:
-          title: Display Priority
+          title: GraphSummaryItemResponseDisplayPriority
           type: number
         render_mode_hint:
           enum:
           - detail
           - compact
           - overview
-          title: Render Mode Hint
+          title: GraphSummaryItemResponseRenderModeHint
           type: string
         cluster_membership:
           items:
             type: string
-          title: Cluster Membership
+          title: GraphSummaryItemResponseClusterMembership
           type: array
         node_ref:
           nullable: true
@@ -9003,46 +9003,46 @@ components:
           enum:
           - state
           - evidence
-          title: Surface
+          title: GraphSummaryResponseSurface
           type: string
         mode_hint:
           enum:
           - detail
           - compact
           - overview
-          title: Mode Hint
+          title: GraphSummaryResponseModeHint
           type: string
         total_nodes:
-          title: Total Nodes
+          title: GraphSummaryResponseTotalNodes
           type: integer
         total_edges:
-          title: Total Edges
+          title: GraphSummaryResponseTotalEdges
           type: integer
         clusters:
           items:
             $ref: "#/components/schemas/GraphSummaryItemResponse"
-          title: Clusters
+          title: GraphSummaryResponseClusters
           type: array
         top_nodes:
           items:
             $ref: "#/components/schemas/GraphSummaryItemResponse"
-          title: Top Nodes
+          title: GraphSummaryResponseTopNodes
           type: array
         bundled_edges:
           items:
             $ref: "#/components/schemas/GraphSummaryEdgeResponse"
-          title: Bundled Edges
+          title: GraphSummaryResponseBundledEdges
           type: array
         initial_focus_ids:
           items:
             type: string
-          title: Initial Focus Ids
+          title: GraphSummaryResponseInitialFocusIds
           type: array
         generated_at:
-          title: Generated At
+          title: GraphSummaryResponseGeneratedAt
           type: string
         cached:
-          title: Cached
+          title: GraphSummaryResponseCached
           type: boolean
       required:
       - generated_at
@@ -9056,19 +9056,19 @@ components:
         detail:
         - msg: msg
           loc:
-          - Location_inner
-          - Location_inner
+          - ValidationErrorLoc_inner
+          - ValidationErrorLoc_inner
           type: type
         - msg: msg
           loc:
-          - Location_inner
-          - Location_inner
+          - ValidationErrorLoc_inner
+          - ValidationErrorLoc_inner
           type: type
       properties:
         detail:
           items:
             $ref: "#/components/schemas/ValidationError"
-          title: Detail
+          title: HTTPValidationErrorDetail
           type: array
       title: HTTPValidationError
     IncludeOptions:
@@ -9096,19 +9096,19 @@ components:
         graph: 2.3021358869347655
       properties:
         recency:
-          title: Recency
+          title: InfluenceContributionRecency
           type: number
         freq:
-          title: Freq
+          title: InfluenceContributionFreq
           type: number
         graph:
-          title: Graph
+          title: InfluenceContributionGraph
           type: number
         rerank:
-          title: Rerank
+          title: InfluenceContributionRerank
           type: number
         dream:
-          title: Dream
+          title: InfluenceContributionDream
           type: number
       required:
       - dream
@@ -9125,16 +9125,16 @@ components:
         count: 4
       properties:
         weekday:
-          title: Weekday
+          title: InfluenceHeatmapPointWeekday
           type: integer
         hour_utc:
-          title: Hour Utc
+          title: InfluenceHeatmapPointHourUtc
           type: integer
         count:
-          title: Count
+          title: InfluenceHeatmapPointCount
           type: integer
         score:
-          title: Score
+          title: InfluenceHeatmapPointScore
           type: number
       required:
       - count
@@ -9158,19 +9158,19 @@ components:
         type: type
       properties:
         id:
-          title: Id
+          title: InfluenceRowId
           type: string
         type:
-          title: Type
+          title: InfluenceRowType
           type: string
         text:
-          title: Text
+          title: InfluenceRowText
           type: string
         access_count:
-          title: Access Count
+          title: InfluenceRowAccessCount
           type: integer
         influence_score:
-          title: Influence Score
+          title: InfluenceRowInfluenceScore
           type: number
         contribution:
           $ref: "#/components/schemas/InfluenceContribution"
@@ -9194,19 +9194,19 @@ components:
         ewma: 1.4894159098541704
       properties:
         index:
-          title: Index
+          title: InfluenceTrendPointIndex
           type: integer
         raw:
-          title: Raw
+          title: InfluenceTrendPointRaw
           type: number
         ewma:
-          title: Ewma
+          title: InfluenceTrendPointEwma
           type: number
         lower:
-          title: Lower
+          title: InfluenceTrendPointLower
           type: number
         upper:
-          title: Upper
+          title: InfluenceTrendPointUpper
           type: number
       required:
       - ewma
@@ -9237,16 +9237,16 @@ components:
           items:
             additionalProperties: true
             type: object
-          title: Items
+          title: ListDocumentsResponseItems
           type: array
         total:
-          title: Total
+          title: ListDocumentsResponseTotal
           type: integer
         limit:
-          title: Limit
+          title: ListDocumentsResponseLimit
           type: integer
         offset:
-          title: Offset
+          title: ListDocumentsResponseOffset
           type: integer
       required:
       - items
@@ -9272,16 +9272,16 @@ components:
           items:
             additionalProperties: true
             type: object
-          title: Items
+          title: ListMemoryUnitsResponseItems
           type: array
         total:
-          title: Total
+          title: ListMemoryUnitsResponseTotal
           type: integer
         limit:
-          title: Limit
+          title: ListMemoryUnitsResponseLimit
           type: integer
         offset:
-          title: Offset
+          title: ListMemoryUnitsResponseOffset
           type: integer
       required:
       - items
@@ -9306,16 +9306,16 @@ components:
         items:
           items:
             $ref: "#/components/schemas/TagItem"
-          title: Items
+          title: ListTagsResponseItems
           type: array
         total:
-          title: Total
+          title: ListTagsResponseTotal
           type: integer
         limit:
-          title: Limit
+          title: ListTagsResponseLimit
           type: integer
         offset:
-          title: Offset
+          title: ListTagsResponseOffset
           type: integer
       required:
       - items
@@ -9342,10 +9342,10 @@ components:
         timestamp: 2024-01-15T10:30:00Z
       properties:
         content:
-          title: Content
+          title: MemoryItemContent
           type: string
         timestamp:
-          $ref: "#/components/schemas/Timestamp"
+          $ref: "#/components/schemas/MemoryItemTimestamp"
         context:
           nullable: true
           type: string
@@ -9367,7 +9367,7 @@ components:
           nullable: true
           type: array
         observation_scopes:
-          $ref: "#/components/schemas/ObservationScopes"
+          $ref: "#/components/schemas/MemoryItemObservationScopes"
       required:
       - content
       title: MemoryItem
@@ -9409,7 +9409,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/MentalModelResponse"
-          title: Items
+          title: MentalModelListResponseItems
           type: array
       required:
       - items
@@ -9434,29 +9434,29 @@ components:
         - tags
       properties:
         id:
-          title: Id
+          title: MentalModelResponseId
           type: string
         bank_id:
-          title: Bank Id
+          title: MentalModelResponseBankId
           type: string
         name:
-          title: Name
+          title: MentalModelResponseName
           type: string
         source_query:
-          title: Source Query
+          title: MentalModelResponseSourceQuery
           type: string
         content:
           description: The mental model content as well-formatted markdown (auto-generated
             from reflect endpoint)
-          title: Content
+          title: MentalModelResponseContent
           type: string
         tags:
           items:
             type: string
-          title: Tags
+          title: MentalModelResponseTags
           type: array
         max_tokens:
-          title: Max Tokens
+          title: MentalModelResponseMaxTokens
           type: integer
         trigger:
           $ref: "#/components/schemas/MentalModelTrigger"
@@ -9485,7 +9485,7 @@ components:
         refresh_after_consolidation:
           description: "If true, refresh this mental model after observations consolidation\
             \ (real-time mode)"
-          title: Refresh After Consolidation
+          title: MentalModelTriggerRefreshAfterConsolidation
           type: boolean
       title: MentalModelTrigger
     OperationResponse:
@@ -9498,22 +9498,22 @@ components:
         task_type: retain
       properties:
         id:
-          title: Id
+          title: OperationResponseId
           type: string
         task_type:
-          title: Task Type
+          title: OperationResponseTaskType
           type: string
         items_count:
-          title: Items Count
+          title: OperationResponseItemsCount
           type: integer
         document_id:
           nullable: true
           type: string
         created_at:
-          title: Created At
+          title: OperationResponseCreatedAt
           type: string
         status:
-          title: Status
+          title: OperationResponseStatus
           type: string
         error_message:
           nullable: true
@@ -9540,7 +9540,7 @@ components:
         updated_at: 2024-01-15T10:31:30Z
       properties:
         operation_id:
-          title: Operation Id
+          title: OperationResultResponseOperationId
           type: string
         status:
           enum:
@@ -9548,7 +9548,7 @@ components:
           - completed
           - failed
           - not_found
-          title: Status
+          title: OperationResultResponseStatus
           type: string
         operation_type:
           nullable: true
@@ -9569,7 +9569,7 @@ components:
           nullable: true
           type: string
         result:
-          $ref: "#/components/schemas/Result"
+          $ref: "#/components/schemas/OperationResultResponseResult"
       required:
       - operation_id
       - status
@@ -9585,7 +9585,7 @@ components:
         updated_at: 2024-01-15T10:31:30Z
       properties:
         operation_id:
-          title: Operation Id
+          title: OperationStatusResponseOperationId
           type: string
         status:
           enum:
@@ -9593,7 +9593,7 @@ components:
           - completed
           - failed
           - not_found
-          title: Status
+          title: OperationStatusResponseStatus
           type: string
         operation_type:
           nullable: true
@@ -9640,21 +9640,21 @@ components:
         total: 150
       properties:
         bank_id:
-          title: Bank Id
+          title: OperationsListResponseBankId
           type: string
         total:
-          title: Total
+          title: OperationsListResponseTotal
           type: integer
         limit:
-          title: Limit
+          title: OperationsListResponseLimit
           type: integer
         offset:
-          title: Offset
+          title: OperationsListResponseOffset
           type: integer
         operations:
           items:
             $ref: "#/components/schemas/OperationResponse"
-          title: Operations
+          title: OperationsListResponseOperations
           type: array
       required:
       - bank_id
@@ -9669,10 +9669,10 @@ components:
         score: 1.4658129805029452
       properties:
         hour_utc:
-          title: Hour Utc
+          title: PredictionPointHourUtc
           type: integer
         score:
-          title: Score
+          title: PredictionPointScore
           type: number
       required:
       - hour_utc
@@ -9697,7 +9697,7 @@ components:
         - experience
       properties:
         query:
-          title: Query
+          title: RecallRequestQuery
           type: string
         types:
           items:
@@ -9707,10 +9707,10 @@ components:
         budget:
           $ref: "#/components/schemas/Budget"
         max_tokens:
-          title: Max Tokens
+          title: RecallRequestMaxTokens
           type: integer
         trace:
-          title: Trace
+          title: RecallRequestTrace
           type: boolean
         query_timestamp:
           nullable: true
@@ -9734,7 +9734,7 @@ components:
           - all
           - any_strict
           - all_strict
-          title: Tags Match
+          title: RecallRequestTagsMatch
           type: string
       required:
       - query
@@ -9773,7 +9773,7 @@ components:
         results:
           items:
             $ref: "#/components/schemas/RecallResult"
-          title: Results
+          title: RecallResponseResults
           type: array
         trace:
           additionalProperties: true
@@ -9816,10 +9816,10 @@ components:
         type: world
       properties:
         id:
-          title: Id
+          title: RecallResultId
           type: string
         text:
-          title: Text
+          title: RecallResultText
           type: string
         type:
           nullable: true
@@ -9873,19 +9873,19 @@ components:
           description: Memory facts used to generate the response
           items:
             $ref: "#/components/schemas/ReflectFact"
-          title: Memories
+          title: ReflectBasedOnMemories
           type: array
         mental_models:
           description: Mental models used during reflection
           items:
             $ref: "#/components/schemas/ReflectMentalModel"
-          title: Mental Models
+          title: ReflectBasedOnMentalModels
           type: array
         directives:
           description: Directives applied during reflection
           items:
             $ref: "#/components/schemas/ReflectDirective"
-          title: Directives
+          title: ReflectBasedOnDirectives
           type: array
       title: ReflectBasedOn
     ReflectDirective:
@@ -9893,15 +9893,15 @@ components:
       properties:
         id:
           description: Directive ID
-          title: Id
+          title: ReflectDirectiveId
           type: string
         name:
           description: Directive name
-          title: Name
+          title: ReflectDirectiveName
           type: string
         content:
           description: Directive content
-          title: Content
+          title: ReflectDirectiveContent
           type: string
       required:
       - content
@@ -9924,7 +9924,7 @@ components:
         text:
           description: "Fact text. When type='observation', this contains markdown-formatted\
             \ consolidated knowledge"
-          title: Text
+          title: ReflectFactText
           type: string
         type:
           nullable: true
@@ -9958,11 +9958,11 @@ components:
       properties:
         scope:
           description: "Call scope: agent_1, agent_2, final, etc."
-          title: Scope
+          title: ReflectLLMCallScope
           type: string
         duration_ms:
           description: Execution time in milliseconds
-          title: Duration Ms
+          title: ReflectLLMCallDurationMs
           type: integer
       required:
       - duration_ms
@@ -9973,11 +9973,11 @@ components:
       properties:
         id:
           description: Mental model ID
-          title: Id
+          title: ReflectMentalModelId
           type: string
         text:
           description: Mental model content
-          title: Text
+          title: ReflectMentalModelText
           type: string
         context:
           nullable: true
@@ -10011,7 +10011,7 @@ components:
         tags_match: any
       properties:
         query:
-          title: Query
+          title: ReflectRequestQuery
           type: string
         budget:
           $ref: "#/components/schemas/Budget"
@@ -10020,7 +10020,7 @@ components:
           type: string
         max_tokens:
           description: Maximum tokens for the response
-          title: Max Tokens
+          title: ReflectRequestMaxTokens
           type: integer
         include:
           allOf:
@@ -10044,7 +10044,7 @@ components:
           - all
           - any_strict
           - all_strict
-          title: Tags Match
+          title: ReflectRequestTagsMatch
           type: string
       required:
       - query
@@ -10095,7 +10095,7 @@ components:
         text:
           description: "The reflect response as well-formatted markdown (headers,\
             \ lists, bold/italic, code blocks, etc.)"
-          title: Text
+          title: ReflectResponseText
           type: string
         based_on:
           allOf:
@@ -10121,12 +10121,12 @@ components:
       properties:
         tool:
           description: "Tool name: lookup, recall, learn, expand"
-          title: Tool
+          title: ReflectToolCallTool
           type: string
         input:
           additionalProperties: true
           description: Tool input parameters
-          title: Input
+          title: ReflectToolCallInput
           type: object
         output:
           additionalProperties: true
@@ -10134,11 +10134,11 @@ components:
           type: object
         duration_ms:
           description: Execution time in milliseconds
-          title: Duration Ms
+          title: ReflectToolCallDurationMs
           type: integer
         iteration:
           description: Iteration number (1-based) when this tool was called
-          title: Iteration
+          title: ReflectToolCallIteration
           type: integer
       required:
       - duration_ms
@@ -10152,13 +10152,13 @@ components:
           description: Tool calls made during reflection
           items:
             $ref: "#/components/schemas/ReflectToolCall"
-          title: Tool Calls
+          title: ReflectTraceToolCalls
           type: array
         llm_calls:
           description: LLM calls made during reflection
           items:
             $ref: "#/components/schemas/ReflectLLMCall"
-          title: Llm Calls
+          title: ReflectTraceLlmCalls
           type: array
       title: ReflectTrace
     RetainRequest:
@@ -10176,12 +10176,12 @@ components:
         items:
           items:
             $ref: "#/components/schemas/MemoryItem"
-          title: Items
+          title: RetainRequestItems
           type: array
         async:
           description: "If true, process asynchronously in background. If false, wait\
             \ for completion (default: false)"
-          title: Async
+          title: RetainRequestAsync
           type: boolean
         document_tags:
           items:
@@ -10204,17 +10204,17 @@ components:
           total_tokens: 600
       properties:
         success:
-          title: Success
+          title: RetainResponseSuccess
           type: boolean
         bank_id:
-          title: Bank Id
+          title: RetainResponseBankId
           type: string
         items_count:
-          title: Items Count
+          title: RetainResponseItemsCount
           type: integer
         async:
           description: Whether the operation was processed asynchronously
-          title: Async
+          title: RetainResponseAsync
           type: boolean
         operation_id:
           nullable: true
@@ -10235,11 +10235,11 @@ components:
         max_tokens:
           description: Maximum total tokens for source facts across all observations
             (-1 = unlimited)
-          title: Max Tokens
+          title: SourceFactsIncludeOptionsMaxTokens
           type: integer
         max_tokens_per_observation:
           description: Maximum tokens of source facts per observation (-1 = unlimited)
-          title: Max Tokens Per Observation
+          title: SourceFactsIncludeOptionsMaxTokensPerObservation
           type: integer
       title: SourceFactsIncludeOptions
     SubRoutineHistogramResponse:
@@ -10255,15 +10255,15 @@ components:
         sample_count: 0
       properties:
         bank_id:
-          title: Bank Id
+          title: SubRoutineHistogramResponseBankId
           type: string
         histogram:
           items:
             $ref: "#/components/schemas/PredictionPoint"
-          title: Histogram
+          title: SubRoutineHistogramResponseHistogram
           type: array
         sample_count:
-          title: Sample Count
+          title: SubRoutineHistogramResponseSampleCount
           type: integer
         source_snapshot_id:
           nullable: true
@@ -10289,18 +10289,18 @@ components:
           score: 1.4658129805029452
       properties:
         bank_id:
-          title: Bank Id
+          title: SubRoutinePredictionResponseBankId
           type: string
         horizon_hours:
-          title: Horizon Hours
+          title: SubRoutinePredictionResponseHorizonHours
           type: integer
         predictions:
           items:
             $ref: "#/components/schemas/PredictionPoint"
-          title: Predictions
+          title: SubRoutinePredictionResponsePredictions
           type: array
         sample_count:
-          title: Sample Count
+          title: SubRoutinePredictionResponseSampleCount
           type: integer
         source_snapshot_id:
           nullable: true
@@ -10324,15 +10324,15 @@ components:
           - warmup
           - incremental
           - full_copy
-          title: Mode
+          title: SubRoutineSubmitRequestMode
           type: string
         horizon_hours:
           maximum: 168.0
           minimum: 1.0
-          title: Horizon Hours
+          title: SubRoutineSubmitRequestHorizonHours
           type: integer
         force_rebuild:
-          title: Force Rebuild
+          title: SubRoutineSubmitRequestForceRebuild
           type: boolean
       title: SubRoutineSubmitRequest
     TagItem:
@@ -10340,11 +10340,11 @@ components:
       properties:
         tag:
           description: The tag value
-          title: Tag
+          title: TagItemTag
           type: string
         count:
           description: Number of memories with this tag
-          title: Count
+          title: TagItemCount
           type: integer
       required:
       - count
@@ -10358,10 +10358,10 @@ components:
         target: target
       properties:
         source:
-          title: Source
+          title: TimelineEdgeResponseSource
           type: string
         target:
-          title: Target
+          title: TimelineEdgeResponseTarget
           type: string
         edge_kind:
           enum:
@@ -10372,10 +10372,10 @@ components:
           - causal
           - source
           - derived
-          title: Edge Kind
+          title: TimelineEdgeResponseEdgeKind
           type: string
         weight:
-          title: Weight
+          title: TimelineEdgeResponseWeight
           type: number
       required:
       - edge_kind
@@ -10417,20 +10417,20 @@ components:
           direction: direction
       properties:
         id:
-          title: Id
+          title: TimelineItemResponseId
           type: string
         kind:
           enum:
           - fact
           - observation
           - mental_model
-          title: Kind
+          title: TimelineItemResponseKind
           type: string
         fact_type:
-          title: Fact Type
+          title: TimelineItemResponseFactType
           type: string
         text:
-          title: Text
+          title: TimelineItemResponseText
           type: string
         context:
           nullable: true
@@ -10442,7 +10442,7 @@ components:
           nullable: true
           type: string
         anchor_kind:
-          title: Anchor Kind
+          title: TimelineItemResponseAnchorKind
           type: string
         recorded_at:
           nullable: true
@@ -10454,7 +10454,7 @@ components:
           nullable: true
           type: string
         temporal_direction:
-          title: Temporal Direction
+          title: TimelineItemResponseTemporalDirection
           type: string
         temporal_confidence:
           nullable: true
@@ -10467,20 +10467,20 @@ components:
         entities:
           items:
             type: string
-          title: Entities
+          title: TimelineItemResponseEntities
           type: array
         tags:
           items:
             type: string
-          title: Tags
+          title: TimelineItemResponseTags
           type: array
         source_memory_ids:
           items:
             type: string
-          title: Source Memory Ids
+          title: TimelineItemResponseSourceMemoryIds
           type: array
         proof_count:
-          title: Proof Count
+          title: TimelineItemResponseProofCount
           type: integer
       required:
       - anchor_kind
@@ -10571,18 +10571,18 @@ components:
         items:
           items:
             $ref: "#/components/schemas/TimelineItemResponse"
-          title: Items
+          title: TimelineResponseItems
           type: array
         edges:
           items:
             $ref: "#/components/schemas/TimelineEdgeResponse"
-          title: Edges
+          title: TimelineResponseEdges
           type: array
         total_items:
-          title: Total Items
+          title: TimelineResponseTotalItems
           type: integer
         limit:
-          title: Limit
+          title: TimelineResponseLimit
           type: integer
       required:
       - limit
@@ -10601,13 +10601,13 @@ components:
           nullable: true
           type: string
         anchor_kind:
-          title: Anchor Kind
+          title: TimelineTemporalResponseAnchorKind
           type: string
         recorded_at:
           nullable: true
           type: string
         direction:
-          title: Direction
+          title: TimelineTemporalResponseDirection
           type: string
         confidence:
           nullable: true
@@ -10632,15 +10632,15 @@ components:
       properties:
         input_tokens:
           description: Number of input/prompt tokens consumed
-          title: Input Tokens
+          title: TokenUsageInputTokens
           type: integer
         output_tokens:
           description: Number of output/completion tokens generated
-          title: Output Tokens
+          title: TokenUsageOutputTokens
           type: integer
         total_tokens:
           description: Total tokens (input + output)
-          title: Total Tokens
+          title: TokenUsageTotalTokens
           type: integer
       title: TokenUsage
     ToolCallsIncludeOptions:
@@ -10649,7 +10649,7 @@ components:
         output:
           description: Include tool outputs in the trace. Set to false to only include
             inputs (smaller payload).
-          title: Output
+          title: ToolCallsIncludeOptionsOutput
           type: boolean
       title: ToolCallsIncludeOptions
     UpdateDirectiveRequest:
@@ -10762,20 +10762,20 @@ components:
       example:
         msg: msg
         loc:
-        - Location_inner
-        - Location_inner
+        - ValidationErrorLoc_inner
+        - ValidationErrorLoc_inner
         type: type
       properties:
         loc:
           items:
-            $ref: "#/components/schemas/Location_inner"
-          title: Location
+            $ref: "#/components/schemas/ValidationErrorLoc_inner"
+          title: ValidationErrorLoc
           type: array
         msg:
-          title: Message
+          title: ValidationErrorMsg
           type: string
         type:
-          title: Error Type
+          title: ValidationErrorType
           type: string
       required:
       - loc
@@ -10799,7 +10799,7 @@ components:
       properties:
         api_version:
           description: API version string
-          title: Api Version
+          title: VersionResponseApiVersion
           type: string
         features:
           allOf:
@@ -10844,7 +10844,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/WebhookDeliveryResponse"
-          title: Items
+          title: WebhookDeliveryListResponseItems
           type: array
         next_cursor:
           nullable: true
@@ -10870,22 +10870,22 @@ components:
         attempts: 0
       properties:
         id:
-          title: Id
+          title: WebhookDeliveryResponseId
           type: string
         webhook_id:
           nullable: true
           type: string
         url:
-          title: Url
+          title: WebhookDeliveryResponseUrl
           type: string
         event_type:
-          title: Event Type
+          title: WebhookDeliveryResponseEventType
           type: string
         status:
-          title: Status
+          title: WebhookDeliveryResponseStatus
           type: string
         attempts:
-          title: Attempts
+          title: WebhookDeliveryResponseAttempts
           type: integer
         next_retry_at:
           nullable: true
@@ -10928,22 +10928,22 @@ components:
       properties:
         method:
           description: "HTTP method: GET or POST"
-          title: Method
+          title: WebhookHttpConfigMethod
           type: string
         timeout_seconds:
           description: HTTP request timeout in seconds
-          title: Timeout Seconds
+          title: WebhookHttpConfigTimeoutSeconds
           type: integer
         headers:
           additionalProperties:
             type: string
           description: Custom HTTP headers
-          title: Headers
+          title: WebhookHttpConfigHeaders
         params:
           additionalProperties:
             type: string
           description: Custom HTTP query parameters
-          title: Params
+          title: WebhookHttpConfigParams
       title: WebhookHttpConfig
     WebhookListResponse:
       description: Response model for listing webhooks.
@@ -10987,7 +10987,7 @@ components:
         items:
           items:
             $ref: "#/components/schemas/WebhookResponse"
-          title: Items
+          title: WebhookListResponseItems
           type: array
       required:
       - items
@@ -11014,13 +11014,13 @@ components:
         enabled: true
       properties:
         id:
-          title: Id
+          title: WebhookResponseId
           type: string
         bank_id:
           nullable: true
           type: string
         url:
-          title: Url
+          title: WebhookResponseUrl
           type: string
         secret:
           nullable: true
@@ -11028,10 +11028,10 @@ components:
         event_types:
           items:
             type: string
-          title: Event Types
+          title: WebhookResponseEventTypes
           type: array
         enabled:
-          title: Enabled
+          title: WebhookResponseEnabled
           type: boolean
         http_config:
           $ref: "#/components/schemas/WebhookHttpConfig"
@@ -11048,7 +11048,7 @@ components:
       - id
       - url
       title: WebhookResponse
-    Timestamp:
+    MemoryItemTimestamp:
       anyOf:
       - format: date-time
         type: string
@@ -11058,8 +11058,8 @@ components:
         \ string 'unset' to explicitly store without any timestamp (use this for timeless\
         \ content such as fictional documents or static reference material)."
       nullable: true
-      title: Timestamp
-    ObservationScopes:
+      title: MemoryItemTimestamp
+    MemoryItemObservationScopes:
       anyOf:
       - enum:
         - per_tag
@@ -11077,15 +11077,15 @@ components:
         \ A list of tag lists runs one pass per inner list, giving full control over\
         \ which combinations to use."
       nullable: true
-      title: ObservationScopes
-    Result:
+      title: MemoryItemObservationScopes
+    OperationResultResponseResult:
       anyOf:
       - $ref: "#/components/schemas/ReflectResponse"
       - additionalProperties: true
         type: object
       nullable: true
-      title: Result
-    Location_inner:
+      title: OperationResultResponseResult
+    ValidationErrorLoc_inner:
       anyOf:
       - type: string
       - type: integer

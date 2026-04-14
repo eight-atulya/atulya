@@ -37,7 +37,7 @@ from .errors import AtulyaError
 from .storage import AtulyaStorage
 from .tools import AtulyaReflectTool
 
-__version__ = "0.8.2"
+__version__ = "0.8.3"
 
 __all__ = [
     "configure",

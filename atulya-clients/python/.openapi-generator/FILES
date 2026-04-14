@@ -118,14 +118,15 @@ atulya_client_api/models/influence_trend_point.py
 atulya_client_api/models/list_documents_response.py
 atulya_client_api/models/list_memory_units_response.py
 atulya_client_api/models/list_tags_response.py
-atulya_client_api/models/location_inner.py
 atulya_client_api/models/memory_item.py
+atulya_client_api/models/memory_item_observation_scopes.py
+atulya_client_api/models/memory_item_timestamp.py
 atulya_client_api/models/mental_model_list_response.py
 atulya_client_api/models/mental_model_response.py
 atulya_client_api/models/mental_model_trigger.py
-atulya_client_api/models/observation_scopes.py
 atulya_client_api/models/operation_response.py
 atulya_client_api/models/operation_result_response.py
+atulya_client_api/models/operation_result_response_result.py
 atulya_client_api/models/operation_status_response.py
 atulya_client_api/models/operations_list_response.py
 atulya_client_api/models/prediction_point.py
@@ -142,7 +143,6 @@ atulya_client_api/models/reflect_request.py
 atulya_client_api/models/reflect_response.py
 atulya_client_api/models/reflect_tool_call.py
 atulya_client_api/models/reflect_trace.py
-atulya_client_api/models/result.py
 atulya_client_api/models/retain_request.py
 atulya_client_api/models/retain_response.py
 atulya_client_api/models/source_facts_include_options.py
@@ -154,7 +154,6 @@ atulya_client_api/models/timeline_edge_response.py
 atulya_client_api/models/timeline_item_response.py
 atulya_client_api/models/timeline_response.py
 atulya_client_api/models/timeline_temporal_response.py
-atulya_client_api/models/timestamp.py
 atulya_client_api/models/token_usage.py
 atulya_client_api/models/tool_calls_include_options.py
 atulya_client_api/models/update_directive_request.py
@@ -162,6 +161,7 @@ atulya_client_api/models/update_disposition_request.py
 atulya_client_api/models/update_mental_model_request.py
 atulya_client_api/models/update_webhook_request.py
 atulya_client_api/models/validation_error.py
+atulya_client_api/models/validation_error_loc_inner.py
 atulya_client_api/models/version_response.py
 atulya_client_api/models/webhook_delivery_list_response.py
 atulya_client_api/models/webhook_delivery_response.py
