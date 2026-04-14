@@ -531,6 +531,7 @@ For advanced authentication (JWT, OAuth, multi-tenant schemas), implement a cust
 | `ATULYA_API_RERANKER_MAX_CANDIDATES` | Max candidates to rerank per recall (RRF pre-filters the rest) | `300` |
 | `ATULYA_API_MPFP_TOP_K_NEIGHBORS` | Fan-out limit per node in MPFP graph traversal | `20` |
 | `ATULYA_API_MENTAL_MODEL_REFRESH_CONCURRENCY` | Max concurrent mental model refreshes | `8` |
+| `ATULYA_API_ENABLE_MENTAL_MODEL_HISTORY` | Track history of content changes to each mental model (previous content + timestamp). Disable to reduce storage if audit trails are not needed. | `true` |
 
 #### Graph Retrieval Algorithms
 
@@ -603,10 +604,36 @@ Configuration for the file upload and conversion pipeline (used by `POST /v1/def
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ATULYA_API_ENABLE_FILE_UPLOAD_API` | Enable the file upload API endpoint | `true` |
-| `ATULYA_API_FILE_PARSER` | File parser to use (`markitdown`, `iris`) | `markitdown` |
+| `ATULYA_API_FILE_PARSER` | Server-side default parser or fallback chain (comma-separated, e.g. `iris,markitdown`) | `markitdown` |
+| `ATULYA_API_FILE_PARSER_ALLOWLIST` | Comma-separated list of parsers clients are allowed to request. If not set, all registered parsers are allowed. | — |
 | `ATULYA_API_FILE_CONVERSION_MAX_BATCH_SIZE` | Max files per upload request | `10` |
 | `ATULYA_API_FILE_CONVERSION_MAX_BATCH_SIZE_MB` | Max total upload size per request (MB) | `100` |
 | `ATULYA_API_FILE_DELETE_AFTER_RETAIN` | Delete stored files after memory extraction completes | `true` |
+
+#### Parser selection
+
+Clients can override the server default by passing `parser` in the request body of `POST /v1/default/banks/{bank_id}/files/retain`. Both the server default and the per-request field accept a single parser name or an ordered **fallback chain** — each parser is tried in sequence until one succeeds.
+
+```bash
+# Server default: try iris first, fall back to markitdown if iris fails
+export ATULYA_API_FILE_PARSER=iris,markitdown
+
+# Restrict what clients may request (optional — defaults to all registered parsers)
+export ATULYA_API_FILE_PARSER_ALLOWLIST=markitdown,iris
+```
+
+```json
+// Per-request override (in the JSON body of the file retain endpoint)
+{
+  "parser": "iris",
+  "files_metadata": [
+    { "document_id": "report" },
+    { "document_id": "fallback_doc", "parser": ["iris", "markitdown"] }
+  ]
+}
+```
+
+Clients that request a parser not in the allowlist receive HTTP 400.
 
 #### Parser: markitdown (default)
 
@@ -626,10 +653,13 @@ Cloud-based extraction via [Vectorize Iris](https://docs.eightengine.com/build-d
 **Supported formats:** PDF, DOCX, DOC, PPTX, PPT, XLSX, XLS, images (JPG, JPEG, PNG, GIF, BMP, TIFF, WEBP), HTML, TXT, MD, CSV.
 
 ```bash
-# Use iris parser (requires Vectorize account)
+# Use iris as the only parser
 export ATULYA_API_FILE_PARSER=iris
 export ATULYA_API_FILE_PARSER_IRIS_TOKEN=your-vectorize-token
 export ATULYA_API_FILE_PARSER_IRIS_ORG_ID=your-org-id
+
+# Or: try iris first, fall back to markitdown if iris fails or rejects the file type
+export ATULYA_API_FILE_PARSER=iris,markitdown
 ```
 
 ```bash
@@ -733,9 +763,12 @@ Observations are consolidated knowledge synthesized from facts.
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ATULYA_API_ENABLE_OBSERVATIONS` | Enable observation consolidation | `true` |
+| `ATULYA_API_ENABLE_OBSERVATION_HISTORY` | Track history of changes to each observation (previous content + timestamp). Disable to reduce storage if audit trails are not needed. | `true` |
 | `ATULYA_API_CONSOLIDATION_BATCH_SIZE` | Memories to load per batch (internal optimization) | `50` |
 | `ATULYA_API_CONSOLIDATION_MAX_TOKENS` | Max tokens for recall when finding related observations during consolidation | `1024` |
-| `ATULYA_API_CONSOLIDATION_LLM_BATCH_SIZE` | Number of facts sent to the LLM in a single consolidation call. Higher values reduce LLM calls and improve throughput at the cost of larger prompts. Set to `1` to disable batching. | `8` |
+| `ATULYA_API_CONSOLIDATION_LLM_BATCH_SIZE` | Number of facts sent to the LLM in a single consolidation call. Higher values reduce LLM calls and improve throughput at the cost of larger prompts. Set to `1` to disable batching. Configurable per bank. | `8` |
+| `ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS` | Total token budget for source facts included with observations in the consolidation prompt. `-1` = unlimited. Configurable per bank. | `-1` |
+| `ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION` | Per-observation token cap for source facts in the consolidation prompt. Each observation independently gets at most this many tokens of source facts. `-1` = unlimited. Configurable per bank. | `256` |
 | `ATULYA_API_OBSERVATIONS_MISSION` | What this bank should synthesise into durable observations. Replaces the built-in consolidation rules — leave unset to use the server default. | - |
 
 #### Customizing observations: when to use what
@@ -784,6 +817,41 @@ export ATULYA_API_OBSERVATIONS_MISSION="Observations are recurring patterns in c
 | `ATULYA_API_REFLECT_MAX_ITERATIONS` | Max tool call iterations before forcing a response | `10` |
 | `ATULYA_API_REFLECT_MAX_CONTEXT_TOKENS` | Max accumulated context tokens in the reflect loop before forcing final synthesis. Prevents `context_length_exceeded` errors on large banks. Lower this if your LLM has a context window smaller than 128K. | `100000` |
 | `ATULYA_API_REFLECT_MISSION` | Global reflect mission (identity and reasoning framing). Overridden per bank via config API. | - |
+
+### Dream/Trance (Bank Config)
+
+Dream/Trance is configured per bank under the `dream` object (via bank config API), not via a single global env toggle.
+
+High-signal fields in `dream`:
+
+- `enabled`, `trance_enabled`
+- `trigger_mode` (`event`, `cron`, `hybrid`)
+- `cron_interval_minutes`, `cooldown_minutes`
+- `top_k`, `min_recall_results`
+- `max_input_tokens`, `max_output_tokens`
+- `quality_threshold`
+- `distillation_mode` (`off`, `summary`, `fragments`)
+- `distillation_max_fragments`
+- `language_tone`, `enforce_layman`
+- `value_focus` (`money`, `time`, `happiness`)
+- `preset` (`balanced_org`, `lean_local`, `risk_guard`, `exec_strategy`)
+
+### Brain Intelligence Analytics
+
+Use the influence endpoint for visual analytics in the control plane and custom dashboards.
+
+| Endpoint query | Description | Default |
+|----------------|-------------|---------|
+| `window_days` | Analytics lookback window | `14` |
+| `top_k` | Number of leaderboard entities | `12` |
+| `entity_type` | Filter: `all`, `memory`, `chunk`, `mental_model` | `all` |
+
+Math behaviors:
+
+- Influence score decomposition: `recency + freq + graph + rerank + dream`
+- EWMA trend smoothing for stable directionality
+- Robust anomaly detection using z-score + IQR
+- Confidence bands (`lower`, `upper`) returned per trend point
 
 #### Disposition
 
@@ -954,6 +1022,14 @@ Metrics are always enabled and available at `http://localhost:8888/metrics`.
 ## Control Plane
 
 The Control Plane is the web UI for managing memory banks.
+
+It now includes Graph Intelligence for:
+
+- seeing what changed in a bank
+- investigating why Atulya believes something
+- drilling from state into raw supporting memories
+
+See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the product workflow.
 
 | Variable | Description | Default |
 |----------|-------------|---------|

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "atulya-api"
-version = "0.8.0"
+version = "0.8.1"
 description = "Atulya: A living algorithm for machine intelligence (MI)"
 readme = "README.md"
 requires-python = ">=3.11"

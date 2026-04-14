@@ -229,6 +229,14 @@ npx @eight-atulya/atulya-control-plane --api-url http://localhost:8888
 
 This connects to your running API server and provides a visual interface for managing memory banks, exploring entities, and testing queries.
 
+The current Control Plane also includes **Graph Intelligence**:
+
+- **State Graph** to see what changed across a bank
+- **Evidence Graph** to inspect the supporting memories
+- a graph analyst flow to move from summary to proof
+
+See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for the full workflow.
+
 #### Options
 
 | Option | Environment Variable | Default | Description |

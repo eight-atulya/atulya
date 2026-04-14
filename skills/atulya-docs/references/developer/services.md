@@ -57,10 +57,13 @@ See [Configuration - Distributed Workers](./configuration#distributed-workers) f
 Web UI for managing and exploring your memory banks:
 
 - Browse agents and memory banks
-- Explore entities and relationships
+- See what changed in a bank with **State Graph**
+- Inspect supporting raw memories with **Evidence Graph**
+- Move from summary to proof with graph-backed investigation
 - View ingestion history and operations
-- Test recall queries interactively
 
 The Control Plane connects to the API service and provides a visual interface for development and debugging.
+
+For a deeper walkthrough of the new graph workflow, see [Control Plane Graph Intelligence](./control-plane-graph-intelligence).
 
 For bare metal deployments, you can run the Control Plane standalone using npx. See [Installation - Bare Metal](./installation#control-plane) for details.

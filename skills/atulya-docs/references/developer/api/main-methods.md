@@ -3,6 +3,8 @@
 
 Atulya provides three core operations: **retain**, **recall**, and **reflect**.
 
+For repository-aware developer workflows, Atulya also exposes a separate **Codebases** surface that is intentionally outside the core retain/recall/reflect loop until a human approves memory hydration.
+
 {/* Import raw source files */}
 
 > **💡 Prerequisites**
@@ -272,3 +274,4 @@ atulya reflect my-bank "Analyze our tech stack" --budget high
 - [**Recall**](./recall) — Tuning search quality and performance
 - [**Reflect**](./reflect) — Configuring disposition
 - [**Memory Banks**](./memory-banks) — Managing memory bank disposition
+- [**Codebases**](../codebases) — Import repos, review ASD snapshots, and approve memory hydration

@@ -26,6 +26,28 @@ Support for external streaming platforms like Kafka for scale-out processing is 
 |-----------|---------|-------------|
 | **batch_retain** | `retain_batch` with `async=True` | Processes large content batches in the background |
 | **consolidate** | After `retain` | Consolidates new facts into observations |
+| **dream_generation** | Consolidation events and/or cron (Dream config) | Runs Assumption -> Audit -> Train -> What-if -> Value synthesis and writes HTML artifacts |
+| **sub_routine** | Manual trigger or startup warmup | Refreshes brain runtime cache and activity model |
+| **brain_learn** | Manual trigger from control plane | Learns and fuses knowledge from a remote brain instance |
+
+## Dream and Brain Intelligence Operations
+
+`0.8.0` adds async intelligence workflows that are safe for production:
+
+- **Dream/Trance generation** never blocks retain/recall paths.
+- **LLM formatting failures** degrade gracefully via deterministic fallback behavior.
+- **Brain analytics** are query-driven and bounded by request parameters (`window_days`, `top_k`, `entity_type`).
+
+If you want the plain-English overview of how Brain, remote brain learning, and Dream fit together, read [**Brain and Dream**](../brain-and-dream).
+
+### Common intelligence endpoints
+
+- `POST /v1/default/banks/{bank_id}/dreams/trigger`
+- `GET /v1/default/banks/{bank_id}/dreams`
+- `GET /v1/default/banks/{bank_id}/dreams/stats`
+- `GET /v1/default/banks/{bank_id}/brain/influence`
+- `POST /v1/default/banks/{bank_id}/brain/learn`
+- `POST /v1/default/banks/{bank_id}/sub-routine`
 
 ## Async Retain Example
 

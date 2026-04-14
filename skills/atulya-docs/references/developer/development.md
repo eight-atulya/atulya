@@ -54,13 +54,53 @@ ATULYA_API_LLM_API_KEY=gsk_xxxxxxxxxxxx
 ATULYA_API_LLM_MODEL=llama-3.1-70b-versatile
 ```
 
-### 5. Start the API Server
+### 5. Start Services
+
+Recommended local orchestrator (API + Control Plane):
 
 ```bash
-./scripts/start-server.sh --env local
+./scripts/dev/start.sh
 ```
 
-The server will be available at http://localhost:8888.
+Optional startup modes:
+
+```bash
+# API only
+./scripts/dev/start.sh --api-only
+
+# Control Plane only
+./scripts/dev/start.sh --cp-only
+
+# API + Control Plane + worker
+./scripts/dev/start.sh --with-worker
+
+# Random free ports (avoids local port conflicts)
+./scripts/dev/start.sh --random-port
+
+# API + Control Plane with native atulya-brain auto-build (requires cargo)
+./scripts/dev/start.sh --with-brain-native
+```
+
+If you only need the API:
+
+```bash
+./scripts/dev/start-api.sh
+```
+
+By default:
+- API: `http://localhost:8888`
+- Control Plane: `http://localhost:9999`
+
+### Optional: native `atulya-brain` runtime
+
+Rust is optional for core Atulya development. Use this only if you want native `atulya-brain` acceleration.
+
+```bash
+./scripts/dev/build-brain.sh
+export ATULYA_API_BRAIN_ENABLED=true
+export ATULYA_API_BRAIN_NATIVE_LIBRARY_PATH=/absolute/path/to/libatulya_brain.dylib
+./scripts/dev/start-api.sh
+```
 
 ## Running Tests
 
@@ -145,5 +185,11 @@ On first run, Atulya downloads embedding and reranking models. This may take a f
 If port 8888 is in use:
 
 ```bash
-ATULYA_API_PORT=8889 ./scripts/start-server.sh --env local
+ATULYA_API_PORT=8889 ./scripts/dev/start-api.sh --port 8889
+```
+
+Or let the orchestrator select free ports:
+
+```bash
+./scripts/dev/start.sh --random-port
 ```

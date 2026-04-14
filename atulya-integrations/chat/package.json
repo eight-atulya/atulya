@@ -1,6 +1,6 @@
 {
   "name": "@eight-atulya/atulya-chat",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Atulya memory integration for Vercel Chat SDK - Give your chat bots persistent, per-user memory",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

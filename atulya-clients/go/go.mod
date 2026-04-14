@@ -1,6 +1,6 @@
 module github.com/eight-atulya/atulya/atulya-clients/go
 
-go 1.18
+go 1.23
 
 require github.com/stretchr/testify v1.11.1
 

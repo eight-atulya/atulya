@@ -1,0 +1,239 @@
+
+
+# Codebases API
+
+<div className="atulya-hero atulya-hero--compact">
+  <div className="atulya-hero__eyebrow">Typed Surfaces</div>
+  <h1 className="atulya-hero__title">Import, query, approve</h1>
+  <p className="atulya-hero__lead">
+    The API is designed around the real developer loop: ingest a repository, inspect the parsed
+    structure, then explicitly promote it into memory when the snapshot is ready.
+  </p>
+</div>
+
+<FeatureCardGrid
+  cards={[
+    {
+      icon: '/img/icons/codebases-overview.svg',
+      eyebrow: 'Import',
+      title: 'Bring in source',
+      description: 'ZIP and GitHub import endpoints both feed the same archive and ASD pipeline.',
+    },
+    {
+      icon: '/img/icons/codebases-lifecycle.svg',
+      eyebrow: 'Query',
+      title: 'Inspect and route structure',
+      description:
+        'Review summary, chunks, files, symbols, impact, and research queue all read from the current parsed snapshot even before approval.',
+    },
+    {
+      icon: '/img/icons/codebases-api.svg',
+      eyebrow: 'Promote',
+      title: 'Approve memory hydration',
+      description: 'A separate approve endpoint keeps code intelligence publish and memory publish decoupled.',
+    },
+  ]}
+/>
+
+## Import Endpoints
+
+- `POST /v1/default/banks/{bank_id}/codebases/import/zip`
+- `POST /v1/default/banks/{bank_id}/codebases/import/github`
+
+Both return:
+
+- `codebase_id`
+- `snapshot_id`
+- `operation_id`
+- initial `status`
+
+GitHub import also returns:
+
+- `resolved_commit_sha`
+
+## Refresh Endpoint
+
+- `POST /v1/default/banks/{bank_id}/codebases/{codebase_id}/refresh`
+
+Use this for GitHub-backed codebases.
+
+If nothing changed remotely:
+
+- response returns `noop=true`
+- no new operation is queued
+
+If a new commit is detected:
+
+- a new reviewable snapshot is created
+- the response includes `snapshot_id` and `operation_id`
+
+## Approval Endpoint
+
+- `POST /v1/default/banks/{bank_id}/codebases/{codebase_id}/approve`
+
+This is the memory publish gate.
+
+Use it when:
+
+- the latest parsed snapshot looks correct
+- you want `recall` and `reflect` to use that snapshot's code documents
+
+Approval now applies only the chunks already routed to `memory`, in batches, instead of trying to hydrate every parsed file in one step.
+
+### Memory Ingest Mode
+
+Approval and route-to-memory flows now support an explicit `memory_ingest_mode`.
+
+| Mode | Best for | Tradeoff |
+|---|---|---|
+| `direct` | Fast deterministic chunk hydration | Skips the richer retain-time semantic extraction path |
+| `retain` | Richer memory formation and better semantic linking | Heavier than direct hydration |
+
+Use `retain` when:
+
+- the chunk is strategically important
+- you want Atulya memory to form richer links and meaning from ASD-reviewed code
+- the shared memory bank will power agent reasoning, not only exact lookup
+
+Use `direct` when:
+
+- you need the cheapest deterministic sync
+- you want exact reviewed code chunks persisted quickly
+- the repo is large and you want to stay conservative about heavier ingestion
+
+```mermaid
+sequenceDiagram
+    participant UI as Control Plane
+    participant API as Codebases API
+    participant ASD as ASD Snapshot
+    participant MEM as Memory Hydration
+
+    UI->>API: route chunk to memory + memory_ingest_mode
+    API->>ASD: validate routed chunks against current snapshot
+    API->>MEM: queue codebase_approve task
+    MEM->>MEM: hydrate only memory-routed chunks
+    MEM-->>API: operation result with ingest mode
+    API-->>UI: operation status / completion
+```
+
+## Review Endpoints
+
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/review`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks/{chunk_id}`
+- `POST /v1/default/banks/{bank_id}/codebases/{codebase_id}/review/route`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/research`
+
+These endpoints make the chunk review loop first-class:
+
+- review summary exposes queue counts, diagnostics, parse coverage, and related-chunk counts
+- chunk listing is cursor-paginated so large repos do not dump everything at once
+- chunk detail exposes code preview, related chunks, cluster members, symbol context, and path-level impact edges
+- review routing explicitly sends chunks to `memory`, `research`, `dismissed`, or back to `unrouted`
+- research queue shows staged chunks that should not be hydrated yet
+
+### Review Route Request Shape
+
+| Field | Purpose |
+|---|---|
+| `item_ids[]` | Chunks to update |
+| `target` | `memory`, `research`, `dismissed`, or `unrouted` |
+| `queue_memory_import` | When `true`, queue approval-style hydration right after routing |
+| `memory_ingest_mode` | `direct` or `retain` for the queued memory operation |
+
+## Query Endpoints
+
+- `GET /v1/default/banks/{bank_id}/codebases`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/files`
+- `GET /v1/default/banks/{bank_id}/codebases/{codebase_id}/symbols`
+- `POST /v1/default/banks/{bank_id}/codebases/{codebase_id}/impact`
+
+## Status Semantics
+
+The key response fields are:
+
+| Field | Meaning |
+|---|---|
+| `snapshot_status` | Current parsed snapshot state |
+| `approval_status` | Whether the current parsed snapshot still needs approval |
+| `memory_status` | Whether memory is hydrated from the current snapshot, a previous one, or not yet |
+| `current_snapshot_id` | Snapshot used for code intelligence |
+| `approved_snapshot_id` | Snapshot used for memory-backed reasoning |
+
+Typical states:
+
+| Situation | `snapshot_status` | `approval_status` | `memory_status` |
+|---|---|---|---|
+| Fresh parsed snapshot | `review_required` | `pending_approval` | `not_hydrated` |
+| Routed but not yet applied | `review_in_progress` | `review_in_progress` | `not_hydrated` or `hydrated_from_previous_snapshot` |
+| New parsed snapshot while older memory stays active | `review_required` | `pending_approval` | `hydrated_from_previous_snapshot` |
+| Approved current snapshot | `approved` | `approved` | `hydrated` |
+| Current snapshot applied but still has unrouted items | `partially_approved` | `partially_approved` | `hydrated` |
+
+## Endpoint Map By Workflow
+
+| Workflow | Endpoints |
+|---|---|
+| Import repo | `import/zip`, `import/github` |
+| Review current snapshot | `review`, `chunks`, `chunks/{chunk_id}`, `files`, `symbols`, `impact` |
+| Stage follow-up work | `review/route`, `research` |
+| Publish to memory | `approve` |
+| Track source of truth | `codebases`, `codebases/{codebase_id}` |
+
+## Files Endpoint
+
+The file-map response can be used before approval.
+
+Useful filters:
+
+- `path_prefix`
+- `language`
+- `changed_only`
+- `snapshot_id`
+
+Before approval, many source files will have:
+
+- `document_id = null`
+
+That is expected. It means the file is part of the parsed snapshot, but has not been promoted into memory yet.
+
+## Symbols Endpoint
+
+Symbol search supports:
+
+- exact match
+- prefix match
+- fuzzy match
+
+This endpoint is ideal for:
+
+- jump-to-symbol tooling
+- impact seeds
+- codemod planning
+- structural repo review
+
+Every symbol match can also include overlapping chunk IDs, which makes it easy to jump straight into the review queue or chunk detail UI.
+
+## Impact Endpoint
+
+Impact analysis accepts exactly one seed:
+
+- `path`
+- `symbol`
+- `query`
+
+And returns:
+
+- `impacted_files`
+- `matched_symbols`
+- `edges`
+- deterministic `explanation`
+
+That makes it useful for pull request analysis, refactor planning, and developer copilots that need structural fan-out instead of just semantic similarity.
+
+## Operational Advice
+
+Use Codebases APIs when you need exact code structure.
+
+Use `recall` and `reflect` after approval when you want broader semantic follow-up across codebase documents and other bank memory.

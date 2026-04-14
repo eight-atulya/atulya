@@ -1,6 +1,6 @@
 {
   "name": "@eight-atulya/atulya-control-plane",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Control plane for Atulya — a living algorithm for machine intelligence (MI).",
   "bin": {
     "atulya-control-plane": "./bin/cli.js"

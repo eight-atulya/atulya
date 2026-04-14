@@ -11,6 +11,54 @@
           "label": "Overview"
         },
         {
+          "type": "category",
+          "label": "Codebases",
+          "link": {
+            "type": "doc",
+            "id": "developer/codebases"
+          },
+          "collapsible": false,
+          "items": [
+            {
+              "type": "doc",
+              "id": "developer/codebases-lifecycle",
+              "label": "Lifecycle",
+              "customProps": {
+                "icon": "/img/icons/codebases-lifecycle.svg"
+              }
+            },
+            {
+              "type": "doc",
+              "id": "developer/codebases-control-plane",
+              "label": "Control Plane",
+              "customProps": {
+                "icon": "/img/icons/codebases-control-plane.svg"
+              }
+            },
+            {
+              "type": "doc",
+              "id": "developer/codebases-for-coding-agents",
+              "label": "Coding Agents",
+              "customProps": {
+                "icon": "/img/icons/codebases-api.svg"
+              }
+            },
+            {
+              "type": "doc",
+              "id": "developer/codebases-api",
+              "label": "API",
+              "customProps": {
+                "icon": "/img/icons/codebases-api.svg"
+              }
+            }
+          ]
+        },
+        {
+          "type": "doc",
+          "id": "developer/control-plane-graph-intelligence",
+          "label": "Graph Intelligence"
+        },
+        {
           "type": "doc",
           "id": "developer/retain",
           "label": "Retain"

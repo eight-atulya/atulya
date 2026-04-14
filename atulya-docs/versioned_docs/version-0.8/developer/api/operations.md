@@ -49,18 +49,6 @@ If you want the plain-English overview of how Brain, remote brain learning, and 
 - `POST /v1/default/banks/{bank_id}/brain/learn`
 - `POST /v1/default/banks/{bank_id}/sub-routine`
 
-### Access count policy (usage telemetry)
-
-Atulya persists usage counters (`access_count`, `last_accessed_at`) for memories, chunks, and mental models.
-This telemetry is used by Brain Influence and leaderboard views.
-
-Policy:
-
-- **Recall:** increments artifacts returned by recall output.
-- **Reflect:** increments artifacts declared as used in final `based_on`.
-- **Chunk counting is strict:** chunks increment only when chunk content is explicitly materialized by tools (for example, recall `chunks` output or expand `chunk` payload), not from provenance-only references.
-- **Per-operation dedupe:** each artifact increments at most `+1` per operation to avoid noisy inflation from repeated references in the same run.
-
 ## Async Retain Example
 
 When retaining large batches of memories, use `async=true` to process in the background. The response includes an `operation_id` that you can use to poll for completion.

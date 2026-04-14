@@ -2,6 +2,7 @@
 
 # import apis into api package
 from atulya_client_api.api.banks_api import BanksApi
+from atulya_client_api.api.codebases_api import CodebasesApi
 from atulya_client_api.api.directives_api import DirectivesApi
 from atulya_client_api.api.documents_api import DocumentsApi
 from atulya_client_api.api.entities_api import EntitiesApi
