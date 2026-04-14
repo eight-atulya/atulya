@@ -73,7 +73,11 @@ ensure_js_release_dependencies() {
     fi
 
     print_info "Installing JavaScript workspace dependencies for release..."
-    npm install --no-fund --no-audit --package-lock=false
+    if [ -f "package-lock.json" ]; then
+        npm ci --no-fund --no-audit
+    else
+        npm install --no-fund --no-audit --package-lock=false
+    fi
 }
 
 # Check if version is provided
