@@ -36,7 +36,7 @@ pub fn list(
                     println!("  {}", ui::dim("No directives found."));
                 } else {
                     for directive in &result.items {
-                        let status = if directive.is_active {
+                        let status = if directive.is_active.unwrap_or(false) {
                             ui::gradient_start("active")
                         } else {
                             ui::dim("inactive")
@@ -116,8 +116,8 @@ pub fn create(
     let request = types::CreateDirectiveRequest {
         name: name.to_string(),
         content: content.to_string(),
-        is_active: true,
-        priority: 0,
+        is_active: Some(true),
+        priority: Some(0),
         tags: vec![],
     };
 
@@ -246,13 +246,20 @@ fn print_directive_detail(directive: &types::DirectiveResponse) {
 
     println!("  {} {}", ui::dim("ID:"), ui::gradient_start(&directive.id));
 
-    let status = if directive.is_active {
+    let status = if directive.is_active.unwrap_or(false) {
         ui::gradient_start("active")
     } else {
         ui::dim("inactive")
     };
     println!("  {} {}", ui::dim("Status:"), status);
-    println!("  {} {}", ui::dim("Priority:"), directive.priority);
+    println!(
+        "  {} {}",
+        ui::dim("Priority:"),
+        directive
+            .priority
+            .map(|value| value.to_string())
+            .unwrap_or_else(|| "unset".to_string())
+    );
 
     if !directive.tags.is_empty() {
         println!("  {} {}", ui::dim("Tags:"), directive.tags.join(", "));

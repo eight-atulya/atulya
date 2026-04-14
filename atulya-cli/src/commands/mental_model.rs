@@ -112,7 +112,7 @@ pub fn create(
         id: id.map(|s| s.to_string()),
         name: name.to_string(),
         source_query: source_query.to_string(),
-        max_tokens: 2048,
+        max_tokens: Some(2048),
         tags: vec![],
         trigger: None,
     };

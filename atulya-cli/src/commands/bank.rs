@@ -526,7 +526,7 @@ pub fn consolidate(
             if output_format == OutputFormat::Pretty {
                 ui::print_success("Consolidation triggered");
                 println!("  {} {}", ui::dim("Operation ID:"), operation_id);
-                if result.deduplicated {
+                if result.deduplicated.unwrap_or(false) {
                     println!("  {} {}", ui::dim("Note:"), "Reusing existing pending consolidation task");
                 }
             } else {

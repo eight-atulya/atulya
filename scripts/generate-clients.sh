@@ -122,6 +122,12 @@ cargo build --release --locked
 echo "✓ Rust client generated at $RUST_CLIENT_DIR"
 echo ""
 
+echo "Validating Rust CLI against the regenerated client..."
+cd "$PROJECT_ROOT/atulya-cli"
+cargo check
+echo "✓ Rust CLI matches regenerated Rust client"
+echo ""
+
 # Generate Python client
 echo "=================================================="
 echo "Generating Python client..."

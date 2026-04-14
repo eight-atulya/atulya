@@ -67,6 +67,93 @@ fn strip_schema_defaults(value: &mut serde_json::Value) {
     }
 }
 
+fn to_pascal_case(value: &str) -> String {
+    let mut output = String::new();
+    let mut uppercase_next = true;
+
+    for ch in value.chars() {
+        if ch.is_ascii_alphanumeric() {
+            if uppercase_next {
+                output.extend(ch.to_uppercase());
+                uppercase_next = false;
+            } else {
+                output.push(ch);
+            }
+        } else {
+            uppercase_next = true;
+        }
+    }
+
+    if output.is_empty() {
+        "Generated".to_string()
+    } else {
+        output
+    }
+}
+
+fn namespace_inline_titles(spec: &mut serde_json::Value) {
+    let Some(components) = spec
+        .get_mut("components")
+        .and_then(|value| value.get_mut("schemas"))
+        .and_then(|value| value.as_object_mut())
+    else {
+        return;
+    };
+
+    for (schema_name, schema) in components.iter_mut() {
+        let root_name = to_pascal_case(schema_name);
+        let mut path = Vec::new();
+        namespace_nested_schema_titles(schema, &root_name, &mut path);
+    }
+}
+
+fn namespace_nested_schema_titles(
+    value: &mut serde_json::Value,
+    root_name: &str,
+    path: &mut Vec<String>,
+) {
+    let Some(obj) = value.as_object_mut() else {
+        return;
+    };
+
+    if !path.is_empty() && obj.contains_key("title") {
+        let mut title = root_name.to_string();
+        for segment in path.iter() {
+            title.push_str(&to_pascal_case(segment));
+        }
+        obj.insert("title".to_string(), serde_json::Value::String(title));
+    }
+
+    if let Some(properties) = obj.get_mut("properties").and_then(|value| value.as_object_mut()) {
+        for (property_name, property_schema) in properties.iter_mut() {
+            path.push(property_name.clone());
+            namespace_nested_schema_titles(property_schema, root_name, path);
+            path.pop();
+        }
+    }
+
+    for (key, label) in [
+        ("items", "item"),
+        ("additionalProperties", "additional_property"),
+    ] {
+        if let Some(child) = obj.get_mut(key) {
+            path.push(label.to_string());
+            namespace_nested_schema_titles(child, root_name, path);
+            path.pop();
+        }
+    }
+
+    for key in ["allOf", "anyOf", "oneOf"] {
+        if let Some(children) = obj.get_mut(key).and_then(|value| value.as_array_mut()) {
+            for (index, child) in children.iter_mut().enumerate() {
+                path.push(format!("{}_{}", key, index + 1));
+                namespace_nested_schema_titles(child, root_name, path);
+                path.pop();
+            }
+        }
+    }
+}
+
 fn convert_anyof_to_nullable(value: &mut serde_json::Value) {
     match value {
         serde_json::Value::Object(obj) => {
@@ -163,6 +250,10 @@ fn main() {
 
     // Remove schema defaults that typify can reject during token generation.
     strip_schema_defaults(&mut spec_json);
+
+    // Give inline property schemas stable, collision-free titles so typify does
+    // not collapse unrelated enums like operation status and dream status.
+    namespace_inline_titles(&mut spec_json);
 
     // Now parse as OpenAPI struct
     let spec: openapiv3::OpenAPI = serde_json::from_value(spec_json)

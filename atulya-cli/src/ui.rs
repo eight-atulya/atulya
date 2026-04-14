@@ -134,7 +134,7 @@ pub fn print_chunk(chunk: &ChunkData) {
         println!("  {}", line);
     }
 
-    if chunk.truncated {
+    if chunk.truncated.unwrap_or(false) {
         println!("  {}", gradient_end("[Truncated due to token limit]"));
     }
 

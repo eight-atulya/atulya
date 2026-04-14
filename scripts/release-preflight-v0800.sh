@@ -277,6 +277,7 @@ print_info "Running v${EXPECTED_VERSION} release preflight"
 
 require_cmd uv
 require_cmd rg
+require_cmd cargo
 assert_file_exists "$BASELINE_FILE"
 assert_linear_migration_chain
 
@@ -297,5 +298,11 @@ run_ty_with_allowlist
 
 print_info "Verifying fresh-database migrations for public and tenant schemas"
 verify_fresh_migrations
+
+print_info "Running Rust CLI contract check against the current generated client"
+(
+    cd "$ROOT_DIR/atulya-cli"
+    cargo check
+)
 
 print_info "v${EXPECTED_VERSION} release preflight passed"

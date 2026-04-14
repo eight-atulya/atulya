@@ -212,7 +212,7 @@ impl ApiClient {
         self.runtime.block_on(async {
             let request = types::AddBackgroundRequest {
                 content: content.to_string(),
-                update_disposition,
+                update_disposition: Some(update_disposition),
             };
             let response = self.client.add_bank_background(agent_id, None, &request).await?;
             Ok(response.into_inner())

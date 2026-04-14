@@ -72,12 +72,13 @@ pub fn get(
             if output_format == OutputFormat::Pretty {
                 ui::print_section_header(&format!("Operation: {}", operation_id));
 
-                use atulya_client::types::Status;
-                let status_str = match &result.status {
-                    Status::Completed => ui::gradient_start("completed"),
-                    Status::Pending => ui::gradient_mid("pending"),
-                    Status::Failed => ui::gradient_end("failed"),
-                    Status::NotFound => ui::gradient_end("not_found"),
+                let status_value = result.status.to_string();
+                let status_str = match status_value.as_str() {
+                    "completed" => ui::gradient_start("completed"),
+                    "pending" => ui::gradient_mid("pending"),
+                    "failed" => ui::gradient_end("failed"),
+                    "not_found" => ui::gradient_end("not_found"),
+                    _ => ui::dim(&status_value),
                 };
 
                 println!("  {} {}", ui::dim("Status:"), status_str);

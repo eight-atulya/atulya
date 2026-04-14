@@ -9,7 +9,9 @@ use crate::output::{self, OutputFormat};
 use crate::ui;
 
 // Import types from generated client
-use atulya_client::types::{Budget, ChunkIncludeOptions, IncludeOptions, TagsMatch};
+use atulya_client::types::{
+    Budget, ChunkIncludeOptions, IncludeOptions, RecallRequestTagsMatch, ReflectRequestTagsMatch,
+};
 use serde::Deserialize;
 use serde_json;
 
@@ -263,7 +265,7 @@ pub fn recall(
     let include = if include_chunks {
         Some(IncludeOptions {
             chunks: Some(ChunkIncludeOptions {
-                max_tokens: chunk_max_tokens,
+                max_tokens: Some(chunk_max_tokens),
             }),
             entities: None,
             source_facts: None,
@@ -276,12 +278,12 @@ pub fn recall(
         query,
         types: if fact_type.is_empty() { None } else { Some(fact_type) },
         budget: Some(parse_budget(&budget)),
-        max_tokens,
-        trace,
+        max_tokens: Some(max_tokens),
+        trace: Some(trace),
         query_timestamp: None,
         include,
         tags: None,
-        tags_match: TagsMatch::Any,
+        tags_match: Some(RecallRequestTagsMatch::Any),
     };
 
     let response = client.recall(agent_id, &request, verbose);
@@ -335,11 +337,11 @@ pub fn reflect(
         query,
         budget: Some(parse_budget(&budget)),
         context,
-        max_tokens: max_tokens.unwrap_or(4096),
+        max_tokens: Some(max_tokens.unwrap_or(4096)),
         include: None,
         response_schema,
         tags: None,
-        tags_match: TagsMatch::Any,
+        tags_match: Some(ReflectRequestTagsMatch::Any),
     };
 
     let response = client.reflect(agent_id, &request, verbose);
@@ -392,7 +394,7 @@ pub fn retain(
 
     let request = RetainRequest {
         items: vec![item],
-        async_: r#async,
+        async_: Some(r#async),
         document_tags: None,
     };
 

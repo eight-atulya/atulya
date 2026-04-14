@@ -400,24 +400,25 @@ fn wait_for_operation(
     poll_interval: u64,
     verbose: bool,
 ) -> Result<()> {
-    use atulya_client::types::Status;
-
     if verbose {
         eprintln!("Waiting for operation {}...", operation_id);
     }
     loop {
         let op = client.get_operation(bank_id, operation_id, verbose)?;
-        match op.status {
-            Status::Completed => return Ok(()),
-            Status::Failed => {
+        match op.status.to_string().as_str() {
+            "completed" => return Ok(()),
+            "failed" => {
                 let err = op.error_message.unwrap_or_else(|| "operation failed".to_string());
                 anyhow::bail!("Operation {} failed: {}", operation_id, err);
             }
-            Status::NotFound => {
+            "not_found" => {
                 anyhow::bail!("Operation {} not found", operation_id);
             }
-            Status::Pending => {
+            "pending" => {
                 std::thread::sleep(Duration::from_secs(poll_interval.max(1)));
+            }
+            other => {
+                anyhow::bail!("Operation {} returned unexpected status: {}", operation_id, other);
             }
         }
     }

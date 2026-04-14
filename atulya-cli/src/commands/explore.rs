@@ -5,7 +5,10 @@ use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use atulya_client::types::{BankListItem, RecallResult, EntityListItem, Budget, TagsMatch};
+use atulya_client::types::{
+    BankListItem, Budget, EntityListItem, RecallRequestTagsMatch, RecallResult,
+    ReflectRequestTagsMatch,
+};
 use serde_json::{Map, Value};
 use ratatui::{
     backend::{Backend, CrosstermBackend},
@@ -337,12 +340,12 @@ impl App {
                             query: query_text,
                             types: None,
                             budget: Some(query_budget),
-                            max_tokens: query_max_tokens,
-                            trace: false,
+                            max_tokens: Some(query_max_tokens),
+                            trace: Some(false),
                             query_timestamp: None,
                             include: None,
                             tags: None,
-                            tags_match: TagsMatch::Any,
+                            tags_match: Some(RecallRequestTagsMatch::Any),
                         };
 
                         let result = client.recall(&bank_id, &request, false)
@@ -356,11 +359,11 @@ impl App {
                             query: query_text,
                             budget: Some(query_budget),
                             context: None,
-                            max_tokens: 4096,
+                            max_tokens: Some(4096),
                             include: None,
                             response_schema: None,
                             tags: None,
-                            tags_match: TagsMatch::Any,
+                            tags_match: Some(ReflectRequestTagsMatch::Any),
                         };
 
                         let result = client.reflect(&bank_id, &request, false)
