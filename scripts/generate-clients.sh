@@ -27,6 +27,57 @@ echo "  - TypeScript (via @hey-api/openapi-ts)"
 echo "  - Go (via ogen)"
 echo ""
 
+OPENAPI_GENERATOR_MODE=""
+OPENAPI_GENERATOR_BIN=""
+
+resolve_openapi_generator_backend() {
+    if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+        OPENAPI_GENERATOR_MODE="docker"
+        echo "✓ OpenAPI Generator backend: Docker (${OPENAPI_GENERATOR_VERSION})"
+        return 0
+    fi
+
+    if command -v openapi-generator-cli >/dev/null 2>&1; then
+        OPENAPI_GENERATOR_MODE="local"
+        OPENAPI_GENERATOR_BIN="openapi-generator-cli"
+        echo "✓ OpenAPI Generator backend: local CLI (openapi-generator-cli)"
+        return 0
+    fi
+
+    if command -v openapi-generator >/dev/null 2>&1; then
+        OPENAPI_GENERATOR_MODE="local"
+        OPENAPI_GENERATOR_BIN="openapi-generator"
+        echo "✓ OpenAPI Generator backend: local CLI (openapi-generator)"
+        return 0
+    fi
+
+    echo "❌ Error: OpenAPI Generator backend unavailable."
+    echo "   Docker is installed only if 'docker info' succeeds, because the release"
+    echo "   path needs a reachable daemon, not just the client binary."
+    echo "   Fallback options:"
+    echo "     1. Start Docker Desktop / Colima so 'docker info' works"
+    echo "     2. Install openapi-generator-cli locally and rerun"
+    exit 1
+}
+
+run_openapi_generator() {
+    local generator="$1"
+    shift
+
+    if [ "$OPENAPI_GENERATOR_MODE" = "docker" ]; then
+        docker run --rm \
+            --platform linux/amd64 \
+            --user "$(id -u):$(id -g)" \
+            "$@" \
+            "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
+            -i /local/openapi.json \
+            -g "$generator"
+        return 0
+    fi
+
+    "$OPENAPI_GENERATOR_BIN" generate "$@" -i "$OPENAPI_SPEC" -g "$generator"
+}
+
 # Check if OpenAPI spec exists
 if [ ! -f "$OPENAPI_SPEC" ]; then
     echo "❌ Error: OpenAPI spec not found at $OPENAPI_SPEC"
@@ -35,14 +86,7 @@ fi
 echo "✓ OpenAPI spec found"
 echo ""
 
-# Check for Docker (we'll use Docker to run openapi-generator)
-if ! command -v docker &> /dev/null; then
-    echo "❌ Error: Docker not found. Please install Docker"
-    echo "   https://docs.docker.com/get-docker/"
-    exit 1
-fi
-echo "✓ Docker available"
-echo "✓ Using openapi-generator ${OPENAPI_GENERATOR_VERSION}"
+resolve_openapi_generator_backend
 echo ""
 
 # Generate Rust client
@@ -105,20 +149,20 @@ done
 echo "Generating new client with openapi-generator..."
 cd "$PYTHON_CLIENT_DIR"
 
-# Run openapi-generator via Docker (pinned version for reproducibility)
-# Use --platform linux/amd64 to ensure identical output on both macOS (arm64) and Linux CI (amd64)
-# Use --user to match current user's UID/GID so generated files are writable
-docker run --rm \
-    --platform linux/amd64 \
-    --user "$(id -u):$(id -g)" \
-    -v "$OPENAPI_SPEC:/local/openapi.json" \
-    -v "$PYTHON_CLIENT_DIR:/local/out" \
-    -v "$PYTHON_CLIENT_DIR/openapi-generator-config.yaml:/local/config.yaml" \
-    "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
-    -i /local/openapi.json \
-    -g python \
-    -o /local/out \
-    -c /local/config.yaml
+if [ "$OPENAPI_GENERATOR_MODE" = "docker" ]; then
+    run_openapi_generator \
+        python \
+        -v "$OPENAPI_SPEC:/local/openapi.json" \
+        -v "$PYTHON_CLIENT_DIR:/local/out" \
+        -v "$PYTHON_CLIENT_DIR/openapi-generator-config.yaml:/local/config.yaml" \
+        -o /local/out \
+        -c /local/config.yaml
+else
+    run_openapi_generator \
+        python \
+        -o "$PYTHON_CLIENT_DIR" \
+        -c "$PYTHON_CLIENT_DIR/openapi-generator-config.yaml"
+fi
 
 echo "Organizing generated files..."
 
@@ -301,6 +345,8 @@ if old_init in content:
     with open(rest_file, 'w') as f:
         f.write(content)
     print("  ✓ rest.py patched successfully")
+elif "self.pool_manager: Optional[aiohttp.ClientSession] = None" in content and "if self.pool_manager is None:" in content:
+    print("  ✓ rest.py already uses lazy session initialization")
 else:
     print("  ⚠ Could not find expected pattern in rest.py - skipping patch")
 PATCH_SCRIPT
@@ -365,21 +411,27 @@ else
     rm -rf docs/ .openapi-generator/
     rm -f go.mod go.sum
 
-    # Generate new client via Docker (--platform linux/amd64 ensures identical output on macOS and Linux CI)
+    # Generate the Go client via the resolved OpenAPI Generator backend.
     echo "Generating client from OpenAPI spec..."
-    docker run --rm \
-        --platform linux/amd64 \
-        --user "$(id -u):$(id -g)" \
-        -v "$OPENAPI_SPEC:/local/openapi.json" \
-        -v "$GO_CLIENT_DIR:/local/out" \
-        "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
-        -i /local/openapi.json \
-        -g go \
-        -o /local/out \
-        --package-name atulya \
-        --git-user-id eight-atulya \
-        --git-repo-id atulya/atulya-clients/go \
-        --global-property apiDocs=false,apiTests=false,modelDocs=false,modelTests=false
+    if [ "$OPENAPI_GENERATOR_MODE" = "docker" ]; then
+        run_openapi_generator \
+            go \
+            -v "$OPENAPI_SPEC:/local/openapi.json" \
+            -v "$GO_CLIENT_DIR:/local/out" \
+            -o /local/out \
+            --package-name atulya \
+            --git-user-id eight-atulya \
+            --git-repo-id atulya/atulya-clients/go \
+            --global-property apiDocs=false,apiTests=false,modelDocs=false,modelTests=false
+    else
+        run_openapi_generator \
+            go \
+            -o "$GO_CLIENT_DIR" \
+            --package-name atulya \
+            --git-user-id eight-atulya \
+            --git-repo-id atulya/atulya-clients/go \
+            --global-property apiDocs=false,apiTests=false,modelDocs=false,modelTests=false
+    fi
 
     # Remove OpenAPI Generator boilerplate files
     echo "Removing boilerplate files..."

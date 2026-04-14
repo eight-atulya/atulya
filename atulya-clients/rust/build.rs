@@ -43,6 +43,30 @@ fn filter_multipart_endpoints(spec: &mut serde_json::Value) {
     }
 }
 
+/// Strip schema defaults that typify/progenitor can reject during schema
+/// conversion after our OpenAPI 3.1 -> 3.0 compatibility rewrite.
+///
+/// The Rust SDK does not need OpenAPI defaults for request/response typing,
+/// and removing them avoids `TypeError(InvalidValue)` failures in typify while
+/// preserving the actual schema structure and endpoint contracts.
+fn strip_schema_defaults(value: &mut serde_json::Value) {
+    match value {
+        serde_json::Value::Object(obj) => {
+            obj.remove("default");
+
+            for (_key, val) in obj.iter_mut() {
+                strip_schema_defaults(val);
+            }
+        }
+        serde_json::Value::Array(arr) => {
+            for item in arr.iter_mut() {
+                strip_schema_defaults(item);
+            }
+        }
+        _ => {}
+    }
+}
+
 fn convert_anyof_to_nullable(value: &mut serde_json::Value) {
     match value {
         serde_json::Value::Object(obj) => {
@@ -134,6 +158,9 @@ fn main() {
 
     // Filter out multipart/form-data endpoints (progenitor doesn't support them)
     filter_multipart_endpoints(&mut spec_json);
+
+    // Remove schema defaults that typify can reject during token generation.
+    strip_schema_defaults(&mut spec_json);
 
     // Now parse as OpenAPI struct
     let spec: openapiv3::OpenAPI = serde_json::from_value(spec_json)

@@ -20,6 +20,52 @@ print_error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+update_version_assignment() {
+    local target_file="$1"
+    local pattern="$2"
+
+    if [ -f "$target_file" ]; then
+        print_info "Updating $target_file"
+        sed -i.bak "$pattern" "$target_file"
+        rm "${target_file}.bak"
+    else
+        print_warn "File $target_file not found, skipping"
+    fi
+}
+
+update_init_version_if_present() {
+    local target_file="$1"
+
+    if [ -f "$target_file" ] && grep -q '^__version__ = "' "$target_file"; then
+        print_info "Updating __version__ in $target_file"
+        sed -i.bak "s/^__version__ = \".*\"/__version__ = \"$VERSION\"/" "$target_file"
+        rm "${target_file}.bak"
+        return 0
+    fi
+
+    return 1
+}
+
+update_integration_package_versions() {
+    local integration_root="$1"
+    local found=0
+
+    if [ ! -d "$integration_root" ]; then
+        print_warn "Integration root $integration_root not found, skipping"
+        return 0
+    fi
+
+    while IFS= read -r init_file; do
+        if update_init_version_if_present "$init_file"; then
+            found=1
+        fi
+    done < <(find "$integration_root" -mindepth 2 -maxdepth 2 -name '__init__.py' | sort)
+
+    if [ "$found" -eq 0 ]; then
+        print_warn "No top-level Python package __init__.py with __version__ found under $integration_root"
+    fi
+}
+
 # Check if version is provided
 if [ -z "$1" ]; then
     print_error "Usage: $0 <version>"
@@ -68,34 +114,28 @@ print_info "Updating version in all components..."
 PYTHON_PACKAGES=("atulya-api" "atulya-dev" "atulya" "atulya-integrations/litellm" "atulya-integrations/crewai" "atulya-integrations/pydantic-ai" "atulya-embed")
 for package in "${PYTHON_PACKAGES[@]}"; do
     PYPROJECT_FILE="$package/pyproject.toml"
-    if [ -f "$PYPROJECT_FILE" ]; then
-        print_info "Updating $PYPROJECT_FILE"
-        sed -i.bak "s/^version = \".*\"/version = \"$VERSION\"/" "$PYPROJECT_FILE"
-        rm "${PYPROJECT_FILE}.bak"
-    else
-        print_warn "File $PYPROJECT_FILE not found, skipping"
-    fi
+    update_version_assignment "$PYPROJECT_FILE" "s/^version = \".*\"/version = \"$VERSION\"/"
 done
 
-# Update __version__ in Python __init__.py files
-PYTHON_INIT_FILES=(
+# Update __version__ in stable Python package __init__.py files.
+STATIC_PYTHON_INIT_FILES=(
     "atulya-api/atulya_api/__init__.py"
     "atulya-embed/atulya_embed/__init__.py"
     "atulya-clients/python/atulya_client_api/__init__.py"
-    "atulya-integrations/litellm/hindsight_litellm/__init__.py"
-    "atulya-integrations/litellm/atulya_litellm/__init__.py"
-    "atulya-integrations/crewai/hindsight_crewai/__init__.py"
-    "atulya-integrations/crewai/atulya_crewai/__init__.py"
-    "atulya-integrations/pydantic-ai/atulya_pydantic_ai/__init__.py"
 )
-for init_file in "${PYTHON_INIT_FILES[@]}"; do
-    if [ -f "$init_file" ]; then
-        print_info "Updating __version__ in $init_file"
-        sed -i.bak "s/^__version__ = \".*\"/__version__ = \"$VERSION\"/" "$init_file"
-        rm "${init_file}.bak"
-    else
-        print_warn "File $init_file not found, skipping"
-    fi
+for init_file in "${STATIC_PYTHON_INIT_FILES[@]}"; do
+    update_init_version_if_present "$init_file" || print_warn "File $init_file not found or has no __version__, skipping"
+done
+
+# Discover integration package roots dynamically so folder renames do not break
+# future patch releases.
+INTEGRATION_PYTHON_ROOTS=(
+    "atulya-integrations/litellm"
+    "atulya-integrations/crewai"
+    "atulya-integrations/pydantic-ai"
+)
+for integration_root in "${INTEGRATION_PYTHON_ROOTS[@]}"; do
+    update_integration_package_versions "$integration_root"
 done
 
 # Update Python client generator config so regenerated SDK metadata matches the release.

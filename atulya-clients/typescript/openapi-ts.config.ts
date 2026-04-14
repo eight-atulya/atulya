@@ -1,6 +1,4 @@
-import { defineConfig } from '@hey-api/openapi-ts';
-
-export default defineConfig({
+export default {
     client: '@hey-api/client-fetch',
     input: '../../atulya-docs/static/openapi.json',
     output: {
@@ -11,4 +9,4 @@ export default defineConfig({
         '@hey-api/typescript',
         '@hey-api/sdk',
     ],
-});
+};
