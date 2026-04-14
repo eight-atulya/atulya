@@ -1825,7 +1825,7 @@ export function CodebasesView() {
                       itemIds: selectedChunkIds,
                       chunkCount: selectedChunkIds.length,
                       previewChunk:
-                        selectedChunkIds.length === 1
+                        selectedChunkIds.length === 1 && chunksResult
                           ? chunksResult.items.find((item) => item.id === selectedChunkIds[0]) ||
                             null
                           : null,

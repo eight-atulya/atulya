@@ -66,7 +66,7 @@ export function ThinkView() {
   const [activeBasedOnTab, setActiveBasedOnTab] = useState<BasedOnTab>("world");
   const [currentOperationId, setCurrentOperationId] = useState<string | null>(null);
   const [operationStatus, setOperationStatus] = useState<
-    "pending" | "completed" | "failed" | "not_found" | null
+    "pending" | "completed" | "failed" | "not_found" | "cancelled" | null
   >(null);
   const [operationStage, setOperationStage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
@@ -236,14 +236,20 @@ export function ThinkView() {
           return;
         }
 
-        if (status.status === "failed" || status.status === "not_found") {
+        if (
+          status.status === "failed" ||
+          status.status === "not_found" ||
+          status.status === "cancelled"
+        ) {
           setLoading(false);
           setResult(null);
           setOperationError(
             status.error_message ||
               (status.status === "not_found"
                 ? "The reflect operation could not be found."
-                : "Reflect failed.")
+                : status.status === "cancelled"
+                  ? "Reflect was cancelled."
+                  : "Reflect failed.")
           );
           if (activeReflectStorageKey && typeof window !== "undefined") {
             window.sessionStorage.removeItem(activeReflectStorageKey);

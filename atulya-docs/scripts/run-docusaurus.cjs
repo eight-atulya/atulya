@@ -17,9 +17,10 @@ const env = {...process.env};
 delete env.DEBUG;
 
 const siteRoot = path.resolve(__dirname, '..');
-const cliEntry = require.resolve('@docusaurus/core/bin/docusaurus.mjs', {
+const docusaurusPackage = require.resolve('@docusaurus/core/package.json', {
   paths: [siteRoot],
 });
+const cliEntry = path.join(path.dirname(docusaurusPackage), 'bin', 'docusaurus.mjs');
 
 const result = spawnSync(process.execPath, [cliEntry, ...args], {
   stdio: 'inherit',

@@ -39,8 +39,10 @@ uv sync --quiet
 echo "  Running lints in parallel..."
 
 # Node/TypeScript tasks
-run_task "eslint" "$REPO_ROOT/atulya-control-plane" "npx eslint --fix src/**/*.{ts,tsx}"
-run_task "prettier" "$REPO_ROOT/atulya-control-plane" "npx prettier --write src/**/*.{ts,tsx}"
+# Use the workspace-local toolchain rather than `npx`, which can drift to a
+# globally installed binary and break reproducibility in fresh release lanes.
+run_task "eslint" "$REPO_ROOT/atulya-control-plane" "npm exec -- eslint --fix src/**/*.{ts,tsx}"
+run_task "prettier" "$REPO_ROOT/atulya-control-plane" "npm exec -- prettier --write src/**/*.{ts,tsx}"
 
 # Python atulya-api tasks
 run_task "ruff-api-check" "$REPO_ROOT/atulya-api" "uv run ruff check --fix ."

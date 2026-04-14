@@ -95,6 +95,21 @@ const OPERATION_TYPE_OPTIONS = [
   { value: "brain_learn", label: "Brain Learn" },
 ];
 
+function isReflectResponse(result: unknown): result is ReflectResponse {
+  if (!result || typeof result !== "object") {
+    return false;
+  }
+
+  const candidate = result as Partial<ReflectResponse>;
+  return (
+    typeof candidate.text === "string" &&
+    Array.isArray(candidate.based_on) &&
+    "structured_output" in candidate &&
+    "usage" in candidate &&
+    "trace" in candidate
+  );
+}
+
 export function BankOperationsView() {
   const { currentBank } = useBank();
   const [operations, setOperations] = useState<Operation[]>([]);
@@ -106,9 +121,9 @@ export function BankOperationsView() {
   const [cancellingOpId, setCancellingOpId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [selectedOperation, setSelectedOperation] = useState<OperationDetails | null>(null);
-  const [selectedOperationResult, setSelectedOperationResult] = useState<ReflectResponse | null>(
-    null
-  );
+  const [selectedOperationResult, setSelectedOperationResult] = useState<
+    ReflectResponse | Record<string, any> | null
+  >(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [loadingDetails, setLoadingDetails] = useState(false);
 
@@ -201,6 +216,12 @@ export function BankOperationsView() {
       return () => clearInterval(interval);
     }
   }, [currentBank, loadOperations, offset, statusFilter, taskTypeFilter]);
+
+  const reflectResult = isReflectResponse(selectedOperationResult) ? selectedOperationResult : null;
+  const rawOperationResult =
+    selectedOperationResult && !isReflectResponse(selectedOperationResult)
+      ? selectedOperationResult
+      : null;
 
   if (!currentBank) return null;
 
@@ -493,9 +514,9 @@ export function BankOperationsView() {
                               payload.
                             </div>
                           </div>
-                          {selectedOperationResult?.text && (
+                          {reflectResult?.text && (
                             <CopyButton
-                              text={selectedOperationResult.text}
+                              text={reflectResult.text}
                               toastLabel="Stored reflect result copied"
                             />
                           )}
@@ -503,22 +524,39 @@ export function BankOperationsView() {
                       </div>
                     )}
 
-                  {selectedOperationResult?.text && (
+                  {reflectResult?.text && (
                     <div className="rounded-lg border p-4">
                       <div className="mb-3 flex items-center justify-between gap-3">
                         <div className="text-sm font-medium text-foreground">
                           Stored Reflect Result
                         </div>
                         <CopyButton
-                          text={selectedOperationResult.text}
+                          text={reflectResult.text}
                           toastLabel="Stored reflect result copied"
                         />
                       </div>
                       <div className="prose prose-sm max-w-none dark:prose-invert">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {selectedOperationResult.text}
+                          {reflectResult.text}
                         </ReactMarkdown>
                       </div>
+                    </div>
+                  )}
+
+                  {rawOperationResult && (
+                    <div className="rounded-lg border p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div className="text-sm font-medium text-foreground">
+                          Stored Operation Payload
+                        </div>
+                        <CopyButton
+                          text={JSON.stringify(rawOperationResult, null, 2)}
+                          toastLabel="Stored operation payload copied"
+                        />
+                      </div>
+                      <pre className="overflow-x-auto rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+                        {JSON.stringify(rawOperationResult, null, 2)}
+                      </pre>
                     </div>
                   )}
 
