@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       `${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/anomaly/intelligence`,
       {
         method: "POST",
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(payload),
         cache: "no-store",
       }

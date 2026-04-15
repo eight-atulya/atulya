@@ -155,6 +155,48 @@ function asRecord(value: unknown): Record<string, any> {
     : {};
 }
 
+function formatErrorDetails(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean") return String(value);
+  if (Array.isArray(value)) {
+    const items = value
+      .map((item) => {
+        if (typeof item === "string") return item;
+        if (item && typeof item === "object") {
+          const record = item as Record<string, unknown>;
+          // Common FastAPI/Pydantic validation format.
+          if (typeof record.msg === "string") {
+            const loc = Array.isArray(record.loc)
+              ? record.loc
+                  .filter(
+                    (part): part is string | number =>
+                      typeof part === "string" || typeof part === "number"
+                  )
+                  .join(".")
+              : undefined;
+            return loc ? `${loc}: ${record.msg}` : record.msg;
+          }
+        }
+        try {
+          return JSON.stringify(item);
+        } catch {
+          return String(item);
+        }
+      })
+      .filter(Boolean);
+    return items.length > 0 ? items.join(" | ") : undefined;
+  }
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+  return undefined;
+}
+
 function normalizeDreamPrediction(raw: Partial<DreamPrediction>): DreamPrediction {
   return {
     prediction_id: raw.prediction_id ?? null,
@@ -847,8 +889,8 @@ export class ControlPlaneClient {
 
         try {
           const errorData = await response.json();
-          errorMessage = errorData.error || errorMessage;
-          errorDetails = errorData.details;
+          errorMessage = formatErrorDetails(errorData.error) || errorMessage;
+          errorDetails = formatErrorDetails(errorData.details ?? errorData.detail);
         } catch {
           // If JSON parse fails, try to get text
           try {
@@ -862,7 +904,7 @@ export class ControlPlaneClient {
         }
 
         // Show toast with different styles based on status code
-        const description = errorDetails || errorMessage;
+        const description = String(errorDetails || errorMessage);
         const status = response.status;
 
         if (status >= 400 && status < 500) {

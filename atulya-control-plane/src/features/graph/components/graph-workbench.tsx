@@ -98,6 +98,11 @@ export interface WorkbenchGraphEdge {
   target: string;
   kind?: "relation" | "event" | "evidence";
   label?: string | null;
+  relationType?: string | null;
+  strength?: number | null;
+  evidenceCount?: number | null;
+  entity?: string | null;
+  summary?: string | null;
   stroke?: string | null;
   dashed?: boolean;
   width?: number;
@@ -545,6 +550,7 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
   markerEnd,
   data,
 }: EdgeProps<Edge<WorkbenchEdgeData>>) {
+  const [isHovered, setIsHovered] = useState(false);
   const [path, labelX, labelY] = getSmoothStepPath({
     sourceX,
     sourceY,
@@ -562,6 +568,13 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
   const payload = edgeData?.payload;
   const width = clamp(payload?.width ?? (isHighlighted ? 2.5 : 1.65), 1.25, 3.5);
   const opacity = isMuted ? 0.14 : isHighlighted ? 0.88 : 0.42;
+  const helperRows = [
+    payload?.relationType ? `Type: ${payload.relationType}` : payload?.label ? `Type: ${payload.label}` : null,
+    typeof payload?.strength === "number" ? `Strength: ${Math.round(payload.strength * 100)}%` : null,
+    typeof payload?.evidenceCount === "number" ? `Evidence: ${payload.evidenceCount}` : null,
+    payload?.entity ? `Entity: ${payload.entity}` : null,
+    payload?.summary ? payload.summary : null,
+  ].filter((row): row is string => Boolean(row));
 
   return (
     <>
@@ -587,6 +600,15 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
           strokeDasharray: payload?.dashed ? "8 10" : "9 11",
         }}
       />
+      <path
+        d={path}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={Math.max(14, width + 12)}
+        style={{ pointerEvents: "stroke", cursor: "pointer" }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      />
       {payload?.label ? (
         <EdgeLabelRenderer>
           <div
@@ -597,6 +619,21 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
             }}
           >
             {truncate(payload.label, 24)}
+          </div>
+        </EdgeLabelRenderer>
+      ) : null}
+      {isHovered && helperRows.length > 0 ? (
+        <EdgeLabelRenderer>
+          <div
+            className="pointer-events-none absolute min-w-[170px] max-w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-lg border px-2.5 py-2 text-[11px] leading-5 shadow-lg"
+            style={{
+              ...PANEL_STYLE,
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 38}px)`,
+            }}
+          >
+            {helperRows.map((row) => (
+              <div key={row}>{truncate(row, 72)}</div>
+            ))}
           </div>
         </EdgeLabelRenderer>
       ) : null}
