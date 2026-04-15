@@ -192,7 +192,10 @@ export default function DashboardPage() {
                   </Button>
                 </div>
                 <div className="mt-3 max-w-xl">
-                  <label htmlFor="starter-kit" className="text-xs font-medium text-muted-foreground">
+                  <label
+                    htmlFor="starter-kit"
+                    className="text-xs font-medium text-muted-foreground"
+                  >
                     Memory starter kit
                   </label>
                   <select
@@ -202,11 +205,14 @@ export default function DashboardPage() {
                     onChange={(e) => setStarterKit(e.target.value === "codebase" ? "codebase" : "")}
                   >
                     <option value="">Default (blank bank)</option>
-                    <option value="codebase">Code repository — retain/reflect tuned + guide cards</option>
+                    <option value="codebase">
+                      Code repository — retain/reflect tuned + guide cards
+                    </option>
                   </select>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    The codebase kit adds ASD-friendly retain rules, observation synthesis, three pinned
-                    guides, and one evidence-first directive (safe to re-run; skips duplicates).
+                    The codebase kit adds ASD-friendly retain rules, observation synthesis, three
+                    pinned guides, and one evidence-first directive (safe to re-run; skips
+                    duplicates).
                   </p>
                 </div>
                 {quickError ? (
