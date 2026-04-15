@@ -8047,8 +8047,8 @@ class MemoryEngine(MemoryEngineInterface):
                     "anomaly_id": key,
                     "correction_type": correction["correction_type"],
                     "target_unit_id": str(correction["target_unit_id"]) if correction["target_unit_id"] else None,
-                    "before_state": correction["before_state"] or {},
-                    "after_state": correction["after_state"] or {},
+                    "before_state": decode_jsonb(correction["before_state"], {}),
+                    "after_state": decode_jsonb(correction["after_state"], {}),
                     "confidence_delta": correction["confidence_delta"],
                     "applied_at": correction["applied_at"].isoformat() if correction["applied_at"] else None,
                     "applied_by": correction["applied_by"],
@@ -8068,7 +8068,7 @@ class MemoryEngine(MemoryEngineInterface):
                     "unit_ids": [str(unit_id) for unit_id in (event["unit_ids"] or [])],
                     "entity_ids": [str(entity_id) for entity_id in (event["entity_ids"] or [])],
                     "description": event["description"],
-                    "metadata": event["metadata"] or {},
+                    "metadata": decode_jsonb(event["metadata"], {}),
                     "detected_at": event["detected_at"].isoformat() if event["detected_at"] else None,
                     "resolved_at": event["resolved_at"].isoformat() if event["resolved_at"] else None,
                     "resolved_by": event["resolved_by"],
@@ -9562,7 +9562,7 @@ class MemoryEngine(MemoryEngineInterface):
             "mention_count": entity_row["mention_count"],
             "first_seen": entity_row["first_seen"].isoformat() if entity_row["first_seen"] else None,
             "last_seen": entity_row["last_seen"].isoformat() if entity_row["last_seen"] else None,
-            "metadata": entity_row["metadata"] or {},
+            "metadata": decode_jsonb(entity_row["metadata"], {}),
             "observations": [],
         }
 
