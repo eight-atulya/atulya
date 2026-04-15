@@ -106,6 +106,10 @@ export function StateGraph({
   resetLayoutVersion = 0,
   fullscreenAccessory,
 }: StateGraphProps) {
+  const neighborhoodNodeTitleById = useMemo(
+    () => new Map((neighborhood?.nodes ?? []).map((node) => [node.id, node.title])),
+    [neighborhood?.nodes]
+  );
   const nodeLookup = useMemo(
     () => new Map((data?.nodes ?? []).map((node) => [node.id, node])),
     [data?.nodes]
@@ -203,8 +207,12 @@ export function StateGraph({
         id: edge.id,
         source: edge.source,
         target: edge.target,
+        sourceTitle: neighborhoodNodeTitleById.get(edge.source) ?? edge.source,
+        targetTitle: neighborhoodNodeTitleById.get(edge.target) ?? edge.target,
         kind: edge.kind,
         label: edge.label,
+        relationType: edge.label,
+        summary: edge.kind === "event" ? "Change event link" : undefined,
         stroke: edge.stroke ?? undefined,
         dashed: edge.dashed,
         width: edge.width,
@@ -218,8 +226,17 @@ export function StateGraph({
       id: edge.id,
       source: edge.source_id,
       target: edge.target_id,
+      sourceTitle: data.nodes.find((node) => node.id === edge.source_id)?.title ?? edge.source_id,
+      targetTitle: data.nodes.find((node) => node.id === edge.target_id)?.title ?? edge.target_id,
       kind: "relation" as const,
       label: edge.relation_type,
+      relationType: edge.relation_type,
+      strength: edge.strength,
+      evidenceCount: edge.evidence_count,
+      summary:
+        edge.evidence_count > 0
+          ? `${edge.evidence_count} supporting evidence item(s)`
+          : "No explicit supporting evidence count",
       width: Math.max(1.4, Math.min(3, 1.15 + edge.strength * 1.4)),
       dashed: edge.relation_type.includes("support") || edge.relation_type.includes("weak"),
       animated: true,
@@ -229,15 +246,25 @@ export function StateGraph({
       id: `event-edge:${event.id}`,
       source: event.node_id,
       target: `event:${event.id}`,
+      sourceTitle: data.nodes.find((node) => node.id === event.node_id)?.title ?? event.node_id,
+      targetTitle:
+        event.change_type === "contradiction"
+          ? "Conflict signal"
+          : event.change_type === "stale"
+            ? "Stale signal"
+            : "Change signal",
       kind: "event" as const,
       label: null,
+      relationType: "change_event",
+      strength: event.confidence,
+      summary: event.summary,
       width: 1.5,
       animated: true,
       dashed: false,
     }));
 
     return [...relationEdges, ...eventEdges];
-  }, [data, neighborhood]);
+  }, [data, neighborhood, neighborhoodNodeTitleById]);
 
   const overviewNodes = useMemo<WorkbenchOverviewNode[]>(
     () =>

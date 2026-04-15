@@ -96,6 +96,8 @@ export interface WorkbenchGraphEdge {
   id: string;
   source: string;
   target: string;
+  sourceTitle?: string | null;
+  targetTitle?: string | null;
   kind?: "relation" | "event" | "evidence";
   label?: string | null;
   relationType?: string | null;
@@ -232,6 +234,48 @@ function formatMetric(label: string, value: number | null | undefined) {
   const formatted = formatPercent(value);
   if (!formatted) return null;
   return `${label} ${formatted}`;
+}
+
+function relationLabel(value: string | null | undefined) {
+  if (!value) return "Linked";
+  const normalized = value.replaceAll("_", " ").trim();
+  if (!normalized) return "Linked";
+  return normalized.charAt(0).toUpperCase() + normalized.slice(1);
+}
+
+function relationMeaning(payload: WorkbenchGraphEdge) {
+  const relation = (payload.relationType || payload.label || "").toLowerCase();
+  const source = payload.sourceTitle || "Source node";
+  const target = payload.targetTitle || "Target node";
+
+  if (relation === "co_occurs" || relation === "co occurs") {
+    return `${source} and ${target} are often mentioned together.`;
+  }
+  if (relation.includes("support")) {
+    return `${source} supports ${target}.`;
+  }
+  if (relation.includes("contradict")) {
+    return `${source} conflicts with ${target}.`;
+  }
+  if (relation === "causes") {
+    return `${source} can lead to ${target}.`;
+  }
+  if (relation === "caused_by") {
+    return `${target} can lead to ${source}.`;
+  }
+  if (relation === "enables") {
+    return `${source} helps make ${target} possible.`;
+  }
+  if (relation === "prevents") {
+    return `${source} reduces or blocks ${target}.`;
+  }
+  if (relation === "temporal") {
+    return `${source} and ${target} are connected by time.`;
+  }
+  if (relation === "entity") {
+    return `${source} and ${target} share an entity connection.`;
+  }
+  return `${source} is related to ${target}.`;
 }
 
 const ALL_HANDLE_SIDES: GraphHandleSide[] = ["left", "right", "top", "bottom"];
@@ -569,10 +613,17 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
   const width = clamp(payload?.width ?? (isHighlighted ? 2.5 : 1.65), 1.25, 3.5);
   const opacity = isMuted ? 0.14 : isHighlighted ? 0.88 : 0.42;
   const helperRows = [
-    payload?.relationType ? `Type: ${payload.relationType}` : payload?.label ? `Type: ${payload.label}` : null,
-    typeof payload?.strength === "number" ? `Strength: ${Math.round(payload.strength * 100)}%` : null,
+    payload?.relationType
+      ? `Type: ${relationLabel(payload.relationType)}`
+      : payload?.label
+        ? `Type: ${relationLabel(payload.label)}`
+        : null,
+    typeof payload?.strength === "number"
+      ? `Strength: ${Math.round(payload.strength * 100)}%`
+      : null,
     typeof payload?.evidenceCount === "number" ? `Evidence: ${payload.evidenceCount}` : null,
     payload?.entity ? `Entity: ${payload.entity}` : null,
+    payload ? relationMeaning(payload) : null,
     payload?.summary ? payload.summary : null,
   ].filter((row): row is string => Boolean(row));
 
@@ -618,16 +669,16 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
             }}
           >
-            {truncate(payload.label, 24)}
+            {truncate(relationLabel(payload.label), 24)}
           </div>
         </EdgeLabelRenderer>
       ) : null}
       {isHovered && helperRows.length > 0 ? (
         <EdgeLabelRenderer>
           <div
-            className="pointer-events-none absolute min-w-[170px] max-w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-lg border px-2.5 py-2 text-[11px] leading-5 shadow-lg"
+            className="pointer-events-none absolute z-[9999] min-w-[170px] max-w-[260px] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-red-400/75 bg-red-950/90 px-2.5 py-2 text-[11px] leading-5 text-red-50 shadow-[0_0_0_1px_rgba(248,113,113,0.5),0_0_32px_rgba(239,68,68,0.55)]"
             style={{
-              ...PANEL_STYLE,
+              zIndex: 9999,
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY - 38}px)`,
             }}
           >

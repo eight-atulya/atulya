@@ -224,12 +224,19 @@ export function Graph2D({
 
   const workbenchEdges = useMemo<WorkbenchGraphEdge[]>(() => {
     if (neighborhood?.edges?.length) {
+      const neighborhoodTitleById = new Map(
+        (neighborhood.nodes ?? []).map((node) => [node.id, node.title] as const)
+      );
       return neighborhood.edges.map((edge) => ({
         id: edge.id,
         source: edge.source,
         target: edge.target,
+        sourceTitle: neighborhoodTitleById.get(edge.source) ?? edge.source,
+        targetTitle: neighborhoodTitleById.get(edge.target) ?? edge.target,
         kind: "evidence",
         label: edge.label,
+        relationType: edge.label,
+        summary: edge.kind === "event" ? "Event edge" : "Evidence link",
         stroke: edge.stroke ?? undefined,
         dashed: edge.dashed,
         width: edge.width,
@@ -237,12 +244,21 @@ export function Graph2D({
         priority: edge.priority,
       }));
     }
+    const titleByNodeId = new Map(
+      limitedData.nodes.map((node) => [node.id, node.label || node.id] as const)
+    );
     return limitedData.links.map((link, index) => ({
       id: `${link.source}:${link.target}:${index}`,
       source: link.source,
       target: link.target,
+      sourceTitle: titleByNodeId.get(link.source) ?? link.source,
+      targetTitle: titleByNodeId.get(link.target) ?? link.target,
       kind: "evidence",
       label: linkLabel(link.type),
+      relationType: link.type ?? "semantic",
+      strength: typeof link.weight === "number" ? link.weight : null,
+      entity: link.entity ?? null,
+      summary: link.entity ? `Shared entity: ${link.entity}` : null,
       stroke: linkColorFn?.(link) ?? link.color ?? undefined,
       dashed: link.type === "temporal",
       width: clamp(linkWidthFn?.(link) ?? link.width ?? 1.6, 1.2, 3.25),
