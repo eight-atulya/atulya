@@ -41,9 +41,10 @@ class CreateBankRequest(BaseModel):
     retain_extraction_mode: Optional[StrictStr] = None
     retain_custom_instructions: Optional[StrictStr] = None
     retain_chunk_size: Optional[StrictInt] = None
+    bank_preset: Optional[StrictStr] = None
     enable_observations: Optional[StrictBool] = None
     observations_mission: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["name", "disposition", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "mission", "background", "reflect_mission", "retain_mission", "retain_extraction_mode", "retain_custom_instructions", "retain_chunk_size", "enable_observations", "observations_mission"]
+    __properties: ClassVar[List[str]] = ["name", "disposition", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "mission", "background", "reflect_mission", "retain_mission", "retain_extraction_mode", "retain_custom_instructions", "retain_chunk_size", "bank_preset", "enable_observations", "observations_mission"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -147,6 +148,11 @@ class CreateBankRequest(BaseModel):
         if self.retain_chunk_size is None and "retain_chunk_size" in self.model_fields_set:
             _dict['retain_chunk_size'] = None
 
+        # set to None if bank_preset (nullable) is None
+        # and model_fields_set contains the field
+        if self.bank_preset is None and "bank_preset" in self.model_fields_set:
+            _dict['bank_preset'] = None
+
         # set to None if enable_observations (nullable) is None
         # and model_fields_set contains the field
         if self.enable_observations is None and "enable_observations" in self.model_fields_set:
@@ -181,6 +187,7 @@ class CreateBankRequest(BaseModel):
             "retain_extraction_mode": obj.get("retain_extraction_mode"),
             "retain_custom_instructions": obj.get("retain_custom_instructions"),
             "retain_chunk_size": obj.get("retain_chunk_size"),
+            "bank_preset": obj.get("bank_preset"),
             "enable_observations": obj.get("enable_observations"),
             "observations_mission": obj.get("observations_mission")
         })

@@ -31,6 +31,7 @@ type CreateBankRequest struct {
 	RetainExtractionMode NullableString `json:"retain_extraction_mode,omitempty"`
 	RetainCustomInstructions NullableString `json:"retain_custom_instructions,omitempty"`
 	RetainChunkSize NullableInt32 `json:"retain_chunk_size,omitempty"`
+	BankPreset NullableString `json:"bank_preset,omitempty"`
 	EnableObservations NullableBool `json:"enable_observations,omitempty"`
 	ObservationsMission NullableString `json:"observations_mission,omitempty"`
 }
@@ -556,6 +557,48 @@ func (o *CreateBankRequest) UnsetRetainChunkSize() {
 	o.RetainChunkSize.Unset()
 }
 
+// GetBankPreset returns the BankPreset field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CreateBankRequest) GetBankPreset() string {
+	if o == nil || IsNil(o.BankPreset.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.BankPreset.Get()
+}
+
+// GetBankPresetOk returns a tuple with the BankPreset field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CreateBankRequest) GetBankPresetOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BankPreset.Get(), o.BankPreset.IsSet()
+}
+
+// HasBankPreset returns a boolean if a field has been set.
+func (o *CreateBankRequest) HasBankPreset() bool {
+	if o != nil && o.BankPreset.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBankPreset gets a reference to the given NullableString and assigns it to the BankPreset field.
+func (o *CreateBankRequest) SetBankPreset(v string) {
+	o.BankPreset.Set(&v)
+}
+// SetBankPresetNil sets the value for BankPreset to be an explicit nil
+func (o *CreateBankRequest) SetBankPresetNil() {
+	o.BankPreset.Set(nil)
+}
+
+// UnsetBankPreset ensures that no value is present for BankPreset, not even an explicit nil
+func (o *CreateBankRequest) UnsetBankPreset() {
+	o.BankPreset.Unset()
+}
+
 // GetEnableObservations returns the EnableObservations field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *CreateBankRequest) GetEnableObservations() bool {
 	if o == nil || IsNil(o.EnableObservations.Get()) {
@@ -685,6 +728,9 @@ func (o CreateBankRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if o.RetainChunkSize.IsSet() {
 		toSerialize["retain_chunk_size"] = o.RetainChunkSize.Get()
+	}
+	if o.BankPreset.IsSet() {
+		toSerialize["bank_preset"] = o.BankPreset.Get()
 	}
 	if o.EnableObservations.IsSet() {
 		toSerialize["enable_observations"] = o.EnableObservations.Get()

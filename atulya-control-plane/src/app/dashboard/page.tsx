@@ -21,6 +21,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { currentBank, banks, loadBanks, setCurrentBank } = useBank();
   const [quickBankId, setQuickBankId] = useState("my-org");
+  const [starterKit, setStarterKit] = useState<"" | "codebase">("");
   const [isCreatingQuickBank, setIsCreatingQuickBank] = useState(false);
   const [quickError, setQuickError] = useState("");
   const [quickMessage, setQuickMessage] = useState("");
@@ -70,7 +71,9 @@ export default function DashboardPage() {
     setQuickError("");
     setQuickMessage("");
     try {
-      await client.createBank(candidate);
+      await client.createBank(candidate, {
+        bankPreset: starterKit || undefined,
+      });
       await loadBanks();
       setCurrentBank(candidate);
       setQuickMessage(`Created "${candidate}". Redirecting...`);
@@ -187,6 +190,24 @@ export default function DashboardPage() {
                   >
                     {isCreatingQuickBank ? "Creating..." : "Create and Start"}
                   </Button>
+                </div>
+                <div className="mt-3 max-w-xl">
+                  <label htmlFor="starter-kit" className="text-xs font-medium text-muted-foreground">
+                    Memory starter kit
+                  </label>
+                  <select
+                    id="starter-kit"
+                    className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    value={starterKit}
+                    onChange={(e) => setStarterKit(e.target.value === "codebase" ? "codebase" : "")}
+                  >
+                    <option value="">Default (blank bank)</option>
+                    <option value="codebase">Code repository — retain/reflect tuned + guide cards</option>
+                  </select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    The codebase kit adds ASD-friendly retain rules, observation synthesis, three pinned
+                    guides, and one evidence-first directive (safe to re-run; skips duplicates).
+                  </p>
                 </div>
                 {quickError ? (
                   <p className="mt-2 text-xs text-red-600 dark:text-red-300">{quickError}</p>

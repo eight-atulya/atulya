@@ -1891,6 +1891,12 @@ export type CreateBankRequest = {
      */
     retain_chunk_size?: number | null;
     /**
+     * CreateBankRequestBankPreset
+     *
+     * Optional starter kit merged before explicit fields: 'codebase' tunes retain/reflect/observations for repository and ASD chunk ingest, and idempotently seeds developer-guide mental models plus one evidence-first directive. Unknown values are ignored.
+     */
+    bank_preset?: string | null;
+    /**
      * CreateBankRequestEnableObservations
      *
      * Toggle automatic observation consolidation after retain().

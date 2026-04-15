@@ -1045,6 +1045,8 @@ export ATULYA_CP_DATAPLANE_API_URL=http://api.example.com:8888
 
 Atulya supports per-bank configuration overrides through a hierarchical system: **Global (env vars) → Tenant → Bank**.
 
+**Bank presets** (`bank_preset` on `PUT` / `PATCH` `/v1/default/banks/{bank_id}`) merge a curated default bundle (for example `codebase`) before any explicit fields you send. See [Bank presets](/developer/bank-presets).
+
 #### Type-Safe Config Access
 
 To prevent accidentally using global defaults when bank-specific overrides exist, Atulya enforces type-safe config access:

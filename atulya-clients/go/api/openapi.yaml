@@ -7126,6 +7126,9 @@ components:
         retain_chunk_size:
           nullable: true
           type: integer
+        bank_preset:
+          nullable: true
+          type: string
         enable_observations:
           nullable: true
           type: boolean

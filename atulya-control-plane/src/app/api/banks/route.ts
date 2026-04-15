@@ -21,7 +21,8 @@ export async function GET() {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { bank_id } = body;
+    const { bank_id: rawBankId, ...profile } = body;
+    const bank_id = typeof rawBankId === "string" ? rawBankId.trim() : "";
 
     if (!bank_id) {
       return NextResponse.json({ error: "bank_id is required" }, { status: 400 });
@@ -30,7 +31,7 @@ export async function POST(request: Request) {
     const response = await sdk.createOrUpdateBank({
       client: lowLevelClient,
       path: { bank_id },
-      body: {},
+      body: profile,
     });
 
     const serializedData = JSON.parse(JSON.stringify(response.data));

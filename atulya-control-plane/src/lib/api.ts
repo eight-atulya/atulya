@@ -872,12 +872,15 @@ export class ControlPlaneClient {
   }
 
   /**
-   * Create a new bank
+   * Create a new bank (optional `bank_preset`, e.g. `codebase`, forwarded to the API).
    */
-  async createBank(bankId: string) {
+  async createBank(bankId: string, options?: { bankPreset?: string }) {
     return this.fetchApi<{ bank_id: string }>("/api/banks", {
       method: "POST",
-      body: JSON.stringify({ bank_id: bankId }),
+      body: JSON.stringify({
+        bank_id: bankId,
+        ...(options?.bankPreset ? { bank_preset: options.bankPreset } : {}),
+      }),
     });
   }
 

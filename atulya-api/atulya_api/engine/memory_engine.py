@@ -9944,6 +9944,63 @@ class MemoryEngine(MemoryEngineInterface):
         logger.info(f"[MENTAL_MODELS] Created pinned mental model '{name}' for bank {bank_id}")
         return self._row_to_mental_model(row)
 
+    async def seed_bank_preset_playbooks(
+        self,
+        bank_id: str,
+        *,
+        preset: str,
+        request_context: "RequestContext",
+    ) -> None:
+        """Insert preset mental models and one directive when ``bank_preset`` is applied (idempotent)."""
+        if (preset or "").strip().lower() != "codebase":
+            return
+
+        from atulya_api.bank_presets import CODEBASE_SEED_DIRECTIVE, CODEBASE_SEED_MENTAL_MODELS
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            has_directive = await conn.fetchval(
+                f"SELECT 1 FROM {fq_table('directives')} WHERE bank_id = $1 AND name = $2",
+                bank_id,
+                CODEBASE_SEED_DIRECTIVE["name"],
+            )
+        if not has_directive:
+            await self.create_directive(
+                bank_id,
+                CODEBASE_SEED_DIRECTIVE["name"],
+                CODEBASE_SEED_DIRECTIVE["content"],
+                priority=int(CODEBASE_SEED_DIRECTIVE.get("priority", 0)),
+                is_active=True,
+                tags=list(CODEBASE_SEED_DIRECTIVE.get("tags") or []),
+                request_context=request_context,
+            )
+
+        for spec in CODEBASE_SEED_MENTAL_MODELS:
+            async with acquire_with_retry(pool) as conn:
+                exists_mm = await conn.fetchval(
+                    f"SELECT 1 FROM {fq_table('mental_models')} WHERE bank_id = $1 AND id = $2",
+                    bank_id,
+                    spec["id"],
+                )
+            if exists_mm:
+                continue
+            try:
+                await self.create_mental_model(
+                    bank_id=bank_id,
+                    name=spec["name"],
+                    source_query=spec["source_query"],
+                    content=spec["content"],
+                    mental_model_id=spec["id"],
+                    tags=list(spec.get("tags") or []),
+                    request_context=request_context,
+                )
+            except asyncpg.UniqueViolationError:
+                logger.info(
+                    "[PRESET] Skipped duplicate mental model id=%s bank_id=%s",
+                    spec["id"],
+                    bank_id,
+                )
+
     async def refresh_mental_model(
         self,
         bank_id: str,

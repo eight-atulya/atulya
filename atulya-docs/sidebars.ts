@@ -47,6 +47,14 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'developer/bank-presets',
+              label: 'Bank presets',
+              customProps: {
+                icon: '/img/icons/codebases-api.svg',
+              },
+            },
+            {
+              type: 'doc',
               id: 'developer/codebases-api',
               label: 'API',
               customProps: {

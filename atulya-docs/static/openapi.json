@@ -10239,6 +10239,18 @@
             "title": "Retain Chunk Size",
             "description": "Maximum token size for each content chunk during retain."
           },
+          "bank_preset": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Preset",
+            "description": "Optional starter kit merged before explicit fields: 'codebase' tunes retain/reflect/observations for repository and ASD chunk ingest, and idempotently seeds developer-guide mental models plus one evidence-first directive. Unknown values are ignored."
+          },
           "enable_observations": {
             "anyOf": [
               {

@@ -72,6 +72,7 @@ def FieldWithDefault(default_factory: Callable, **kwargs) -> Any:
     return Field(default_factory=default_factory, json_schema_extra=json_extra, **kwargs)
 
 
+from atulya_api.bank_presets import merge_bank_preset
 from atulya_api.config import get_config
 from atulya_api.engine.memory_engine import Budget, _current_schema, _get_tiktoken_encoding, fq_table
 from atulya_api.engine.response_models import VALID_RECALL_FACT_TYPES, MemoryFact, TokenUsage
@@ -1375,6 +1376,15 @@ class CreateBankRequest(BaseModel):
         default=None,
         description="Maximum token size for each content chunk during retain.",
     )
+    bank_preset: str | None = Field(
+        default=None,
+        description=(
+            "Optional starter kit merged before explicit fields: "
+            "'codebase' tunes retain/reflect/observations for repository and ASD chunk ingest, "
+            "and idempotently seeds developer-guide mental models plus one evidence-first directive. "
+            "Unknown values are ignored."
+        ),
+    )
     enable_observations: bool | None = Field(
         default=None,
         description="Toggle automatic observation consolidation after retain().",
@@ -1419,7 +1429,7 @@ class CreateBankRequest(BaseModel):
             value = getattr(self, field_name)
             if value is not None:
                 updates[field_name] = value
-        return updates
+        return merge_bank_preset(self.bank_preset, updates)
 
 
 class BankConfigUpdate(BaseModel):
@@ -4717,6 +4727,18 @@ def _register_routes(app: FastAPI):
             if config_updates:
                 await app.state.memory._config_resolver.update_bank_config(bank_id, config_updates, request_context)
 
+            if (request.bank_preset or "").strip().lower() == "codebase":
+                try:
+                    await app.state.memory.seed_bank_preset_playbooks(
+                        bank_id, preset="codebase", request_context=request_context
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "bank_preset codebase seed failed for bank_id=%s: %s",
+                        bank_id,
+                        exc,
+                    )
+
             # Get final profile
             final_profile = await app.state.memory.get_bank_profile(bank_id, request_context=request_context)
             disposition_dict = (
@@ -4771,6 +4793,18 @@ def _register_routes(app: FastAPI):
             config_updates = request.get_config_updates()
             if config_updates:
                 await app.state.memory._config_resolver.update_bank_config(bank_id, config_updates, request_context)
+
+            if (request.bank_preset or "").strip().lower() == "codebase":
+                try:
+                    await app.state.memory.seed_bank_preset_playbooks(
+                        bank_id, preset="codebase", request_context=request_context
+                    )
+                except Exception as exc:
+                    logger.warning(
+                        "bank_preset codebase seed failed for bank_id=%s: %s",
+                        bank_id,
+                        exc,
+                    )
 
             # Get final profile
             final_profile = await app.state.memory.get_bank_profile(bank_id, request_context=request_context)
