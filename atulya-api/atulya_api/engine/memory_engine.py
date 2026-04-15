@@ -910,7 +910,8 @@ class MemoryEngine(MemoryEngineInterface):
         """Split source text into deterministic overlapping chunks for recall.
 
         Each tuple is ``(chunk_text, start_line, end_line)`` using 1-based inclusive line
-        numbers within the stripped source buffer (consistent with how chunks are sliced).
+        numbers for the span of ``chunk_text`` inside the stripped source buffer (after
+        applying the same strip as used for ``chunk_text``, not the raw window slice).
         """
         normalized = text.strip()
         if not normalized:
@@ -928,8 +929,14 @@ class MemoryEngine(MemoryEngineInterface):
             slice_raw = normalized[start:end]
             chunk = slice_raw.strip()
             if chunk:
-                start_line = normalized[:start].count("\n") + 1
-                end_line = start_line + slice_raw.count("\n")
+                lead = len(slice_raw) - len(slice_raw.lstrip())
+                trail = len(slice_raw) - len(slice_raw.rstrip())
+                inner_start = start + lead
+                inner_end_exclusive = end - trail
+                inner_raw = normalized[inner_start:inner_end_exclusive]
+                start_line = normalized[:inner_start].count("\n") + 1
+                lines_spanned = len(inner_raw.splitlines())
+                end_line = start_line + lines_spanned - 1
                 chunks.append((chunk, start_line, end_line))
             if end >= text_len:
                 break
@@ -1543,12 +1550,9 @@ class MemoryEngine(MemoryEngineInterface):
                             context_parts.append(f"cluster={row['cluster_label']}")
                         if row["language"]:
                             context_parts.append(f"language={row['language']}")
-                        content_header = f"# {row['path']}:{row['start_line']}-{row['end_line']}"
-                        if row["label"]:
-                            content_header += f" [{row['label']}]"
                         rows_by_language.setdefault(row["language"], []).append(
                             {
-                                "content": f"{content_header}\n{row['content_text']}",
+                                "content": row["content_text"],
                                 "context": " | ".join(context_parts),
                                 "document_id": stable_document_id,
                             }

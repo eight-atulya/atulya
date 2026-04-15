@@ -398,15 +398,16 @@ def _build_chunk(
         return None
     chunk_key = _chunk_key(path, kind, label, start_line, end_line)
     geo_header = f"# {path}  lines {start_line}-{end_line}\n"
+    stored_content_text = f"{geo_header}{normalized_text}"
     return IndexedChunk(
         chunk_key=chunk_key,
         path=path,
         language=language,
         kind=kind,
         label=label,
-        content_hash=hashlib.sha256(normalized_text.encode("utf-8")).hexdigest(),
-        content_text=f"{geo_header}{normalized_text}",
-        preview_text=_compact_preview(normalized_text),
+        content_hash=hashlib.sha256(stored_content_text.encode("utf-8")).hexdigest(),
+        content_text=stored_content_text,
+        preview_text=_compact_preview(stored_content_text),
         start_line=start_line,
         end_line=end_line,
         container=container,
