@@ -904,13 +904,19 @@ class MemoryEngine(MemoryEngineInterface):
                 # Non-fatal - log and continue
                 logger.warning(f"[FILE_CONVERT_RETAIN] Failed to delete file {storage_key}: {e}")
 
-    def _chunk_codebase_text(self, text: str, *, chunk_size: int = 2000, overlap: int = 200) -> list[str]:
-        """Split source text into deterministic overlapping chunks for recall."""
+    def _chunk_codebase_text(
+        self, text: str, *, chunk_size: int = 2000, overlap: int = 200
+    ) -> list[tuple[str, int, int]]:
+        """Split source text into deterministic overlapping chunks for recall.
+
+        Each tuple is ``(chunk_text, start_line, end_line)`` using 1-based inclusive line
+        numbers within the stripped source buffer (consistent with how chunks are sliced).
+        """
         normalized = text.strip()
         if not normalized:
             return []
 
-        chunks: list[str] = []
+        chunks: list[tuple[str, int, int]] = []
         start = 0
         text_len = len(normalized)
         while start < text_len:
@@ -919,9 +925,12 @@ class MemoryEngine(MemoryEngineInterface):
                 newline_break = normalized.rfind("\n", start, end)
                 if newline_break > start + 200:
                     end = newline_break
-            chunk = normalized[start:end].strip()
+            slice_raw = normalized[start:end]
+            chunk = slice_raw.strip()
             if chunk:
-                chunks.append(chunk)
+                start_line = normalized[:start].count("\n") + 1
+                end_line = start_line + slice_raw.count("\n")
+                chunks.append((chunk, start_line, end_line))
             if end >= text_len:
                 break
             start = max(end - overlap, start + 1)
@@ -1107,6 +1116,8 @@ class MemoryEngine(MemoryEngineInterface):
         language: str | None,
         text: str,
         label: str,
+        start_line: int,
+        end_line: int,
     ) -> str:
         """Store one reviewed code chunk as a stable memory-backed document."""
         from .retain import chunk_storage, embedding_processing, fact_storage
@@ -1124,7 +1135,7 @@ class MemoryEngine(MemoryEngineInterface):
             document_id,
             text,
             True,
-            retain_params={"context": f"{path}::{label}"},
+            retain_params={"context": f"{path}:{start_line}-{end_line}::{label}"},
             document_tags=tags,
         )
 
@@ -1143,7 +1154,7 @@ class MemoryEngine(MemoryEngineInterface):
             temporal_direction="atemporal",
             temporal_confidence=None,
             temporal_reference_text=None,
-            context=f"{path}::{label}",
+            context=f"{path}:{start_line}-{end_line}::{label}",
             metadata={},
             chunk_id=chunk_id_map[0],
             document_id=document_id,
@@ -1189,6 +1200,8 @@ class MemoryEngine(MemoryEngineInterface):
         if not chunks:
             return document_id
 
+        chunk_texts = [item[0] for item in chunks]
+
         await fact_storage.ensure_bank_exists(conn, bank_id)
         await fact_storage.handle_document_tracking(
             conn,
@@ -1202,10 +1215,10 @@ class MemoryEngine(MemoryEngineInterface):
 
         chunk_meta = [
             ChunkMetadata(chunk_text=chunk_text, fact_count=1, content_index=0, chunk_index=index)
-            for index, chunk_text in enumerate(chunks)
+            for index, chunk_text in enumerate(chunk_texts)
         ]
         chunk_id_map = await chunk_storage.store_chunks_batch(conn, bank_id, document_id, chunk_meta)
-        embeddings = await embedding_processing.generate_embeddings_batch(self.embeddings, chunks)
+        embeddings = await embedding_processing.generate_embeddings_batch(self.embeddings, chunk_texts)
         now = datetime.now(UTC)
         facts = [
             ProcessedFact(
@@ -1219,13 +1232,15 @@ class MemoryEngine(MemoryEngineInterface):
                 temporal_direction="atemporal",
                 temporal_confidence=None,
                 temporal_reference_text=None,
-                context=path,
+                context=f"{path}:{start_line}-{end_line}",
                 metadata={},
                 chunk_id=chunk_id_map[index],
                 document_id=document_id,
                 tags=tags,
             )
-            for index, (chunk_text, embedding) in enumerate(zip(chunks, embeddings, strict=False))
+            for index, ((chunk_text, start_line, end_line), embedding) in enumerate(
+                zip(chunks, embeddings, strict=True)
+            )
         ]
         await fact_storage.insert_facts_batch(conn, bank_id, facts, document_id=document_id)
         return document_id
@@ -1528,9 +1543,12 @@ class MemoryEngine(MemoryEngineInterface):
                             context_parts.append(f"cluster={row['cluster_label']}")
                         if row["language"]:
                             context_parts.append(f"language={row['language']}")
+                        content_header = f"# {row['path']}:{row['start_line']}-{row['end_line']}"
+                        if row["label"]:
+                            content_header += f" [{row['label']}]"
                         rows_by_language.setdefault(row["language"], []).append(
                             {
-                                "content": row["content_text"],
+                                "content": f"{content_header}\n{row['content_text']}",
                                 "context": " | ".join(context_parts),
                                 "document_id": stable_document_id,
                             }
@@ -1559,6 +1577,8 @@ class MemoryEngine(MemoryEngineInterface):
                                     language=row["language"],
                                     text=row["content_text"],
                                     label=row["label"],
+                                    start_line=row["start_line"],
+                                    end_line=row["end_line"],
                                 )
                     hydrated_files += len(rows_to_ingest)
 

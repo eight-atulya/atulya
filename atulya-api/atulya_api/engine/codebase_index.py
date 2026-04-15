@@ -397,6 +397,7 @@ def _build_chunk(
     if not normalized_text:
         return None
     chunk_key = _chunk_key(path, kind, label, start_line, end_line)
+    geo_header = f"# {path}  lines {start_line}-{end_line}\n"
     return IndexedChunk(
         chunk_key=chunk_key,
         path=path,
@@ -404,7 +405,7 @@ def _build_chunk(
         kind=kind,
         label=label,
         content_hash=hashlib.sha256(normalized_text.encode("utf-8")).hexdigest(),
-        content_text=normalized_text,
+        content_text=f"{geo_header}{normalized_text}",
         preview_text=_compact_preview(normalized_text),
         start_line=start_line,
         end_line=end_line,
