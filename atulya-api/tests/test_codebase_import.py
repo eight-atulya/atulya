@@ -646,6 +646,79 @@ async def test_public_github_archive_download_rejects_unexpected_redirect_host(m
 
 
 @pytest.mark.asyncio
+async def test_public_github_ref_resolution_suggests_default_branch_on_missing_ref(memory_no_llm_verify):
+    async def mock_handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/repos/octocat/hello-world/commits/main":
+            return httpx.Response(404, request=request)
+        if request.url.path == "/repos/octocat/hello-world":
+            return httpx.Response(200, json={"default_branch": "master"}, request=request)
+        return httpx.Response(404, request=request)
+
+    async with httpx.AsyncClient(transport=httpx.MockTransport(mock_handler), timeout=10.0) as client:
+        memory_no_llm_verify._http_client = client
+        with pytest.raises(ValueError, match="default branch is 'master'"):
+            await memory_no_llm_verify._resolve_public_github_commit_sha("octocat", "hello-world", "main")
+
+
+@pytest.mark.asyncio
+async def test_codebase_github_import_auto_detects_default_branch_when_ref_is_missing(
+    memory_no_llm_verify, request_context, monkeypatch
+):
+    bank_id = _bank_id("github_default_ref")
+    archive_bytes = _build_repo_zip({"demo-repo/src/main.py": "print('ok')\n"})
+
+    async def fake_default_ref(owner: str, repo: str) -> str:
+        assert owner == "octocat"
+        assert repo == "hello-world"
+        return "master"
+
+    async def fake_resolve(owner: str, repo: str, ref: str) -> str:
+        assert owner == "octocat"
+        assert repo == "hello-world"
+        assert ref == "master"
+        return "sha-master"
+
+    async def fake_download(owner: str, repo: str, commit_sha: str) -> bytes:
+        assert owner == "octocat"
+        assert repo == "hello-world"
+        assert commit_sha == "sha-master"
+        return archive_bytes
+
+    monkeypatch.setattr(memory_no_llm_verify, "_resolve_public_github_default_ref", fake_default_ref)
+    monkeypatch.setattr(memory_no_llm_verify, "_resolve_public_github_commit_sha", fake_resolve)
+    monkeypatch.setattr(memory_no_llm_verify, "_download_public_github_archive", fake_download)
+
+    try:
+        await memory_no_llm_verify.get_bank_profile(bank_id=bank_id, request_context=request_context)
+
+        import_result = await memory_no_llm_verify.submit_async_codebase_github_import(
+            bank_id=bank_id,
+            owner="octocat",
+            repo="hello-world",
+            ref=None,
+            request_context=request_context,
+        )
+
+        operation = await memory_no_llm_verify.get_operation_result(
+            bank_id,
+            import_result["operation_id"],
+            request_context=request_context,
+        )
+        assert operation["status"] == "completed"
+
+        codebase = await memory_no_llm_verify.get_codebase(
+            bank_id,
+            import_result["codebase_id"],
+            request_context=request_context,
+        )
+        assert codebase is not None
+        assert codebase["source_config"]["ref"] == "master"
+        assert codebase["source_ref"] == "master"
+    finally:
+        await memory_no_llm_verify.delete_bank(bank_id, request_context=request_context)
+
+
+@pytest.mark.asyncio
 async def test_codebase_github_http_import_accepts_repo_url(
     memory_no_llm_verify, request_context, monkeypatch
 ):

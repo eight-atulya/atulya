@@ -548,7 +548,7 @@ class MemoryEngineInterface(ABC):
         *,
         owner: str,
         repo: str,
-        ref: str,
+        ref: str | None = None,
         root_path: str | None = None,
         include_globs: list[str] | None = None,
         exclude_globs: list[str] | None = None,

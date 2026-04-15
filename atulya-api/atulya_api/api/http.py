@@ -671,8 +671,8 @@ class CodebaseImportGithubRequest(BaseModel):
             self.repo = self.repo or repo
             self.ref = self.ref or parsed_ref
 
-        if not self.owner or not self.repo or not self.ref:
-            raise ValueError("GitHub import requires owner, repo, and ref, or a repo_url plus ref.")
+        if not self.owner or not self.repo:
+            raise ValueError("GitHub import requires owner and repo, or a valid GitHub repo_url.")
         return self
 
 

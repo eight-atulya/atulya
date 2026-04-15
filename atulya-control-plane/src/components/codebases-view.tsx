@@ -301,7 +301,7 @@ export function CodebasesView() {
   const [githubRepoUrl, setGithubRepoUrl] = useState("");
   const [githubOwner, setGithubOwner] = useState("");
   const [githubRepo, setGithubRepo] = useState("");
-  const [githubRef, setGithubRef] = useState("main");
+  const [githubRef, setGithubRef] = useState("");
   const [githubRootPath, setGithubRootPath] = useState("");
   const [githubInclude, setGithubInclude] = useState("");
   const [githubExclude, setGithubExclude] = useState("");
@@ -601,8 +601,8 @@ export function CodebasesView() {
     const effectiveRepo = githubRepo.trim() || parsedRepoUrl?.repo || "";
     const effectiveRef = githubRef.trim() || parsedRepoUrl?.ref || "";
 
-    if (!currentBank || !effectiveOwner || !effectiveRepo || !effectiveRef) {
-      toast.error("GitHub import needs a repo URL or owner/repo, plus a ref.");
+    if (!currentBank || !effectiveOwner || !effectiveRepo) {
+      toast.error("GitHub import needs a repo URL or owner/repo.");
       return;
     }
 
@@ -612,7 +612,7 @@ export function CodebasesView() {
         owner: effectiveOwner,
         repo: effectiveRepo,
         repo_url: githubRepoUrl.trim() || undefined,
-        ref: effectiveRef,
+        ref: effectiveRef || undefined,
         root_path: githubRootPath.trim() || undefined,
         include_globs: parseGlobs(githubInclude),
         exclude_globs: parseGlobs(githubExclude),
@@ -631,7 +631,8 @@ export function CodebasesView() {
         stage: "queued",
       });
       setOperationResult(null);
-      toast.success(`Queued GitHub import for ${effectiveOwner}/${effectiveRepo}@${effectiveRef}.`);
+      const refLabel = effectiveRef || "default branch";
+      toast.success(`Queued GitHub import for ${effectiveOwner}/${effectiveRepo}@${refLabel}.`);
       await loadCodebases(false);
     } finally {
       setSubmittingGithub(false);
@@ -1173,7 +1174,7 @@ export function CodebasesView() {
                       id="github-ref"
                       value={githubRef}
                       onChange={(event) => setGithubRef(event.target.value)}
-                      placeholder="main"
+                      placeholder="main (optional, auto-detect default branch)"
                     />
                   </div>
                 </div>

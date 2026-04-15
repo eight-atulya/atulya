@@ -1630,6 +1630,27 @@ class MemoryEngine(MemoryEngineInterface):
             "applied_routes": len(current_memory_rows),
         }
 
+    async def _resolve_public_github_default_ref(self, owner: str, repo: str) -> str:
+        """Resolve a public GitHub repository default branch."""
+        client = self._http_client or httpx.AsyncClient(timeout=30.0)
+        owns_client = self._http_client is None
+        try:
+            response = await client.get(
+                f"https://api.github.com/repos/{owner}/{repo}",
+                headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
+            )
+            if response.status_code == 404:
+                raise ValueError(f"Public GitHub repository not found: {owner}/{repo}")
+            response.raise_for_status()
+            payload = response.json()
+            default_branch = payload.get("default_branch")
+            if not default_branch:
+                raise ValueError(f"GitHub did not return a default branch for {owner}/{repo}")
+            return str(default_branch)
+        finally:
+            if owns_client:
+                await client.aclose()
+
     async def _resolve_public_github_commit_sha(self, owner: str, repo: str, ref: str) -> str:
         """Resolve a public GitHub ref to a commit SHA."""
         client = self._http_client or httpx.AsyncClient(timeout=30.0)
@@ -1640,6 +1661,13 @@ class MemoryEngine(MemoryEngineInterface):
                 headers={"Accept": "application/vnd.github+json", "User-Agent": "atulya-api"},
             )
             if response.status_code == 404:
+                default_ref = await self._resolve_public_github_default_ref(owner, repo)
+                if ref != default_ref:
+                    raise ValueError(
+                        f"GitHub ref '{ref}' was not found for {owner}/{repo}. "
+                        f"The repository default branch is '{default_ref}'. "
+                        "Use that ref, or leave ref empty to auto-detect the default branch."
+                    )
                 raise ValueError(f"Public GitHub ref not found: {owner}/{repo}@{ref}")
             response.raise_for_status()
             payload = response.json()
@@ -11279,7 +11307,7 @@ class MemoryEngine(MemoryEngineInterface):
         *,
         owner: str,
         repo: str,
-        ref: str,
+        ref: str | None = None,
         root_path: str | None = None,
         include_globs: list[str] | None = None,
         exclude_globs: list[str] | None = None,
@@ -11294,12 +11322,15 @@ class MemoryEngine(MemoryEngineInterface):
             ctx = BankWriteContext(bank_id=bank_id, operation="submit_codebase_import", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
 
-        resolved_commit_sha = await self._resolve_public_github_commit_sha(owner, repo, ref)
+        effective_ref = ref.strip() if ref else ""
+        if not effective_ref:
+            effective_ref = await self._resolve_public_github_default_ref(owner, repo)
+        resolved_commit_sha = await self._resolve_public_github_commit_sha(owner, repo, effective_ref)
         name = f"{owner}/{repo}"
         source_config = {
             "owner": owner,
             "repo": repo,
-            "ref": ref,
+            "ref": effective_ref,
             "root_path": root_path,
             "include_globs": include_globs or [],
             "exclude_globs": exclude_globs or [],
@@ -11351,7 +11382,7 @@ class MemoryEngine(MemoryEngineInterface):
                 """,
                 uuid.UUID(codebase_id),
                 bank_id,
-                ref,
+                effective_ref,
                 resolved_commit_sha,
             )
             snapshot_id = str(snapshot_row["id"])
@@ -11374,7 +11405,7 @@ class MemoryEngine(MemoryEngineInterface):
                 codebase_id=codebase_id,
                 snapshot_id=snapshot_id,
                 source_type="github",
-                source_ref=ref,
+                source_ref=effective_ref,
             ).to_dict(),
             dedupe_by_bank=False,
         )
