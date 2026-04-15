@@ -29,6 +29,7 @@ interface StateGraphProps {
   highlightedNodeIds?: string[];
   highlightedEdgeIds?: string[];
   onNodeClick?: (node: GraphStateNode) => void;
+  onNodeContextMenu?: (node: GraphStateNode, position: { x: number; y: number }) => void;
   onEventClick?: (event: GraphChangeEvent) => void;
   onSummaryClick?: (itemId: string) => void;
   onBackgroundClick?: () => void;
@@ -96,6 +97,7 @@ export function StateGraph({
   highlightedNodeIds = [],
   highlightedEdgeIds = [],
   onNodeClick,
+  onNodeContextMenu,
   onEventClick,
   onSummaryClick,
   onBackgroundClick,
@@ -336,6 +338,10 @@ export function StateGraph({
 
         const node = nodeLookup.get(nodeId);
         if (node) onNodeClick?.(node);
+      }}
+      onNodeContextMenu={(nodeId, position) => {
+        const node = nodeLookup.get(nodeId);
+        if (node) onNodeContextMenu?.(node, position);
       }}
     />
   );

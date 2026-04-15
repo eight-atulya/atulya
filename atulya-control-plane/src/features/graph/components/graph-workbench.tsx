@@ -122,6 +122,7 @@ interface WorkbenchGraphProps {
   layoutMode?: GraphLayoutMode;
   fullscreenAccessory?: ReactNode;
   onNodeSelect?: (nodeId: string) => void;
+  onNodeContextMenu?: (nodeId: string, position: { x: number; y: number }) => void;
   onNodeHover?: (nodeId: string | null) => void;
   onBackgroundClick?: () => void;
 }
@@ -643,6 +644,7 @@ function OverviewCanvas({
   selectedIds,
   highlightedNodeIds,
   onSelect,
+  onContextMenu,
   onBackgroundClick,
   onZoomChange,
   fitVersion,
@@ -652,6 +654,7 @@ function OverviewCanvas({
   selectedIds: string[];
   highlightedNodeIds: string[];
   onSelect?: (nodeId: string) => void;
+  onContextMenu?: (nodeId: string, position: { x: number; y: number }) => void;
   onBackgroundClick?: () => void;
   onZoomChange?: (zoom: number) => void;
   fitVersion: number;
@@ -775,6 +778,11 @@ function OverviewCanvas({
                 event.stopPropagation();
                 onSelect?.(node.id);
               }}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                onContextMenu?.(node.id, { x: event.clientX, y: event.clientY });
+              }}
               className={[
                 "absolute rounded-[14px] border bg-card/95 p-4 text-left text-card-foreground shadow-sm transition-[transform,box-shadow,opacity,border-color] duration-150 hover:-translate-y-0.5 hover:shadow-lg",
                 tone.border,
@@ -842,6 +850,14 @@ function buildEdgeColor(surfaceMode: WorkbenchSurfaceMode, edge: WorkbenchGraphE
       return "#7c3aed";
     case "causal":
       return "#dc2626";
+    case "causes":
+      return "#8b5cf6";
+    case "caused_by":
+      return "#6366f1";
+    case "enables":
+      return "#059669";
+    case "prevents":
+      return "#dc2626";
     default:
       return "var(--graph-edge-neutral)";
   }
@@ -903,6 +919,7 @@ function GraphWorkbenchInner({
   layoutMode = "signal-first",
   fullscreenAccessory,
   onNodeSelect,
+  onNodeContextMenu,
   onNodeHover,
   onBackgroundClick,
   isFullscreen,
@@ -1436,6 +1453,7 @@ function GraphWorkbenchInner({
                 selectedIds={selectedIds}
                 highlightedNodeIds={highlightedNodeIds}
                 onSelect={onNodeSelect}
+                onContextMenu={onNodeContextMenu}
                 onBackgroundClick={onBackgroundClick}
                 onZoomChange={setOverviewZoom}
                 fitVersion={overviewFitVersion}
@@ -1455,6 +1473,11 @@ function GraphWorkbenchInner({
                 onNodesChange={onNodesChange}
                 onNodeDragStop={handleNodeDragStop}
                 onNodeClick={handleNodeClick}
+                onNodeContextMenu={(event, node) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onNodeContextMenu?.(node.id, { x: event.clientX, y: event.clientY });
+                }}
                 onNodeMouseEnter={handleNodeMouseEnter}
                 onNodeMouseLeave={handleNodeMouseLeave}
                 onPaneClick={handlePaneClick}

@@ -60,6 +60,31 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
 - Learns from new inputs instead of starting from zero
 - Supports sharing distilled memory between systems through `.brain` files
 
+## Graph Review
+
+The Control Plane has a graph workspace that helps you review memory without getting lost in a large node map.
+
+```mermaid
+flowchart LR
+    A["Open bank"] --> B["State Graph: see what changed"]
+    B --> C["Evidence Graph: verify proof"]
+    C --> D["Right-click a node to focus or filter"]
+    D --> E["Use anomaly filters to review risk"]
+```
+
+| View | Best for | What you get |
+|---|---|---|
+| State Graph | Quick understanding | What changed, what is stale, what conflicts |
+| Evidence Graph | Proof review | Raw memories and links behind a state |
+| Analyst query | Fast investigation | A short answer plus focused graph area |
+
+| Control | What it does |
+|---|---|
+| Right-click node | Open quick actions like focus neighbors or filter |
+| Filter Anomalies | Show only nodes linked to anomaly events |
+| Severity Overlay | Color nodes by anomaly severity |
+| Link filters | Show/hide semantic, temporal, entity, and causal links |
+
 ## Why this matters
 
 People do not grow by being perfect.  

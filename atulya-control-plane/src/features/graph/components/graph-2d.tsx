@@ -47,6 +47,7 @@ export interface Graph2DProps {
   selectedNodeId?: string | null;
   highlightedNodeIds?: string[];
   onNodeClick?: (node: GraphNode) => void;
+  onNodeContextMenu?: (node: GraphNode, position: { x: number; y: number }) => void;
   onNodeHover?: (node: GraphNode | null) => void;
   onBackgroundClick?: () => void;
   onSummaryClick?: (itemId: string) => void;
@@ -106,6 +107,12 @@ function linkCategory(type?: string) {
   return "semantic";
 }
 
+function linkLabel(type?: string) {
+  if (!type) return "semantic";
+  if (["causes", "caused_by", "enables", "prevents"].includes(type)) return type;
+  return linkCategory(type);
+}
+
 export function Graph2D({
   data,
   summary,
@@ -115,6 +122,7 @@ export function Graph2D({
   selectedNodeId,
   highlightedNodeIds = [],
   onNodeClick,
+  onNodeContextMenu,
   onNodeHover,
   onBackgroundClick,
   onSummaryClick,
@@ -234,7 +242,7 @@ export function Graph2D({
       source: link.source,
       target: link.target,
       kind: "evidence",
-      label: linkCategory(link.type),
+      label: linkLabel(link.type),
       stroke: linkColorFn?.(link) ?? link.color ?? undefined,
       dashed: link.type === "temporal",
       width: clamp(linkWidthFn?.(link) ?? link.width ?? 1.6, 1.2, 3.25),
@@ -316,6 +324,10 @@ export function Graph2D({
         }
         const node = nodeLookup.get(nodeId);
         if (node) onNodeClick?.(node);
+      }}
+      onNodeContextMenu={(nodeId, position) => {
+        const node = nodeLookup.get(nodeId);
+        if (node) onNodeContextMenu?.(node, position);
       }}
     />
   );

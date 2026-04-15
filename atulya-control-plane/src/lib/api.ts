@@ -428,6 +428,47 @@ export interface GraphNeighborhoodResponse {
   cached: boolean;
 }
 
+export type AnomalyStatus = "open" | "acknowledged" | "resolved" | "suppressed";
+
+export interface AnomalyCorrection {
+  id: string;
+  anomaly_id: string;
+  correction_type: string;
+  target_unit_id: string | null;
+  confidence_delta: number | null;
+  applied_at: string;
+  applied_by: string;
+  before_state: Record<string, any>;
+  after_state: Record<string, any>;
+}
+
+export interface AnomalyEvent {
+  id: string;
+  anomaly_type: string;
+  severity: number;
+  status: AnomalyStatus;
+  unit_ids: string[];
+  entity_ids: string[];
+  description: string;
+  metadata: Record<string, any>;
+  detected_at: string;
+  resolved_at: string | null;
+  resolved_by: string | null;
+}
+
+export interface AnomalyIntelligenceSummary {
+  total_anomalies: number;
+  open_anomalies: number;
+  high_severity_count: number;
+  by_type: Record<string, number>;
+}
+
+export interface AnomalyIntelligenceResponse {
+  events: AnomalyEvent[];
+  corrections: AnomalyCorrection[];
+  summary: AnomalyIntelligenceSummary;
+}
+
 export interface TimelineTemporal {
   anchor_at: string | null;
   anchor_kind: string;
@@ -1148,6 +1189,19 @@ export class ControlPlaneClient {
     return this.fetchApi<GraphNeighborhoodResponse>(
       `/api/graph/neighborhood?${queryParams.toString()}`
     );
+  }
+
+  async getAnomalyIntelligence(params: {
+    bank_id: string;
+    limit?: number;
+    status?: AnomalyStatus;
+    anomaly_types?: string[];
+    min_severity?: number;
+  }) {
+    return this.fetchApi<AnomalyIntelligenceResponse>("/api/anomaly/intelligence", {
+      method: "POST",
+      body: JSON.stringify(params),
+    });
   }
 
   /**

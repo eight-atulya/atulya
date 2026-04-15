@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import {
+  AnomalyIntelligenceResponse,
   client,
   GraphChangeEvent,
   GraphIntelligenceResponse,
@@ -111,6 +112,8 @@ export function DataView({ factType }: DataViewProps) {
   const [graphInvestigation, setGraphInvestigation] = useState<GraphInvestigationResponse | null>(
     null
   );
+  const [anomalyIntelligence, setAnomalyIntelligence] =
+    useState<AnomalyIntelligenceResponse | null>(null);
   const [graphSurfaceMode, setGraphSurfaceMode] = useState<GraphSurfaceMode>("state");
   const [graphLayoutResetVersion, setGraphLayoutResetVersion] = useState(0);
   const [analystQuery, setAnalystQuery] = useState("");
@@ -139,6 +142,17 @@ export function DataView({ factType }: DataViewProps) {
   const [visibleLinkTypes, setVisibleLinkTypes] = useState<Set<string>>(
     new Set(["semantic", "temporal", "entity", "causal"])
   );
+  const [showOnlyAnomalyNodes, setShowOnlyAnomalyNodes] = useState(false);
+  const [showAnomalySeverityOverlay, setShowAnomalySeverityOverlay] = useState(true);
+  const [evidenceNeighborOnlyNodeId, setEvidenceNeighborOnlyNodeId] = useState<string | null>(null);
+  const [graphNodeContextMenu, setGraphNodeContextMenu] = useState<{
+    x: number;
+    y: number;
+    nodeId: string;
+    nodeLabel: string;
+    surface: "state" | "evidence";
+    nodeKind?: "entity" | "topic";
+  } | null>(null);
 
   const toggleLinkType = (type: string) => {
     setVisibleLinkTypes((prev) => {
@@ -220,50 +234,61 @@ export function DataView({ factType }: DataViewProps) {
             tags_match: "all_strict",
           })
         : Promise.resolve(null);
-      const [graphData, timelinePayload, intelligence, nextStateSummary, nextEvidenceSummary] =
-        await Promise.all([
-          client.getGraph({
-            bank_id: currentBank,
-            type: factType,
-            limit: effectiveLimit,
-            q,
-            tags,
-          }),
-          timelinePromise,
-          client.getGraphIntelligence({
-            bank_id: currentBank,
-            type: factType,
-            limit: 18,
-            q,
-            tags,
-            tags_match: "all_strict",
-            confidence_min: confidenceMin,
-            node_kind: nodeKind,
-            window_days: windowDays === "all" ? undefined : Number(windowDays),
-          }),
-          client.getGraphSummary({
-            bank_id: currentBank,
-            surface: "state",
-            type: factType,
-            q,
-            tags,
-            tags_match: "all_strict",
-            confidence_min: confidenceMin,
-            node_kind: nodeKind,
-            window_days: windowDays === "all" ? undefined : Number(windowDays),
-          }),
-          client.getGraphSummary({
-            bank_id: currentBank,
-            surface: "evidence",
-            type: factType,
-            q,
-            tags,
-            tags_match: "all_strict",
-          }),
-        ]);
+      const [
+        graphData,
+        timelinePayload,
+        intelligence,
+        nextStateSummary,
+        nextEvidenceSummary,
+        anomalyPayload,
+      ] = await Promise.all([
+        client.getGraph({
+          bank_id: currentBank,
+          type: factType,
+          limit: effectiveLimit,
+          q,
+          tags,
+        }),
+        timelinePromise,
+        client.getGraphIntelligence({
+          bank_id: currentBank,
+          type: factType,
+          limit: 18,
+          q,
+          tags,
+          tags_match: "all_strict",
+          confidence_min: confidenceMin,
+          node_kind: nodeKind,
+          window_days: windowDays === "all" ? undefined : Number(windowDays),
+        }),
+        client.getGraphSummary({
+          bank_id: currentBank,
+          surface: "state",
+          type: factType,
+          q,
+          tags,
+          tags_match: "all_strict",
+          confidence_min: confidenceMin,
+          node_kind: nodeKind,
+          window_days: windowDays === "all" ? undefined : Number(windowDays),
+        }),
+        client.getGraphSummary({
+          bank_id: currentBank,
+          surface: "evidence",
+          type: factType,
+          q,
+          tags,
+          tags_match: "all_strict",
+        }),
+        client.getAnomalyIntelligence({
+          bank_id: currentBank,
+          limit: 200,
+        }),
+      ]);
       setData(graphData);
       setTimelineData(timelinePayload);
       setGraphIntelligence(intelligence);
+      setAnomalyIntelligence(anomalyPayload);
       setStateSummary(nextStateSummary);
       setEvidenceSummary(nextEvidenceSummary);
       if (nextStateSummary.mode_hint === "overview") {
@@ -402,15 +427,54 @@ export function DataView({ factType }: DataViewProps) {
   const graph2DData = useMemo(() => {
     if (!data) return { nodes: [], links: [] };
     const fullData = convertAtulyaGraphData(data);
+    const anomalySeverityByNodeId = new Map<string, number>();
+    (anomalyIntelligence?.events ?? []).forEach((event) => {
+      const severity = Number(event.severity ?? 0);
+      (event.unit_ids ?? []).forEach((unitId) => {
+        const previous = anomalySeverityByNodeId.get(unitId) ?? 0;
+        if (severity > previous) anomalySeverityByNodeId.set(unitId, severity);
+      });
+    });
+    const anomalyNodeIds = new Set(anomalySeverityByNodeId.keys());
+
+    let candidateNodes = fullData.nodes;
+    if (showOnlyAnomalyNodes) {
+      candidateNodes = candidateNodes.filter((node) => anomalyNodeIds.has(node.id));
+    }
+    if (evidenceNeighborOnlyNodeId) {
+      const relatedNodeIds = new Set<string>([evidenceNeighborOnlyNodeId]);
+      fullData.links.forEach((link) => {
+        if (link.source === evidenceNeighborOnlyNodeId) relatedNodeIds.add(link.target);
+        if (link.target === evidenceNeighborOnlyNodeId) relatedNodeIds.add(link.source);
+      });
+      candidateNodes = candidateNodes.filter((node) => relatedNodeIds.has(node.id));
+    }
+    candidateNodes = candidateNodes.map((node) => ({
+      ...node,
+      metadata: {
+        ...(node.metadata ?? {}),
+        anomaly_max_severity: anomalySeverityByNodeId.get(node.id) ?? 0,
+        anomaly_flagged: anomalySeverityByNodeId.has(node.id),
+      },
+    }));
+    const visibleIds = new Set(candidateNodes.map((node) => node.id));
 
     // Filter links based on visible link types
     const links = fullData.links.filter((link) => {
       const category = getLinkTypeCategory(link.type);
-      return visibleLinkTypes.has(category);
+      return (
+        visibleLinkTypes.has(category) && visibleIds.has(link.source) && visibleIds.has(link.target)
+      );
     });
 
-    return { nodes: fullData.nodes, links };
-  }, [data, visibleLinkTypes]);
+    return { nodes: candidateNodes, links };
+  }, [
+    anomalyIntelligence?.events,
+    data,
+    evidenceNeighborOnlyNodeId,
+    showOnlyAnomalyNodes,
+    visibleLinkTypes,
+  ]);
 
   // Calculate link stats for display
   const linkStats = useMemo(() => {
@@ -566,6 +630,12 @@ export function DataView({ factType }: DataViewProps) {
     selectedStateNode,
   ]);
 
+  useEffect(() => {
+    const dismissContextMenu = () => setGraphNodeContextMenu(null);
+    window.addEventListener("click", dismissContextMenu);
+    return () => window.removeEventListener("click", dismissContextMenu);
+  }, []);
+
   // Handle node click in graph - show in panel
   const handleGraphNodeClick = useCallback(
     (node: GraphNode) => {
@@ -585,6 +655,15 @@ export function DataView({ factType }: DataViewProps) {
   // Memoized style functions to prevent graph re-initialization
   const nodeColorFn = useCallback(
     (node: GraphNode) => {
+      const anomalySeverity = Math.max(
+        0,
+        Math.min(1, Number((node.metadata as any)?.anomaly_max_severity ?? 0))
+      );
+      if (showAnomalySeverityOverlay && anomalySeverity > 0) {
+        // Severity overlay: higher anomaly severity pushes toward stronger rose.
+        const lightness = Math.round(62 - anomalySeverity * 28);
+        return `hsl(345 78% ${lightness}%)`;
+      }
       const count = Math.max(0, Number((node.metadata as any)?.access_count ?? 0));
       const maxCount = usageStats.maxCount;
       if (maxCount <= 0) return node.color || "#dc2626";
@@ -594,7 +673,7 @@ export function DataView({ factType }: DataViewProps) {
       const lightness = Math.round(58 - normalized * 20); // 58% -> 38%
       return `hsl(0 72% ${lightness}%)`;
     },
-    [usageStats.maxCount]
+    [showAnomalySeverityOverlay, usageStats.maxCount]
   );
 
   const nodeSizeFn = useCallback(
@@ -612,14 +691,10 @@ export function DataView({ factType }: DataViewProps) {
   const linkColorFn = useCallback((link: any) => {
     if (link.type === "temporal") return "#991b1b";
     if (link.type === "entity") return "#f59e0b"; // Amber
-    if (
-      link.type === "causes" ||
-      link.type === "caused_by" ||
-      link.type === "enables" ||
-      link.type === "prevents"
-    ) {
-      return "#8b5cf6"; // Purple for causal
-    }
+    if (link.type === "causes") return "#8b5cf6";
+    if (link.type === "caused_by") return "#6366f1";
+    if (link.type === "enables") return "#059669";
+    if (link.type === "prevents") return "#dc2626";
     return "#dc2626";
   }, []);
 
@@ -891,6 +966,13 @@ export function DataView({ factType }: DataViewProps) {
   }, []);
 
   const graphCanvasHeight = isCompactGraphLayout ? 560 : 700;
+  const anomalySummary = anomalyIntelligence?.summary;
+  const topAnomalyTypes = useMemo(() => {
+    if (!anomalySummary) return [] as Array<[string, number]>;
+    return Object.entries(anomalySummary.by_type ?? {})
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 3);
+  }, [anomalySummary]);
 
   return (
     <div>
@@ -1160,7 +1242,57 @@ export function DataView({ factType }: DataViewProps) {
                         : `${evidenceNeighborhood?.nodes.length ?? graph2DData.nodes.length} visible of ${evidenceSummary?.total_nodes ?? graph2DData.nodes.length} evidence memories`}
                     </div>
                   )}
+                  {anomalySummary && (
+                    <>
+                      <div className="h-5 w-px bg-border" />
+                      <span className="text-xs text-muted-foreground">
+                        Anomalies: {anomalySummary.open_anomalies} open /{" "}
+                        {anomalySummary.total_anomalies} total
+                      </span>
+                      <Button
+                        variant={showOnlyAnomalyNodes ? "default" : "outline"}
+                        size="sm"
+                        className="h-8"
+                        onClick={() => setShowOnlyAnomalyNodes((current) => !current)}
+                        disabled={graphSurfaceMode !== "evidence"}
+                        title={
+                          graphSurfaceMode !== "evidence"
+                            ? "Available in Evidence Graph"
+                            : "Show only nodes referenced by anomaly events"
+                        }
+                      >
+                        {showOnlyAnomalyNodes ? "Anomaly Filter On" : "Filter Anomalies"}
+                      </Button>
+                      <Button
+                        variant={showAnomalySeverityOverlay ? "default" : "outline"}
+                        size="sm"
+                        className="h-8"
+                        onClick={() => setShowAnomalySeverityOverlay((current) => !current)}
+                        disabled={graphSurfaceMode !== "evidence"}
+                        title={
+                          graphSurfaceMode !== "evidence"
+                            ? "Available in Evidence Graph"
+                            : "Color evidence nodes by maximum anomaly severity"
+                        }
+                      >
+                        {showAnomalySeverityOverlay ? "Severity Overlay On" : "Severity Overlay"}
+                      </Button>
+                    </>
+                  )}
                 </div>
+                {topAnomalyTypes.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>Top anomaly types:</span>
+                    {topAnomalyTypes.map(([type, count]) => (
+                      <span
+                        key={type}
+                        className="rounded border border-border bg-muted/40 px-2 py-0.5 text-foreground"
+                      >
+                        {type.replaceAll("_", " ")} ({count})
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className={`flex gap-0 ${isCompactGraphLayout ? "flex-col" : "flex-row"}`}>
@@ -1180,6 +1312,16 @@ export function DataView({ factType }: DataViewProps) {
                       resetLayoutVersion={graphLayoutResetVersion}
                       onBackgroundClick={clearGraphFocus}
                       onNodeClick={(node) => focusStateNode(node)}
+                      onNodeContextMenu={(node, position) =>
+                        setGraphNodeContextMenu({
+                          x: position.x,
+                          y: position.y,
+                          nodeId: node.id,
+                          nodeLabel: node.title,
+                          surface: "state",
+                          nodeKind: node.kind,
+                        })
+                      }
                       onEventClick={(event) => focusChangeEvent(event)}
                       onSummaryClick={focusStateSummaryItem}
                     />
@@ -1193,9 +1335,25 @@ export function DataView({ factType }: DataViewProps) {
                       selectedNodeId={selectedGraphNode?.id ?? null}
                       highlightedNodeIds={selectedEvidenceIds}
                       onNodeClick={handleGraphNodeClick}
+                      onNodeContextMenu={(node, position) =>
+                        setGraphNodeContextMenu({
+                          x: position.x,
+                          y: position.y,
+                          nodeId: node.id,
+                          nodeLabel: node.label || node.id,
+                          surface: "evidence",
+                        })
+                      }
                       onBackgroundClick={() => setSelectedGraphNode(null)}
                       maxNodes={maxNodes}
                       nodeColorFn={nodeColorFn}
+                      linkWidthFn={(link) => {
+                        const base = Number(link.weight ?? 0);
+                        const category = getLinkTypeCategory(link.type);
+                        const categoryBoost =
+                          category === "causal" ? 0.7 : category === "temporal" ? 0.3 : 0;
+                        return Math.max(1.25, Math.min(3.4, 1.25 + base * 1.2 + categoryBoost));
+                      }}
                       nodeSizeFn={nodeSizeFn}
                       linkColorFn={linkColorFn}
                       storageKey={evidenceLayoutStorageKey}
@@ -1522,6 +1680,10 @@ export function DataView({ factType }: DataViewProps) {
                                 {linkStats.causal}
                               </span>
                             </button>
+                            <div className="mt-2 rounded-md border border-border bg-muted/30 px-2 py-1.5 text-[11px] text-muted-foreground">
+                              <span className="font-medium text-foreground">Causal legend:</span>{" "}
+                              causes (violet), caused by (indigo), enables (green), prevents (red)
+                            </div>
                           </div>
                         </div>
 
@@ -1538,6 +1700,16 @@ export function DataView({ factType }: DataViewProps) {
                                 id="show-labels"
                                 checked={showLabels}
                                 onCheckedChange={setShowLabels}
+                              />
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <Label htmlFor="anomaly-overlay" className="text-sm text-foreground">
+                                Anomaly severity overlay
+                              </Label>
+                              <Switch
+                                id="anomaly-overlay"
+                                checked={showAnomalySeverityOverlay}
+                                onCheckedChange={setShowAnomalySeverityOverlay}
                               />
                             </div>
                           </div>
@@ -1594,6 +1766,95 @@ export function DataView({ factType }: DataViewProps) {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {graphNodeContextMenu && (
+            <div
+              className="fixed z-[120] min-w-[220px] rounded-md border border-border bg-popover p-1 shadow-xl"
+              style={{ left: graphNodeContextMenu.x, top: graphNodeContextMenu.y }}
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="px-2 py-1.5 text-xs text-muted-foreground truncate max-w-[260px]">
+                {graphNodeContextMenu.nodeLabel}
+              </div>
+              {graphNodeContextMenu.surface === "evidence" ? (
+                <>
+                  <button
+                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setGraphNodeContextMenu(null);
+                      setGraphSurfaceMode("evidence");
+                      selectRawMemoryById(graphNodeContextMenu.nodeId);
+                      void loadEvidenceNeighborhood([graphNodeContextMenu.nodeId], 1);
+                    }}
+                  >
+                    Focus this node
+                  </button>
+                  <button
+                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setGraphNodeContextMenu(null);
+                      setEvidenceNeighborOnlyNodeId(graphNodeContextMenu.nodeId);
+                    }}
+                  >
+                    Show connected neighborhood
+                  </button>
+                  <button
+                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setGraphNodeContextMenu(null);
+                      setEvidenceNeighborOnlyNodeId(null);
+                    }}
+                  >
+                    Clear neighborhood focus
+                  </button>
+                  <button
+                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setGraphNodeContextMenu(null);
+                      setShowOnlyAnomalyNodes(true);
+                    }}
+                  >
+                    Show anomaly-linked nodes
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                    onClick={() => {
+                      setGraphNodeContextMenu(null);
+                      void loadStateNeighborhood([graphNodeContextMenu.nodeId], 2);
+                    }}
+                  >
+                    Focus neighbors
+                  </button>
+                  {graphNodeContextMenu.nodeKind && (
+                    <button
+                      className="w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted"
+                      onClick={() => {
+                        setGraphNodeContextMenu(null);
+                        setNodeKind(graphNodeContextMenu.nodeKind!);
+                      }}
+                    >
+                      Filter to {graphNodeContextMenu.nodeKind}s
+                    </button>
+                  )}
+                </>
+              )}
+              <button
+                className="w-full rounded px-2 py-1.5 text-left text-sm text-muted-foreground hover:bg-muted"
+                onClick={() => {
+                  setGraphNodeContextMenu(null);
+                  setEvidenceNeighborOnlyNodeId(null);
+                  setShowOnlyAnomalyNodes(false);
+                  setShowAnomalySeverityOverlay(true);
+                  setNodeKind("all");
+                }}
+              >
+                Reset node filters
+              </button>
             </div>
           )}
 
