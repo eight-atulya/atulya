@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
 type LearningType = "auto" | "distilled" | "structured" | "raw_mirror";
+const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
 export function BrainView() {
   const { currentBank } = useBank();
@@ -116,6 +117,80 @@ export function BrainView() {
       },
       []
     ) ?? [];
+  const heatmapMaxScore = useMemo(
+    () => Math.max(0, ...(influence?.heatmap.map((cell) => cell.score) ?? [0])),
+    [influence?.heatmap]
+  );
+  const trendStats = useMemo(() => {
+    const points = influence?.trend ?? [];
+    if (points.length < 2) {
+      return {
+        latest: null as number | null,
+        delta: null as number | null,
+        direction: "steady" as "rising" | "falling" | "steady",
+      };
+    }
+    const latest = points[points.length - 1].ewma;
+    const previous = points[points.length - 2].ewma;
+    const delta = latest - previous;
+    return {
+      latest,
+      delta,
+      direction: delta > 0.01 ? "rising" : delta < -0.01 ? "falling" : "steady",
+    };
+  }, [influence?.trend]);
+  const ewmaChart = useMemo(() => {
+    const series = (influence?.trend ?? [])
+      .map((point, index) => ({
+        x: point.index ?? index,
+        y: Number(point.ewma),
+      }))
+      .filter((point) => Number.isFinite(point.y));
+    if (series.length < 2) return null;
+
+    const width = 640;
+    const height = 220;
+    const left = 52;
+    const right = 18;
+    const top = 16;
+    const bottom = 32;
+    const plotWidth = width - left - right;
+    const plotHeight = height - top - bottom;
+    const ys = series.map((point) => point.y);
+    const rawMin = Math.min(...ys);
+    const rawMax = Math.max(...ys);
+    const span = Math.max(0.02, rawMax - rawMin);
+    const minY = rawMin - span * 0.12;
+    const maxY = rawMax + span * 0.12;
+    const scaleX = (index: number) => left + (index / Math.max(1, series.length - 1)) * plotWidth;
+    const scaleY = (value: number) =>
+      top + (1 - (value - minY) / Math.max(1e-6, maxY - minY)) * plotHeight;
+    const points = series.map((point, index) => ({
+      px: scaleX(index),
+      py: scaleY(point.y),
+      value: point.y,
+    }));
+    const linePath = points
+      .map(
+        (point, index) => `${index === 0 ? "M" : "L"} ${point.px.toFixed(2)} ${point.py.toFixed(2)}`
+      )
+      .join(" ");
+    const areaPath = `${linePath} L ${points[points.length - 1].px.toFixed(2)} ${(top + plotHeight).toFixed(2)} L ${points[0].px.toFixed(2)} ${(top + plotHeight).toFixed(2)} Z`;
+    const yTicks = [maxY, (maxY + minY) / 2, minY];
+    return {
+      width,
+      height,
+      left,
+      right,
+      top,
+      bottom,
+      plotHeight,
+      points,
+      linePath,
+      areaPath,
+      yTicks,
+    };
+  }, [influence?.trend]);
 
   const runSubRoutine = async () => {
     if (!currentBank) return;
@@ -371,52 +446,173 @@ export function BrainView() {
                 ))}
               </div>
             )}
-            <div className="grid gap-3 md:grid-cols-2">
-              <div>
-                <div className="text-xs text-muted-foreground mb-2">Access Heatmap</div>
-                <div className="space-y-[2px]">
+            <div className="space-y-4">
+              <div className="rounded-xl border border-border bg-background/40 p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">Access Heatmap</div>
+                    <p className="text-xs text-muted-foreground">
+                      Darker cells mean stronger activity for that weekday and UTC hour.
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    max score {Math.round(heatmapMaxScore * 100)}%
+                  </div>
+                </div>
+                <div
+                  className="mb-2 grid gap-[2px]"
+                  style={{ gridTemplateColumns: "44px repeat(24, minmax(0, 1fr))" }}
+                >
+                  <div />
+                  {Array.from({ length: 24 }, (_, hour) => (
+                    <div
+                      key={`hour-header-${hour}`}
+                      className="text-center text-[10px] text-muted-foreground"
+                    >
+                      {String(hour).padStart(2, "0")}
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-[4px]">
                   {miniHeatmapRows.map((row, dayIndex) => (
                     <div
                       key={`mini-row-${dayIndex}`}
-                      className="grid gap-[2px]"
-                      style={{ gridTemplateColumns: "repeat(24, minmax(0, 1fr))" }}
+                      className="grid gap-[2px] items-center"
+                      style={{ gridTemplateColumns: "44px repeat(24, minmax(0, 1fr))" }}
                     >
+                      <div className="text-[10px] text-muted-foreground">
+                        {WEEKDAY_LABELS[dayIndex] || `D${dayIndex}`}
+                      </div>
                       {row
                         .sort((a, b) => a.hour_utc - b.hour_utc)
                         .map((cell) => (
                           <div
                             key={`${cell.weekday}-${cell.hour_utc}`}
-                            className="h-2 rounded-sm"
+                            className="h-4 rounded-sm border border-border/50"
                             style={{
                               backgroundColor: `rgba(59,130,246,${Math.max(0.08, cell.score)})`,
                             }}
-                            title={`day ${cell.weekday}, h${cell.hour_utc}: ${(cell.score * 100).toFixed(0)}%`}
+                            title={`${WEEKDAY_LABELS[cell.weekday] || `day ${cell.weekday}`} ${String(cell.hour_utc).padStart(2, "0")}:00 UTC - activity ${(cell.score * 100).toFixed(0)}%`}
                           />
                         ))}
                     </div>
                   ))}
                 </div>
               </div>
-              <div>
-                <div className="text-xs text-muted-foreground mb-2">EWMA Trend</div>
-                <svg viewBox="0 0 240 48" className="w-full h-12">
-                  {influence.trend.length > 1 && (
-                    <polyline
+
+              <div className="rounded-xl border border-border bg-background/40 p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-sm font-semibold text-foreground">EWMA Trend</div>
+                    <p className="text-xs text-muted-foreground">
+                      Smoothed signal line to show direction without noisy spikes.
+                    </p>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {trendStats.direction === "rising"
+                      ? "rising"
+                      : trendStats.direction === "falling"
+                        ? "falling"
+                        : "steady"}
+                    {trendStats.latest !== null
+                      ? ` · now ${Math.round(trendStats.latest * 100)}%`
+                      : ""}
+                    {trendStats.delta !== null
+                      ? ` · ${trendStats.delta >= 0 ? "+" : ""}${Math.round(trendStats.delta * 100)} pts`
+                      : ""}
+                  </div>
+                </div>
+                {ewmaChart ? (
+                  <svg
+                    viewBox={`0 0 ${ewmaChart.width} ${ewmaChart.height}`}
+                    className="h-64 w-full rounded-md border border-border/60 bg-background/60"
+                  >
+                    <defs>
+                      <linearGradient id="ewmaFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
+                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.03" />
+                      </linearGradient>
+                    </defs>
+
+                    {ewmaChart.yTicks.map((tickValue, idx) => {
+                      const y =
+                        ewmaChart.top +
+                        (idx / Math.max(1, ewmaChart.yTicks.length - 1)) * ewmaChart.plotHeight;
+                      return (
+                        <g key={`y-tick-${idx}`}>
+                          <line
+                            x1={ewmaChart.left}
+                            y1={y}
+                            x2={ewmaChart.width - ewmaChart.right}
+                            y2={y}
+                            stroke="currentColor"
+                            opacity={0.12}
+                          />
+                          <text
+                            x={ewmaChart.left - 8}
+                            y={y + 4}
+                            textAnchor="end"
+                            className="fill-muted-foreground text-[10px]"
+                          >
+                            {Math.round(tickValue * 100)}%
+                          </text>
+                        </g>
+                      );
+                    })}
+
+                    <path d={ewmaChart.areaPath} fill="url(#ewmaFill)" />
+                    <path
+                      d={ewmaChart.linePath}
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="2"
-                      points={influence.trend
-                        .map(
-                          (p, i) =>
-                            `${(i / (influence.trend.length - 1)) * 240},${48 - p.ewma * 46}`
-                        )
-                        .join(" ")}
+                      strokeWidth="3"
                     />
-                  )}
-                </svg>
-                <p className="text-xs text-muted-foreground">
-                  Smoothing uses EWMA for stable signal and anomaly-resistant trend reading.
-                </p>
+
+                    {ewmaChart.points.map((point, index) => (
+                      <circle
+                        key={`ewma-point-${index}`}
+                        cx={point.px}
+                        cy={point.py}
+                        r={index === ewmaChart.points.length - 1 ? 4.5 : 2.2}
+                        fill="currentColor"
+                        opacity={index === ewmaChart.points.length - 1 ? 1 : 0.55}
+                      />
+                    ))}
+
+                    <text
+                      x={ewmaChart.left}
+                      y={ewmaChart.height - 10}
+                      className="fill-muted-foreground text-[10px]"
+                    >
+                      Oldest
+                    </text>
+                    <text
+                      x={ewmaChart.width / 2}
+                      y={ewmaChart.height - 10}
+                      textAnchor="middle"
+                      className="fill-muted-foreground text-[10px]"
+                    >
+                      Mid-window
+                    </text>
+                    <text
+                      x={ewmaChart.width - ewmaChart.right}
+                      y={ewmaChart.height - 10}
+                      textAnchor="end"
+                      className="fill-muted-foreground text-[10px]"
+                    >
+                      Latest
+                    </text>
+                  </svg>
+                ) : (
+                  <div className="flex h-64 w-full items-center justify-center rounded-md border border-dashed border-border/60 bg-background/40 text-xs text-muted-foreground">
+                    Not enough trend points yet to plot EWMA meaningfully.
+                  </div>
+                )}
+                <div className="mt-3 rounded-md border border-border bg-background/70 px-3 py-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">How to read:</span> Upward slope
+                  means influence momentum is increasing, flat means stable, downward means cooling
+                  down.
+                </div>
               </div>
             </div>
           </CardContent>
