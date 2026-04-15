@@ -1778,6 +1778,56 @@ class GraphNeighborhoodResponse(BaseModel):
     cached: bool = False
 
 
+class AnomalyCorrectionResponse(BaseModel):
+    id: str
+    bank_id: str
+    anomaly_id: str
+    correction_type: str
+    target_unit_id: str | None = None
+    before_state: dict[str, Any] = Field(default_factory=dict)
+    after_state: dict[str, Any] = Field(default_factory=dict)
+    confidence_delta: float | None = None
+    applied_at: str | None = None
+    applied_by: str
+
+
+class AnomalyEventResponse(BaseModel):
+    id: str
+    bank_id: str
+    anomaly_type: str
+    severity: float
+    status: Literal["open", "acknowledged", "resolved", "suppressed"]
+    unit_ids: list[str] = Field(default_factory=list)
+    entity_ids: list[str] = Field(default_factory=list)
+    description: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    detected_at: str | None = None
+    resolved_at: str | None = None
+    resolved_by: str | None = None
+    corrections: list[AnomalyCorrectionResponse] = Field(default_factory=list)
+
+
+class AnomalyIntelligenceRequest(BaseModel):
+    limit: int = Field(default=50, ge=1, le=200)
+    status: Literal["open", "acknowledged", "resolved", "suppressed"] | None = None
+    anomaly_types: list[str] | None = None
+    min_severity: float = Field(default=0.0, ge=0.0, le=1.0)
+
+
+class AnomalyIntelligenceSummaryResponse(BaseModel):
+    total_events: int
+    open_events: int
+    resolved_events: int
+    avg_severity: float = Field(ge=0.0, le=1.0)
+    by_type: dict[str, int] = Field(default_factory=dict)
+
+
+class AnomalyIntelligenceResponse(BaseModel):
+    summary: AnomalyIntelligenceSummaryResponse
+    events: list[AnomalyEventResponse] = Field(default_factory=list)
+    total_events_in_response: int
+
+
 class ListMemoryUnitsResponse(BaseModel):
     """Response model for list memory units endpoint."""
 
@@ -3092,6 +3142,38 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/graph/investigate: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/anomaly/intelligence",
+        response_model=AnomalyIntelligenceResponse,
+        summary="Get anomaly intelligence for bank",
+        operation_id="get_anomaly_intelligence",
+        tags=["Memory"],
+    )
+    async def api_anomaly_intelligence(
+        bank_id: str,
+        request: AnomalyIntelligenceRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            return await app.state.memory.get_anomaly_intelligence(
+                bank_id=bank_id,
+                limit=request.limit,
+                status=request.status,
+                anomaly_types=request.anomaly_types,
+                min_severity=request.min_severity,
+                request_context=request_context,
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/anomaly/intelligence: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(

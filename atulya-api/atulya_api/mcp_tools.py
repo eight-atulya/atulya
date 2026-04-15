@@ -170,6 +170,7 @@ def register_mcp_tools(
         "update_bank",
         "delete_bank",
         "clear_memories",
+        "get_anomaly_intelligence",
     }
 
     if "retain" in tools_to_register:
@@ -264,6 +265,9 @@ def register_mcp_tools(
 
     if "clear_memories" in tools_to_register:
         _register_clear_memories(mcp, memory, config)
+
+    if "get_anomaly_intelligence" in tools_to_register:
+        _register_get_anomaly_intelligence(mcp, memory, config)
 
     _apply_bank_tool_filtering(mcp, memory, config)
 
@@ -2724,4 +2728,85 @@ def _register_clear_memories(mcp: FastMCP, memory: MemoryEngine, config: MCPTool
                 return {"error": str(e)}
             except Exception as e:
                 logger.error(f"Error clearing memories: {e}", exc_info=True)
+                return {"error": str(e)}
+
+
+def _register_get_anomaly_intelligence(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    """Register the get_anomaly_intelligence tool."""
+
+    if config.include_bank_id_param:
+
+        @mcp.tool()
+        async def get_anomaly_intelligence(
+            limit: int = 50,
+            status: str | None = None,
+            anomaly_types: list[str] | None = None,
+            min_severity: float = 0.0,
+            bank_id: str | None = None,
+        ) -> str:
+            """
+            Fetch anomaly intelligence events and correction audit logs for a bank.
+
+            Args:
+                limit: Maximum events to return (default: 50, max: 200)
+                status: Optional anomaly status filter: open, acknowledged, resolved, suppressed
+                anomaly_types: Optional anomaly type filters
+                min_severity: Minimum severity threshold in [0,1]
+                bank_id: Optional bank (defaults to session bank). Use for cross-bank operations.
+            """
+            try:
+                target_bank = bank_id or config.bank_id_resolver()
+                if target_bank is None:
+                    return '{"error": "No bank_id configured"}'
+                result = await memory.get_anomaly_intelligence(
+                    bank_id=target_bank,
+                    limit=limit,
+                    status=status,
+                    anomaly_types=anomaly_types,
+                    min_severity=min_severity,
+                    request_context=_get_request_context(config),
+                )
+                return json.dumps(result, default=str)
+            except OperationValidationError as e:
+                logger.warning(f"Operation rejected: {e}")
+                return json.dumps({"error": str(e)})
+            except Exception as e:
+                logger.error(f"Error fetching anomaly intelligence: {e}", exc_info=True)
+                return json.dumps({"error": str(e)})
+
+    else:
+
+        @mcp.tool()
+        async def get_anomaly_intelligence(
+            limit: int = 50,
+            status: str | None = None,
+            anomaly_types: list[str] | None = None,
+            min_severity: float = 0.0,
+        ) -> dict:
+            """
+            Fetch anomaly intelligence events and correction audit logs for the configured bank.
+
+            Args:
+                limit: Maximum events to return (default: 50, max: 200)
+                status: Optional anomaly status filter: open, acknowledged, resolved, suppressed
+                anomaly_types: Optional anomaly type filters
+                min_severity: Minimum severity threshold in [0,1]
+            """
+            try:
+                target_bank = config.bank_id_resolver()
+                if target_bank is None:
+                    return {"error": "No bank_id configured"}
+                return await memory.get_anomaly_intelligence(
+                    bank_id=target_bank,
+                    limit=limit,
+                    status=status,
+                    anomaly_types=anomaly_types,
+                    min_severity=min_severity,
+                    request_context=_get_request_context(config),
+                )
+            except OperationValidationError as e:
+                logger.warning(f"Operation rejected: {e}")
+                return {"error": str(e)}
+            except Exception as e:
+                logger.error(f"Error fetching anomaly intelligence: {e}", exc_info=True)
                 return {"error": str(e)}

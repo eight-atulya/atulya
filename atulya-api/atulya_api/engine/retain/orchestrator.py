@@ -11,8 +11,12 @@ from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 from typing import Any
 
+from ..adaptive_correction import apply_adaptive_corrections
 from ..db_utils import acquire_with_retry
+from ..flaw_identification import detect_flaws
+from ..pattern_library import match_patterns_for_facts
 from . import bank_utils
+from .anomaly_detection import detect_write_time_anomalies, persist_anomalies
 
 
 def utcnow():
@@ -484,6 +488,39 @@ async def retain_batch(
             step_start = time.time()
             causal_link_count = await link_creation.create_causal_links_batch(conn, unit_ids, non_duplicate_facts)
             log_buffer.append(f"[10] Causal links: {causal_link_count} links in {time.time() - step_start:.3f}s")
+
+            # Write-time anomaly + flaw + pattern detection (in-transaction)
+            step_start = time.time()
+            detected_anomalies = await detect_write_time_anomalies(
+                conn,
+                bank_id=bank_id,
+                unit_ids=unit_ids,
+                facts=non_duplicate_facts,
+            )
+            detected_anomalies.extend(
+                await detect_flaws(
+                    conn,
+                    bank_id=bank_id,
+                    unit_ids=unit_ids,
+                )
+            )
+            detected_anomalies.extend(
+                await match_patterns_for_facts(
+                    conn,
+                    bank_id=bank_id,
+                    unit_ids=unit_ids,
+                    facts=non_duplicate_facts,
+                )
+            )
+            anomaly_event_ids = await persist_anomalies(conn, bank_id=bank_id, anomalies=detected_anomalies)
+            correction_count = await apply_adaptive_corrections(
+                conn,
+                bank_id=bank_id,
+                anomaly_event_ids=anomaly_event_ids,
+            )
+            log_buffer.append(
+                f"[11] Anomaly intelligence: {len(anomaly_event_ids)} events, {correction_count} corrections in {time.time() - step_start:.3f}s"
+            )
 
             # Map results back to original content items
             result_unit_ids = _map_results_to_contents(contents, extracted_facts, unit_ids)

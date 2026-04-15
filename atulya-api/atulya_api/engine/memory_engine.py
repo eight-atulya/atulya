@@ -172,6 +172,9 @@ _PROTECTED_TABLES = frozenset(
         "dream_predictions",
         "dream_proposals",
         "dream_prediction_outcomes",
+        "anomaly_events",
+        "anomaly_corrections",
+        "pattern_library",
     ]
 )
 
@@ -1948,6 +1951,7 @@ class MemoryEngine(MemoryEngineInterface):
                         excluded_count += 1
 
                 chunk_id_map: dict[str, uuid.UUID] = {}
+                inserted_chunk_records: list[dict[str, object]] = []
                 route_counts = {"unrouted": 0, "memory": 0, "research": 0, "dismissed": 0}
                 for chunk_row in chunk_rows:
                     inserted = await conn.fetchrow(
@@ -1981,6 +1985,13 @@ class MemoryEngine(MemoryEngineInterface):
                     )
                     chunk_id = inserted["id"]
                     chunk_id_map[chunk_row["chunk_key"]] = chunk_id
+                    inserted_chunk_records.append(
+                        {
+                            "id": str(chunk_id),
+                            "label": chunk_row["label"],
+                            "preview_text": chunk_row["preview_text"],
+                        }
+                    )
                     previous_route = previous_routes.get(chunk_row["chunk_key"])
                     inherited_route = (
                         previous_route["route_target"]
@@ -2028,6 +2039,17 @@ class MemoryEngine(MemoryEngineInterface):
                         related_chunk_count += 1
 
                 cluster_count = len({row["cluster_id"] for row in chunk_rows if row["cluster_id"]})
+
+                if inserted_chunk_records:
+                    from .pattern_library import match_patterns_for_code_chunks
+                    from .retain.anomaly_detection import persist_anomalies
+
+                    chunk_anomalies = await match_patterns_for_code_chunks(
+                        conn,
+                        bank_id=bank_id,
+                        chunk_records=inserted_chunk_records,
+                    )
+                    await persist_anomalies(conn, bank_id=bank_id, anomalies=chunk_anomalies)
 
                 stats = {
                     "total_files": len(index_result.files),
@@ -7928,6 +7950,143 @@ class MemoryEngine(MemoryEngineInterface):
             )
         investigation = build_investigation(query, graph, recall_units)
         return investigation.model_dump(mode="json")
+
+    async def get_anomaly_intelligence(
+        self,
+        bank_id: str,
+        *,
+        limit: int = 50,
+        status: str | None = None,
+        anomaly_types: list[str] | None = None,
+        min_severity: float = 0.0,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="get_anomaly_intelligence", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            conditions = ["bank_id = $1", "severity >= $2"]
+            params: list[Any] = [bank_id, float(min_severity)]
+            param_count = 2
+            if status:
+                param_count += 1
+                conditions.append(f"status = ${param_count}")
+                params.append(status)
+            if anomaly_types:
+                param_count += 1
+                conditions.append(f"anomaly_type = ANY(${param_count}::text[])")
+                params.append(anomaly_types)
+            where_clause = " AND ".join(conditions)
+            param_count += 1
+            params.append(max(1, min(limit, 200)))
+
+            event_rows = await conn.fetch(
+                f"""
+                SELECT id, bank_id, anomaly_type, severity, status, unit_ids, entity_ids,
+                       description, metadata, detected_at, resolved_at, resolved_by
+                FROM {fq_table("anomaly_events")}
+                WHERE {where_clause}
+                ORDER BY detected_at DESC
+                LIMIT ${param_count}
+                """,
+                *params,
+            )
+
+            anomaly_ids = [row["id"] for row in event_rows]
+            correction_rows = []
+            if anomaly_ids:
+                correction_rows = await conn.fetch(
+                    f"""
+                    SELECT id, bank_id, anomaly_id, correction_type, target_unit_id, before_state,
+                           after_state, confidence_delta, applied_at, applied_by
+                    FROM {fq_table("anomaly_corrections")}
+                    WHERE bank_id = $1 AND anomaly_id = ANY($2::uuid[])
+                    ORDER BY applied_at DESC
+                    """,
+                    bank_id,
+                    anomaly_ids,
+                )
+
+            summary_row = await conn.fetchrow(
+                f"""
+                SELECT
+                    COUNT(*)::int AS total_events,
+                    COUNT(*) FILTER (WHERE status = 'open')::int AS open_events,
+                    COUNT(*) FILTER (WHERE status = 'resolved')::int AS resolved_events,
+                    COALESCE(AVG(severity), 0.0)::double precision AS avg_severity
+                FROM {fq_table("anomaly_events")}
+                WHERE bank_id = $1
+                """,
+                bank_id,
+            )
+            by_type_rows = await conn.fetch(
+                f"""
+                SELECT anomaly_type, COUNT(*)::int AS count
+                FROM {fq_table("anomaly_events")}
+                WHERE bank_id = $1
+                GROUP BY anomaly_type
+                ORDER BY count DESC
+                """,
+                bank_id,
+            )
+
+        corrections_by_anomaly: dict[str, list[dict[str, Any]]] = {}
+        for correction in correction_rows:
+            key = str(correction["anomaly_id"])
+            corrections_by_anomaly.setdefault(key, []).append(
+                {
+                    "id": str(correction["id"]),
+                    "bank_id": correction["bank_id"],
+                    "anomaly_id": key,
+                    "correction_type": correction["correction_type"],
+                    "target_unit_id": str(correction["target_unit_id"]) if correction["target_unit_id"] else None,
+                    "before_state": correction["before_state"] or {},
+                    "after_state": correction["after_state"] or {},
+                    "confidence_delta": correction["confidence_delta"],
+                    "applied_at": correction["applied_at"].isoformat() if correction["applied_at"] else None,
+                    "applied_by": correction["applied_by"],
+                }
+            )
+
+        events: list[dict[str, Any]] = []
+        for event in event_rows:
+            anomaly_id = str(event["id"])
+            events.append(
+                {
+                    "id": anomaly_id,
+                    "bank_id": event["bank_id"],
+                    "anomaly_type": event["anomaly_type"],
+                    "severity": float(event["severity"] or 0.0),
+                    "status": event["status"],
+                    "unit_ids": [str(unit_id) for unit_id in (event["unit_ids"] or [])],
+                    "entity_ids": [str(entity_id) for entity_id in (event["entity_ids"] or [])],
+                    "description": event["description"],
+                    "metadata": event["metadata"] or {},
+                    "detected_at": event["detected_at"].isoformat() if event["detected_at"] else None,
+                    "resolved_at": event["resolved_at"].isoformat() if event["resolved_at"] else None,
+                    "resolved_by": event["resolved_by"],
+                    "corrections": corrections_by_anomaly.get(anomaly_id, []),
+                }
+            )
+
+        return {
+            "summary": {
+                "total_events": int(summary_row["total_events"] or 0) if summary_row else 0,
+                "open_events": int(summary_row["open_events"] or 0) if summary_row else 0,
+                "resolved_events": int(summary_row["resolved_events"] or 0) if summary_row else 0,
+                "avg_severity": float(summary_row["avg_severity"] or 0.0) if summary_row else 0.0,
+                "by_type": {str(row["anomaly_type"]): int(row["count"] or 0) for row in by_type_rows},
+            },
+            "events": events,
+            "total_events_in_response": len(events),
+        }
 
     async def list_memory_units(
         self,

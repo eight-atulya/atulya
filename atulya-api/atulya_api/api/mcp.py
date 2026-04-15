@@ -47,6 +47,7 @@ _ALL_TOOLS: frozenset[str] = frozenset(
         "update_bank",
         "delete_bank",
         "clear_memories",
+        "get_anomaly_intelligence",
     }
 )
 
@@ -149,6 +150,7 @@ def create_mcp_server(memory: MemoryEngine, multi_bank: bool = True) -> FastMCP:
             "update_bank",
             "delete_bank",
             "clear_memories",
+            "get_anomaly_intelligence",
         }
     )
     base_tools: frozenset[str] | None = None if multi_bank else _SINGLE_BANK_TOOLS
