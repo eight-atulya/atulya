@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import Image from "next/image";
+import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -391,14 +392,16 @@ function BankSelectorInner() {
     <div className="bg-card text-card-foreground px-5 py-3 border-b-4 border-primary-gradient">
       <div className="flex items-center gap-4 text-sm">
         {/* Logo */}
-        <Image
-          src="/logo.png"
-          alt="Atulya"
-          width={40}
-          height={40}
-          className="h-10 w-auto"
-          unoptimized
-        />
+        <Link href="/dashboard" aria-label="Go to dashboard" className="inline-flex">
+          <Image
+            src="/logo.png"
+            alt="Atulya"
+            width={40}
+            height={40}
+            className="h-10 w-auto"
+            unoptimized
+          />
+        </Link>
 
         {/* Separator */}
         <div className="h-8 w-px bg-border" />
@@ -1129,14 +1132,16 @@ export function BankSelector() {
       fallback={
         <div className="bg-card text-card-foreground px-5 py-3 border-b-4 border-primary-gradient">
           <div className="flex items-center gap-4 text-sm">
-            <Image
-              src="/logo.png"
-              alt="Atulya"
-              width={40}
-              height={40}
-              className="h-10 w-auto"
-              unoptimized
-            />
+            <Link href="/dashboard" aria-label="Go to dashboard" className="inline-flex">
+              <Image
+                src="/logo.png"
+                alt="Atulya"
+                width={40}
+                height={40}
+                className="h-10 w-auto"
+                unoptimized
+              />
+            </Link>
             <div className="h-8 w-px bg-border" />
             <Button
               variant="outline"

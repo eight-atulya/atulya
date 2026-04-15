@@ -7,6 +7,7 @@ import {
   Brain,
   Building2,
   ChartNoAxesCombined,
+  CheckCircle2,
   FlaskConical,
   Sparkles,
   Wand2,
@@ -132,6 +133,115 @@ export default function DashboardPage() {
                 Atulya helps teams move from guesswork to math-backed confidence.
               </p>
 
+              <div className="mt-6 rounded-xl border border-border bg-background/60 p-4">
+                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <Wand2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                  Quick Start
+                </div>
+                <p className="mb-3 text-xs text-muted-foreground">
+                  Create your first memory bank now, then jump directly into memories and reasoning.
+                </p>
+                <div className="flex w-full max-w-xl flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+                  <Input
+                    value={quickBankId}
+                    onChange={(e) => setQuickBankId(e.target.value)}
+                    placeholder="e.g. my-org, sales-intel"
+                    className="h-11 w-full"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isCreatingQuickBank) void handleQuickCreate();
+                    }}
+                  />
+                  <Button
+                    onClick={handleQuickCreate}
+                    disabled={isCreatingQuickBank || !quickBankId.trim()}
+                    className="h-11 w-full sm:w-auto sm:px-6"
+                  >
+                    {isCreatingQuickBank ? "Creating..." : "Create and Start"}
+                  </Button>
+                </div>
+
+                <div className="mt-4 space-y-2 max-w-3xl">
+                  <p className="text-xs font-medium text-muted-foreground">Starter kit</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => setStarterKit("")}
+                      className={`rounded-lg border p-3 text-left transition-colors ${
+                        starterKit === ""
+                          ? "border-red-500/60 bg-red-500/10"
+                          : "border-border bg-background/70 hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground">
+                          Default (blank bank)
+                        </p>
+                        {starterKit === "" ? (
+                          <CheckCircle2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Start clean with no presets. Best for custom workflows.
+                      </p>
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-300">
+                        Use this starter
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStarterKit("codebase")}
+                      className={`rounded-lg border p-3 text-left transition-colors ${
+                        starterKit === "codebase"
+                          ? "border-red-500/60 bg-red-500/10"
+                          : "border-border bg-background/70 hover:bg-muted/40"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm font-semibold text-foreground">Code repository kit</p>
+                        {starterKit === "codebase" ? (
+                          <CheckCircle2 className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        ) : null}
+                      </div>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Tuned retain/reflect rules, observation synthesis, pinned guides, and one
+                        evidence-first directive.
+                      </p>
+                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-300">
+                        Use this starter
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </button>
+                  </div>
+                </div>
+                {quickError ? (
+                  <p className="mt-2 text-xs text-red-600 dark:text-red-300">{quickError}</p>
+                ) : null}
+                {quickMessage ? (
+                  <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
+                    {quickMessage}
+                  </p>
+                ) : null}
+              </div>
+
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={openHeaderBankSelector}
+                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/70"
+                  aria-label="Open memory bank selector"
+                >
+                  Select an existing memory bank
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+                <div className="text-xs text-muted-foreground">
+                  {bankCount > 0
+                    ? `${bankCount} memory bank${bankCount === 1 ? "" : "s"} available.`
+                    : "No banks yet. Create your first one in one click."}
+                </div>
+              </div>
+
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-border bg-background/70 p-4">
                   <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
@@ -151,78 +261,6 @@ export default function DashboardPage() {
                     Use proven signals, trends, and confidence bands before committing to action.
                   </p>
                 </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={openHeaderBankSelector}
-                className="mt-6 inline-flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/70"
-                aria-label="Open memory bank selector"
-              >
-                Select a memory bank above to begin
-                <ArrowRight className="h-4 w-4" />
-              </button>
-              <div className="mt-3 text-xs text-muted-foreground">
-                {bankCount > 0
-                  ? `${bankCount} memory bank${bankCount === 1 ? "" : "s"} available.`
-                  : "No banks yet. Create your first one below in one click."}
-              </div>
-
-              <div className="mt-5 rounded-xl border border-border bg-background/60 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Wand2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  Quick Start (Create a bank)
-                </div>
-                <div className="flex w-full max-w-xl flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                  <Input
-                    value={quickBankId}
-                    onChange={(e) => setQuickBankId(e.target.value)}
-                    placeholder="e.g. my-org, sales-intel"
-                    className="h-11 w-full"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isCreatingQuickBank) void handleQuickCreate();
-                    }}
-                  />
-                  <Button
-                    onClick={handleQuickCreate}
-                    disabled={isCreatingQuickBank || !quickBankId.trim()}
-                    className="h-11 w-full sm:w-auto sm:px-6"
-                  >
-                    {isCreatingQuickBank ? "Creating..." : "Create and Start"}
-                  </Button>
-                </div>
-                <div className="mt-3 max-w-xl">
-                  <label
-                    htmlFor="starter-kit"
-                    className="text-xs font-medium text-muted-foreground"
-                  >
-                    Memory starter kit
-                  </label>
-                  <select
-                    id="starter-kit"
-                    className="mt-1 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                    value={starterKit}
-                    onChange={(e) => setStarterKit(e.target.value === "codebase" ? "codebase" : "")}
-                  >
-                    <option value="">Default (blank bank)</option>
-                    <option value="codebase">
-                      Code repository — retain/reflect tuned + guide cards
-                    </option>
-                  </select>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    The codebase kit adds ASD-friendly retain rules, observation synthesis, three
-                    pinned guides, and one evidence-first directive (safe to re-run; skips
-                    duplicates).
-                  </p>
-                </div>
-                {quickError ? (
-                  <p className="mt-2 text-xs text-red-600 dark:text-red-300">{quickError}</p>
-                ) : null}
-                {quickMessage ? (
-                  <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
-                    {quickMessage}
-                  </p>
-                ) : null}
               </div>
             </section>
 
