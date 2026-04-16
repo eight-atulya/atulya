@@ -3964,9 +3964,7 @@ class MemoryEngine(MemoryEngineInterface):
             if webhook_manager:
                 for event in events:
                     await webhook_manager.fire_event_with_conn(event, conn, schema=schema)
-            await self._enqueue_entity_trajectory_tasks(
-                conn, bank_id=bank_id, unit_ids=unit_ids, schema=schema
-            )
+            await self._enqueue_entity_trajectory_tasks(conn, bank_id=bank_id, unit_ids=unit_ids, schema=schema)
 
         return _callback
 

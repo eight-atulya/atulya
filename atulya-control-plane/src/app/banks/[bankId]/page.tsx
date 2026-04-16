@@ -562,10 +562,12 @@ export default function BankPage() {
               <div>
                 <h1 className="text-3xl font-bold mb-2 text-foreground">Entity trajectories</h1>
                 <p className="text-muted-foreground mb-6">
-                  Visualize discrete progression states, transitions, and short-horizon forecasts per
-                  entity (requires{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code> on
-                  the bank).
+                  Visualize discrete progression states, transitions, and short-horizon forecasts
+                  per entity (requires{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                    enable_entity_trajectories
+                  </code>{" "}
+                  on the bank).
                 </p>
                 <EntityTrajectoriesView />
               </div>

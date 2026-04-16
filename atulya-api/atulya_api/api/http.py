@@ -3868,9 +3868,7 @@ def _register_routes(app: FastAPI):
         bank_id: str, entity_id: str, request_context: RequestContext = Depends(get_request_context)
     ):
         try:
-            row = await app.state.memory.get_entity_trajectory(
-                bank_id, entity_id, request_context=request_context
-            )
+            row = await app.state.memory.get_entity_trajectory(bank_id, entity_id, request_context=request_context)
             if row is None:
                 raise HTTPException(status_code=404, detail="Trajectory not computed for this entity yet")
             steps = [

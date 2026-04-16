@@ -147,7 +147,11 @@ export function EntityTrajectoriesView() {
           disabled={!entityId || recomputing}
           onClick={() => void handleRecompute()}
         >
-          {recomputing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+          {recomputing ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4" />
+          )}
           <span className="ml-2">Recompute</span>
         </Button>
       </div>
@@ -162,9 +166,9 @@ export function EntityTrajectoriesView() {
       {notFound && !loadingTraj && entityId && (
         <p className="text-sm text-muted-foreground">
           No trajectory yet for this entity. Enable{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code> on
-          the bank, retain facts linked to the entity, then use Recompute (or wait for the background
-          worker).
+          <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code>{" "}
+          on the bank, retain facts linked to the entity, then use Recompute (or wait for the
+          background worker).
         </p>
       )}
 
@@ -187,7 +191,9 @@ export function EntityTrajectoriesView() {
               <span className="text-muted-foreground">Forward log P:</span>{" "}
               {trajectory.forward_log_prob != null ? trajectory.forward_log_prob.toFixed(2) : "—"}
             </div>
-            <div className="text-xs text-muted-foreground truncate">Model: {trajectory.llm_model}</div>
+            <div className="text-xs text-muted-foreground truncate">
+              Model: {trajectory.llm_model}
+            </div>
           </div>
 
           <div>
@@ -209,7 +215,13 @@ export function EntityTrajectoriesView() {
                       "State",
                     ]}
                   />
-                  <Line type="stepAfter" dataKey="y" stroke="hsl(var(--primary))" dot name="State index" />
+                  <Line
+                    type="stepAfter"
+                    dataKey="y"
+                    stroke="hsl(var(--primary))"
+                    dot
+                    name="State index"
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -224,7 +236,10 @@ export function EntityTrajectoriesView() {
                     <tr>
                       <th className="p-1" />
                       {vocab.map((h) => (
-                        <th key={h} className="p-1 text-left font-medium text-muted-foreground max-w-[72px] truncate">
+                        <th
+                          key={h}
+                          className="p-1 text-left font-medium text-muted-foreground max-w-[72px] truncate"
+                        >
                           {h}
                         </th>
                       ))}
@@ -240,7 +255,11 @@ export function EntityTrajectoriesView() {
                           const c = Math.max(0, Math.min(1, cell));
                           const bg = `rgba(59, 130, 246, ${0.15 + c * 0.75})`;
                           return (
-                            <td key={ci} className="p-1 text-center font-mono" style={{ backgroundColor: bg }}>
+                            <td
+                              key={ci}
+                              className="p-1 text-center font-mono"
+                              style={{ backgroundColor: bg }}
+                            >
                               {c.toFixed(2)}
                             </td>
                           );
