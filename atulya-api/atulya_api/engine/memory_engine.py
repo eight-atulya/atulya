@@ -42,7 +42,6 @@ from ..tracing import create_operation_span
 from ..utils import mask_network_location
 from ..worker.exceptions import RetryTaskAt
 from .db_budget import budgeted_operation
-from .jsonb_compat import decode_jsonb
 from .dreaming import (
     DreamConfidenceModel,
     DreamEvidenceBasis,
@@ -62,6 +61,7 @@ from .dreaming import (
     summarize_confidence,
     to_jsonable,
 )
+from .jsonb_compat import decode_jsonb
 from .operation_metadata import (
     BatchRetainChildMetadata,
     BatchRetainParentMetadata,
