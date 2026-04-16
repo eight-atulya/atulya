@@ -561,13 +561,22 @@ export default function BankPage() {
             {view === "trajectories" && (
               <div>
                 <h1 className="text-3xl font-bold mb-2 text-foreground">Entity trajectories</h1>
-                <p className="text-muted-foreground mb-6">
-                  Visualize discrete progression states, transitions, and short-horizon forecasts
-                  per entity (requires{" "}
-                  <code className="rounded bg-muted px-1 py-0.5 text-xs">
+                <p className="text-muted-foreground mb-3 max-w-3xl leading-relaxed">
+                  See how a <span className="text-foreground/90">single entity</span> (a person,
+                  company, product, or place extracted from memories) appears to evolve over time: we
+                  turn your chronological facts into a small set of{" "}
+                  <span className="text-foreground/90">story states</span>, how often the narrative
+                  moves between them, and a short look-ahead. This is scoped to one entity at a time so
+                  the picture stays interpretable.
+                </p>
+                <p className="text-sm text-muted-foreground/90 mb-6 max-w-3xl leading-relaxed">
+                  The bank must have{" "}
+                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
                     enable_entity_trajectories
                   </code>{" "}
-                  on the bank).
+                  enabled. Facts need to be linked to the entity when retained; use{" "}
+                  <span className="font-medium text-foreground">Recompute</span> after changing
+                  settings or memories.
                 </p>
                 <EntityTrajectoriesView />
               </div>
