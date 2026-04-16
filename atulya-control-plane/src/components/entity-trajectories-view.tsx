@@ -175,8 +175,8 @@ export function EntityTrajectoriesView() {
 
       {!loadingList && !listError && entities.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No entities in this bank yet. Retain memories that mention people or organizations, then open this tab
-          again.
+          No entities in this bank yet. Retain memories that mention people or organizations, then
+          open this tab again.
         </p>
       )}
 
@@ -196,17 +196,23 @@ export function EntityTrajectoriesView() {
       {notFound && !loadingTraj && entityId && (
         <div className="text-sm text-muted-foreground space-y-2 max-w-2xl">
           <p>
-            No trajectory computed for this entity yet. This is normal until the first successful run.
+            No trajectory computed for this entity yet. This is normal until the first successful
+            run.
           </p>
           <p>
             Turn on{" "}
             <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code>{" "}
-            for the bank (e.g. <code className="rounded bg-muted px-1 py-0.5 text-xs">ATULYA_API_ENABLE_ENTITY_TRAJECTORIES=true</code>{" "}
-            or bank config), ensure the entity has at least three memory facts with embeddings linked via{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-xs">unit_entities</code>, then click{" "}
-            <span className="font-medium text-foreground">Recompute</span>. Computation runs in the API{" "}
-            <span className="font-medium text-foreground">worker</span>—use{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-xs">./scripts/dev/start.sh --with-worker</code>{" "}
+            for the bank (e.g.{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">
+              ATULYA_API_ENABLE_ENTITY_TRAJECTORIES=true
+            </code>{" "}
+            or bank config), ensure the entity has at least three memory facts with embeddings
+            linked via <code className="rounded bg-muted px-1 py-0.5 text-xs">unit_entities</code>,
+            then click <span className="font-medium text-foreground">Recompute</span>. Computation
+            runs in the API <span className="font-medium text-foreground">worker</span>—use{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">
+              ./scripts/dev/start.sh --with-worker
+            </code>{" "}
             if jobs stay pending locally.
           </p>
         </div>
