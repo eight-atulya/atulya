@@ -3871,6 +3871,7 @@ def _register_routes(app: FastAPI):
             row = await app.state.memory.get_entity_trajectory(bank_id, entity_id, request_context=request_context)
             if row is None:
                 raise HTTPException(status_code=404, detail="Trajectory not computed for this entity yet")
+            # Row shapes are normalized in MemoryEngine.get_entity_trajectory (persisted_row).
             steps = [
                 TrajectoryViterbiStepResponse(
                     unit_id=str(s.get("unit_id", "")),
@@ -3885,13 +3886,13 @@ def _register_routes(app: FastAPI):
                 entity_id=row["entity_id"],
                 bank_id=row["bank_id"],
                 computed_at=row.get("computed_at"),
-                state_vocabulary=list(row.get("state_vocabulary") or []),
+                state_vocabulary=row["state_vocabulary"],
                 vocabulary_hash=str(row.get("vocabulary_hash") or ""),
-                transition_matrix=[list(map(float, r)) for r in (row.get("transition_matrix") or [])],
+                transition_matrix=row["transition_matrix"],
                 current_state=str(row.get("current_state") or ""),
                 viterbi_path=steps,
                 forecast_horizon=int(row.get("forecast_horizon") or 0),
-                forecast_distribution={str(k): float(v) for k, v in (row.get("forecast_distribution") or {}).items()},
+                forecast_distribution=row["forecast_distribution"],
                 forward_log_prob=row.get("forward_log_prob"),
                 anomaly_score=row.get("anomaly_score"),
                 llm_model=str(row.get("llm_model") or ""),

@@ -42,6 +42,7 @@ from ..tracing import create_operation_span
 from ..utils import mask_network_location
 from ..worker.exceptions import RetryTaskAt
 from .db_budget import budgeted_operation
+from .jsonb_compat import decode_jsonb
 from .dreaming import (
     DreamConfidenceModel,
     DreamEvidenceBasis,
@@ -91,20 +92,6 @@ _tiktoken_encoder = tiktoken.get_encoding("cl100k_base")  # GPT-4/GPT-3.5-turbo 
 def count_tokens(text: str) -> int:
     """Count tokens in text using tiktoken (cl100k_base encoding for GPT-4/3.5)."""
     return len(_tiktoken_encoder.encode(text))
-
-
-def decode_jsonb(raw_value: Any, default: Any) -> Any:
-    """Decode asyncpg JSONB values that may already be deserialized."""
-    if raw_value is None:
-        return default
-    if isinstance(raw_value, (dict, list)):
-        return raw_value
-    if isinstance(raw_value, str):
-        try:
-            return json.loads(raw_value)
-        except json.JSONDecodeError:
-            return default
-    return default
 
 
 def build_temporal_block(
@@ -9688,22 +9675,9 @@ class MemoryEngine(MemoryEngineInterface):
             )
         if not row:
             return None
-        return {
-            "entity_id": str(row["entity_id"]),
-            "bank_id": row["bank_id"],
-            "computed_at": row["computed_at"].isoformat() if row["computed_at"] else None,
-            "state_vocabulary": list(row["state_vocabulary"]) if row["state_vocabulary"] else [],
-            "vocabulary_hash": row["vocabulary_hash"] or "",
-            "transition_matrix": list(row["transition_matrix"]) if row["transition_matrix"] else [],
-            "current_state": row["current_state"],
-            "viterbi_path": list(row["viterbi_path"]) if row["viterbi_path"] else [],
-            "forecast_horizon": int(row["forecast_horizon"] or 0),
-            "forecast_distribution": dict(row["forecast_distribution"]) if row["forecast_distribution"] else {},
-            "forward_log_prob": float(row["forward_log_prob"]) if row["forward_log_prob"] is not None else None,
-            "anomaly_score": float(row["anomaly_score"]) if row["anomaly_score"] is not None else None,
-            "llm_model": row["llm_model"] or "",
-            "prompt_version": row["prompt_version"] or "",
-        }
+        from atulya_api.engine.entity_trajectory.persisted_row import entity_trajectory_payload_from_record
+
+        return entity_trajectory_payload_from_record(row)
 
     async def submit_entity_trajectory_recompute(
         self,
