@@ -249,15 +249,15 @@ export function EntityTrajectoriesView() {
         </div>
       </details>
 
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-[220px] flex-1">
-          <label className="text-sm font-medium text-muted-foreground mb-1.5 block">
-            Entity to analyze
-          </label>
-          <p className="text-[11px] text-muted-foreground mb-2 max-w-xl leading-relaxed">
-            Choose who or what this trajectory is <em>about</em>. The number in parentheses is how
-            many memories mention this entity—more points usually make a steadier path.
-          </p>
+      <div className="max-w-4xl space-y-2">
+        <label className="block text-sm font-medium text-muted-foreground" htmlFor="entity-trajectory-select">
+          Entity to analyze
+        </label>
+        <p className="text-[11px] leading-relaxed text-muted-foreground">
+          Choose who or what this trajectory is <em>about</em>. The number in parentheses is how many
+          memories mention this entity—more points usually make a steadier path.
+        </p>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Select
             value={entityId}
             onValueChange={(v) => {
@@ -266,7 +266,7 @@ export function EntityTrajectoriesView() {
             }}
             disabled={loadingList || !entities.length}
           >
-            <SelectTrigger className="bg-background">
+            <SelectTrigger id="entity-trajectory-select" className="h-10 w-full min-w-0 bg-background sm:min-w-[280px] sm:flex-1">
               <SelectValue placeholder={loadingList ? "Loading…" : "Select entity"} />
             </SelectTrigger>
             <SelectContent>
@@ -277,26 +277,25 @@ export function EntityTrajectoriesView() {
               ))}
             </SelectContent>
           </Select>
-        </div>
-        <div className="flex shrink-0 flex-col gap-1.5">
           <Button
+            type="button"
             variant="outline"
-            size="sm"
             disabled={!entityId || recomputing}
             onClick={() => void handleRecompute()}
-            className="shrink-0"
+            className="h-10 shrink-0 px-4 sm:w-auto w-full"
           >
             {recomputing ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
             ) : (
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className="h-4 w-4 shrink-0" />
             )}
             <span className="ml-2">Recompute</span>
           </Button>
-          <p className="max-w-[14rem] text-[10px] leading-snug text-muted-foreground">
-            Re-runs the analysis on latest memories. Needs background worker + enough linked facts.
-          </p>
         </div>
+        <p className="text-[10px] leading-snug text-muted-foreground">
+          <span className="font-medium text-muted-foreground/90">Recompute</span> re-runs the analysis on
+          your latest memories (requires the API worker and enough facts linked to this entity).
+        </p>
       </div>
 
       {!loadingList && !listError && entities.length === 0 && (
