@@ -25,8 +25,11 @@ export async function POST(
     });
 
     if (response.error) {
-      const status = (response.error as { status?: number }).status ?? 500;
-      return NextResponse.json({ error: response.error }, { status });
+      const httpStatus =
+        "response" in response && response.response instanceof Response
+          ? response.response.status
+          : 500;
+      return NextResponse.json({ error: response.error }, { status: httpStatus });
     }
 
     return NextResponse.json(response.data, { status: 200 });

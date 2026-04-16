@@ -896,7 +896,11 @@ export interface CodebaseImpactResult {
 }
 
 export class ControlPlaneClient {
-  private async fetchApi<T>(path: string, options?: RequestInit): Promise<T> {
+  private async fetchApi<T>(
+    path: string,
+    options?: RequestInit,
+    meta?: { suppressToastIfStatus?: number[] }
+  ): Promise<T> {
     try {
       const response = await fetch(path, {
         ...options,
@@ -931,24 +935,28 @@ export class ControlPlaneClient {
         const description = String(errorDetails || errorMessage);
         const status = response.status;
 
-        if (status >= 400 && status < 500) {
-          // Client errors (4xx) - validation, bad request, etc. - show as warning
-          toast.warning("Client Error", {
-            description,
-            duration: 5000,
-          });
-        } else if (status >= 500) {
-          // Server errors (5xx) - show as error
-          toast.error("Server Error", {
-            description,
-            duration: 5000,
-          });
-        } else {
-          // Other HTTP errors - show as error
-          toast.error("API Error", {
-            description,
-            duration: 5000,
-          });
+        const skipToast = meta?.suppressToastIfStatus?.includes(status) ?? false;
+
+        if (!skipToast) {
+          if (status >= 400 && status < 500) {
+            // Client errors (4xx) - validation, bad request, etc. - show as warning
+            toast.warning("Client Error", {
+              description,
+              duration: 5000,
+            });
+          } else if (status >= 500) {
+            // Server errors (5xx) - show as error
+            toast.error("Server Error", {
+              description,
+              duration: 5000,
+            });
+          } else {
+            // Other HTTP errors - show as error
+            toast.error("API Error", {
+              description,
+              duration: 5000,
+            });
+          }
         }
 
         // Still throw error for callers that want to handle it
@@ -1341,7 +1349,9 @@ export class ControlPlaneClient {
    */
   async getEntityTrajectory(entityId: string, bankId: string) {
     return this.fetchApi<EntityTrajectoryPayload>(
-      `/api/entities/${encodeURIComponent(entityId)}/trajectory?bank_id=${encodeURIComponent(bankId)}`
+      `/api/entities/${encodeURIComponent(entityId)}/trajectory?bank_id=${encodeURIComponent(bankId)}`,
+      undefined,
+      { suppressToastIfStatus: [404] }
     );
   }
 

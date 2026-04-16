@@ -40,13 +40,19 @@ export function EntityTrajectoriesView() {
   const [loadingTraj, setLoadingTraj] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [recomputing, setRecomputing] = useState(false);
+  const [listError, setListError] = useState<string | null>(null);
+  const [trajError, setTrajError] = useState<string | null>(null);
 
   const loadEntities = useCallback(async () => {
     if (!currentBank) return;
     setLoadingList(true);
+    setListError(null);
     try {
       const res = await client.listEntities({ bank_id: currentBank, limit: 200, offset: 0 });
       setEntities((res.items || []) as EntityRow[]);
+    } catch (e: unknown) {
+      setListError(e instanceof Error ? e.message : "Could not list entities");
+      setEntities([]);
     } finally {
       setLoadingList(false);
     }
@@ -58,6 +64,7 @@ export function EntityTrajectoriesView() {
       setEntityId("");
       setTrajectory(null);
       setNotFound(false);
+      setTrajError(null);
     }
   }, [currentBank, loadEntities]);
 
@@ -65,6 +72,7 @@ export function EntityTrajectoriesView() {
     if (!currentBank || !id) return;
     setLoadingTraj(true);
     setNotFound(false);
+    setTrajError(null);
     try {
       const data = await client.getEntityTrajectory(id, currentBank);
       setTrajectory(data);
@@ -73,6 +81,9 @@ export function EntityTrajectoriesView() {
       if (status === 404) {
         setTrajectory(null);
         setNotFound(true);
+      } else {
+        setTrajectory(null);
+        setTrajError(e instanceof Error ? e.message : "Failed to load trajectory");
       }
     } finally {
       setLoadingTraj(false);
@@ -118,6 +129,12 @@ export function EntityTrajectoriesView() {
 
   return (
     <div className="space-y-6">
+      {listError && (
+        <p className="text-sm text-destructive" role="alert">
+          {listError}
+        </p>
+      )}
+
       <div className="flex flex-wrap items-end gap-4">
         <div className="min-w-[220px] flex-1">
           <label className="text-sm font-medium text-muted-foreground mb-1 block">Entity</label>
@@ -156,6 +173,19 @@ export function EntityTrajectoriesView() {
         </Button>
       </div>
 
+      {!loadingList && !listError && entities.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No entities in this bank yet. Retain memories that mention people or organizations, then open this tab
+          again.
+        </p>
+      )}
+
+      {trajError && (
+        <p className="text-sm text-destructive" role="alert">
+          {trajError}
+        </p>
+      )}
+
       {loadingTraj && (
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -164,12 +194,22 @@ export function EntityTrajectoriesView() {
       )}
 
       {notFound && !loadingTraj && entityId && (
-        <p className="text-sm text-muted-foreground">
-          No trajectory yet for this entity. Enable{" "}
-          <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code>{" "}
-          on the bank, retain facts linked to the entity, then use Recompute (or wait for the
-          background worker).
-        </p>
+        <div className="text-sm text-muted-foreground space-y-2 max-w-2xl">
+          <p>
+            No trajectory computed for this entity yet. This is normal until the first successful run.
+          </p>
+          <p>
+            Turn on{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code>{" "}
+            for the bank (e.g. <code className="rounded bg-muted px-1 py-0.5 text-xs">ATULYA_API_ENABLE_ENTITY_TRAJECTORIES=true</code>{" "}
+            or bank config), ensure the entity has at least three memory facts with embeddings linked via{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">unit_entities</code>, then click{" "}
+            <span className="font-medium text-foreground">Recompute</span>. Computation runs in the API{" "}
+            <span className="font-medium text-foreground">worker</span>—use{" "}
+            <code className="rounded bg-muted px-1 py-0.5 text-xs">./scripts/dev/start.sh --with-worker</code>{" "}
+            if jobs stay pending locally.
+          </p>
+        </div>
       )}
 
       {trajectory && !loadingTraj && (
