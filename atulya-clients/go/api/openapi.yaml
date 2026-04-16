@@ -378,6 +378,48 @@ paths:
       summary: Investigate graph intelligence
       tags:
       - Memory
+  /v1/default/banks/{bank_id}/anomaly/intelligence:
+    post:
+      operationId: get_anomaly_intelligence
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnomalyIntelligenceRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnomalyIntelligenceResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get anomaly intelligence for bank
+      tags:
+      - Memory
   /v1/default/banks/{bank_id}/graph/summary:
     get:
       description: Retrieve a clustered graph summary and top-use nodes for scalable
@@ -1129,6 +1171,97 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
       summary: Get entity details
+      tags:
+      - Entities
+  /v1/default/banks/{bank_id}/entities/{entity_id}/trajectory:
+    get:
+      description: "Return the latest LLM+HMM-style progression snapshot for an entity,\
+        \ if computed."
+      operationId: get_entity_trajectory
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: entity_id
+        required: true
+        schema:
+          title: Entity Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityTrajectoryResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get entity trajectory
+      tags:
+      - Entities
+  /v1/default/banks/{bank_id}/entities/{entity_id}/trajectory/recompute:
+    post:
+      description: Enqueue a background job to recompute the trajectory for this entity.
+      operationId: post_entity_trajectory_recompute
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: entity_id
+        required: true
+        schema:
+          title: Entity Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EntityTrajectoryRecomputeResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Queue entity trajectory recompute
       tags:
       - Entities
   /v1/default/banks/{bank_id}/entities/{entity_id}/regenerate:
@@ -4718,6 +4851,340 @@ components:
       required:
       - content
       title: AddBackgroundRequest
+    AnomalyCorrectionResponse:
+      example:
+        applied_at: applied_at
+        anomaly_id: anomaly_id
+        target_unit_id: target_unit_id
+        confidence_delta: 7.061401241503109
+        bank_id: bank_id
+        correction_type: correction_type
+        id: id
+        before_state:
+          key: ""
+        applied_by: applied_by
+        after_state:
+          key: ""
+      properties:
+        id:
+          title: AnomalyCorrectionResponseId
+          type: string
+        bank_id:
+          title: AnomalyCorrectionResponseBankId
+          type: string
+        anomaly_id:
+          title: AnomalyCorrectionResponseAnomalyId
+          type: string
+        correction_type:
+          title: AnomalyCorrectionResponseCorrectionType
+          type: string
+        target_unit_id:
+          nullable: true
+          type: string
+        before_state:
+          additionalProperties: true
+          title: AnomalyCorrectionResponseBeforeState
+          type: object
+        after_state:
+          additionalProperties: true
+          title: AnomalyCorrectionResponseAfterState
+          type: object
+        confidence_delta:
+          nullable: true
+          type: number
+        applied_at:
+          nullable: true
+          type: string
+        applied_by:
+          title: AnomalyCorrectionResponseAppliedBy
+          type: string
+      required:
+      - anomaly_id
+      - applied_by
+      - bank_id
+      - correction_type
+      - id
+      title: AnomalyCorrectionResponse
+    AnomalyEventResponse:
+      example:
+        severity: 2.3021358869347655
+        metadata:
+          key: ""
+        description: description
+        unit_ids:
+        - unit_ids
+        - unit_ids
+        detected_at: detected_at
+        resolved_by: resolved_by
+        corrections:
+        - applied_at: applied_at
+          anomaly_id: anomaly_id
+          target_unit_id: target_unit_id
+          confidence_delta: 7.061401241503109
+          bank_id: bank_id
+          correction_type: correction_type
+          id: id
+          before_state:
+            key: ""
+          applied_by: applied_by
+          after_state:
+            key: ""
+        - applied_at: applied_at
+          anomaly_id: anomaly_id
+          target_unit_id: target_unit_id
+          confidence_delta: 7.061401241503109
+          bank_id: bank_id
+          correction_type: correction_type
+          id: id
+          before_state:
+            key: ""
+          applied_by: applied_by
+          after_state:
+            key: ""
+        bank_id: bank_id
+        resolved_at: resolved_at
+        anomaly_type: anomaly_type
+        id: id
+        entity_ids:
+        - entity_ids
+        - entity_ids
+        status: open
+      properties:
+        id:
+          title: AnomalyEventResponseId
+          type: string
+        bank_id:
+          title: AnomalyEventResponseBankId
+          type: string
+        anomaly_type:
+          title: AnomalyEventResponseAnomalyType
+          type: string
+        severity:
+          title: AnomalyEventResponseSeverity
+          type: number
+        status:
+          enum:
+          - open
+          - acknowledged
+          - resolved
+          - suppressed
+          title: AnomalyEventResponseStatus
+          type: string
+        unit_ids:
+          items:
+            type: string
+          title: AnomalyEventResponseUnitIds
+          type: array
+        entity_ids:
+          items:
+            type: string
+          title: AnomalyEventResponseEntityIds
+          type: array
+        description:
+          title: AnomalyEventResponseDescription
+          type: string
+        metadata:
+          additionalProperties: true
+          title: AnomalyEventResponseMetadata
+          type: object
+        detected_at:
+          nullable: true
+          type: string
+        resolved_at:
+          nullable: true
+          type: string
+        resolved_by:
+          nullable: true
+          type: string
+        corrections:
+          items:
+            $ref: "#/components/schemas/AnomalyCorrectionResponse"
+          title: AnomalyEventResponseCorrections
+          type: array
+      required:
+      - anomaly_type
+      - bank_id
+      - description
+      - id
+      - severity
+      - status
+      title: AnomalyEventResponse
+    AnomalyIntelligenceRequest:
+      example:
+        anomaly_types:
+        - anomaly_types
+        - anomaly_types
+        limit: 16
+        min_severity: 0.6027456183070403
+        status: open
+      properties:
+        limit:
+          maximum: 200.0
+          minimum: 1.0
+          title: AnomalyIntelligenceRequestLimit
+          type: integer
+        status:
+          enum:
+          - open
+          - acknowledged
+          - resolved
+          - suppressed
+          nullable: true
+          type: string
+        anomaly_types:
+          items:
+            type: string
+          nullable: true
+          type: array
+        min_severity:
+          maximum: 1.0
+          minimum: 0.0
+          title: AnomalyIntelligenceRequestMinSeverity
+          type: number
+      title: AnomalyIntelligenceRequest
+    AnomalyIntelligenceResponse:
+      example:
+        summary:
+          total_events: 0
+          avg_severity: 0.5962133916683182
+          resolved_events: 1
+          by_type:
+            key: 5
+          open_events: 6
+        total_events_in_response: 9
+        events:
+        - severity: 2.3021358869347655
+          metadata:
+            key: ""
+          description: description
+          unit_ids:
+          - unit_ids
+          - unit_ids
+          detected_at: detected_at
+          resolved_by: resolved_by
+          corrections:
+          - applied_at: applied_at
+            anomaly_id: anomaly_id
+            target_unit_id: target_unit_id
+            confidence_delta: 7.061401241503109
+            bank_id: bank_id
+            correction_type: correction_type
+            id: id
+            before_state:
+              key: ""
+            applied_by: applied_by
+            after_state:
+              key: ""
+          - applied_at: applied_at
+            anomaly_id: anomaly_id
+            target_unit_id: target_unit_id
+            confidence_delta: 7.061401241503109
+            bank_id: bank_id
+            correction_type: correction_type
+            id: id
+            before_state:
+              key: ""
+            applied_by: applied_by
+            after_state:
+              key: ""
+          bank_id: bank_id
+          resolved_at: resolved_at
+          anomaly_type: anomaly_type
+          id: id
+          entity_ids:
+          - entity_ids
+          - entity_ids
+          status: open
+        - severity: 2.3021358869347655
+          metadata:
+            key: ""
+          description: description
+          unit_ids:
+          - unit_ids
+          - unit_ids
+          detected_at: detected_at
+          resolved_by: resolved_by
+          corrections:
+          - applied_at: applied_at
+            anomaly_id: anomaly_id
+            target_unit_id: target_unit_id
+            confidence_delta: 7.061401241503109
+            bank_id: bank_id
+            correction_type: correction_type
+            id: id
+            before_state:
+              key: ""
+            applied_by: applied_by
+            after_state:
+              key: ""
+          - applied_at: applied_at
+            anomaly_id: anomaly_id
+            target_unit_id: target_unit_id
+            confidence_delta: 7.061401241503109
+            bank_id: bank_id
+            correction_type: correction_type
+            id: id
+            before_state:
+              key: ""
+            applied_by: applied_by
+            after_state:
+              key: ""
+          bank_id: bank_id
+          resolved_at: resolved_at
+          anomaly_type: anomaly_type
+          id: id
+          entity_ids:
+          - entity_ids
+          - entity_ids
+          status: open
+      properties:
+        summary:
+          $ref: "#/components/schemas/AnomalyIntelligenceSummaryResponse"
+        events:
+          items:
+            $ref: "#/components/schemas/AnomalyEventResponse"
+          title: AnomalyIntelligenceResponseEvents
+          type: array
+        total_events_in_response:
+          title: AnomalyIntelligenceResponseTotalEventsInResponse
+          type: integer
+      required:
+      - summary
+      - total_events_in_response
+      title: AnomalyIntelligenceResponse
+    AnomalyIntelligenceSummaryResponse:
+      example:
+        total_events: 0
+        avg_severity: 0.5962133916683182
+        resolved_events: 1
+        by_type:
+          key: 5
+        open_events: 6
+      properties:
+        total_events:
+          title: AnomalyIntelligenceSummaryResponseTotalEvents
+          type: integer
+        open_events:
+          title: AnomalyIntelligenceSummaryResponseOpenEvents
+          type: integer
+        resolved_events:
+          title: AnomalyIntelligenceSummaryResponseResolvedEvents
+          type: integer
+        avg_severity:
+          maximum: 1.0
+          minimum: 0.0
+          title: AnomalyIntelligenceSummaryResponseAvgSeverity
+          type: number
+        by_type:
+          additionalProperties:
+            type: integer
+          title: AnomalyIntelligenceSummaryResponseByType
+      required:
+      - avg_severity
+      - open_events
+      - resolved_events
+      - total_events
+      title: AnomalyIntelligenceSummaryResponse
     AsyncOperationSubmitResponse:
       description: Response model for submitting an async operation.
       example:
@@ -7967,6 +8434,115 @@ components:
       - entity_id
       - observations
       title: EntityStateResponse
+    EntityTrajectoryRecomputeResponse:
+      description: Queued background trajectory recompute.
+      example:
+        operation_id: operation_id
+        status: status
+      properties:
+        operation_id:
+          title: EntityTrajectoryRecomputeResponseOperationId
+          type: string
+        status:
+          title: EntityTrajectoryRecomputeResponseStatus
+          type: string
+      required:
+      - operation_id
+      title: EntityTrajectoryRecomputeResponse
+    EntityTrajectoryResponse:
+      description: Latest entity trajectory snapshot (LLM vocabulary + HMM-style dynamics).
+      example:
+        llm_model: llm_model
+        vocabulary_hash: vocabulary_hash
+        forward_log_prob: 5.962133916683182
+        current_state: current_state
+        transition_matrix:
+        - - 0.8008281904610115
+          - 0.8008281904610115
+        - - 0.8008281904610115
+          - 0.8008281904610115
+        entity_id: entity_id
+        prompt_version: prompt_version
+        state_vocabulary:
+        - state_vocabulary
+        - state_vocabulary
+        forecast_distribution:
+          key: 1.4658129805029452
+        anomaly_score: 5.637376656633329
+        viterbi_path:
+        - occurred_sort_at: occurred_sort_at
+          fact_preview: fact_preview
+          state: state
+          unit_id: unit_id
+        - occurred_sort_at: occurred_sort_at
+          fact_preview: fact_preview
+          state: state
+          unit_id: unit_id
+        bank_id: bank_id
+        computed_at: computed_at
+        forecast_horizon: 6
+      properties:
+        entity_id:
+          title: EntityTrajectoryResponseEntityId
+          type: string
+        bank_id:
+          title: EntityTrajectoryResponseBankId
+          type: string
+        computed_at:
+          nullable: true
+          type: string
+        state_vocabulary:
+          items:
+            type: string
+          title: EntityTrajectoryResponseStateVocabulary
+          type: array
+        vocabulary_hash:
+          title: EntityTrajectoryResponseVocabularyHash
+          type: string
+        transition_matrix:
+          items:
+            items:
+              type: number
+            type: array
+          title: EntityTrajectoryResponseTransitionMatrix
+          type: array
+        current_state:
+          title: EntityTrajectoryResponseCurrentState
+          type: string
+        viterbi_path:
+          items:
+            $ref: "#/components/schemas/TrajectoryViterbiStepResponse"
+          title: EntityTrajectoryResponseViterbiPath
+          type: array
+        forecast_horizon:
+          title: EntityTrajectoryResponseForecastHorizon
+          type: integer
+        forecast_distribution:
+          additionalProperties:
+            type: number
+          title: EntityTrajectoryResponseForecastDistribution
+        forward_log_prob:
+          nullable: true
+          type: number
+        anomaly_score:
+          nullable: true
+          type: number
+        llm_model:
+          title: EntityTrajectoryResponseLlmModel
+          type: string
+        prompt_version:
+          title: EntityTrajectoryResponsePromptVersion
+          type: string
+      required:
+      - bank_id
+      - current_state
+      - entity_id
+      - forecast_distribution
+      - forecast_horizon
+      - state_vocabulary
+      - transition_matrix
+      - viterbi_path
+      title: EntityTrajectoryResponse
     FactsIncludeOptions:
       description: Options for including facts (based_on) in reflect results.
       properties: {}
@@ -10655,6 +11231,32 @@ components:
           title: ToolCallsIncludeOptionsOutput
           type: boolean
       title: ToolCallsIncludeOptions
+    TrajectoryViterbiStepResponse:
+      description: One step on the decoded Viterbi path.
+      example:
+        occurred_sort_at: occurred_sort_at
+        fact_preview: fact_preview
+        state: state
+        unit_id: unit_id
+      properties:
+        unit_id:
+          title: TrajectoryViterbiStepResponseUnitId
+          type: string
+        state:
+          title: TrajectoryViterbiStepResponseState
+          type: string
+        occurred_sort_at:
+          title: TrajectoryViterbiStepResponseOccurredSortAt
+          type: string
+        fact_preview:
+          title: TrajectoryViterbiStepResponseFactPreview
+          type: string
+      required:
+      - fact_preview
+      - occurred_sort_at
+      - state
+      - unit_id
+      title: TrajectoryViterbiStepResponse
     UpdateDirectiveRequest:
       description: Request model for updating a directive.
       example:

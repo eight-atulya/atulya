@@ -175,6 +175,7 @@ _PROTECTED_TABLES = frozenset(
         "anomaly_events",
         "anomaly_corrections",
         "pattern_library",
+        "entity_trajectories",
     ]
 )
 
@@ -3663,6 +3664,45 @@ class MemoryEngine(MemoryEngineInterface):
             result.get("total_events"),
         )
 
+    async def _handle_entity_trajectory_recompute(self, task_dict: dict[str, Any]) -> None:
+        """Background recompute of entity_trajectories rows for given entity IDs."""
+        from atulya_api.engine.entity_trajectory.service import EntityTrajectoryService
+        from atulya_api.models import RequestContext
+
+        bank_id = task_dict.get("bank_id")
+        entity_ids = task_dict.get("entity_ids") or []
+        if not bank_id or not entity_ids:
+            return
+
+        rc = RequestContext(internal=True)
+        resolved = await self._config_resolver.resolve_full_config(bank_id, rc)
+        if not resolved.enable_entity_trajectories:
+            logger.debug("[ENTITY_TRAJECTORY] skipped: feature disabled for bank=%s", bank_id)
+            return
+
+        llm = self._retain_llm_config.with_config(resolved)
+        pool = await self._get_pool()
+        for eid in entity_ids:
+            async with acquire_with_retry(pool) as conn:
+                row = await conn.fetchrow(
+                    f"""
+                    SELECT canonical_name FROM {fq_table("entities")}
+                    WHERE id = $1::uuid AND bank_id = $2
+                    """,
+                    uuid.UUID(str(eid)),
+                    bank_id,
+                )
+                if not row:
+                    continue
+                await EntityTrajectoryService.compute_and_persist(
+                    conn,
+                    bank_id=bank_id,
+                    entity_id=str(eid),
+                    entity_canonical_name=str(row["canonical_name"]),
+                    llm_config=llm,
+                    resolved_config=resolved,
+                )
+
     async def execute_task(self, task_dict: dict[str, Any]):
         """
         Execute a task by routing it to the appropriate handler.
@@ -3724,6 +3764,8 @@ class MemoryEngine(MemoryEngineInterface):
                 await self._handle_brain_learn(task_dict)
             elif task_type == "dream_generation":
                 await self._handle_dream_generation(task_dict)
+            elif task_type == "entity_trajectory_recompute":
+                await self._handle_entity_trajectory_recompute(task_dict)
             elif task_type == "webhook_delivery":
                 await self._handle_webhook_delivery(task_dict)
             else:
@@ -3829,49 +3871,102 @@ class MemoryEngine(MemoryEngineInterface):
         except Exception as e:
             logger.error(f"Failed to fire consolidation webhook for operation {operation_id}: {e}")
 
+    async def _enqueue_entity_trajectory_tasks(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        unit_ids: list[str],
+        schema: str | None = None,
+    ) -> None:
+        """Queue a single async worker task to recompute trajectories for touched entities."""
+        _ = schema
+        if not unit_ids:
+            return
+        from atulya_api.models import RequestContext
+
+        rc = RequestContext(internal=True)
+        resolved = await self._config_resolver.resolve_full_config(bank_id, rc)
+        if not resolved.enable_entity_trajectories:
+            return
+        cap = int(resolved.entity_trajectory_enqueue_max_entities)
+        rows = await conn.fetch(
+            f"""
+            SELECT DISTINCT ue.entity_id::text AS eid
+            FROM {fq_table("unit_entities")} ue
+            WHERE ue.unit_id = ANY($1::uuid[])
+            LIMIT $2
+            """,
+            unit_ids,
+            cap,
+        )
+        eids = [str(r["eid"]) for r in rows]
+        if not eids:
+            return
+        op_id = uuid.uuid4()
+        payload = json.dumps(
+            {
+                "type": "entity_trajectory_recompute",
+                "operation_id": str(op_id),
+                "bank_id": bank_id,
+                "entity_ids": eids,
+            }
+        )
+        now = datetime.now(UTC)
+        await conn.execute(
+            f"""
+            INSERT INTO {fq_table("async_operations")}
+              (operation_id, bank_id, operation_type, status, task_payload, result_metadata, created_at, updated_at)
+            VALUES ($1, $2, 'entity_trajectory_recompute', 'pending', $3::jsonb, '{{}}'::jsonb, $4, $4)
+            """,
+            op_id,
+            bank_id,
+            payload,
+            now,
+        )
+
     def _build_retain_outbox_callback(
         self,
         bank_id: str,
         contents: list[dict],
         operation_id: str | None,
         schema: str | None = None,
-    ) -> "Callable[[asyncpg.Connection], Awaitable[None]] | None":
-        """Build a transactional outbox callback for retain.completed webhook events.
+    ) -> "Callable[[asyncpg.Connection, list[str]], Awaitable[None]]":
+        """Transactional outbox: retain.completed webhooks (if configured) + entity trajectory enqueue."""
 
-        Returns a coroutine function that queues one webhook delivery row per content
-        item using the provided connection (inside the retain transaction). Returns None
-        if no webhook manager is configured.
-        """
         webhook_manager = getattr(self, "_webhook_manager", None)
-        if not webhook_manager:
-            return None
 
         from ..webhooks.models import RetainEventData, WebhookEvent, WebhookEventType
 
         now = datetime.now(UTC)
         op_id = operation_id or uuid.uuid4().hex
         events = []
-        for content in contents:
-            doc_id = content.get("document_id")
-            tags = content.get("tags")
-            data = RetainEventData(
-                document_id=doc_id,
-                tags=tags if isinstance(tags, list) else None,
-            )
-            events.append(
-                WebhookEvent(
-                    event=WebhookEventType.RETAIN_COMPLETED,
-                    bank_id=bank_id,
-                    operation_id=op_id,
-                    status="completed",
-                    timestamp=now,
-                    data=data,
+        if webhook_manager:
+            for content in contents:
+                doc_id = content.get("document_id")
+                tags = content.get("tags")
+                data = RetainEventData(
+                    document_id=doc_id,
+                    tags=tags if isinstance(tags, list) else None,
                 )
-            )
+                events.append(
+                    WebhookEvent(
+                        event=WebhookEventType.RETAIN_COMPLETED,
+                        bank_id=bank_id,
+                        operation_id=op_id,
+                        status="completed",
+                        timestamp=now,
+                        data=data,
+                    )
+                )
 
-        async def _callback(conn: asyncpg.Connection) -> None:
-            for event in events:
-                await webhook_manager.fire_event_with_conn(event, conn, schema=schema)
+        async def _callback(conn: asyncpg.Connection, unit_ids: list[str]) -> None:
+            if webhook_manager:
+                for event in events:
+                    await webhook_manager.fire_event_with_conn(event, conn, schema=schema)
+            await self._enqueue_entity_trajectory_tasks(
+                conn, bank_id=bank_id, unit_ids=unit_ids, schema=schema
+            )
 
         return _callback
 
@@ -4678,7 +4773,7 @@ class MemoryEngine(MemoryEngineInterface):
         document_tags: list[str] | None = None,
         return_usage: bool = False,
         operation_id: str | None = None,
-        outbox_callback: "Callable[[asyncpg.Connection], Awaitable[None]] | None" = None,
+        outbox_callback: "Callable[[asyncpg.Connection, list[str]], Awaitable[None]] | None" = None,
     ):
         """
         Store multiple content items as memory units in ONE batch operation.
@@ -4902,7 +4997,7 @@ class MemoryEngine(MemoryEngineInterface):
         confidence_score: float | None = None,
         document_tags: list[str] | None = None,
         operation_id: str | None = None,
-        outbox_callback: "Callable[[asyncpg.Connection], Awaitable[None]] | None" = None,
+        outbox_callback: "Callable[[asyncpg.Connection, list[str]], Awaitable[None]] | None" = None,
     ) -> tuple[list[list[str]], "TokenUsage"]:
         """
         Internal method for batch processing without chunking logic.
@@ -9565,6 +9660,93 @@ class MemoryEngine(MemoryEngineInterface):
             "metadata": decode_jsonb(entity_row["metadata"], {}),
             "observations": [],
         }
+
+    async def get_entity_trajectory(
+        self,
+        bank_id: str,
+        entity_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any] | None:
+        """Return latest persisted entity trajectory row, or None if missing."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="get_entity_trajectory", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT entity_id, bank_id, computed_at, state_vocabulary, vocabulary_hash,
+                       transition_matrix, current_state, viterbi_path, forecast_horizon,
+                       forecast_distribution, forward_log_prob, anomaly_score, llm_model, prompt_version
+                FROM {fq_table("entity_trajectories")}
+                WHERE bank_id = $1 AND entity_id = $2::uuid
+                """,
+                bank_id,
+                uuid.UUID(entity_id),
+            )
+        if not row:
+            return None
+        return {
+            "entity_id": str(row["entity_id"]),
+            "bank_id": row["bank_id"],
+            "computed_at": row["computed_at"].isoformat() if row["computed_at"] else None,
+            "state_vocabulary": list(row["state_vocabulary"]) if row["state_vocabulary"] else [],
+            "vocabulary_hash": row["vocabulary_hash"] or "",
+            "transition_matrix": list(row["transition_matrix"]) if row["transition_matrix"] else [],
+            "current_state": row["current_state"],
+            "viterbi_path": list(row["viterbi_path"]) if row["viterbi_path"] else [],
+            "forecast_horizon": int(row["forecast_horizon"] or 0),
+            "forecast_distribution": dict(row["forecast_distribution"]) if row["forecast_distribution"] else {},
+            "forward_log_prob": float(row["forward_log_prob"]) if row["forward_log_prob"] is not None else None,
+            "anomaly_score": float(row["anomaly_score"]) if row["anomaly_score"] is not None else None,
+            "llm_model": row["llm_model"] or "",
+            "prompt_version": row["prompt_version"] or "",
+        }
+
+    async def submit_entity_trajectory_recompute(
+        self,
+        bank_id: str,
+        entity_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> str:
+        """Insert a pending async_operations row to recompute trajectory for one entity. Returns operation_id."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="submit_entity_trajectory_recompute", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        op_id = uuid.uuid4()
+        payload = json.dumps(
+            {
+                "type": "entity_trajectory_recompute",
+                "operation_id": str(op_id),
+                "bank_id": bank_id,
+                "entity_ids": [str(entity_id)],
+            }
+        )
+        now = datetime.now(UTC)
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {fq_table("async_operations")}
+                  (operation_id, bank_id, operation_type, status, task_payload, result_metadata, created_at, updated_at)
+                VALUES ($1, $2, 'entity_trajectory_recompute', 'pending', $3::jsonb, '{{}}'::jsonb, $4, $4)
+                """,
+                op_id,
+                bank_id,
+                payload,
+                now,
+            )
+        return str(op_id)
 
     def _parse_observations(self, observations_raw: list):
         """Parse raw observation dicts into typed Observation models.

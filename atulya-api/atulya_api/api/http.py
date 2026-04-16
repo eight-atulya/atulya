@@ -302,6 +302,41 @@ class EntityDetailResponse(BaseModel):
     observations: list[EntityObservationResponse]
 
 
+class TrajectoryViterbiStepResponse(BaseModel):
+    """One step on the decoded Viterbi path."""
+
+    unit_id: str
+    state: str
+    occurred_sort_at: str
+    fact_preview: str
+
+
+class EntityTrajectoryResponse(BaseModel):
+    """Latest entity trajectory snapshot (LLM vocabulary + HMM-style dynamics)."""
+
+    entity_id: str
+    bank_id: str
+    computed_at: str | None = None
+    state_vocabulary: list[str]
+    vocabulary_hash: str = ""
+    transition_matrix: list[list[float]]
+    current_state: str
+    viterbi_path: list[TrajectoryViterbiStepResponse]
+    forecast_horizon: int
+    forecast_distribution: dict[str, float]
+    forward_log_prob: float | None = None
+    anomaly_score: float | None = None
+    llm_model: str = ""
+    prompt_version: str = ""
+
+
+class EntityTrajectoryRecomputeResponse(BaseModel):
+    """Queued background trajectory recompute."""
+
+    operation_id: str
+    status: str = "pending"
+
+
 class ChunkData(BaseModel):
     """Chunk data for a single chunk."""
 
@@ -3819,6 +3854,87 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/entities/{entity_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/entities/{entity_id}/trajectory",
+        response_model=EntityTrajectoryResponse,
+        summary="Get entity trajectory",
+        description="Return the latest LLM+HMM-style progression snapshot for an entity, if computed.",
+        operation_id="get_entity_trajectory",
+        tags=["Entities"],
+    )
+    async def api_get_entity_trajectory(
+        bank_id: str, entity_id: str, request_context: RequestContext = Depends(get_request_context)
+    ):
+        try:
+            row = await app.state.memory.get_entity_trajectory(
+                bank_id, entity_id, request_context=request_context
+            )
+            if row is None:
+                raise HTTPException(status_code=404, detail="Trajectory not computed for this entity yet")
+            steps = [
+                TrajectoryViterbiStepResponse(
+                    unit_id=str(s.get("unit_id", "")),
+                    state=str(s.get("state", "")),
+                    occurred_sort_at=str(s.get("occurred_sort_at", "")),
+                    fact_preview=str(s.get("fact_preview", "")),
+                )
+                for s in (row.get("viterbi_path") or [])
+                if isinstance(s, dict)
+            ]
+            return EntityTrajectoryResponse(
+                entity_id=row["entity_id"],
+                bank_id=row["bank_id"],
+                computed_at=row.get("computed_at"),
+                state_vocabulary=list(row.get("state_vocabulary") or []),
+                vocabulary_hash=str(row.get("vocabulary_hash") or ""),
+                transition_matrix=[list(map(float, r)) for r in (row.get("transition_matrix") or [])],
+                current_state=str(row.get("current_state") or ""),
+                viterbi_path=steps,
+                forecast_horizon=int(row.get("forecast_horizon") or 0),
+                forecast_distribution={str(k): float(v) for k, v in (row.get("forecast_distribution") or {}).items()},
+                forward_log_prob=row.get("forward_log_prob"),
+                anomaly_score=row.get("anomaly_score"),
+                llm_model=str(row.get("llm_model") or ""),
+                prompt_version=str(row.get("prompt_version") or ""),
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET entity trajectory: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/entities/{entity_id}/trajectory/recompute",
+        response_model=EntityTrajectoryRecomputeResponse,
+        summary="Queue entity trajectory recompute",
+        description="Enqueue a background job to recompute the trajectory for this entity.",
+        operation_id="post_entity_trajectory_recompute",
+        tags=["Entities"],
+    )
+    async def api_post_entity_trajectory_recompute(
+        bank_id: str, entity_id: str, request_context: RequestContext = Depends(get_request_context)
+    ):
+        try:
+            op_id = await app.state.memory.submit_entity_trajectory_recompute(
+                bank_id, entity_id, request_context=request_context
+            )
+            return EntityTrajectoryRecomputeResponse(operation_id=op_id)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST entity trajectory recompute: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post(

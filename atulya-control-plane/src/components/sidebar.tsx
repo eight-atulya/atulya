@@ -14,6 +14,7 @@ import {
   ChevronRight,
   FolderGit2,
   Settings,
+  LineChart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -26,6 +27,7 @@ type NavItem =
   | "documents"
   | "codebases"
   | "entities"
+  | "trajectories"
   | "profile";
 
 interface SidebarProps {
@@ -50,6 +52,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
     { id: "documents" as NavItem, label: "Documents", icon: FileText },
     { id: "codebases" as NavItem, label: "Codebases", icon: FolderGit2 },
     { id: "entities" as NavItem, label: "Entities", icon: Users },
+    { id: "trajectories" as NavItem, label: "Trajectories", icon: LineChart },
     { id: "profile" as NavItem, label: "Brain Configuration", icon: Settings },
   ];
 

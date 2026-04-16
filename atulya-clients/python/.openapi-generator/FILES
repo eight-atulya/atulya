@@ -17,6 +17,11 @@ atulya_client_api/configuration.py
 atulya_client_api/exceptions.py
 atulya_client_api/models/__init__.py
 atulya_client_api/models/add_background_request.py
+atulya_client_api/models/anomaly_correction_response.py
+atulya_client_api/models/anomaly_event_response.py
+atulya_client_api/models/anomaly_intelligence_request.py
+atulya_client_api/models/anomaly_intelligence_response.py
+atulya_client_api/models/anomaly_intelligence_summary_response.py
 atulya_client_api/models/async_operation_submit_response.py
 atulya_client_api/models/background_response.py
 atulya_client_api/models/bank_config_response.py
@@ -93,6 +98,8 @@ atulya_client_api/models/entity_list_item.py
 atulya_client_api/models/entity_list_response.py
 atulya_client_api/models/entity_observation_response.py
 atulya_client_api/models/entity_state_response.py
+atulya_client_api/models/entity_trajectory_recompute_response.py
+atulya_client_api/models/entity_trajectory_response.py
 atulya_client_api/models/features_info.py
 atulya_client_api/models/file_retain_response.py
 atulya_client_api/models/graph_change_event_response.py
@@ -156,6 +163,7 @@ atulya_client_api/models/timeline_response.py
 atulya_client_api/models/timeline_temporal_response.py
 atulya_client_api/models/token_usage.py
 atulya_client_api/models/tool_calls_include_options.py
+atulya_client_api/models/trajectory_viterbi_step_response.py
 atulya_client_api/models/update_directive_request.py
 atulya_client_api/models/update_disposition_request.py
 atulya_client_api/models/update_mental_model_request.py

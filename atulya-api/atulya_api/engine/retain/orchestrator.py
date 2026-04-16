@@ -89,7 +89,7 @@ async def retain_batch(
     document_tags: list[str] | None = None,
     operation_id: str | None = None,
     schema: str | None = None,
-    outbox_callback: Callable[["asyncpg.Connection"], Awaitable[None]] | None = None,
+    outbox_callback: Callable[["asyncpg.Connection", list[str]], Awaitable[None]] | None = None,
 ) -> tuple[list[list[str]], TokenUsage]:
     """
     Process a batch of content through the retain pipeline.
@@ -528,7 +528,7 @@ async def retain_batch(
             # Transactional outbox: queue any side-effect tasks (e.g. webhook deliveries)
             # inside the same transaction so they are atomically committed with the retain data.
             if outbox_callback:
-                await outbox_callback(conn)
+                await outbox_callback(conn, [str(u) for u in unit_ids])
 
         # Flush entity stats (mention_count / last_seen) now that the transaction
         # has committed.  Uses a fresh pool connection — no locks held.

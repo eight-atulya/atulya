@@ -25,6 +25,181 @@ export type AddBackgroundRequest = {
 };
 
 /**
+ * AnomalyCorrectionResponse
+ */
+export type AnomalyCorrectionResponse = {
+    /**
+     * AnomalyCorrectionResponseId
+     */
+    id: string;
+    /**
+     * AnomalyCorrectionResponseBankId
+     */
+    bank_id: string;
+    /**
+     * AnomalyCorrectionResponseAnomalyId
+     */
+    anomaly_id: string;
+    /**
+     * AnomalyCorrectionResponseCorrectionType
+     */
+    correction_type: string;
+    /**
+     * AnomalyCorrectionResponseTargetUnitId
+     */
+    target_unit_id?: string | null;
+    /**
+     * AnomalyCorrectionResponseBeforeState
+     */
+    before_state?: {
+        [key: string]: unknown;
+    };
+    /**
+     * AnomalyCorrectionResponseAfterState
+     */
+    after_state?: {
+        [key: string]: unknown;
+    };
+    /**
+     * AnomalyCorrectionResponseConfidenceDelta
+     */
+    confidence_delta?: number | null;
+    /**
+     * AnomalyCorrectionResponseAppliedAt
+     */
+    applied_at?: string | null;
+    /**
+     * AnomalyCorrectionResponseAppliedBy
+     */
+    applied_by: string;
+};
+
+/**
+ * AnomalyEventResponse
+ */
+export type AnomalyEventResponse = {
+    /**
+     * AnomalyEventResponseId
+     */
+    id: string;
+    /**
+     * AnomalyEventResponseBankId
+     */
+    bank_id: string;
+    /**
+     * AnomalyEventResponseAnomalyType
+     */
+    anomaly_type: string;
+    /**
+     * AnomalyEventResponseSeverity
+     */
+    severity: number;
+    /**
+     * AnomalyEventResponseStatus
+     */
+    status: 'open' | 'acknowledged' | 'resolved' | 'suppressed';
+    /**
+     * AnomalyEventResponseUnitIds
+     */
+    unit_ids?: Array<string>;
+    /**
+     * AnomalyEventResponseEntityIds
+     */
+    entity_ids?: Array<string>;
+    /**
+     * AnomalyEventResponseDescription
+     */
+    description: string;
+    /**
+     * AnomalyEventResponseMetadata
+     */
+    metadata?: {
+        [key: string]: unknown;
+    };
+    /**
+     * AnomalyEventResponseDetectedAt
+     */
+    detected_at?: string | null;
+    /**
+     * AnomalyEventResponseResolvedAt
+     */
+    resolved_at?: string | null;
+    /**
+     * AnomalyEventResponseResolvedBy
+     */
+    resolved_by?: string | null;
+    /**
+     * AnomalyEventResponseCorrections
+     */
+    corrections?: Array<AnomalyCorrectionResponse>;
+};
+
+/**
+ * AnomalyIntelligenceRequest
+ */
+export type AnomalyIntelligenceRequest = {
+    /**
+     * AnomalyIntelligenceRequestLimit
+     */
+    limit?: number;
+    /**
+     * AnomalyIntelligenceRequestStatus
+     */
+    status?: 'open' | 'acknowledged' | 'resolved' | 'suppressed' | null;
+    /**
+     * AnomalyIntelligenceRequestAnomalyTypes
+     */
+    anomaly_types?: Array<string> | null;
+    /**
+     * AnomalyIntelligenceRequestMinSeverity
+     */
+    min_severity?: number;
+};
+
+/**
+ * AnomalyIntelligenceResponse
+ */
+export type AnomalyIntelligenceResponse = {
+    summary: AnomalyIntelligenceSummaryResponse;
+    /**
+     * AnomalyIntelligenceResponseEvents
+     */
+    events?: Array<AnomalyEventResponse>;
+    /**
+     * AnomalyIntelligenceResponseTotalEventsInResponse
+     */
+    total_events_in_response: number;
+};
+
+/**
+ * AnomalyIntelligenceSummaryResponse
+ */
+export type AnomalyIntelligenceSummaryResponse = {
+    /**
+     * AnomalyIntelligenceSummaryResponseTotalEvents
+     */
+    total_events: number;
+    /**
+     * AnomalyIntelligenceSummaryResponseOpenEvents
+     */
+    open_events: number;
+    /**
+     * AnomalyIntelligenceSummaryResponseResolvedEvents
+     */
+    resolved_events: number;
+    /**
+     * AnomalyIntelligenceSummaryResponseAvgSeverity
+     */
+    avg_severity: number;
+    /**
+     * AnomalyIntelligenceSummaryResponseByType
+     */
+    by_type?: {
+        [key: string]: number;
+    };
+};
+
+/**
  * AsyncOperationSubmitResponse
  *
  * Response model for submitting an async operation.
@@ -2611,6 +2786,88 @@ export type EntityStateResponse = {
 };
 
 /**
+ * EntityTrajectoryRecomputeResponse
+ *
+ * Queued background trajectory recompute.
+ */
+export type EntityTrajectoryRecomputeResponse = {
+    /**
+     * EntityTrajectoryRecomputeResponseOperationId
+     */
+    operation_id: string;
+    /**
+     * EntityTrajectoryRecomputeResponseStatus
+     */
+    status?: string;
+};
+
+/**
+ * EntityTrajectoryResponse
+ *
+ * Latest entity trajectory snapshot (LLM vocabulary + HMM-style dynamics).
+ */
+export type EntityTrajectoryResponse = {
+    /**
+     * EntityTrajectoryResponseEntityId
+     */
+    entity_id: string;
+    /**
+     * EntityTrajectoryResponseBankId
+     */
+    bank_id: string;
+    /**
+     * EntityTrajectoryResponseComputedAt
+     */
+    computed_at?: string | null;
+    /**
+     * EntityTrajectoryResponseStateVocabulary
+     */
+    state_vocabulary: Array<string>;
+    /**
+     * EntityTrajectoryResponseVocabularyHash
+     */
+    vocabulary_hash?: string;
+    /**
+     * EntityTrajectoryResponseTransitionMatrix
+     */
+    transition_matrix: Array<Array<number>>;
+    /**
+     * EntityTrajectoryResponseCurrentState
+     */
+    current_state: string;
+    /**
+     * EntityTrajectoryResponseViterbiPath
+     */
+    viterbi_path: Array<TrajectoryViterbiStepResponse>;
+    /**
+     * EntityTrajectoryResponseForecastHorizon
+     */
+    forecast_horizon: number;
+    /**
+     * EntityTrajectoryResponseForecastDistribution
+     */
+    forecast_distribution: {
+        [key: string]: number;
+    };
+    /**
+     * EntityTrajectoryResponseForwardLogProb
+     */
+    forward_log_prob?: number | null;
+    /**
+     * EntityTrajectoryResponseAnomalyScore
+     */
+    anomaly_score?: number | null;
+    /**
+     * EntityTrajectoryResponseLlmModel
+     */
+    llm_model?: string;
+    /**
+     * EntityTrajectoryResponsePromptVersion
+     */
+    prompt_version?: string;
+};
+
+/**
  * FactsIncludeOptions
  *
  * Options for including facts (based_on) in reflect results.
@@ -4624,6 +4881,30 @@ export type ToolCallsIncludeOptions = {
 };
 
 /**
+ * TrajectoryViterbiStepResponse
+ *
+ * One step on the decoded Viterbi path.
+ */
+export type TrajectoryViterbiStepResponse = {
+    /**
+     * TrajectoryViterbiStepResponseUnitId
+     */
+    unit_id: string;
+    /**
+     * TrajectoryViterbiStepResponseState
+     */
+    state: string;
+    /**
+     * TrajectoryViterbiStepResponseOccurredSortAt
+     */
+    occurred_sort_at: string;
+    /**
+     * TrajectoryViterbiStepResponseFactPreview
+     */
+    fact_preview: string;
+};
+
+/**
  * UpdateDirectiveRequest
  *
  * Request model for updating a directive.
@@ -5208,6 +5489,42 @@ export type InvestigateGraphResponses = {
 
 export type InvestigateGraphResponse = InvestigateGraphResponses[keyof InvestigateGraphResponses];
 
+export type GetAnomalyIntelligenceData = {
+    body: AnomalyIntelligenceRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/anomaly/intelligence';
+};
+
+export type GetAnomalyIntelligenceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetAnomalyIntelligenceError = GetAnomalyIntelligenceErrors[keyof GetAnomalyIntelligenceErrors];
+
+export type GetAnomalyIntelligenceResponses = {
+    /**
+     * Successful Response
+     */
+    200: AnomalyIntelligenceResponse;
+};
+
+export type GetAnomalyIntelligenceResponse = GetAnomalyIntelligenceResponses[keyof GetAnomalyIntelligenceResponses];
+
 export type GetGraphSummaryData = {
     body?: never;
     headers?: {
@@ -5754,6 +6071,86 @@ export type GetEntityResponses = {
 };
 
 export type GetEntityResponse = GetEntityResponses[keyof GetEntityResponses];
+
+export type GetEntityTrajectoryData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Entity Id
+         */
+        entity_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/entities/{entity_id}/trajectory';
+};
+
+export type GetEntityTrajectoryErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetEntityTrajectoryError = GetEntityTrajectoryErrors[keyof GetEntityTrajectoryErrors];
+
+export type GetEntityTrajectoryResponses = {
+    /**
+     * Successful Response
+     */
+    200: EntityTrajectoryResponse;
+};
+
+export type GetEntityTrajectoryResponse = GetEntityTrajectoryResponses[keyof GetEntityTrajectoryResponses];
+
+export type PostEntityTrajectoryRecomputeData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Entity Id
+         */
+        entity_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/entities/{entity_id}/trajectory/recompute';
+};
+
+export type PostEntityTrajectoryRecomputeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PostEntityTrajectoryRecomputeError = PostEntityTrajectoryRecomputeErrors[keyof PostEntityTrajectoryRecomputeErrors];
+
+export type PostEntityTrajectoryRecomputeResponses = {
+    /**
+     * Successful Response
+     */
+    200: EntityTrajectoryRecomputeResponse;
+};
+
+export type PostEntityTrajectoryRecomputeResponse = PostEntityTrajectoryRecomputeResponses[keyof PostEntityTrajectoryRecomputeResponses];
 
 export type RegenerateEntityObservationsData = {
     body?: never;

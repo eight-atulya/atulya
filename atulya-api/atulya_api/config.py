@@ -271,6 +271,15 @@ ENV_RETAIN_ENTITY_LOOKUP = "ATULYA_API_RETAIN_ENTITY_LOOKUP"
 ENV_RETAIN_BATCH_ENABLED = "ATULYA_API_RETAIN_BATCH_ENABLED"
 ENV_RETAIN_BATCH_POLL_INTERVAL_SECONDS = "ATULYA_API_RETAIN_BATCH_POLL_INTERVAL_SECONDS"
 
+# Entity trajectory (LLM + HMM-style progression; async recompute after retain)
+ENV_ENABLE_ENTITY_TRAJECTORIES = "ATULYA_API_ENABLE_ENTITY_TRAJECTORIES"
+ENV_ENTITY_TRAJECTORY_MAX_FACTS_PER_ENTITY = "ATULYA_API_ENTITY_TRAJECTORY_MAX_FACTS_PER_ENTITY"
+ENV_ENTITY_TRAJECTORY_FORECAST_HORIZON = "ATULYA_API_ENTITY_TRAJECTORY_FORECAST_HORIZON"
+ENV_ENTITY_TRAJECTORY_LAPLACE_ALPHA = "ATULYA_API_ENTITY_TRAJECTORY_LAPLACE_ALPHA"
+ENV_ENTITY_TRAJECTORY_MIN_FACTS = "ATULYA_API_ENTITY_TRAJECTORY_MIN_FACTS"
+ENV_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES = "ATULYA_API_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES"
+ENV_ENTITY_TRAJECTORY_PROMPT_VERSION = "ATULYA_API_ENTITY_TRAJECTORY_PROMPT_VERSION"
+
 # File storage configuration
 ENV_FILE_STORAGE_TYPE = "ATULYA_API_FILE_STORAGE_TYPE"
 ENV_FILE_STORAGE_S3_BUCKET = "ATULYA_API_FILE_STORAGE_S3_BUCKET"
@@ -469,6 +478,14 @@ DEFAULT_RETAIN_BATCH_TOKENS = 10_000  # ~40KB of text  # Max chars per sub-batch
 DEFAULT_RETAIN_ENTITY_LOOKUP = "trigram"  # "full" or "trigram"
 DEFAULT_RETAIN_BATCH_ENABLED = False  # Use LLM Batch API for fact extraction (only when async=True)
 DEFAULT_RETAIN_BATCH_POLL_INTERVAL_SECONDS = 60  # Batch API polling interval in seconds
+
+DEFAULT_ENABLE_ENTITY_TRAJECTORIES = False
+DEFAULT_ENTITY_TRAJECTORY_MAX_FACTS_PER_ENTITY = 200
+DEFAULT_ENTITY_TRAJECTORY_FORECAST_HORIZON = 5
+DEFAULT_ENTITY_TRAJECTORY_LAPLACE_ALPHA = 0.1
+DEFAULT_ENTITY_TRAJECTORY_MIN_FACTS = 3
+DEFAULT_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES = 50
+DEFAULT_ENTITY_TRAJECTORY_PROMPT_VERSION = "v1"
 
 # File storage defaults
 DEFAULT_FILE_STORAGE_TYPE = "native"  # PostgreSQL BYTEA storage
@@ -792,6 +809,15 @@ class AtulyaConfig:
     retain_batch_poll_interval_seconds: int
     retain_entity_lookup: str  # "full" or "trigram"
 
+    # Entity trajectory (hierarchical — async LLM+HMM-style progression per entity)
+    enable_entity_trajectories: bool
+    entity_trajectory_max_facts_per_entity: int
+    entity_trajectory_forecast_horizon: int
+    entity_trajectory_laplace_alpha: float
+    entity_trajectory_min_facts: int
+    entity_trajectory_enqueue_max_entities: int
+    entity_trajectory_prompt_version: str
+
     # File storage (static - server-level only)
     file_storage_type: str  # "native" (PostgreSQL) or "s3" (S3-compatible)
     file_storage_s3_bucket: str | None  # S3 bucket name (required for s3 storage)
@@ -943,6 +969,14 @@ class AtulyaConfig:
         # Entity labels (controlled vocabulary for entity classification)
         "entity_labels",
         "entities_allow_free_form",
+        # Entity trajectory (semantic progression layer)
+        "enable_entity_trajectories",
+        "entity_trajectory_max_facts_per_entity",
+        "entity_trajectory_forecast_horizon",
+        "entity_trajectory_laplace_alpha",
+        "entity_trajectory_min_facts",
+        "entity_trajectory_enqueue_max_entities",
+        "entity_trajectory_prompt_version",
         # Consolidation settings
         "enable_observations",
         "consolidation_llm_batch_size",
@@ -1072,6 +1106,16 @@ class AtulyaConfig:
             raise ValueError("consolidation_duplicate_ce_threshold must be in [0.0, 1.0]")
         if self.reranker_proof_boost_max_count < 0:
             raise ValueError("reranker_proof_boost_max_count must be >= 0")
+        if self.entity_trajectory_max_facts_per_entity < 1:
+            raise ValueError("entity_trajectory_max_facts_per_entity must be >= 1")
+        if self.entity_trajectory_forecast_horizon < 1 or self.entity_trajectory_forecast_horizon > 50:
+            raise ValueError("entity_trajectory_forecast_horizon must be in [1, 50]")
+        if self.entity_trajectory_laplace_alpha <= 0.0:
+            raise ValueError("entity_trajectory_laplace_alpha must be > 0")
+        if self.entity_trajectory_min_facts < 1:
+            raise ValueError("entity_trajectory_min_facts must be >= 1")
+        if self.entity_trajectory_enqueue_max_entities < 1:
+            raise ValueError("entity_trajectory_enqueue_max_entities must be >= 1")
 
     @classmethod
     def from_env(cls) -> "AtulyaConfig":
@@ -1297,6 +1341,37 @@ class AtulyaConfig:
             == "true",
             retain_batch_poll_interval_seconds=int(
                 os.getenv(ENV_RETAIN_BATCH_POLL_INTERVAL_SECONDS, str(DEFAULT_RETAIN_BATCH_POLL_INTERVAL_SECONDS))
+            ),
+            enable_entity_trajectories=os.getenv(
+                ENV_ENABLE_ENTITY_TRAJECTORIES, str(DEFAULT_ENABLE_ENTITY_TRAJECTORIES)
+            ).lower()
+            == "true",
+            entity_trajectory_max_facts_per_entity=int(
+                os.getenv(
+                    ENV_ENTITY_TRAJECTORY_MAX_FACTS_PER_ENTITY,
+                    str(DEFAULT_ENTITY_TRAJECTORY_MAX_FACTS_PER_ENTITY),
+                )
+            ),
+            entity_trajectory_forecast_horizon=int(
+                os.getenv(
+                    ENV_ENTITY_TRAJECTORY_FORECAST_HORIZON,
+                    str(DEFAULT_ENTITY_TRAJECTORY_FORECAST_HORIZON),
+                )
+            ),
+            entity_trajectory_laplace_alpha=float(
+                os.getenv(ENV_ENTITY_TRAJECTORY_LAPLACE_ALPHA, str(DEFAULT_ENTITY_TRAJECTORY_LAPLACE_ALPHA))
+            ),
+            entity_trajectory_min_facts=int(
+                os.getenv(ENV_ENTITY_TRAJECTORY_MIN_FACTS, str(DEFAULT_ENTITY_TRAJECTORY_MIN_FACTS))
+            ),
+            entity_trajectory_enqueue_max_entities=int(
+                os.getenv(
+                    ENV_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES,
+                    str(DEFAULT_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES),
+                )
+            ),
+            entity_trajectory_prompt_version=os.getenv(
+                ENV_ENTITY_TRAJECTORY_PROMPT_VERSION, DEFAULT_ENTITY_TRAJECTORY_PROMPT_VERSION
             ),
             # File storage
             file_storage_type=os.getenv(ENV_FILE_STORAGE_TYPE, DEFAULT_FILE_STORAGE_TYPE),

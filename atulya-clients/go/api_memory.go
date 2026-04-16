@@ -282,6 +282,137 @@ func (a *MemoryAPIService) ClearMemoryObservationsExecute(r ApiClearMemoryObserv
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGetAnomalyIntelligenceRequest struct {
+	ctx context.Context
+	ApiService *MemoryAPIService
+	bankId string
+	anomalyIntelligenceRequest *AnomalyIntelligenceRequest
+	authorization *string
+}
+
+func (r ApiGetAnomalyIntelligenceRequest) AnomalyIntelligenceRequest(anomalyIntelligenceRequest AnomalyIntelligenceRequest) ApiGetAnomalyIntelligenceRequest {
+	r.anomalyIntelligenceRequest = &anomalyIntelligenceRequest
+	return r
+}
+
+func (r ApiGetAnomalyIntelligenceRequest) Authorization(authorization string) ApiGetAnomalyIntelligenceRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiGetAnomalyIntelligenceRequest) Execute() (*AnomalyIntelligenceResponse, *http.Response, error) {
+	return r.ApiService.GetAnomalyIntelligenceExecute(r)
+}
+
+/*
+GetAnomalyIntelligence Get anomaly intelligence for bank
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @return ApiGetAnomalyIntelligenceRequest
+*/
+func (a *MemoryAPIService) GetAnomalyIntelligence(ctx context.Context, bankId string) ApiGetAnomalyIntelligenceRequest {
+	return ApiGetAnomalyIntelligenceRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+	}
+}
+
+// Execute executes the request
+//  @return AnomalyIntelligenceResponse
+func (a *MemoryAPIService) GetAnomalyIntelligenceExecute(r ApiGetAnomalyIntelligenceRequest) (*AnomalyIntelligenceResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *AnomalyIntelligenceResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetAnomalyIntelligence")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/anomaly/intelligence"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.anomalyIntelligenceRequest == nil {
+		return localVarReturnValue, nil, reportError("anomalyIntelligenceRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	// body params
+	localVarPostBody = r.anomalyIntelligenceRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGetGraphRequest struct {
 	ctx context.Context
 	ApiService *MemoryAPIService

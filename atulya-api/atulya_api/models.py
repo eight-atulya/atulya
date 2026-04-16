@@ -34,6 +34,7 @@ from sqlalchemy import (
     Index,
     Integer,
     Text,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy import (
@@ -302,6 +303,37 @@ class MemoryLink(Base):
             postgresql_where=sql_text("weight >= 0.1"),
             postgresql_ops={"weight": "DESC"},
         ),
+    )
+
+
+class EntityTrajectory(Base):
+    """Latest LLM+HMM-style progression snapshot per entity (one row per bank+entity)."""
+
+    __tablename__ = "entity_trajectories"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=sql_text("gen_random_uuid()")
+    )
+    bank_id: Mapped[str] = mapped_column(Text, nullable=False)
+    entity_id: Mapped[PyUUID] = mapped_column(UUID(as_uuid=True), ForeignKey("entities.id", ondelete="CASCADE"))
+    computed_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    state_vocabulary: Mapped[list] = mapped_column(JSONB, nullable=False)
+    vocabulary_hash: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    transition_matrix: Mapped[list] = mapped_column(JSONB, nullable=False)
+    current_state: Mapped[str] = mapped_column(Text, nullable=False)
+    viterbi_path: Mapped[list] = mapped_column(JSONB, nullable=False)
+    forecast_horizon: Mapped[int] = mapped_column(Integer, nullable=False, server_default="5")
+    forecast_distribution: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    forward_log_prob: Mapped[float | None] = mapped_column(Float, nullable=True)
+    anomaly_score: Mapped[float | None] = mapped_column(Float, nullable=True)
+    llm_model: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    prompt_version: Mapped[str] = mapped_column(Text, nullable=False, server_default="v1")
+
+    entity = relationship("Entity", backref="trajectory_rows")
+
+    __table_args__ = (
+        UniqueConstraint("bank_id", "entity_id", name="uq_entity_trajectories_bank_entity"),
+        Index("idx_entity_trajectories_bank_computed", "bank_id", "computed_at"),
     )
 
 

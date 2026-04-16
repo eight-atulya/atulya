@@ -39,6 +39,30 @@ export interface WebhookDelivery {
   updated_at: string | null;
 }
 
+export interface TrajectoryViterbiStepPayload {
+  unit_id: string;
+  state: string;
+  occurred_sort_at: string;
+  fact_preview: string;
+}
+
+export interface EntityTrajectoryPayload {
+  entity_id: string;
+  bank_id: string;
+  computed_at: string | null;
+  state_vocabulary: string[];
+  vocabulary_hash: string;
+  transition_matrix: number[][];
+  current_state: string;
+  viterbi_path: TrajectoryViterbiStepPayload[];
+  forecast_horizon: number;
+  forecast_distribution: Record<string, number>;
+  forward_log_prob: number | null;
+  anomaly_score: number | null;
+  llm_model: string;
+  prompt_version: string;
+}
+
 export interface MentalModel {
   id: string;
   bank_id: string;
@@ -1310,6 +1334,25 @@ export class ControlPlaneClient {
    */
   async getEntity(entityId: string, bankId: string) {
     return this.fetchApi(`/api/entities/${entityId}?bank_id=${bankId}`);
+  }
+
+  /**
+   * Latest entity trajectory (LLM + HMM-style progression).
+   */
+  async getEntityTrajectory(entityId: string, bankId: string) {
+    return this.fetchApi<EntityTrajectoryPayload>(
+      `/api/entities/${encodeURIComponent(entityId)}/trajectory?bank_id=${encodeURIComponent(bankId)}`
+    );
+  }
+
+  /**
+   * Queue background trajectory recompute for one entity.
+   */
+  async postEntityTrajectoryRecompute(entityId: string, bankId: string) {
+    return this.fetchApi<{ operation_id: string; status?: string }>(
+      `/api/entities/${encodeURIComponent(entityId)}/trajectory/recompute?bank_id=${encodeURIComponent(bankId)}`,
+      { method: "POST" }
+    );
   }
 
   /**

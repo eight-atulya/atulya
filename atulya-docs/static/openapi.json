@@ -591,6 +591,74 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/anomaly/intelligence": {
+      "post": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get anomaly intelligence for bank",
+        "operationId": "get_anomaly_intelligence",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnomalyIntelligenceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnomalyIntelligenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/graph/summary": {
       "get": {
         "tags": [
@@ -1709,6 +1777,142 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EntityDetailResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/entities/{entity_id}/trajectory": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Get entity trajectory",
+        "description": "Return the latest LLM+HMM-style progression snapshot for an entity, if computed.",
+        "operationId": "get_entity_trajectory",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityTrajectoryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/entities/{entity_id}/trajectory/recompute": {
+      "post": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Queue entity trajectory recompute",
+        "description": "Enqueue a background job to recompute the trajectory for this entity.",
+        "operationId": "post_entity_trajectory_recompute",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityTrajectoryRecomputeResponse"
                 }
               }
             }
@@ -7127,6 +7331,297 @@
           "update_disposition": true
         }
       },
+      "AnomalyCorrectionResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "anomaly_id": {
+            "type": "string",
+            "title": "Anomaly Id"
+          },
+          "correction_type": {
+            "type": "string",
+            "title": "Correction Type"
+          },
+          "target_unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Unit Id"
+          },
+          "before_state": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Before State"
+          },
+          "after_state": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "After State"
+          },
+          "confidence_delta": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence Delta"
+          },
+          "applied_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Applied At"
+          },
+          "applied_by": {
+            "type": "string",
+            "title": "Applied By"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "bank_id",
+          "anomaly_id",
+          "correction_type",
+          "applied_by"
+        ],
+        "title": "AnomalyCorrectionResponse"
+      },
+      "AnomalyEventResponse": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "anomaly_type": {
+            "type": "string",
+            "title": "Anomaly Type"
+          },
+          "severity": {
+            "type": "number",
+            "title": "Severity"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "acknowledged",
+              "resolved",
+              "suppressed"
+            ],
+            "title": "Status"
+          },
+          "unit_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unit Ids"
+          },
+          "entity_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entity Ids"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          },
+          "detected_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detected At"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "corrections": {
+            "items": {
+              "$ref": "#/components/schemas/AnomalyCorrectionResponse"
+            },
+            "type": "array",
+            "title": "Corrections"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "bank_id",
+          "anomaly_type",
+          "severity",
+          "status",
+          "description"
+        ],
+        "title": "AnomalyEventResponse"
+      },
+      "AnomalyIntelligenceRequest": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 50
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "open",
+                  "acknowledged",
+                  "resolved",
+                  "suppressed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "anomaly_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomaly Types"
+          },
+          "min_severity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Min Severity",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "title": "AnomalyIntelligenceRequest"
+      },
+      "AnomalyIntelligenceResponse": {
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/AnomalyIntelligenceSummaryResponse"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AnomalyEventResponse"
+            },
+            "type": "array",
+            "title": "Events"
+          },
+          "total_events_in_response": {
+            "type": "integer",
+            "title": "Total Events In Response"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "total_events_in_response"
+        ],
+        "title": "AnomalyIntelligenceResponse"
+      },
+      "AnomalyIntelligenceSummaryResponse": {
+        "properties": {
+          "total_events": {
+            "type": "integer",
+            "title": "Total Events"
+          },
+          "open_events": {
+            "type": "integer",
+            "title": "Open Events"
+          },
+          "resolved_events": {
+            "type": "integer",
+            "title": "Resolved Events"
+          },
+          "avg_severity": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Avg Severity"
+          },
+          "by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_events",
+          "open_events",
+          "resolved_events",
+          "avg_severity"
+        ],
+        "title": "AnomalyIntelligenceSummaryResponse"
+      },
       "AsyncOperationSubmitResponse": {
         "properties": {
           "operation_id": {
@@ -11367,6 +11862,137 @@
         "title": "EntityStateResponse",
         "description": "Current mental model of an entity."
       },
+      "EntityTrajectoryRecomputeResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id"
+        ],
+        "title": "EntityTrajectoryRecomputeResponse",
+        "description": "Queued background trajectory recompute."
+      },
+      "EntityTrajectoryResponse": {
+        "properties": {
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "computed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Computed At"
+          },
+          "state_vocabulary": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "State Vocabulary"
+          },
+          "vocabulary_hash": {
+            "type": "string",
+            "title": "Vocabulary Hash",
+            "default": ""
+          },
+          "transition_matrix": {
+            "items": {
+              "items": {
+                "type": "number"
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Transition Matrix"
+          },
+          "current_state": {
+            "type": "string",
+            "title": "Current State"
+          },
+          "viterbi_path": {
+            "items": {
+              "$ref": "#/components/schemas/TrajectoryViterbiStepResponse"
+            },
+            "type": "array",
+            "title": "Viterbi Path"
+          },
+          "forecast_horizon": {
+            "type": "integer",
+            "title": "Forecast Horizon"
+          },
+          "forecast_distribution": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Forecast Distribution"
+          },
+          "forward_log_prob": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Forward Log Prob"
+          },
+          "anomaly_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anomaly Score"
+          },
+          "llm_model": {
+            "type": "string",
+            "title": "Llm Model",
+            "default": ""
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_id",
+          "bank_id",
+          "state_vocabulary",
+          "transition_matrix",
+          "current_state",
+          "viterbi_path",
+          "forecast_horizon",
+          "forecast_distribution"
+        ],
+        "title": "EntityTrajectoryResponse",
+        "description": "Latest entity trajectory snapshot (LLM vocabulary + HMM-style dynamics)."
+      },
       "FactsIncludeOptions": {
         "properties": {},
         "type": "object",
@@ -15058,6 +15684,35 @@
         "type": "object",
         "title": "ToolCallsIncludeOptions",
         "description": "Options for including tool calls in reflect results."
+      },
+      "TrajectoryViterbiStepResponse": {
+        "properties": {
+          "unit_id": {
+            "type": "string",
+            "title": "Unit Id"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "occurred_sort_at": {
+            "type": "string",
+            "title": "Occurred Sort At"
+          },
+          "fact_preview": {
+            "type": "string",
+            "title": "Fact Preview"
+          }
+        },
+        "type": "object",
+        "required": [
+          "unit_id",
+          "state",
+          "occurred_sort_at",
+          "fact_preview"
+        ],
+        "title": "TrajectoryViterbiStepResponse",
+        "description": "One step on the decoded Viterbi path."
       },
       "UpdateDirectiveRequest": {
         "properties": {

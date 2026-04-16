@@ -19,6 +19,7 @@ import { BrainView } from "@/components/brain-view";
 import { MentalModelsView } from "@/components/mental-models-view";
 import { WebhooksView } from "@/components/webhooks-view";
 import { DreamTranceView } from "@/components/dream-trance-view";
+import { EntityTrajectoriesView } from "@/components/entity-trajectories-view";
 import { useFeatures } from "@/lib/features-context";
 import { useBank } from "@/lib/bank-context";
 import { client } from "@/lib/api";
@@ -50,6 +51,7 @@ type NavItem =
   | "documents"
   | "codebases"
   | "entities"
+  | "trajectories"
   | "profile";
 type DataSubTab = "world" | "experience" | "observations" | "mental-models";
 type BankConfigTab = "general" | "configuration" | "webhooks" | "dreams";
@@ -553,6 +555,19 @@ export default function BankPage() {
                   Explore entities (people, organizations, places) mentioned in memories.
                 </p>
                 <EntitiesView />
+              </div>
+            )}
+
+            {view === "trajectories" && (
+              <div>
+                <h1 className="text-3xl font-bold mb-2 text-foreground">Entity trajectories</h1>
+                <p className="text-muted-foreground mb-6">
+                  Visualize discrete progression states, transitions, and short-horizon forecasts per
+                  entity (requires{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 text-xs">enable_entity_trajectories</code> on
+                  the bank).
+                </p>
+                <EntityTrajectoriesView />
               </div>
             )}
           </div>

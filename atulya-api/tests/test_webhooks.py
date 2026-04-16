@@ -743,7 +743,7 @@ class TestRetainCompletedWebhook:
                 )
                 assert callback is not None
                 async with memory._pool.acquire() as conn:
-                    await callback(conn)
+                    await callback(conn, [])
             finally:
                 memory._webhook_manager = original_manager
 

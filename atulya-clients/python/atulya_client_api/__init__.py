@@ -39,6 +39,11 @@ __all__ = [
     "ApiAttributeError",
     "ApiException",
     "AddBackgroundRequest",
+    "AnomalyCorrectionResponse",
+    "AnomalyEventResponse",
+    "AnomalyIntelligenceRequest",
+    "AnomalyIntelligenceResponse",
+    "AnomalyIntelligenceSummaryResponse",
     "AsyncOperationSubmitResponse",
     "BackgroundResponse",
     "BankConfigResponse",
@@ -115,6 +120,8 @@ __all__ = [
     "EntityListResponse",
     "EntityObservationResponse",
     "EntityStateResponse",
+    "EntityTrajectoryRecomputeResponse",
+    "EntityTrajectoryResponse",
     "FeaturesInfo",
     "FileRetainResponse",
     "GraphChangeEventResponse",
@@ -178,6 +185,7 @@ __all__ = [
     "TimelineTemporalResponse",
     "TokenUsage",
     "ToolCallsIncludeOptions",
+    "TrajectoryViterbiStepResponse",
     "UpdateDirectiveRequest",
     "UpdateDispositionRequest",
     "UpdateMentalModelRequest",
@@ -218,6 +226,11 @@ from atulya_client_api.exceptions import ApiException as ApiException
 
 # import models into sdk package
 from atulya_client_api.models.add_background_request import AddBackgroundRequest as AddBackgroundRequest
+from atulya_client_api.models.anomaly_correction_response import AnomalyCorrectionResponse as AnomalyCorrectionResponse
+from atulya_client_api.models.anomaly_event_response import AnomalyEventResponse as AnomalyEventResponse
+from atulya_client_api.models.anomaly_intelligence_request import AnomalyIntelligenceRequest as AnomalyIntelligenceRequest
+from atulya_client_api.models.anomaly_intelligence_response import AnomalyIntelligenceResponse as AnomalyIntelligenceResponse
+from atulya_client_api.models.anomaly_intelligence_summary_response import AnomalyIntelligenceSummaryResponse as AnomalyIntelligenceSummaryResponse
 from atulya_client_api.models.async_operation_submit_response import AsyncOperationSubmitResponse as AsyncOperationSubmitResponse
 from atulya_client_api.models.background_response import BackgroundResponse as BackgroundResponse
 from atulya_client_api.models.bank_config_response import BankConfigResponse as BankConfigResponse
@@ -294,6 +307,8 @@ from atulya_client_api.models.entity_list_item import EntityListItem as EntityLi
 from atulya_client_api.models.entity_list_response import EntityListResponse as EntityListResponse
 from atulya_client_api.models.entity_observation_response import EntityObservationResponse as EntityObservationResponse
 from atulya_client_api.models.entity_state_response import EntityStateResponse as EntityStateResponse
+from atulya_client_api.models.entity_trajectory_recompute_response import EntityTrajectoryRecomputeResponse as EntityTrajectoryRecomputeResponse
+from atulya_client_api.models.entity_trajectory_response import EntityTrajectoryResponse as EntityTrajectoryResponse
 from atulya_client_api.models.features_info import FeaturesInfo as FeaturesInfo
 from atulya_client_api.models.file_retain_response import FileRetainResponse as FileRetainResponse
 from atulya_client_api.models.graph_change_event_response import GraphChangeEventResponse as GraphChangeEventResponse
@@ -357,6 +372,7 @@ from atulya_client_api.models.timeline_response import TimelineResponse as Timel
 from atulya_client_api.models.timeline_temporal_response import TimelineTemporalResponse as TimelineTemporalResponse
 from atulya_client_api.models.token_usage import TokenUsage as TokenUsage
 from atulya_client_api.models.tool_calls_include_options import ToolCallsIncludeOptions as ToolCallsIncludeOptions
+from atulya_client_api.models.trajectory_viterbi_step_response import TrajectoryViterbiStepResponse as TrajectoryViterbiStepResponse
 from atulya_client_api.models.update_directive_request import UpdateDirectiveRequest as UpdateDirectiveRequest
 from atulya_client_api.models.update_disposition_request import UpdateDispositionRequest as UpdateDispositionRequest
 from atulya_client_api.models.update_mental_model_request import UpdateMentalModelRequest as UpdateMentalModelRequest
