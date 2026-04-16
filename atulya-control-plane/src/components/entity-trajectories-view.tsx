@@ -250,12 +250,15 @@ export function EntityTrajectoriesView() {
       </details>
 
       <div className="max-w-4xl space-y-2">
-        <label className="block text-sm font-medium text-muted-foreground" htmlFor="entity-trajectory-select">
+        <label
+          className="block text-sm font-medium text-muted-foreground"
+          htmlFor="entity-trajectory-select"
+        >
           Entity to analyze
         </label>
         <p className="text-[11px] leading-relaxed text-muted-foreground">
-          Choose who or what this trajectory is <em>about</em>. The number in parentheses is how many
-          memories mention this entity—more points usually make a steadier path.
+          Choose who or what this trajectory is <em>about</em>. The number in parentheses is how
+          many memories mention this entity—more points usually make a steadier path.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
           <Select
@@ -266,7 +269,10 @@ export function EntityTrajectoriesView() {
             }}
             disabled={loadingList || !entities.length}
           >
-            <SelectTrigger id="entity-trajectory-select" className="h-10 w-full min-w-0 bg-background sm:min-w-[280px] sm:flex-1">
+            <SelectTrigger
+              id="entity-trajectory-select"
+              className="h-10 w-full min-w-0 bg-background sm:min-w-[280px] sm:flex-1"
+            >
               <SelectValue placeholder={loadingList ? "Loading…" : "Select entity"} />
             </SelectTrigger>
             <SelectContent>
@@ -293,8 +299,9 @@ export function EntityTrajectoriesView() {
           </Button>
         </div>
         <p className="text-[10px] leading-snug text-muted-foreground">
-          <span className="font-medium text-muted-foreground/90">Recompute</span> re-runs the analysis on
-          your latest memories (requires the API worker and enough facts linked to this entity).
+          <span className="font-medium text-muted-foreground/90">Recompute</span> re-runs the
+          analysis on your latest memories (requires the API worker and enough facts linked to this
+          entity).
         </p>
       </div>
 
