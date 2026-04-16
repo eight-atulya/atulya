@@ -563,11 +563,11 @@ export default function BankPage() {
                 <h1 className="text-3xl font-bold mb-2 text-foreground">Entity trajectories</h1>
                 <p className="text-muted-foreground mb-3 max-w-3xl leading-relaxed">
                   See how a <span className="text-foreground/90">single entity</span> (a person,
-                  company, product, or place extracted from memories) appears to evolve over time: we
-                  turn your chronological facts into a small set of{" "}
+                  company, product, or place extracted from memories) appears to evolve over time:
+                  we turn your chronological facts into a small set of{" "}
                   <span className="text-foreground/90">story states</span>, how often the narrative
-                  moves between them, and a short look-ahead. This is scoped to one entity at a time so
-                  the picture stays interpretable.
+                  moves between them, and a short look-ahead. This is scoped to one entity at a time
+                  so the picture stays interpretable.
                 </p>
                 <p className="text-sm text-muted-foreground/90 mb-6 max-w-3xl leading-relaxed">
                   The bank must have{" "}
