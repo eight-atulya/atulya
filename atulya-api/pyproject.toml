@@ -100,6 +100,10 @@ include = [
 ]
 
 [tool.pytest.ini_options]
+markers = [
+    "integration: full-stack or external dependency",
+    "slow: intentionally slow tests (opt-in or excluded in CI)",
+]
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s - %(levelname)s - %(name)s - %(message)s"
