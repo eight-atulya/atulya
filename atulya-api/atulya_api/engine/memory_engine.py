@@ -232,6 +232,13 @@ def validate_sql_schema(sql: str) -> None:
 import asyncpg
 from pydantic import BaseModel, Field
 
+from .code_intel import (
+    CodeIntelResult,
+)
+from .code_intel import (
+    run_pipeline as run_code_intel_pipeline,
+)
+from .code_intel.significance import SignificanceThresholds
 from .codebase_index import (
     IndexedChunk,
     IndexedEdge,
@@ -314,6 +321,207 @@ def _get_tiktoken_encoding():
     if _TIKTOKEN_ENCODING is None:
         _TIKTOKEN_ENCODING = tiktoken.get_encoding("cl100k_base")
     return _TIKTOKEN_ENCODING
+
+
+def _route_for_hint(hint: str) -> tuple[str, str]:
+    """Map a code-intel route hint to (route_target, route_source)."""
+
+    if hint == "dismiss":
+        return "dismissed", "auto_triage_dismiss"
+    if hint == "memory":
+        return "memory", "auto_triage_memory_pending"
+    return "unrouted", "auto_triage_review"
+
+
+def _significance_components_payload(intel_score) -> dict[str, float]:
+    """Serialize SignificanceScore.components into a JSON-safe dict.
+
+    Includes the final score and route info so the UI 'Why?' popover
+    has everything it needs in one column."""
+
+    components = intel_score.components
+    return {
+        "score": float(intel_score.score),
+        "route_hint": intel_score.route_hint,
+        "reason": intel_score.reason,
+        "role_weight": float(getattr(components, "role_weight", 0.0) or 0.0),
+        "symbol_kind_weight": float(getattr(components, "symbol_kind_weight", 0.0) or 0.0),
+        "exportness": float(getattr(components, "exportness", 0.0) or 0.0),
+        "pagerank_centrality": float(getattr(components, "pagerank_centrality", 0.0) or 0.0),
+        "fanin": float(getattr(components, "fanin", 0.0) or 0.0),
+        "complexity_density": float(getattr(components, "complexity_density", 0.0) or 0.0),
+        "safety_priority": float(getattr(components, "safety_priority", 0.0) or 0.0),
+        "cluster_representativeness": float(getattr(components, "cluster_representativeness", 0.0) or 0.0),
+        "change_boost": float(getattr(components, "change_boost", 0.0) or 0.0),
+        "parse_confidence": float(getattr(components, "parse_confidence", 0.0) or 0.0),
+    }
+
+
+def _decode_jsonb_field(value: Any) -> Any:
+    """asyncpg returns jsonb as raw text in some configurations;
+    decode opportunistically without raising."""
+
+    if value is None:
+        return None
+    if isinstance(value, (dict, list)):
+        return value
+    try:
+        return json.loads(value)
+    except Exception:
+        return None
+
+
+def _make_file_text_provider(indexed_files: list[IndexedFile]) -> Callable[[str], str | None]:
+    """Build an in-memory path -> text lookup for the code-intel pipeline."""
+
+    text_map: dict[str, str | None] = {f.path: f.retain_text for f in indexed_files}
+    return lambda path: text_map.get(path)
+
+
+_INTENT_TOKEN_RE = __import__("re").compile(r"[A-Za-z0-9_]+")
+_INTENT_STOPWORDS = {
+    "the",
+    "a",
+    "an",
+    "and",
+    "or",
+    "of",
+    "to",
+    "in",
+    "for",
+    "on",
+    "at",
+    "that",
+    "this",
+    "with",
+    "is",
+    "are",
+    "be",
+    "by",
+    "as",
+    "it",
+    "i",
+    "do",
+    "does",
+    "we",
+    "my",
+    "our",
+    "your",
+    "their",
+    "from",
+    "about",
+    "what",
+    "how",
+    "when",
+    "where",
+    "which",
+    "into",
+    "via",
+    "code",
+    "function",
+    "module",
+    "file",
+    "class",
+}
+
+
+def _tokenize_intent(text: str) -> set[str]:
+    """Lowercase tokens minus english stopwords; used for the
+    cosine/path-match scoring inside curate_codebase_by_intent."""
+
+    if not text:
+        return set()
+    tokens = {token.lower() for token in _INTENT_TOKEN_RE.findall(text)}
+    return {t for t in tokens if len(t) > 1 and t not in _INTENT_STOPWORDS}
+
+
+def _intent_text_overlap(intent_tokens: set[str], blob: str) -> float:
+    """Lightweight bag-of-words cosine substitute.
+
+    We deliberately avoid running an embedding API on every chunk per
+    request; the full code-aware embedding cosine is wired through the
+    CodeEmbeddingProvider but the snapshot pass already weighed signal
+    quality. For interactive curation we want zero-latency answers."""
+
+    if not intent_tokens or not blob:
+        return 0.0
+    blob_tokens = {token.lower() for token in _INTENT_TOKEN_RE.findall(blob)}
+    if not blob_tokens:
+        return 0.0
+    overlap = intent_tokens & blob_tokens
+    if not overlap:
+        return 0.0
+    import math
+
+    return min(1.0, len(overlap) / math.sqrt(len(intent_tokens) * len(blob_tokens)))
+
+
+def _intent_path_match(intent_tokens: set[str], path: str) -> float:
+    """Score how well a path matches the intent tokens."""
+
+    if not intent_tokens or not path:
+        return 0.0
+    path_tokens = {token.lower() for token in _INTENT_TOKEN_RE.findall(path)}
+    if not path_tokens:
+        return 0.0
+    overlap = intent_tokens & path_tokens
+    if not overlap:
+        return 0.0
+    return min(1.0, len(overlap) / max(1, len(intent_tokens)))
+
+
+def _build_intent_explain(cosine: float, path_match: float, significance: float, pagerank: float) -> str:
+    """One-line human-readable badge for each curated result."""
+
+    parts = []
+    if cosine > 0.0:
+        parts.append(f"text {cosine:.2f}")
+    if path_match > 0.0:
+        parts.append(f"path {path_match:.2f}")
+    if significance > 0.0:
+        parts.append(f"signal {significance:.2f}")
+    if pagerank > 0.0:
+        parts.append(f"central {pagerank:.2f}")
+    return " | ".join(parts) if parts else "scored"
+
+
+_TRIAGE_SETTINGS_DEFAULTS: dict[str, Any] = {
+    "score_threshold_high": 0.62,
+    "centrality_threshold": 0.35,
+    "safety_threshold": 0.25,
+    "embedding_provider": "jina_local",
+    "enable_safety_scan": True,
+    "enable_semgrep": False,
+    "semgrep_rulepack": None,
+    "scip_index_path": None,
+}
+
+
+def _normalize_triage_settings(raw: dict[str, Any]) -> dict[str, Any]:
+    """Merge user overrides into defaults; coerces simple types."""
+
+    out = dict(_TRIAGE_SETTINGS_DEFAULTS)
+    if not isinstance(raw, dict):
+        return out
+    for key, default in _TRIAGE_SETTINGS_DEFAULTS.items():
+        if key not in raw:
+            continue
+        value = raw[key]
+        if isinstance(default, bool):
+            out[key] = bool(value)
+        elif isinstance(default, float):
+            try:
+                out[key] = max(0.0, min(1.0, float(value)))
+            except (TypeError, ValueError):
+                continue
+        elif isinstance(default, int):
+            try:
+                out[key] = int(value)
+            except (TypeError, ValueError):
+                continue
+        else:
+            out[key] = value if value is not None else None
+    return out
 
 
 class MemoryEngine(MemoryEngineInterface):
@@ -951,6 +1159,36 @@ class MemoryEngine(MemoryEngineInterface):
             return max(0, int(payload.get("offset", 0)))
         except (TypeError, ValueError, AttributeError):
             return 0
+
+    @staticmethod
+    def _codebase_chunk_order_clause(order_by: str | None) -> str:
+        """Map an order_by token to a stable SQL ORDER BY clause.
+
+        Default puts highest-significance first so the gold layer
+        surfaces immediately. Legacy 'review' ordering is preserved for
+        backwards-compatible callers."""
+
+        token = (order_by or "significance").lower()
+        if token == "review":
+            return (
+                "CASE r.route_target "
+                "WHEN 'unrouted' THEN 0 "
+                "WHEN 'memory' THEN 1 "
+                "WHEN 'research' THEN 2 "
+                "ELSE 3 END, "
+                "CASE f.change_kind "
+                "WHEN 'modified' THEN 0 "
+                "WHEN 'added' THEN 1 "
+                "ELSE 2 END, "
+                "c.path ASC, c.start_line ASC"
+            )
+        if token == "path":
+            return "c.path ASC, c.start_line ASC"
+        if token == "complexity":
+            return "c.complexity_score DESC NULLS LAST, c.significance_score DESC, c.path ASC, c.start_line ASC"
+        if token == "pagerank":
+            return "c.pagerank_centrality DESC NULLS LAST, c.significance_score DESC, c.path ASC, c.start_line ASC"
+        return "c.significance_score DESC, c.pagerank_centrality DESC NULLS LAST, c.path ASC, c.start_line ASC"
 
     async def _build_codebase_chunk_graph(
         self,
@@ -1850,6 +2088,14 @@ class MemoryEngine(MemoryEngineInterface):
                     file_edges=file_edges,
                 )
 
+                triage_settings = await self._load_codebase_triage_settings(conn, codebase_id=codebase_id)
+                code_intel_result = self._run_code_intel_safe(
+                    indexed_files=index_result.files,
+                    file_edges=file_edges,
+                    chunk_rows=chunk_rows,
+                    triage_settings=triage_settings,
+                )
+
                 if operation_id:
                     await self._set_operation_stage(
                         operation_id,
@@ -1941,20 +2187,40 @@ class MemoryEngine(MemoryEngineInterface):
                 chunk_id_map: dict[str, uuid.UUID] = {}
                 inserted_chunk_records: list[dict[str, object]] = []
                 route_counts = {"unrouted": 0, "memory": 0, "research": 0, "dismissed": 0}
+                route_source_counts: dict[str, int] = {}
                 for chunk_row in chunk_rows:
+                    chunk_key = chunk_row["chunk_key"]
+                    intel_score = code_intel_result.chunk_scores.get(chunk_key)
+                    significance_score = float(intel_score.score) if intel_score else 0.0
+                    significance_components = (
+                        json.dumps(_significance_components_payload(intel_score)) if intel_score else None
+                    )
+                    file_role_value = code_intel_result.chunk_file_role.get(chunk_key)
+                    auto_route_reason = intel_score.reason if intel_score else None
+                    complexity_payload = code_intel_result.chunk_complexity.get(chunk_key)
+                    complexity_score_val = (
+                        float(complexity_payload["cyclomatic_complexity"]) if complexity_payload else None
+                    )
+                    safety_tags_val = code_intel_result.chunk_safety_tags.get(chunk_key, [])
+                    pagerank_val = code_intel_result.chunk_pagerank.get(chunk_key)
+                    fanin_val = int(code_intel_result.chunk_fanin.get(chunk_key, 0))
+
                     inserted = await conn.fetchrow(
                         f"""
                         INSERT INTO {fq_table("codebase_chunks")}
                             (codebase_id, snapshot_id, bank_id, chunk_key, document_id, path, language, kind, label,
                              content_hash, preview_text, content_text, start_line, end_line, container,
-                             parent_symbol, parent_fq_name, parse_confidence, cluster_id, cluster_label)
-                        VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19)
+                             parent_symbol, parent_fq_name, parse_confidence, cluster_id, cluster_label,
+                             significance_score, significance_components, file_role, auto_route_reason,
+                             complexity_score, safety_tags, pagerank_centrality, fanin_count)
+                        VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                                $20, $21::jsonb, $22, $23, $24, $25, $26, $27)
                         RETURNING id
                         """,
                         uuid.UUID(codebase_id),
                         uuid.UUID(snapshot_id),
                         bank_id,
-                        chunk_row["chunk_key"],
+                        chunk_key,
                         chunk_row["path"],
                         chunk_row["language"],
                         chunk_row["kind"],
@@ -1970,9 +2236,17 @@ class MemoryEngine(MemoryEngineInterface):
                         chunk_row["parse_confidence"],
                         chunk_row["cluster_id"],
                         chunk_row["cluster_label"],
+                        significance_score,
+                        significance_components,
+                        file_role_value,
+                        auto_route_reason,
+                        complexity_score_val,
+                        safety_tags_val,
+                        pagerank_val,
+                        fanin_val,
                     )
                     chunk_id = inserted["id"]
-                    chunk_id_map[chunk_row["chunk_key"]] = chunk_id
+                    chunk_id_map[chunk_key] = chunk_id
                     inserted_chunk_records.append(
                         {
                             "id": str(chunk_id),
@@ -1980,14 +2254,22 @@ class MemoryEngine(MemoryEngineInterface):
                             "preview_text": chunk_row["preview_text"],
                         }
                     )
-                    previous_route = previous_routes.get(chunk_row["chunk_key"])
-                    inherited_route = (
+                    previous_route = previous_routes.get(chunk_key)
+                    inherited_route_value = (
                         previous_route["route_target"]
                         if previous_route and previous_route["content_hash"] == chunk_row["content_hash"]
-                        else "unrouted"
+                        else None
                     )
-                    route_source = "inherited" if inherited_route != "unrouted" else "system"
-                    route_counts[inherited_route] = route_counts.get(inherited_route, 0) + 1
+                    if inherited_route_value:
+                        final_route = inherited_route_value
+                        route_source = "inherited"
+                    elif intel_score is not None:
+                        final_route, route_source = _route_for_hint(intel_score.route_hint)
+                    else:
+                        final_route = "unrouted"
+                        route_source = "system"
+                    route_counts[final_route] = route_counts.get(final_route, 0) + 1
+                    route_source_counts[route_source] = route_source_counts.get(route_source, 0) + 1
                     await conn.execute(
                         f"""
                         INSERT INTO {fq_table("codebase_review_routes")}
@@ -1998,7 +2280,7 @@ class MemoryEngine(MemoryEngineInterface):
                         uuid.UUID(snapshot_id),
                         chunk_id,
                         bank_id,
-                        inherited_route,
+                        final_route,
                         route_source,
                     )
 
@@ -2028,6 +2310,14 @@ class MemoryEngine(MemoryEngineInterface):
 
                 cluster_count = len({row["cluster_id"] for row in chunk_rows if row["cluster_id"]})
 
+                await self._persist_code_intel_artifacts(
+                    conn,
+                    codebase_id=codebase_id,
+                    snapshot_id=snapshot_id,
+                    bank_id=bank_id,
+                    result=code_intel_result,
+                )
+
                 if inserted_chunk_records:
                     from .pattern_library import match_patterns_for_code_chunks
                     from .retain.anomaly_detection import persist_anomalies
@@ -2056,6 +2346,13 @@ class MemoryEngine(MemoryEngineInterface):
                     "related_chunk_count": related_chunk_count,
                     "parse_coverage": round(index_result.parse_coverage, 4),
                     "review_counts": route_counts,
+                    "review_route_sources": route_source_counts,
+                    "code_intel": code_intel_result.summary,
+                    "code_intel_artifact_counts": {
+                        "symbol_cards": len(code_intel_result.symbol_cards),
+                        "module_briefs": len(code_intel_result.module_briefs),
+                        "repo_map": 1 if code_intel_result.repo_map else 0,
+                    },
                 }
                 await conn.execute(
                     f"""
@@ -2091,6 +2388,106 @@ class MemoryEngine(MemoryEngineInterface):
             "stats": stats,
             "review_counts": route_counts,
         }
+
+    async def _load_codebase_triage_settings(self, conn, *, codebase_id: str) -> dict[str, Any]:
+        """Read per-codebase triage settings (thresholds, embedding choice, semgrep toggle)."""
+
+        try:
+            row = await conn.fetchrow(
+                f"SELECT triage_settings FROM {fq_table('codebases')} WHERE id = $1",
+                uuid.UUID(codebase_id),
+            )
+        except Exception:
+            return {}
+        if not row or row["triage_settings"] is None:
+            return {}
+        raw = row["triage_settings"]
+        if isinstance(raw, dict):
+            return raw
+        try:
+            return json.loads(raw)
+        except Exception:
+            return {}
+
+    def _run_code_intel_safe(
+        self,
+        *,
+        indexed_files: list[IndexedFile],
+        file_edges: list[IndexedEdge],
+        chunk_rows: list[dict[str, Any]],
+        triage_settings: dict[str, Any] | None = None,
+    ) -> "CodeIntelResult":
+        """Run the code-intel pipeline; return an empty result on failure
+        so an indexing run never breaks because of a code-intel bug."""
+
+        triage_settings = triage_settings or {}
+        thresholds = SignificanceThresholds(
+            high=float(triage_settings.get("score_threshold_high", 0.62)),
+            centrality=float(triage_settings.get("centrality_threshold", 0.35)),
+            safety=float(triage_settings.get("safety_threshold", 0.25)),
+        )
+        enable_safety_scan = bool(triage_settings.get("enable_safety_scan", True))
+        provider = _make_file_text_provider(indexed_files)
+        try:
+            return run_code_intel_pipeline(
+                indexed_files=indexed_files,
+                file_edges=file_edges,
+                chunk_rows=chunk_rows,
+                file_text_provider=provider,
+                enable_safety_scan=enable_safety_scan,
+                thresholds=thresholds,
+            )
+        except Exception:
+            logger.exception("code_intel pipeline failed; falling back to empty result")
+            return CodeIntelResult()
+
+    async def _persist_code_intel_artifacts(
+        self,
+        conn,
+        *,
+        codebase_id: str,
+        snapshot_id: str,
+        bank_id: str,
+        result: "CodeIntelResult",
+    ) -> None:
+        """Persist Symbol Cards, Module Briefs, and Repo Map into
+        codebase_intel_artifacts for this snapshot."""
+
+        if not result.symbol_cards and not result.module_briefs and result.repo_map is None:
+            return
+
+        await conn.execute(
+            f"DELETE FROM {fq_table('codebase_intel_artifacts')} WHERE snapshot_id = $1",
+            uuid.UUID(snapshot_id),
+        )
+
+        rows: list[tuple[str, str, str]] = []
+        for card in result.symbol_cards:
+            rows.append(("symbol_card", card.fq_name, json.dumps(card.to_payload())))
+        for brief in result.module_briefs:
+            rows.append(("module_brief", brief.module, json.dumps(brief.to_payload())))
+        if result.repo_map is not None:
+            rows.append(("repo_map", "snapshot", json.dumps(result.repo_map.to_payload())))
+
+        for kind, ref_id, payload in rows:
+            try:
+                await conn.execute(
+                    f"""
+                    INSERT INTO {fq_table("codebase_intel_artifacts")}
+                        (codebase_id, snapshot_id, bank_id, kind, ref_id, payload)
+                    VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                    ON CONFLICT (snapshot_id, kind, ref_id)
+                    DO UPDATE SET payload = EXCLUDED.payload, created_at = NOW()
+                    """,
+                    uuid.UUID(codebase_id),
+                    uuid.UUID(snapshot_id),
+                    bank_id,
+                    kind,
+                    ref_id,
+                    payload,
+                )
+            except Exception:
+                logger.exception("failed to persist code_intel artifact kind=%s ref_id=%s", kind, ref_id)
 
     async def _handle_codebase_import_zip(self, task_dict: dict[str, Any]) -> dict[str, Any]:
         """Handle ZIP-backed codebase import tasks."""
@@ -12244,9 +12641,19 @@ class MemoryEngine(MemoryEngineInterface):
         limit: int = 25,
         cursor: str | None = None,
         snapshot_id: str | None = None,
+        min_significance: float | None = None,
+        max_significance: float | None = None,
+        file_role: str | None = None,
+        auto_route_reason: str | None = None,
+        has_safety_tag: bool | None = None,
+        route_source: str | None = None,
+        order_by: str | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
-        """List reviewable codebase chunks with cursor-based pagination."""
+        """List reviewable codebase chunks with cursor-based pagination.
+
+        Default ordering surfaces highest-significance items first so
+        coders see the gold layer before noise."""
         from atulya_api.extensions import BankReadContext
 
         await self._authenticate_tenant(request_context)
@@ -12297,6 +12704,27 @@ class MemoryEngine(MemoryEngineInterface):
             if q:
                 where_clauses.append(f"(c.label ILIKE ${len(params) + 1} OR c.preview_text ILIKE ${len(params) + 1})")
                 params.append(f"%{q}%")
+            if min_significance is not None:
+                where_clauses.append(f"c.significance_score >= ${len(params) + 1}")
+                params.append(float(min_significance))
+            if max_significance is not None:
+                where_clauses.append(f"c.significance_score <= ${len(params) + 1}")
+                params.append(float(max_significance))
+            if file_role:
+                where_clauses.append(f"c.file_role = ${len(params) + 1}")
+                params.append(file_role)
+            if auto_route_reason:
+                where_clauses.append(f"c.auto_route_reason ILIKE ${len(params) + 1}")
+                params.append(f"%{auto_route_reason}%")
+            if has_safety_tag is True:
+                where_clauses.append("array_length(c.safety_tags, 1) > 0")
+            elif has_safety_tag is False:
+                where_clauses.append("(c.safety_tags IS NULL OR array_length(c.safety_tags, 1) IS NULL)")
+            if route_source:
+                where_clauses.append(f"r.route_source = ${len(params) + 1}")
+                params.append(route_source)
+
+            order_clause = self._codebase_chunk_order_clause(order_by)
 
             offset = self._decode_codebase_cursor(cursor)
             rows = await conn.fetch(
@@ -12304,6 +12732,9 @@ class MemoryEngine(MemoryEngineInterface):
                 SELECT c.id, c.chunk_key, c.path, c.language, c.kind, c.label, c.preview_text,
                        c.start_line, c.end_line, c.container, c.parent_symbol, c.parent_fq_name,
                        c.parse_confidence, c.cluster_id, c.cluster_label, c.document_id,
+                       c.significance_score, c.significance_components, c.file_role,
+                       c.auto_route_reason, c.complexity_score, c.safety_tags,
+                       c.pagerank_centrality, c.fanin_count,
                        r.route_target, r.route_source, f.change_kind,
                        (
                            SELECT COUNT(*)
@@ -12318,20 +12749,7 @@ class MemoryEngine(MemoryEngineInterface):
                 JOIN {fq_table("codebase_files")} f
                   ON f.snapshot_id = c.snapshot_id AND f.codebase_id = c.codebase_id AND f.bank_id = c.bank_id AND f.path = c.path
                 WHERE {" AND ".join(where_clauses)}
-                ORDER BY
-                    CASE r.route_target
-                        WHEN 'unrouted' THEN 0
-                        WHEN 'memory' THEN 1
-                        WHEN 'research' THEN 2
-                        ELSE 3
-                    END,
-                    CASE f.change_kind
-                        WHEN 'modified' THEN 0
-                        WHEN 'added' THEN 1
-                        ELSE 2
-                    END,
-                    c.path ASC,
-                    c.start_line ASC
+                ORDER BY {order_clause}
                 OFFSET ${len(params) + 1}
                 LIMIT ${len(params) + 2}
                 """,
@@ -12367,6 +12785,18 @@ class MemoryEngine(MemoryEngineInterface):
                     "change_kind": row["change_kind"],
                     "related_count": int(row["related_count"] or 0),
                     "document_id": row["document_id"],
+                    "significance_score": float(row["significance_score"] or 0.0),
+                    "significance_components": _decode_jsonb_field(row["significance_components"]),
+                    "file_role": row["file_role"],
+                    "auto_route_reason": row["auto_route_reason"],
+                    "complexity_score": (
+                        float(row["complexity_score"]) if row["complexity_score"] is not None else None
+                    ),
+                    "safety_tags": list(row["safety_tags"] or []),
+                    "pagerank_centrality": (
+                        float(row["pagerank_centrality"]) if row["pagerank_centrality"] is not None else None
+                    ),
+                    "fanin_count": int(row["fanin_count"] or 0),
                 }
                 for row in page
             ],
@@ -12399,7 +12829,9 @@ class MemoryEngine(MemoryEngineInterface):
                 SELECT c.id, c.snapshot_id, c.chunk_key, c.path, c.language, c.kind, c.label,
                        c.content_text, c.preview_text, c.start_line, c.end_line, c.container,
                        c.parent_symbol, c.parent_fq_name, c.parse_confidence, c.cluster_id, c.cluster_label,
-                       c.document_id, r.route_target, r.route_source, f.change_kind
+                       c.document_id, c.significance_score, c.significance_components, c.file_role,
+                       c.auto_route_reason, c.complexity_score, c.safety_tags, c.pagerank_centrality,
+                       c.fanin_count, r.route_target, r.route_source, f.change_kind
                 FROM {fq_table("codebase_chunks")} c
                 JOIN {fq_table("codebase_review_routes")} r
                   ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
@@ -12499,6 +12931,16 @@ class MemoryEngine(MemoryEngineInterface):
             "route_source": row["route_source"],
             "change_kind": row["change_kind"],
             "document_id": row["document_id"],
+            "significance_score": float(row["significance_score"] or 0.0),
+            "significance_components": _decode_jsonb_field(row["significance_components"]),
+            "file_role": row["file_role"],
+            "auto_route_reason": row["auto_route_reason"],
+            "complexity_score": (float(row["complexity_score"]) if row["complexity_score"] is not None else None),
+            "safety_tags": list(row["safety_tags"] or []),
+            "pagerank_centrality": (
+                float(row["pagerank_centrality"]) if row["pagerank_centrality"] is not None else None
+            ),
+            "fanin_count": int(row["fanin_count"] or 0),
             "related_chunks": [
                 {
                     "id": str(related["id"]),
@@ -12588,7 +13030,22 @@ class MemoryEngine(MemoryEngineInterface):
             if not snapshot_row or not snapshot_row["current_snapshot_id"]:
                 raise ValueError(f"Codebase {codebase_id} has no active snapshot")
             snapshot_id = str(snapshot_row["current_snapshot_id"])
+            user_id = getattr(request_context, "user_id", None) or getattr(request_context, "api_key_id", None)
             async with conn.transaction():
+                prior_rows = await conn.fetch(
+                    f"""
+                    SELECT r.chunk_id, r.route_target, r.route_source, c.auto_route_reason
+                    FROM {fq_table("codebase_review_routes")} r
+                    JOIN {fq_table("codebase_chunks")} c
+                      ON c.snapshot_id = r.snapshot_id AND c.id = r.chunk_id
+                    WHERE r.snapshot_id = $1 AND r.bank_id = $2 AND r.codebase_id = $3
+                      AND r.chunk_id = ANY($4::uuid[])
+                    """,
+                    uuid.UUID(snapshot_id),
+                    bank_id,
+                    uuid.UUID(codebase_id),
+                    [uuid.UUID(item_id) for item_id in item_ids],
+                )
                 await conn.execute(
                     f"""
                     UPDATE {fq_table("codebase_review_routes")}
@@ -12603,6 +13060,29 @@ class MemoryEngine(MemoryEngineInterface):
                     target,
                     [uuid.UUID(item_id) for item_id in item_ids],
                 )
+                for prior in prior_rows:
+                    if prior["route_target"] == target:
+                        continue
+                    if str(prior["route_source"] or "").startswith("auto_triage"):
+                        try:
+                            await conn.execute(
+                                f"""
+                                INSERT INTO {fq_table("codebase_auto_triage_overrides")}
+                                    (codebase_id, snapshot_id, chunk_id, bank_id, prior_route, prior_reason,
+                                     new_route, user_id)
+                                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                                """,
+                                uuid.UUID(codebase_id),
+                                uuid.UUID(snapshot_id),
+                                prior["chunk_id"],
+                                bank_id,
+                                prior["route_target"],
+                                prior["auto_route_reason"],
+                                target,
+                                user_id,
+                            )
+                        except Exception:
+                            logger.debug("failed to log auto_triage override", exc_info=True)
                 review_counts = await self._refresh_codebase_review_stats(
                     conn,
                     bank_id=bank_id,
@@ -12650,6 +13130,456 @@ class MemoryEngine(MemoryEngineInterface):
             limit=limit,
             request_context=request_context,
         )
+
+    async def _resolve_codebase_snapshot(
+        self,
+        conn,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str | None,
+    ) -> str | None:
+        """Resolve current snapshot id for a codebase or use override."""
+
+        if snapshot_id:
+            return snapshot_id
+        row = await conn.fetchrow(
+            f"SELECT current_snapshot_id FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+            uuid.UUID(codebase_id),
+            bank_id,
+        )
+        if not row:
+            raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+        return str(row["current_snapshot_id"]) if row["current_snapshot_id"] else None
+
+    async def get_codebase_repo_map(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Return the snapshot Repo Map artifact (top-K ranked tags)."""
+
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="get_codebase_repo_map", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            effective = await self._resolve_codebase_snapshot(
+                conn, bank_id=bank_id, codebase_id=codebase_id, snapshot_id=snapshot_id
+            )
+            if not effective:
+                return {"codebase_id": codebase_id, "snapshot_id": None, "repo_map": None}
+            row = await conn.fetchrow(
+                f"""
+                SELECT payload, created_at FROM {fq_table("codebase_intel_artifacts")}
+                WHERE snapshot_id = $1 AND kind = 'repo_map'
+                ORDER BY created_at DESC LIMIT 1
+                """,
+                uuid.UUID(effective),
+            )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective,
+            "repo_map": _decode_jsonb_field(row["payload"]) if row else None,
+            "generated_at": row["created_at"].isoformat() if row else None,
+        }
+
+    async def list_codebase_modules(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        snapshot_id: str | None = None,
+        limit: int = 100,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Return all Module Brief artifacts for a snapshot."""
+
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(bank_id=bank_id, operation="list_codebase_modules", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            effective = await self._resolve_codebase_snapshot(
+                conn, bank_id=bank_id, codebase_id=codebase_id, snapshot_id=snapshot_id
+            )
+            if not effective:
+                return {"codebase_id": codebase_id, "snapshot_id": None, "items": []}
+            rows = await conn.fetch(
+                f"""
+                SELECT ref_id, payload FROM {fq_table("codebase_intel_artifacts")}
+                WHERE snapshot_id = $1 AND kind = 'module_brief'
+                ORDER BY ref_id ASC
+                LIMIT $2
+                """,
+                uuid.UUID(effective),
+                limit,
+            )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective,
+            "items": [_decode_jsonb_field(row["payload"]) or {} for row in rows],
+        }
+
+    async def get_codebase_symbol_card(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        symbol_id: str,
+        *,
+        snapshot_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Return one Symbol Card artifact by fully-qualified symbol id."""
+
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="get_codebase_symbol_card", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            effective = await self._resolve_codebase_snapshot(
+                conn, bank_id=bank_id, codebase_id=codebase_id, snapshot_id=snapshot_id
+            )
+            if not effective:
+                raise ValueError(f"Codebase {codebase_id} has no active snapshot")
+            row = await conn.fetchrow(
+                f"""
+                SELECT payload FROM {fq_table("codebase_intel_artifacts")}
+                WHERE snapshot_id = $1 AND kind = 'symbol_card' AND ref_id = $2
+                LIMIT 1
+                """,
+                uuid.UUID(effective),
+                symbol_id,
+            )
+        if not row:
+            raise ValueError(f"Symbol card not found for {symbol_id}")
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective,
+            "symbol_card": _decode_jsonb_field(row["payload"]) or {},
+        }
+
+    async def list_codebase_symbol_cards(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        snapshot_id: str | None = None,
+        limit: int = 100,
+        cursor: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Paginated listing of Symbol Card artifacts (top-N by significance)."""
+
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="list_codebase_symbol_cards", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            effective = await self._resolve_codebase_snapshot(
+                conn, bank_id=bank_id, codebase_id=codebase_id, snapshot_id=snapshot_id
+            )
+            if not effective:
+                return {
+                    "codebase_id": codebase_id,
+                    "snapshot_id": None,
+                    "items": [],
+                    "next_cursor": None,
+                    "has_more": False,
+                }
+            offset = self._decode_codebase_cursor(cursor)
+            rows = await conn.fetch(
+                f"""
+                SELECT ref_id, payload FROM {fq_table("codebase_intel_artifacts")}
+                WHERE snapshot_id = $1 AND kind = 'symbol_card'
+                ORDER BY (payload->>'pagerank')::float DESC NULLS LAST,
+                         (payload->>'significance_score')::float DESC NULLS LAST,
+                         ref_id ASC
+                OFFSET $2 LIMIT $3
+                """,
+                uuid.UUID(effective),
+                offset,
+                limit + 1,
+            )
+        has_more = len(rows) > limit
+        page = rows[:limit]
+        next_cursor = self._encode_codebase_cursor(offset + limit) if has_more else None
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective,
+            "items": [_decode_jsonb_field(row["payload"]) or {} for row in page],
+            "next_cursor": next_cursor,
+            "has_more": has_more,
+        }
+
+    async def curate_codebase_by_intent(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        intent: str,
+        scope_hint: str | None = None,
+        snapshot_id: str | None = None,
+        top_k_clusters: int = 10,
+        top_k_symbols: int = 20,
+        include_dismissed: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Rank Symbol Cards + chunks against a free-text intent.
+
+        Combines code-aware embedding cosine similarity, the chunk's
+        precomputed significance score, PageRank centrality, and a path
+        token match. Returns top clusters (each with up to 3 chunks) and
+        top symbol cards with explainable badges so the agent can load
+        the focused memory set first."""
+
+        from atulya_api.extensions import BankReadContext
+
+        if not intent or not intent.strip():
+            raise ValueError("intent is required")
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="curate_codebase_by_intent", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        intent_clean = intent.strip()
+        intent_tokens = _tokenize_intent(intent_clean)
+        if scope_hint:
+            intent_tokens.update(_tokenize_intent(scope_hint))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            effective = await self._resolve_codebase_snapshot(
+                conn, bank_id=bank_id, codebase_id=codebase_id, snapshot_id=snapshot_id
+            )
+            if not effective:
+                return {
+                    "codebase_id": codebase_id,
+                    "snapshot_id": None,
+                    "intent": intent_clean,
+                    "clusters": [],
+                    "symbol_cards": [],
+                }
+
+            extra_routes = "'memory', 'unrouted'" if not include_dismissed else "'memory', 'unrouted', 'dismissed'"
+            chunk_rows = await conn.fetch(
+                f"""
+                SELECT c.id, c.chunk_key, c.path, c.language, c.kind, c.label, c.preview_text,
+                       c.start_line, c.end_line, c.parent_fq_name, c.cluster_id, c.cluster_label,
+                       c.significance_score, c.pagerank_centrality, c.file_role, c.safety_tags,
+                       r.route_target, r.route_source
+                FROM {fq_table("codebase_chunks")} c
+                JOIN {fq_table("codebase_review_routes")} r
+                  ON r.snapshot_id = c.snapshot_id AND r.chunk_id = c.id
+                WHERE c.snapshot_id = $1 AND c.bank_id = $2 AND c.codebase_id = $3
+                  AND r.route_target IN ({extra_routes})
+                ORDER BY c.significance_score DESC NULLS LAST
+                LIMIT 4000
+                """,
+                uuid.UUID(effective),
+                bank_id,
+                uuid.UUID(codebase_id),
+            )
+
+            symbol_card_rows = await conn.fetch(
+                f"""
+                SELECT ref_id, payload FROM {fq_table("codebase_intel_artifacts")}
+                WHERE snapshot_id = $1 AND kind = 'symbol_card'
+                ORDER BY (payload->>'pagerank')::float DESC NULLS LAST,
+                         (payload->>'significance_score')::float DESC NULLS LAST
+                LIMIT 1500
+                """,
+                uuid.UUID(effective),
+            )
+
+        scored_chunks: list[dict[str, Any]] = []
+        for row in chunk_rows:
+            text_blob = " ".join(filter(None, [row["label"], row["preview_text"]])).lower()
+            cosine = _intent_text_overlap(intent_tokens, text_blob)
+            path_match = _intent_path_match(intent_tokens, row["path"] or "")
+            significance = float(row["significance_score"] or 0.0)
+            pagerank = float(row["pagerank_centrality"] or 0.0)
+            final = round(0.45 * cosine + 0.25 * significance + 0.15 * pagerank + 0.15 * path_match, 4)
+            if final <= 0.0:
+                continue
+            scored_chunks.append(
+                {
+                    "id": str(row["id"]),
+                    "chunk_key": row["chunk_key"],
+                    "path": row["path"],
+                    "language": row["language"],
+                    "kind": row["kind"],
+                    "label": row["label"],
+                    "preview_text": row["preview_text"],
+                    "start_line": row["start_line"],
+                    "end_line": row["end_line"],
+                    "parent_fq_name": row["parent_fq_name"],
+                    "cluster_id": row["cluster_id"],
+                    "cluster_label": row["cluster_label"],
+                    "route_target": row["route_target"],
+                    "route_source": row["route_source"],
+                    "significance_score": significance,
+                    "pagerank_centrality": pagerank,
+                    "file_role": row["file_role"],
+                    "safety_tags": list(row["safety_tags"] or []),
+                    "intent_score": final,
+                    "explain": _build_intent_explain(cosine, path_match, significance, pagerank),
+                }
+            )
+
+        scored_chunks.sort(key=lambda item: item["intent_score"], reverse=True)
+
+        clusters_map: dict[str, list[dict[str, Any]]] = {}
+        unclustered: list[dict[str, Any]] = []
+        for chunk in scored_chunks:
+            cluster_id_value = chunk.get("cluster_id") or ""
+            if cluster_id_value:
+                clusters_map.setdefault(cluster_id_value, []).append(chunk)
+            else:
+                unclustered.append(chunk)
+
+        clusters_payload: list[dict[str, Any]] = []
+        for cluster_id_value, members in clusters_map.items():
+            members_sorted = sorted(members, key=lambda c: c["intent_score"], reverse=True)
+            clusters_payload.append(
+                {
+                    "cluster_id": cluster_id_value,
+                    "cluster_label": members_sorted[0].get("cluster_label"),
+                    "score": round(
+                        sum(m["intent_score"] for m in members_sorted[:3]) / max(1, min(3, len(members_sorted))), 4
+                    ),
+                    "chunks": members_sorted[:3],
+                    "size": len(members_sorted),
+                }
+            )
+        clusters_payload.sort(key=lambda c: c["score"], reverse=True)
+        clusters_payload = clusters_payload[:top_k_clusters]
+
+        symbol_cards_scored: list[dict[str, Any]] = []
+        for row in symbol_card_rows:
+            payload = _decode_jsonb_field(row["payload"]) or {}
+            text_blob = " ".join(
+                filter(
+                    None,
+                    [payload.get("name"), payload.get("signature"), payload.get("purpose"), payload.get("path")],
+                )
+            ).lower()
+            cosine = _intent_text_overlap(intent_tokens, text_blob)
+            path_match = _intent_path_match(intent_tokens, payload.get("path") or "")
+            pagerank = float(payload.get("pagerank") or 0.0)
+            significance = float(payload.get("significance_score") or 0.0)
+            final = round(0.5 * cosine + 0.2 * significance + 0.15 * pagerank + 0.15 * path_match, 4)
+            if final <= 0.0:
+                continue
+            payload["intent_score"] = final
+            payload["explain"] = _build_intent_explain(cosine, path_match, significance, pagerank)
+            symbol_cards_scored.append(payload)
+
+        symbol_cards_scored.sort(key=lambda item: item.get("intent_score", 0.0), reverse=True)
+
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": effective,
+            "intent": intent_clean,
+            "scope_hint": scope_hint,
+            "clusters": clusters_payload,
+            "symbol_cards": symbol_cards_scored[:top_k_symbols],
+            "unclustered": unclustered[:top_k_symbols] if not clusters_payload else [],
+            "total_candidates": len(scored_chunks),
+        }
+
+    async def get_codebase_triage_settings(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Read per-codebase triage settings."""
+
+        from atulya_api.extensions import BankReadContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="get_codebase_triage_settings", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"SELECT triage_settings FROM {fq_table('codebases')} WHERE id = $1 AND bank_id = $2",
+                uuid.UUID(codebase_id),
+                bank_id,
+            )
+        if not row:
+            raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+        settings = _decode_jsonb_field(row["triage_settings"]) or {}
+        return {
+            "codebase_id": codebase_id,
+            "settings": _normalize_triage_settings(settings),
+        }
+
+    async def update_codebase_triage_settings(
+        self,
+        bank_id: str,
+        codebase_id: str,
+        *,
+        settings: dict[str, Any],
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Persist per-codebase triage settings."""
+
+        from atulya_api.extensions import BankWriteContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(
+                bank_id=bank_id, operation="update_codebase_triage_settings", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        normalized = _normalize_triage_settings(settings or {})
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebases")}
+                SET triage_settings = $3::jsonb, updated_at = NOW()
+                WHERE id = $1 AND bank_id = $2
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+                json.dumps(normalized),
+            )
+        return {"codebase_id": codebase_id, "settings": normalized}
 
     async def list_codebase_files(
         self,

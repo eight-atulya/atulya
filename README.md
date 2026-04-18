@@ -12,7 +12,7 @@
 **A living algorithm for machine intelligence (MI).**
 
 Atulya is built on one simple idea:  
->machines should not only store information, they should learn and grow over time.
+>machines should not only store information, they should learn and grow over time. What if life itself reads like a well-written class ~ clear state, honest functions, traceable links. That same instinct of mapping meaning is what code-intel brings to every repo.
 
 Most systems try to remove all mistakes. Atulya takes a different path.  
 It treats gaps, change, and feedback as useful signals for learning.
@@ -36,6 +36,14 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
 
 <p align="center">
   <em>Learn continuously from team history, reduce decision risk, and compound intelligence over time.</em>
+</p>
+
+<p align="center">
+  <img src="./atulya-docs/static/img/code_intel.png" alt="Code intelligence: ranked symbols, module briefs, and intent-driven curation" width="920" />
+</p>
+
+<p align="center">
+  <em>Code-intel turns 50k+ raw chunks into ranked symbols, module briefs, and intent-driven curation ~ so reviewers act on what actually matters.</em>
 </p>
 
 <table align="center">

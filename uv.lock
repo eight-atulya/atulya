@@ -443,6 +443,7 @@ dependencies = [
     { name = "cohere" },
     { name = "cryptography" },
     { name = "dateparser" },
+    { name = "docstring-parser" },
     { name = "einops" },
     { name = "fastapi", extra = ["standard"] },
     { name = "fastmcp" },
@@ -456,7 +457,9 @@ dependencies = [
     { name = "langchain-text-splitters" },
     { name = "langsmith" },
     { name = "litellm" },
+    { name = "lizard" },
     { name = "markitdown", extra = ["docx", "pdf", "pptx", "xls", "xlsx"] },
+    { name = "networkx" },
     { name = "obstore" },
     { name = "openai" },
     { name = "opentelemetry-api" },
@@ -523,6 +526,7 @@ requires-dist = [
     { name = "cohere", specifier = ">=5.0.0" },
     { name = "cryptography", specifier = ">=46.0.5" },
     { name = "dateparser", specifier = ">=1.2.2" },
+    { name = "docstring-parser", specifier = ">=0.16" },
     { name = "einops", specifier = ">=0.8.2" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.120.3" },
     { name = "fastmcp", specifier = ">=2.14.0" },
@@ -537,7 +541,9 @@ requires-dist = [
     { name = "langchain-text-splitters", specifier = ">=0.3.0" },
     { name = "langsmith", specifier = ">=0.6.3" },
     { name = "litellm", specifier = ">=1.0.0" },
+    { name = "lizard", specifier = ">=1.17.10" },
     { name = "markitdown", extras = ["pdf", "docx", "pptx", "xlsx", "xls"], specifier = ">=0.1.4" },
+    { name = "networkx", specifier = ">=3.2" },
     { name = "obstore", specifier = ">=0.4.0" },
     { name = "openai", specifier = ">=1.0.0" },
     { name = "opentelemetry-api", specifier = ">=1.20.0" },
@@ -2193,6 +2199,19 @@ wheels = [
 ]
 
 [[package]]
+name = "lizard"
+version = "1.21.6"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pathspec" },
+    { name = "pygments" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/6d/e6/c9ffd177f15905835e076570d6aebc7b8944b2f15f810aef7e93dede8b76/lizard-1.21.6.tar.gz", hash = "sha256:2b05a65754faefc91bda8db03ca75fada5efd827235244c74bf90274270eed65", size = 90128, upload-time = "2026-04-17T07:51:06.883Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/7c/80/778b6274e0e45bcae98ad6d63a000a1e74edd6a82f57815300bd084dd606/lizard-1.21.6-py2.py3-none-any.whl", hash = "sha256:15de71e63a9a6fcd0c2228eacac42067c4803604d5fae1d72417e3bff7c720eb", size = 98556, upload-time = "2026-04-17T07:51:05.311Z" },
+]
+
+[[package]]
 name = "lupa"
 version = "2.6"
 source = { registry = "https://pypi.org/simple" }
@@ -3374,6 +3393,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/67/93/8f2c2075b180c12c1e9f6a09d1a985bc2036906b13dff1d8917e395f2048/pathable-0.4.4.tar.gz", hash = "sha256:6905a3cd17804edfac7875b5f6c9142a218c7caef78693c2dbbbfbac186d88b2", size = 8124, upload-time = "2025-01-10T18:43:13.247Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7d/eb/b6260b31b1a96386c0a880edebe26f89669098acea8e0318bff6adb378fd/pathable-0.4.4-py3-none-any.whl", hash = "sha256:5ae9e94793b6ef5a4cbe0a7ce9dbbefc1eec38df253763fd0aeeacf2762dbbc2", size = 9592, upload-time = "2025-01-10T18:43:11.88Z" },
+]
+
+[[package]]
+name = "pathspec"
+version = "1.0.4"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fa/36/e27608899f9b8d4dff0617b2d9ab17ca5608956ca44461ac14ac48b44015/pathspec-1.0.4.tar.gz", hash = "sha256:0210e2ae8a21a9137c0d470578cb0e595af87edaa6ebf12ff176f14a02e0e645", size = 131200, upload-time = "2026-01-27T03:59:46.938Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ef/3c/2c197d226f9ea224a9ab8d197933f9da0ae0aac5b6e0f884e2b8d9c8e9f7/pathspec-1.0.4-py3-none-any.whl", hash = "sha256:fb6ae2fd4e7c921a165808a552060e722767cfa526f99ca5156ed2ce45a5c723", size = 55206, upload-time = "2026-01-27T03:59:45.137Z" },
 ]
 
 [[package]]

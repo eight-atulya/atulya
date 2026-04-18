@@ -47,6 +47,14 @@ const sidebars: SidebarsConfig = {
             },
             {
               type: 'doc',
+              id: 'developer/codebases-code-intel',
+              label: 'Code Intelligence',
+              customProps: {
+                icon: '/img/icons/codebases-overview.svg',
+              },
+            },
+            {
+              type: 'doc',
               id: 'developer/bank-presets',
               label: 'Bank presets',
               customProps: {
