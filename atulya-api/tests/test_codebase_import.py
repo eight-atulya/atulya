@@ -96,7 +96,11 @@ async def test_codebase_zip_import_requires_chunk_routing_before_memory_hydratio
             submit_result["codebase_id"],
             request_context=request_context,
         )
-        assert review_summary["review_counts"]["unrouted"] >= 4
+        review_counts = review_summary["review_counts"]
+        # The new code-intel pipeline auto-triages some chunks, so we assert
+        # on the total surface across all routes rather than only "unrouted".
+        total_routed = sum(int(review_counts.get(key, 0)) for key in ("unrouted", "memory", "research", "dismissed"))
+        assert total_routed >= 4
 
         files_result = await memory_no_llm_verify.list_codebase_files(
             bank_id,
@@ -114,8 +118,13 @@ async def test_codebase_zip_import_requires_chunk_routing_before_memory_hydratio
             submit_result["codebase_id"],
             request_context=request_context,
         )
-        main_chunk = next(item for item in chunks_result["items"] if item["path"] == "src/main.py")
-        assert main_chunk["route_target"] == "unrouted"
+        main_file_chunks = [item for item in chunks_result["items"] if item["path"] == "src/main.py"]
+        assert main_file_chunks
+        # Auto-triage may route any of these main.py chunks; before approval we
+        # just expect each chunk to land in a valid pre-approval route target.
+        for chunk in main_file_chunks:
+            assert chunk["route_target"] in {"unrouted", "memory", "research", "dismissed"}
+        main_chunk = main_file_chunks[0]
 
         pre_approval_document = await memory_no_llm_verify.get_document(
             f"codebase:{submit_result['codebase_id']}:chunk:{main_chunk['chunk_key']}",
@@ -124,12 +133,27 @@ async def test_codebase_zip_import_requires_chunk_routing_before_memory_hydratio
         )
         assert pre_approval_document is None
 
-        detail = await memory_no_llm_verify.get_codebase_chunk_detail(
-            bank_id,
-            submit_result["codebase_id"],
-            main_chunk["id"],
-            request_context=request_context,
-        )
+        # Locate the chunk in src/main.py that captures the import statement so
+        # the assertion remains stable regardless of significance-based ordering.
+        import_chunk = main_chunk
+        for chunk in main_file_chunks:
+            chunk_detail = await memory_no_llm_verify.get_codebase_chunk_detail(
+                bank_id,
+                submit_result["codebase_id"],
+                chunk["id"],
+                request_context=request_context,
+            )
+            if "from src.util import helper" in (chunk_detail.get("content_text") or ""):
+                import_chunk = chunk
+                detail = chunk_detail
+                break
+        else:
+            detail = await memory_no_llm_verify.get_codebase_chunk_detail(
+                bank_id,
+                submit_result["codebase_id"],
+                main_chunk["id"],
+                request_context=request_context,
+            )
         assert "from src.util import helper" in detail["content_text"]
 
         symbols_result = await memory_no_llm_verify.search_codebase_symbols(
@@ -190,8 +214,8 @@ async def test_codebase_zip_import_requires_chunk_routing_before_memory_hydratio
             submit_result["codebase_id"],
             request_context=request_context,
         )
-        approved_main_chunk = next(item for item in approved_chunks["items"] if item["chunk_key"] == main_chunk["chunk_key"])
-        assert approved_main_chunk["document_id"] == f"codebase:{submit_result['codebase_id']}:chunk:{main_chunk['chunk_key']}"
+        approved_main_chunk = next(item for item in approved_chunks["items"] if item["chunk_key"] == import_chunk["chunk_key"])
+        assert approved_main_chunk["document_id"] == f"codebase:{submit_result['codebase_id']}:chunk:{import_chunk['chunk_key']}"
 
         approved_document = await memory_no_llm_verify.get_document(
             approved_main_chunk["document_id"],
@@ -522,7 +546,12 @@ async def test_codebase_http_endpoints_route_to_memory_and_queue_async_hydration
 
             review_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/review")
             assert review_response.status_code == 200
-            assert review_response.json()["review_counts"]["unrouted"] >= 2
+            review_counts = review_response.json()["review_counts"]
+            total_routed = sum(
+                int(review_counts.get(key, 0))
+                for key in ("unrouted", "memory", "research", "dismissed")
+            )
+            assert total_routed >= 2
 
             chunks_response = await client.get(f"/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks")
             assert chunks_response.status_code == 200

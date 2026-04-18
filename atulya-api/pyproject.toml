@@ -64,6 +64,14 @@ dependencies = [
     "claude-agent-sdk>=0.1.27",
     "einops>=0.8.2",
     "tree-sitter-language-pack>=1.5.0",
+    # Code intelligence pipeline (auto-triage + gold artifacts)
+    "networkx>=3.2",            # PageRank / centrality on symbol graph
+    "lizard>=1.17.10",           # Multi-language cyclomatic complexity / NLOC
+    "docstring-parser>=0.16",    # Parse Python docstrings for Symbol Cards
+    # Optional code-intel dependencies are lazy-imported at runtime:
+    #   semgrep      (CLI subprocess, opt-in via settings)
+    #   voyageai     (premium code embeddings, opt-in via settings)
+    #   scip-protobuf (precise cross-references, opt-in)
 ]
 
 [project.optional-dependencies]

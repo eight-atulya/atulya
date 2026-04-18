@@ -15,6 +15,10 @@ import {
   CodebaseReviewSummary,
   CodebaseSummary,
   CodebaseSymbolsResult,
+  CodebaseRepoMapResult,
+  CodebaseModuleBriefsResult,
+  CodebaseCurateResult,
+  CodebaseTriageSettings,
   OperationResult,
   OperationStatus,
 } from "@/lib/api";
@@ -50,6 +54,8 @@ import {
 } from "@/components/ui/table";
 import {
   AlertCircle,
+  ArrowRight,
+  Boxes,
   CheckCircle2,
   ChevronsRight,
   ChevronRight,
@@ -57,19 +63,145 @@ import {
   Files,
   FolderGit2,
   GitBranch,
+  HelpCircle,
+  Inbox,
+  Info,
   Layers3,
   Loader2,
+  Map as MapIcon,
   Network,
   RefreshCw,
   Search,
+  ShieldCheck,
+  Sliders,
   Sparkles,
+  Telescope,
   Upload,
   X,
+  Zap,
 } from "lucide-react";
 
 type ImportTab = "github" | "zip";
-type WorkspaceTab = "review" | "files" | "symbols" | "impact" | "research" | "approved";
+type WorkspaceTab =
+  | "review"
+  | "files"
+  | "code_map"
+  | "curate"
+  | "symbols"
+  | "impact"
+  | "research"
+  | "approved";
 type ImpactMode = "path" | "symbol" | "query";
+
+type ChunkOrderBy = "default" | "significance" | "complexity" | "pagerank";
+
+const FILE_ROLE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "all", label: "All roles" },
+  { value: "entrypoint", label: "Entrypoint" },
+  { value: "api_route", label: "API route" },
+  { value: "config", label: "Config" },
+  { value: "schema_model", label: "Schema / model" },
+  { value: "migration", label: "Migration" },
+  { value: "public_lib", label: "Public library" },
+  { value: "shared_util", label: "Shared utility" },
+  { value: "test", label: "Test" },
+  { value: "docs", label: "Docs" },
+  { value: "fixture", label: "Fixture" },
+  { value: "generated", label: "Generated" },
+  { value: "vendored", label: "Vendored" },
+  { value: "boilerplate", label: "Boilerplate" },
+  { value: "unknown", label: "Unknown" },
+];
+
+const ROUTE_SOURCE_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "all", label: "Any source" },
+  { value: "auto_triage_dismiss", label: "Auto-dismissed" },
+  { value: "auto_triage_memory_pending", label: "Auto → memory" },
+  { value: "auto_triage_review", label: "Auto-review (gray zone)" },
+  { value: "manual", label: "Manual" },
+  { value: "inherited", label: "Inherited" },
+  { value: "system", label: "System" },
+];
+
+const SAFETY_TAG_OPTIONS: Array<{ value: string; label: string }> = [
+  { value: "all", label: "Any safety" },
+  { value: "auth", label: "Auth" },
+  { value: "crypto", label: "Crypto" },
+  { value: "sql_string", label: "SQL string" },
+  { value: "eval", label: "Eval" },
+  { value: "deserialization", label: "Deserialization" },
+  { value: "subprocess", label: "Subprocess" },
+  { value: "network", label: "Network" },
+];
+
+function safetyTagTone(tag: string): string {
+  switch (tag) {
+    case "auth":
+    case "crypto":
+      return "bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30";
+    case "sql_string":
+    case "eval":
+    case "deserialization":
+      return "bg-rose-500/15 text-rose-600 ring-1 ring-rose-500/30";
+    case "subprocess":
+      return "bg-orange-500/15 text-orange-600 ring-1 ring-orange-500/30";
+    case "network":
+      return "bg-sky-500/15 text-sky-600 ring-1 ring-sky-500/30";
+    default:
+      return "bg-muted text-muted-foreground ring-1 ring-border";
+  }
+}
+
+function routeSourceTone(source: string | null | undefined): string {
+  switch (source) {
+    case "auto_triage_dismiss":
+      return "bg-muted text-muted-foreground ring-1 ring-border";
+    case "auto_triage_memory_pending":
+      return "bg-emerald-500/15 text-emerald-600 ring-1 ring-emerald-500/30";
+    case "auto_triage_review":
+      return "bg-amber-500/15 text-amber-600 ring-1 ring-amber-500/30";
+    case "manual":
+      return "bg-indigo-500/15 text-indigo-600 ring-1 ring-indigo-500/30";
+    case "inherited":
+      return "bg-sky-500/15 text-sky-600 ring-1 ring-sky-500/30";
+    case "system":
+      return "bg-muted text-muted-foreground ring-1 ring-border";
+    default:
+      return "bg-muted text-muted-foreground ring-1 ring-border";
+  }
+}
+
+function formatRouteSource(value: string | null | undefined): string {
+  if (!value) return "Manual";
+  switch (value) {
+    case "auto_triage_dismiss":
+      return "Auto-dismissed";
+    case "auto_triage_memory_pending":
+      return "Auto → memory";
+    case "auto_triage_review":
+      return "Auto-review";
+    case "manual":
+      return "Manual";
+    case "inherited":
+      return "Inherited";
+    case "system":
+      return "System";
+    default:
+      return value.replace(/_/g, " ");
+  }
+}
+
+function formatSignificance(score: number | undefined | null): string {
+  if (score === null || score === undefined) return "—";
+  return score.toFixed(2);
+}
+
+function significanceTone(score: number | undefined | null): string {
+  if (score === null || score === undefined) return "text-muted-foreground";
+  if (score >= 0.65) return "text-emerald-600 font-semibold";
+  if (score >= 0.35) return "text-amber-600 font-semibold";
+  return "text-muted-foreground";
+}
 
 type ParsedGithubSource = {
   owner: string;
@@ -330,6 +462,12 @@ export function CodebasesView() {
   const [chunkRouteFilter, setChunkRouteFilter] = useState("all");
   const [chunkChangeFilter, setChunkChangeFilter] = useState("all");
   const [chunkKindFilter, setChunkKindFilter] = useState("all");
+  const [chunkFileRoleFilter, setChunkFileRoleFilter] = useState("all");
+  const [chunkSafetyFilter, setChunkSafetyFilter] = useState("all");
+  const [chunkRouteSourceFilter, setChunkRouteSourceFilter] = useState("all");
+  const [chunkAutoReasonFilter, setChunkAutoReasonFilter] = useState<string | null>(null);
+  const [chunkOrderBy, setChunkOrderBy] = useState<ChunkOrderBy>("default");
+  const [chunkMinSignificance, setChunkMinSignificance] = useState<string>("");
   const [chunksResult, setChunksResult] = useState<CodebaseChunksResult | null>(null);
   const [loadingChunks, setLoadingChunks] = useState(false);
   const [selectedChunkIds, setSelectedChunkIds] = useState<string[]>([]);
@@ -363,6 +501,24 @@ export function CodebasesView() {
   const [impactInput, setImpactInput] = useState("");
   const [impactResult, setImpactResult] = useState<CodebaseImpactResult | null>(null);
   const [loadingImpact, setLoadingImpact] = useState(false);
+
+  const [repoMapResult, setRepoMapResult] = useState<CodebaseRepoMapResult | null>(null);
+  const [loadingRepoMap, setLoadingRepoMap] = useState(false);
+  const [moduleBriefsResult, setModuleBriefsResult] = useState<CodebaseModuleBriefsResult | null>(
+    null
+  );
+  const [loadingModuleBriefs, setLoadingModuleBriefs] = useState(false);
+
+  const [intentInput, setIntentInput] = useState("");
+  const [intentScopeHint, setIntentScopeHint] = useState("");
+  const [intentResult, setIntentResult] = useState<CodebaseCurateResult | null>(null);
+  const [loadingIntent, setLoadingIntent] = useState(false);
+
+  const [triageSettings, setTriageSettings] = useState<CodebaseTriageSettings | null>(null);
+  const [loadingTriageSettings, setLoadingTriageSettings] = useState(false);
+  const [triageSettingsOpen, setTriageSettingsOpen] = useState(false);
+  const [triageDraft, setTriageDraft] = useState<CodebaseTriageSettings | null>(null);
+  const [savingTriageSettings, setSavingTriageSettings] = useState(false);
 
   const selectedCodebaseSource = useMemo(() => {
     if (!selectedCodebase) return null;
@@ -430,11 +586,18 @@ export function CodebasesView() {
     if (!currentBank) return;
     setLoadingChunks(true);
     try {
+      const minSigParsed = chunkMinSignificance.trim() ? Number(chunkMinSignificance.trim()) : NaN;
       const response = await client.listCodebaseChunks(currentBank, codebaseId, {
         q: deferredChunkQuery || undefined,
         route_target: chunkRouteFilter === "all" ? undefined : chunkRouteFilter,
         changed_only: chunkChangeFilter === "changed",
         kind: chunkKindFilter === "all" ? undefined : chunkKindFilter,
+        file_role: chunkFileRoleFilter === "all" ? undefined : chunkFileRoleFilter,
+        has_safety_tag: chunkSafetyFilter === "all" ? undefined : chunkSafetyFilter,
+        route_source: chunkRouteSourceFilter === "all" ? undefined : chunkRouteSourceFilter,
+        auto_route_reason: chunkAutoReasonFilter || undefined,
+        min_significance: Number.isFinite(minSigParsed) ? minSigParsed : undefined,
+        order_by: chunkOrderBy === "default" ? undefined : chunkOrderBy,
         limit: 20,
         cursor: cursor || undefined,
       });
@@ -450,6 +613,103 @@ export function CodebasesView() {
       setChunksResult(null);
     } finally {
       setLoadingChunks(false);
+    }
+  };
+
+  const loadRepoMap = async (codebaseId: string) => {
+    if (!currentBank) return;
+    setLoadingRepoMap(true);
+    try {
+      const response = await client.getCodebaseRepoMap(currentBank, codebaseId);
+      setRepoMapResult(response);
+    } catch {
+      setRepoMapResult(null);
+    } finally {
+      setLoadingRepoMap(false);
+    }
+  };
+
+  const loadModuleBriefs = async (codebaseId: string) => {
+    if (!currentBank) return;
+    setLoadingModuleBriefs(true);
+    try {
+      const response = await client.listCodebaseModuleBriefs(currentBank, codebaseId);
+      setModuleBriefsResult(response);
+    } catch {
+      setModuleBriefsResult(null);
+    } finally {
+      setLoadingModuleBriefs(false);
+    }
+  };
+
+  const loadTriageSettings = async (codebaseId: string) => {
+    if (!currentBank) return;
+    setLoadingTriageSettings(true);
+    try {
+      const response = await client.getCodebaseTriageSettings(currentBank, codebaseId);
+      setTriageSettings(response.settings);
+    } catch {
+      setTriageSettings(null);
+    } finally {
+      setLoadingTriageSettings(false);
+    }
+  };
+
+  const openTriageSettingsDialog = () => {
+    setTriageDraft(
+      triageSettings ?? {
+        score_threshold_high: 0.62,
+        centrality_threshold: 0.35,
+        safety_threshold: 0.25,
+        embedding_provider: "jina_local",
+        enable_safety_scan: true,
+        enable_semgrep: false,
+        semgrep_rulepack: null,
+        scip_index_path: null,
+      }
+    );
+    setTriageSettingsOpen(true);
+  };
+
+  const saveTriageSettings = async () => {
+    if (!currentBank || !selectedCodebaseId || !triageDraft) return;
+    setSavingTriageSettings(true);
+    try {
+      const response = await client.updateCodebaseTriageSettings(
+        currentBank,
+        selectedCodebaseId,
+        triageDraft
+      );
+      setTriageSettings(response.settings);
+      toast.success("Triage settings updated. Re-index the codebase for new chunks to use them.");
+      setTriageSettingsOpen(false);
+    } catch {
+      toast.error("Failed to update triage settings.");
+    } finally {
+      setSavingTriageSettings(false);
+    }
+  };
+
+  const runIntentCuration = async () => {
+    if (!currentBank || !selectedCodebaseId) return;
+    const intent = intentInput.trim();
+    if (!intent) {
+      toast.error("Describe the intent you want to curate for.");
+      return;
+    }
+    setLoadingIntent(true);
+    try {
+      const response = await client.curateCodebaseByIntent(currentBank, selectedCodebaseId, {
+        intent,
+        scope_hint: intentScopeHint.trim() || null,
+        top_k_clusters: 8,
+        top_k_symbols: 24,
+      });
+      setIntentResult(response);
+    } catch {
+      setIntentResult(null);
+    } finally {
+      setLoadingIntent(false);
     }
   };
 
@@ -898,6 +1158,12 @@ export function CodebasesView() {
     chunkRouteFilter,
     chunkChangeFilter,
     chunkKindFilter,
+    chunkFileRoleFilter,
+    chunkSafetyFilter,
+    chunkRouteSourceFilter,
+    chunkAutoReasonFilter,
+    chunkMinSignificance,
+    chunkOrderBy,
   ]);
 
   useEffect(() => {
@@ -908,6 +1174,33 @@ export function CodebasesView() {
     }
     void loadApprovedChunks(selectedCodebaseId, selectedCodebase.approved_snapshot_id);
   }, [workspaceTab, selectedCodebaseId, selectedCodebase?.approved_snapshot_id]);
+
+  useEffect(() => {
+    if (!selectedCodebaseId) {
+      setRepoMapResult(null);
+      setModuleBriefsResult(null);
+      return;
+    }
+    if (workspaceTab === "code_map") {
+      if (!repoMapResult) void loadRepoMap(selectedCodebaseId);
+      if (!moduleBriefsResult) void loadModuleBriefs(selectedCodebaseId);
+    }
+  }, [workspaceTab, selectedCodebaseId]);
+
+  useEffect(() => {
+    setRepoMapResult(null);
+    setModuleBriefsResult(null);
+    setIntentResult(null);
+    setTriageSettings(null);
+    setChunkAutoReasonFilter(null);
+  }, [selectedCodebaseId]);
+
+  useEffect(() => {
+    if (!selectedCodebaseId) return;
+    if (workspaceTab === "code_map" || workspaceTab === "review") {
+      void loadTriageSettings(selectedCodebaseId);
+    }
+  }, [workspaceTab, selectedCodebaseId]);
 
   useEffect(() => {
     if (!currentBank || !activeOperationId) return;
@@ -1691,13 +1984,79 @@ export function CodebasesView() {
             onValueChange={(value) => setWorkspaceTab(value as WorkspaceTab)}
           >
             <div className="mb-4 overflow-x-auto pb-1">
-              <TabsList className="inline-flex min-w-full">
-                <TabsTrigger value="review">Review Queue</TabsTrigger>
-                <TabsTrigger value="files">Repo Map</TabsTrigger>
-                <TabsTrigger value="symbols">Symbol Search</TabsTrigger>
-                <TabsTrigger value="impact">Impact</TabsTrigger>
-                <TabsTrigger value="research">Research Queue</TabsTrigger>
-                <TabsTrigger value="approved">Approved Memory</TabsTrigger>
+              <TabsList className="inline-flex h-auto min-w-full gap-1 rounded-lg bg-muted/60 p-1">
+                {(
+                  [
+                    {
+                      value: "review",
+                      label: "Review Queue",
+                      icon: Inbox,
+                      desc: "Triage chunks the auto-router left in the gray zone. Filter by route reason, role, safety, or significance.",
+                    },
+                    {
+                      value: "code_map",
+                      label: "Code Map",
+                      icon: MapIcon,
+                      desc: "Aider-style PageRank over the symbol graph plus module briefs. Best place to learn an unfamiliar repo.",
+                    },
+                    {
+                      value: "curate",
+                      label: "Curate by Intent",
+                      icon: Sparkles,
+                      desc: "Describe what you are about to build — get a tailored bundle of clusters and symbol cards ranked by intent.",
+                    },
+                    {
+                      value: "files",
+                      label: "Files",
+                      icon: Files,
+                      desc: "Browse the indexed file tree with size, language, and memory-status filters.",
+                    },
+                    {
+                      value: "symbols",
+                      label: "Symbol Search",
+                      icon: Search,
+                      desc: "Jump-to-symbol with exact, prefix, and fuzzy matching across the snapshot.",
+                    },
+                    {
+                      value: "impact",
+                      label: "Impact",
+                      icon: Network,
+                      desc: "Trace the structural blast radius for a path, symbol, or query before refactoring.",
+                    },
+                    {
+                      value: "research",
+                      label: "Research Queue",
+                      icon: Telescope,
+                      desc: "Chunks staged for deeper follow-up that should not be hydrated into memory yet.",
+                    },
+                    {
+                      value: "approved",
+                      label: "Approved Memory",
+                      icon: CheckCircle2,
+                      desc: "What is currently powering recall and reflect — the last approved snapshot's documents.",
+                    },
+                  ] as const
+                ).map(({ value, label, icon: Icon, desc }) => (
+                  <Tooltip key={value} delayDuration={250}>
+                    <TooltipTrigger asChild>
+                      <TabsTrigger
+                        value={value}
+                        className="group relative gap-1.5 px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                      >
+                        <Icon className="h-3.5 w-3.5 opacity-70 transition-opacity group-hover:opacity-100 group-data-[state=active]:opacity-100" />
+                        {label}
+                      </TabsTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      align="center"
+                      className="max-w-[260px] px-3 py-2 text-xs leading-snug"
+                    >
+                      <div className="font-semibold">{label}</div>
+                      <div className="mt-0.5 text-primary-foreground/80">{desc}</div>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
               </TabsList>
             </div>
 
@@ -1744,6 +2103,46 @@ export function CodebasesView() {
                   </div>
                 </div>
               </div>
+
+              {reviewSummary?.diagnostics?.length ? (
+                <div className="rounded-xl border border-border/70 bg-muted/10 p-3">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Auto-triage breakdown
+                    </div>
+                    {chunkAutoReasonFilter ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => setChunkAutoReasonFilter(null)}
+                      >
+                        Clear filter
+                      </Button>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {reviewSummary.diagnostics.map((item) => {
+                      const isActive = chunkAutoReasonFilter === item.reason;
+                      return (
+                        <button
+                          key={`auto-${item.reason}-${item.count}`}
+                          type="button"
+                          onClick={() => setChunkAutoReasonFilter(isActive ? null : item.reason)}
+                          className={`rounded-full px-3 py-1 text-xs font-medium ring-1 transition ${
+                            isActive
+                              ? "bg-primary/15 text-primary ring-primary/40"
+                              : "bg-muted text-muted-foreground ring-border hover:bg-muted/70"
+                          }`}
+                          title={`Click to filter by reason: ${item.reason}`}
+                        >
+                          {item.reason} · {item.count.toLocaleString()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="grid gap-4 xl:grid-cols-[1.2fr_0.9fr_0.8fr_0.8fr_auto]">
                 <div className="space-y-2">
@@ -1813,6 +2212,84 @@ export function CodebasesView() {
                     )}
                     Refresh
                   </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-5">
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-file-role-filter">File role</Label>
+                  <Select value={chunkFileRoleFilter} onValueChange={setChunkFileRoleFilter}>
+                    <SelectTrigger id="chunk-file-role-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILE_ROLE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-route-source-filter">Route source</Label>
+                  <Select value={chunkRouteSourceFilter} onValueChange={setChunkRouteSourceFilter}>
+                    <SelectTrigger id="chunk-route-source-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {ROUTE_SOURCE_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-safety-filter">Safety tag</Label>
+                  <Select value={chunkSafetyFilter} onValueChange={setChunkSafetyFilter}>
+                    <SelectTrigger id="chunk-safety-filter">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {SAFETY_TAG_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-order-by">Order by</Label>
+                  <Select
+                    value={chunkOrderBy}
+                    onValueChange={(value) => setChunkOrderBy(value as ChunkOrderBy)}
+                  >
+                    <SelectTrigger id="chunk-order-by">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Default (recency)</SelectItem>
+                      <SelectItem value="significance">Significance ↓</SelectItem>
+                      <SelectItem value="complexity">Complexity ↓</SelectItem>
+                      <SelectItem value="pagerank">PageRank ↓</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="chunk-min-significance">Min significance</Label>
+                  <Input
+                    id="chunk-min-significance"
+                    type="number"
+                    step="0.05"
+                    min="0"
+                    max="1"
+                    value={chunkMinSignificance}
+                    onChange={(event) => setChunkMinSignificance(event.target.value)}
+                    placeholder="0.30"
+                  />
                 </div>
               </div>
 
@@ -1887,10 +2364,10 @@ export function CodebasesView() {
                           </TableHead>
                           <TableHead>Chunk</TableHead>
                           <TableHead>Path</TableHead>
-                          <TableHead>Kind</TableHead>
-                          <TableHead>Change</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Significance</TableHead>
+                          <TableHead>Safety</TableHead>
                           <TableHead>Cluster</TableHead>
-                          <TableHead>Related</TableHead>
                           <TableHead>Route</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -1922,23 +2399,114 @@ export function CodebasesView() {
                               <HoverPath
                                 value={`${item.path}:${item.start_line}-${item.end_line}`}
                               />
+                              <div className="mt-1 text-[11px] uppercase tracking-wide text-muted-foreground">
+                                {item.kind}
+                                {item.change_kind && item.change_kind !== "unchanged"
+                                  ? ` · ${item.change_kind}`
+                                  : ""}
+                              </div>
                             </TableCell>
-                            <TableCell className="text-card-foreground">{item.kind}</TableCell>
-                            <TableCell className="text-card-foreground">
-                              {item.change_kind}
+                            <TableCell>
+                              {item.file_role ? (
+                                <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground ring-1 ring-border">
+                                  {item.file_role.replace(/_/g, " ")}
+                                </span>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span
+                                    className={`text-sm tabular-nums cursor-help ${significanceTone(item.significance_score)}`}
+                                  >
+                                    {formatSignificance(item.significance_score)}
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="top" className="max-w-sm text-xs">
+                                  <div className="font-semibold mb-1">Significance components</div>
+                                  {item.significance_components ? (
+                                    <ul className="space-y-0.5">
+                                      {Object.entries(item.significance_components)
+                                        .filter(([, v]) => typeof v === "number")
+                                        .sort(([, a], [, b]) => (Number(b) || 0) - (Number(a) || 0))
+                                        .slice(0, 8)
+                                        .map(([key, value]) => (
+                                          <li key={key} className="flex justify-between gap-3">
+                                            <span className="text-muted-foreground">
+                                              {key.replace(/_/g, " ")}
+                                            </span>
+                                            <span className="tabular-nums">
+                                              {(Number(value) || 0).toFixed(2)}
+                                            </span>
+                                          </li>
+                                        ))}
+                                    </ul>
+                                  ) : (
+                                    <span className="text-muted-foreground">
+                                      No score available yet.
+                                    </span>
+                                  )}
+                                  {item.complexity_score !== null &&
+                                  item.complexity_score !== undefined ? (
+                                    <div className="mt-2 text-muted-foreground">
+                                      Complexity density: {item.complexity_score.toFixed(2)}
+                                    </div>
+                                  ) : null}
+                                  {item.pagerank_centrality ? (
+                                    <div className="text-muted-foreground">
+                                      PageRank: {item.pagerank_centrality.toFixed(4)} · fan-in{" "}
+                                      {item.fanin_count ?? 0}
+                                    </div>
+                                  ) : null}
+                                </TooltipContent>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {(item.safety_tags || []).length === 0 ? (
+                                  <span className="text-xs text-muted-foreground">—</span>
+                                ) : (
+                                  (item.safety_tags || []).slice(0, 3).map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${safetyTagTone(tag)}`}
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))
+                                )}
+                              </div>
                             </TableCell>
                             <TableCell className="text-card-foreground">
                               {item.cluster_label || "-"}
                             </TableCell>
-                            <TableCell className="text-card-foreground">
-                              {item.related_count}
-                            </TableCell>
                             <TableCell>
-                              <span
-                                className={`rounded-full px-2.5 py-1 text-xs font-semibold ${routeTone(item.route_target)}`}
-                              >
-                                {formatStatusLabel(item.route_target)}
-                              </span>
+                              <div className="flex flex-col gap-1">
+                                <span
+                                  className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${routeTone(item.route_target)}`}
+                                >
+                                  {formatStatusLabel(item.route_target)}
+                                </span>
+                                {item.route_source ? (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span
+                                        className={`w-fit cursor-help rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide ${routeSourceTone(item.route_source)}`}
+                                      >
+                                        {formatRouteSource(item.route_source)}
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-xs text-xs">
+                                      <div className="font-semibold">Why this route?</div>
+                                      <div className="mt-1 text-muted-foreground">
+                                        {item.auto_route_reason || "Manual decision."}
+                                      </div>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                ) : null}
+                              </div>
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
@@ -2045,6 +2613,754 @@ export function CodebasesView() {
                   {selectedCodebaseId
                     ? "The review queue will show semantic chunks once the current snapshot has been parsed."
                     : "Select a codebase to load the review queue."}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="code_map" className="space-y-5">
+              <div className="flex flex-wrap items-start gap-3 rounded-xl border border-border/70 bg-gradient-to-br from-muted/30 to-transparent p-4">
+                <div className="flex min-w-0 flex-1 items-start gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                    <MapIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm font-semibold text-foreground">
+                        Repo Map &amp; Module Briefs
+                      </h3>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[300px] text-xs leading-snug">
+                          Symbols are ranked by Aider-style PageRank over the call/import graph.
+                          Module briefs summarize each folder's role, public surface, and
+                          dependencies. Both refresh on every index pass.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Generated deterministically when the snapshot is indexed. Use this to learn an
+                      unfamiliar repo or pick refactor targets.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-shrink-0 items-center gap-2">
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!selectedCodebaseId || loadingRepoMap}
+                        onClick={() => selectedCodebaseId && void loadRepoMap(selectedCodebaseId)}
+                      >
+                        {loadingRepoMap ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                        )}
+                        Repo map
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                      Re-fetch the cached PageRank table for this snapshot.
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!selectedCodebaseId || loadingModuleBriefs}
+                        onClick={() =>
+                          selectedCodebaseId && void loadModuleBriefs(selectedCodebaseId)
+                        }
+                      >
+                        {loadingModuleBriefs ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                        )}
+                        Modules
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                      Re-fetch the per-folder module briefs.
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip delayDuration={200}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={!selectedCodebaseId || loadingTriageSettings}
+                        onClick={openTriageSettingsDialog}
+                      >
+                        <Sliders className="mr-2 h-4 w-4" />
+                        Tune triage
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" className="max-w-[280px] text-xs">
+                      Adjust auto-triage thresholds, embedding provider, and safety scanning. New
+                      settings apply on the next index pass.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+
+              {triageSettings ? (
+                <div className="grid gap-2 rounded-xl border border-border/70 bg-muted/10 p-3 text-xs sm:grid-cols-3 lg:grid-cols-5">
+                  {(
+                    [
+                      {
+                        label: "Embedding",
+                        value: triageSettings.embedding_provider,
+                        tip: "Code-aware embedding model used by Curate by Intent. jina_local runs on the host; voyage_code_3 calls a paid API.",
+                      },
+                      {
+                        label: "High threshold",
+                        value: triageSettings.score_threshold_high.toFixed(2),
+                        tip: "Significance score (0..1) at which a chunk auto-routes to memory. Lower = more chunks promoted, higher = tighter gold layer.",
+                      },
+                      {
+                        label: "Centrality",
+                        value: triageSettings.centrality_threshold.toFixed(2),
+                        tip: "PageRank cutoff for pulling structurally connected symbols into the review queue when their score is mid.",
+                      },
+                      {
+                        label: "Safety scan",
+                        value: triageSettings.enable_safety_scan
+                          ? triageSettings.enable_semgrep
+                            ? "On + Semgrep"
+                            : "On"
+                          : "Off",
+                        tip: "Built-in regex scanner tags auth, crypto, SQL, eval, deserialization, subprocess, network. Semgrep adds CI-grade rules (heavier).",
+                      },
+                      {
+                        label: "SCIP",
+                        value: triageSettings.scip_index_path ? "Configured" : "Off",
+                        tip: "Optional path to a precomputed SCIP index for precise cross-references. Falls back to tree-sitter heuristics when off.",
+                      },
+                    ] as const
+                  ).map((item) => (
+                    <Tooltip key={item.label} delayDuration={200}>
+                      <TooltipTrigger asChild>
+                        <button
+                          type="button"
+                          className="flex w-full flex-col items-start rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <div className="flex items-center gap-1 uppercase tracking-wide text-muted-foreground">
+                            {item.label}
+                            <Info className="h-3 w-3 opacity-50" />
+                          </div>
+                          <div className="mt-0.5 font-medium text-foreground">{item.value}</div>
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="bottom"
+                        align="start"
+                        className="max-w-[280px] text-xs leading-snug"
+                      >
+                        {item.tip}
+                      </TooltipContent>
+                    </Tooltip>
+                  ))}
+                </div>
+              ) : null}
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" />
+                      <div className="text-sm font-semibold text-foreground">
+                        Top symbols by PageRank
+                      </div>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[280px] text-xs leading-snug">
+                          Symbols sorted by their PageRank centrality on the call/import graph. High
+                          fan-in usually means it's a good first read for new contributors.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {repoMapResult?.repo_map?.top_symbols?.length || 0} ranked
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    {loadingRepoMap ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading repo map...
+                      </div>
+                    ) : repoMapResult?.repo_map?.top_symbols?.length ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Symbol</TableHead>
+                              <TableHead>Path</TableHead>
+                              <TableHead className="text-right">PageRank</TableHead>
+                              <TableHead className="text-right">Fan-in</TableHead>
+                              <TableHead>Safety</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {repoMapResult.repo_map.top_symbols.slice(0, 50).map((symbol) => (
+                              <TableRow key={`${symbol.path}::${symbol.fq_name}`}>
+                                <TableCell>
+                                  <div className="font-medium text-card-foreground">
+                                    {symbol.name}
+                                  </div>
+                                  <div className="text-[11px] text-muted-foreground">
+                                    {symbol.kind}
+                                    {symbol.language ? ` · ${symbol.language}` : ""}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="max-w-[18rem]">
+                                  <HoverPath value={`${symbol.path}:${symbol.start_line}`} />
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-card-foreground">
+                                  {symbol.pagerank.toFixed(4)}
+                                </TableCell>
+                                <TableCell className="text-right tabular-nums text-card-foreground">
+                                  {symbol.fanin}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-1">
+                                    {(symbol.safety_tags || []).slice(0, 3).map((tag) => (
+                                      <span
+                                        key={tag}
+                                        className={`rounded-full px-2 py-0.5 text-[11px] font-medium ${safetyTagTone(tag)}`}
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-6 text-center text-sm text-muted-foreground">
+                        <MapIcon className="mx-auto mb-2 h-6 w-6 opacity-40" />
+                        {selectedCodebaseId
+                          ? "Repo map is generated when a snapshot is indexed. Re-index to populate."
+                          : "Select a codebase to view its repo map."}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border/60 px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <Boxes className="h-4 w-4 text-primary" />
+                      <div className="text-sm font-semibold text-foreground">Module briefs</div>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[280px] text-xs leading-snug">
+                          Per-folder summaries: dominant role, public surface, top symbols, and
+                          internal dependencies. Great for picking the right module to dive into.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <div className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                      {moduleBriefsResult?.items?.length || 0} modules
+                    </div>
+                  </div>
+                  <div className="p-4">
+                    {loadingModuleBriefs ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading modules...
+                      </div>
+                    ) : moduleBriefsResult?.items?.length ? (
+                      <div className="space-y-3 max-h-[640px] overflow-y-auto pr-1">
+                        {moduleBriefsResult.items.map((brief) => (
+                          <div
+                            key={brief.module}
+                            className="rounded-lg border border-border/70 bg-muted/10 p-3"
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="font-medium text-card-foreground">{brief.module}</div>
+                              <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                <span>{brief.file_count} files</span>
+                                {brief.dominant_language ? (
+                                  <span>· {brief.dominant_language}</span>
+                                ) : null}
+                                {brief.dominant_role ? (
+                                  <span className="rounded-full bg-muted px-2 py-0.5 ring-1 ring-border">
+                                    {brief.dominant_role.replace(/_/g, " ")}
+                                  </span>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="mt-1 text-xs text-muted-foreground">
+                              {brief.purpose}
+                            </div>
+                            {brief.public_surface?.length ? (
+                              <div className="mt-2 text-[11px] text-muted-foreground">
+                                <span className="font-semibold uppercase tracking-wide">
+                                  Public surface:
+                                </span>{" "}
+                                {brief.public_surface.slice(0, 6).join(", ")}
+                              </div>
+                            ) : null}
+                            {brief.top_symbols?.length ? (
+                              <div className="mt-1 text-[11px] text-muted-foreground">
+                                <span className="font-semibold uppercase tracking-wide">
+                                  Top symbols:
+                                </span>{" "}
+                                {brief.top_symbols.slice(0, 6).join(", ")}
+                              </div>
+                            ) : null}
+                            {brief.internal_dependencies?.length ? (
+                              <div className="mt-1 text-[11px] text-muted-foreground">
+                                <span className="font-semibold uppercase tracking-wide">
+                                  Depends on:
+                                </span>{" "}
+                                {brief.internal_dependencies.slice(0, 5).join(", ")}
+                              </div>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-6 text-center text-sm text-muted-foreground">
+                        <Boxes className="mx-auto mb-2 h-6 w-6 opacity-40" />
+                        {selectedCodebaseId
+                          ? "Module briefs appear after the next index pass with the code-intel pipeline enabled."
+                          : "Select a codebase to view its module briefs."}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="curate" className="space-y-5">
+              <div className="rounded-xl border border-border/70 bg-gradient-to-br from-muted/30 to-transparent p-4">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-lg bg-primary/10 p-2 text-primary">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-1.5">
+                      <h3 className="text-sm font-semibold text-foreground">Curate by intent</h3>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="max-w-[300px] text-xs leading-snug">
+                          We embed your intent with a code-aware model and re-rank chunks using
+                          cosine similarity, token overlap, optional path scope, and the chunk's
+                          significance score. Each result explains why it ranked.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Describe the work you&apos;re about to do. We&apos;ll reduce the snapshot to
+                      the smallest useful slice — clusters and symbol cards — that you can route
+                      straight to memory.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr_auto]">
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Label htmlFor="intent-input">Intent</Label>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[260px] text-xs leading-snug">
+                          A short natural-language sentence. The more specific, the tighter the
+                          curated bundle.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="intent-input"
+                      value={intentInput}
+                      onChange={(event) => setIntentInput(event.target.value)}
+                      placeholder="Add idempotency keys to checkout API; fix race in payment retries"
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" && intentInput.trim()) {
+                          event.preventDefault();
+                          void runIntentCuration();
+                        }
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <Label htmlFor="intent-scope-hint">Scope hint (optional)</Label>
+                      <Tooltip delayDuration={200}>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          >
+                            <HelpCircle className="h-3 w-3" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="top" className="max-w-[260px] text-xs leading-snug">
+                          Comma-separated path prefixes. Results matching these paths get a ranking
+                          boost — leave blank to search the whole repo.
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Input
+                      id="intent-scope-hint"
+                      value={intentScopeHint}
+                      onChange={(event) => setIntentScopeHint(event.target.value)}
+                      placeholder="services/payments, src/api"
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    <Tooltip delayDuration={200}>
+                      <TooltipTrigger asChild>
+                        <Button
+                          disabled={!selectedCodebaseId || loadingIntent || !intentInput.trim()}
+                          onClick={() => void runIntentCuration()}
+                          className="w-full"
+                        >
+                          {loadingIntent ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Sparkles className="mr-2 h-4 w-4" />
+                          )}
+                          Curate
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" className="max-w-[240px] text-xs">
+                        Press Enter inside the intent box for the same shortcut.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
+
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                    Try
+                  </span>
+                  {[
+                    "Where do we authenticate API requests",
+                    "Find rate limiting middleware",
+                    "Database migration patterns",
+                    "How embeddings are cached",
+                  ].map((example) => (
+                    <button
+                      key={example}
+                      type="button"
+                      onClick={() => setIntentInput(example)}
+                      className="rounded-full border border-border/70 bg-card px-2.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-foreground"
+                    >
+                      {example}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {intentResult ? (
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span className="rounded-full bg-muted px-2 py-0.5">
+                      {intentResult.total_candidates.toLocaleString()} candidate
+                      {intentResult.total_candidates === 1 ? "" : "s"} ranked
+                    </span>
+                    <span className="rounded-full bg-muted px-2 py-0.5">
+                      {intentResult.clusters.length} cluster
+                      {intentResult.clusters.length === 1 ? "" : "s"}
+                    </span>
+                    <span className="rounded-full bg-muted px-2 py-0.5">
+                      {intentResult.symbol_cards.length} symbol card
+                      {intentResult.symbol_cards.length === 1 ? "" : "s"}
+                    </span>
+                  </div>
+
+                  {intentResult.symbol_cards.length ? (
+                    <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+                      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+                        <Zap className="h-4 w-4 text-primary" />
+                        <div className="text-sm font-semibold text-foreground">
+                          Top symbol cards
+                        </div>
+                        <Tooltip delayDuration={200}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            >
+                              <HelpCircle className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="max-w-[280px] text-xs leading-snug"
+                          >
+                            High-significance symbols that best match your intent. Each card is
+                            ready to be sent to memory directly.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="p-4">
+                        <div className="grid gap-3 md:grid-cols-2">
+                          {intentResult.symbol_cards.slice(0, 12).map((card) => (
+                            <div
+                              key={`${card.path}::${card.fq_name}`}
+                              className="group rounded-lg border border-border/70 bg-muted/10 p-3 transition-all hover:border-primary/40 hover:bg-muted/20 hover:shadow-sm"
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate font-medium text-card-foreground">
+                                    {card.name}
+                                  </div>
+                                  <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                                    {card.kind}
+                                    {card.language ? ` · ${card.language}` : ""} · {card.path}:
+                                    {card.start_line}
+                                  </div>
+                                </div>
+                                <Tooltip delayDuration={200}>
+                                  <TooltipTrigger asChild>
+                                    <div className="flex shrink-0 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium tabular-nums text-primary">
+                                      <Zap className="h-3 w-3" />
+                                      {(card.intent_score ?? 0).toFixed(2)}
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="left" className="max-w-[220px] text-xs">
+                                    Intent rank score (0..1). Combines embedding similarity, token
+                                    overlap, path match, and significance prior.
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                              {card.signature ? (
+                                <pre className="mt-2 overflow-x-auto rounded bg-muted/40 p-2 text-[11px] text-card-foreground">
+                                  {card.signature}
+                                </pre>
+                              ) : null}
+                              {card.purpose ? (
+                                <div className="mt-2 text-xs text-muted-foreground">
+                                  {card.purpose}
+                                </div>
+                              ) : null}
+                              {(card.safety_tags || []).length ? (
+                                <div className="mt-2 flex flex-wrap gap-1">
+                                  {card.safety_tags.map((tag) => (
+                                    <Tooltip key={tag} delayDuration={200}>
+                                      <TooltipTrigger asChild>
+                                        <span
+                                          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${safetyTagTone(tag)}`}
+                                        >
+                                          <ShieldCheck className="h-3 w-3" />
+                                          {tag}
+                                        </span>
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-[240px] text-xs">
+                                        Detected safety pattern. Auto-routed to review (never
+                                        auto-promoted) so a human can confirm intent.
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  ))}
+                                </div>
+                              ) : null}
+                              {card.explain ? (
+                                <div className="mt-2 rounded bg-muted/30 px-2 py-1 text-[11px] italic text-muted-foreground">
+                                  {card.explain}
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {intentResult.clusters.length ? (
+                    <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+                      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+                        <Layers3 className="h-4 w-4 text-primary" />
+                        <div className="text-sm font-semibold text-foreground">Top clusters</div>
+                        <Tooltip delayDuration={200}>
+                          <TooltipTrigger asChild>
+                            <button
+                              type="button"
+                              className="rounded-full p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            >
+                              <HelpCircle className="h-3.5 w-3.5" />
+                            </button>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="right"
+                            className="max-w-[280px] text-xs leading-snug"
+                          >
+                            Groups of near-duplicate chunks. Routing the cluster sends every member
+                            at once, which is the fastest way to absorb a feature.
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <div className="space-y-3 p-4">
+                        {intentResult.clusters.map((cluster) => {
+                          const clusterChunkIds = cluster.chunks.map((c) => c.id);
+                          return (
+                            <div
+                              key={cluster.cluster_id}
+                              className="group rounded-lg border border-border/70 bg-muted/10 p-3 transition-colors hover:border-primary/40 hover:bg-muted/20"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate font-medium text-card-foreground">
+                                    {cluster.cluster_label || cluster.cluster_id}
+                                  </div>
+                                  <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                                    <span className="rounded-full bg-muted px-2 py-0.5">
+                                      {cluster.size} chunk{cluster.size === 1 ? "" : "s"}
+                                    </span>
+                                    <span className="flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 font-medium text-primary">
+                                      <Zap className="h-3 w-3" />
+                                      {cluster.score.toFixed(2)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <Tooltip delayDuration={200}>
+                                  <TooltipTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 gap-1"
+                                      disabled={routingTarget !== null}
+                                      onClick={() =>
+                                        void handleRouteItems("memory", clusterChunkIds)
+                                      }
+                                    >
+                                      <ArrowRight className="h-3.5 w-3.5" />
+                                      Route to memory
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="left" className="max-w-[260px] text-xs">
+                                    Sends every chunk in this cluster to the memory queue. Approve
+                                    later via ASD Direct or Retain Pipeline.
+                                  </TooltipContent>
+                                </Tooltip>
+                              </div>
+                              <div className="mt-2 grid gap-1 text-xs">
+                                {cluster.chunks.slice(0, 6).map((chunk) => (
+                                  <button
+                                    key={chunk.id}
+                                    type="button"
+                                    onClick={() => void openChunkDetail(chunk.id)}
+                                    className="flex flex-wrap items-center justify-between gap-2 rounded border border-border/40 bg-card/40 px-2 py-1 text-left transition-colors hover:border-primary/40 hover:bg-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                  >
+                                    <div className="min-w-0 flex-1">
+                                      <div className="truncate font-medium text-card-foreground">
+                                        {chunk.label}
+                                      </div>
+                                      <div className="truncate text-[11px] text-muted-foreground">
+                                        {chunk.path}:{chunk.start_line}-{chunk.end_line}
+                                      </div>
+                                    </div>
+                                    <div className="text-[11px] tabular-nums text-muted-foreground">
+                                      {(chunk.intent_score ?? 0).toFixed(2)}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {intentResult.unclustered.length ? (
+                    <div className="rounded-xl border border-border/70 bg-card shadow-sm">
+                      <div className="flex items-center gap-2 border-b border-border/60 px-4 py-3">
+                        <Inbox className="h-4 w-4 text-muted-foreground" />
+                        <div className="text-sm font-semibold text-foreground">
+                          Other candidates
+                        </div>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {intentResult.unclustered.length}
+                        </span>
+                      </div>
+                      <div className="grid gap-1 p-4 text-xs">
+                        {intentResult.unclustered.slice(0, 12).map((chunk) => (
+                          <div
+                            key={chunk.id}
+                            className="flex flex-wrap items-center justify-between gap-2 rounded border border-border/40 bg-muted/10 px-2 py-1.5 transition-colors hover:border-primary/40 hover:bg-muted/20"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate font-medium text-card-foreground">
+                                {chunk.label}
+                              </div>
+                              <div className="truncate text-[11px] text-muted-foreground">
+                                {chunk.path}:{chunk.start_line}-{chunk.end_line}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 text-[11px] tabular-nums text-muted-foreground">
+                              {(chunk.intent_score ?? 0).toFixed(2)}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2"
+                                onClick={() => void openChunkDetail(chunk.id)}
+                              >
+                                Details
+                                <ChevronRight className="ml-0.5 h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border/70 bg-muted/5 p-8 text-center">
+                  <Sparkles className="mx-auto mb-3 h-8 w-8 text-primary/40" />
+                  <div className="text-sm font-medium text-foreground">
+                    Describe an intent to start curating
+                  </div>
+                  <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+                    The ranker uses a code-aware embedding model plus path overlap and chunk
+                    significance to surface the smallest useful slice — usually 5-15 symbols instead
+                    of 50,000 chunks.
+                  </p>
                 </div>
               )}
             </TabsContent>
@@ -3203,6 +4519,212 @@ export function CodebasesView() {
             <div className="rounded-xl border border-dashed border-border/70 p-6 text-sm text-muted-foreground">
               Pick a chunk from the review queue to inspect its detail surface.
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={triageSettingsOpen} onOpenChange={setTriageSettingsOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Tune auto-triage settings</DialogTitle>
+            <DialogDescription>
+              Thresholds run in [0..1]. Lower values pull more chunks into{" "}
+              <span className="font-medium">memory</span>; raise them to keep the gold layer
+              tighter. Changes apply on the next index pass.
+            </DialogDescription>
+          </DialogHeader>
+
+          {triageDraft ? (
+            <div className="space-y-4 text-sm">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label htmlFor="triage-high">High score threshold</Label>
+                  <Input
+                    id="triage-high"
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={triageDraft.score_threshold_high}
+                    onChange={(event) =>
+                      setTriageDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              score_threshold_high: Math.max(
+                                0,
+                                Math.min(1, Number(event.target.value) || 0)
+                              ),
+                            }
+                          : current
+                      )
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Default 0.62. Chunks above this with high centrality auto-route to memory.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="triage-centrality">Centrality threshold</Label>
+                  <Input
+                    id="triage-centrality"
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={triageDraft.centrality_threshold}
+                    onChange={(event) =>
+                      setTriageDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              centrality_threshold: Math.max(
+                                0,
+                                Math.min(1, Number(event.target.value) || 0)
+                              ),
+                            }
+                          : current
+                      )
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Default 0.35. PageRank cutoff for the &ldquo;exported + central&rdquo; rule.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="triage-safety">Safety centrality threshold</Label>
+                  <Input
+                    id="triage-safety"
+                    type="number"
+                    min={0}
+                    max={1}
+                    step={0.01}
+                    value={triageDraft.safety_threshold}
+                    onChange={(event) =>
+                      setTriageDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              safety_threshold: Math.max(
+                                0,
+                                Math.min(1, Number(event.target.value) || 0)
+                              ),
+                            }
+                          : current
+                      )
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Default 0.25. Min PageRank to auto-promote safety-critical chunks to memory.
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="triage-embed">Embedding provider</Label>
+                  <Select
+                    value={triageDraft.embedding_provider}
+                    onValueChange={(value) =>
+                      setTriageDraft((current) =>
+                        current ? { ...current, embedding_provider: value } : current
+                      )
+                    }
+                  >
+                    <SelectTrigger id="triage-embed">
+                      <SelectValue placeholder="Provider" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="jina_local">Jina v2 code (local)</SelectItem>
+                      <SelectItem value="voyage_code_3">Voyage code-3 (paid)</SelectItem>
+                      <SelectItem value="generic">Generic engine fallback</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid gap-4 rounded-xl border border-border/70 bg-muted/10 p-3 sm:grid-cols-2">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={triageDraft.enable_safety_scan}
+                    onCheckedChange={(value) =>
+                      setTriageDraft((current) =>
+                        current ? { ...current, enable_safety_scan: value === true } : current
+                      )
+                    }
+                  />
+                  <span>Built-in safety scan (auth/crypto/sql/eval/...)</span>
+                </label>
+                <label className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Checkbox
+                    checked={triageDraft.enable_semgrep}
+                    onCheckedChange={(value) =>
+                      setTriageDraft((current) =>
+                        current ? { ...current, enable_semgrep: value === true } : current
+                      )
+                    }
+                  />
+                  <span>Run Semgrep curated rulepack (requires CLI installed)</span>
+                </label>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="triage-rulepack">Semgrep rulepack</Label>
+                  <Input
+                    id="triage-rulepack"
+                    placeholder="p/owasp-top-ten or path to rules"
+                    value={triageDraft.semgrep_rulepack ?? ""}
+                    onChange={(event) =>
+                      setTriageDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              semgrep_rulepack: event.target.value.trim() || null,
+                            }
+                          : current
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  <Label htmlFor="triage-scip">SCIP index path (optional)</Label>
+                  <Input
+                    id="triage-scip"
+                    placeholder="path/to/index.scip"
+                    value={triageDraft.scip_index_path ?? ""}
+                    onChange={(event) =>
+                      setTriageDraft((current) =>
+                        current
+                          ? {
+                              ...current,
+                              scip_index_path: event.target.value.trim() || null,
+                            }
+                          : current
+                      )
+                    }
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    When present, precise cross-references replace the tree-sitter heuristics.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTriageSettingsOpen(false)}
+                  disabled={savingTriageSettings}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => void saveTriageSettings()}
+                  disabled={savingTriageSettings}
+                >
+                  {savingTriageSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  Save settings
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-muted-foreground">Loading current settings...</div>
           )}
         </DialogContent>
       </Dialog>

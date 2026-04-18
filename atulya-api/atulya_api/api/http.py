@@ -861,6 +861,14 @@ class CodebaseChunkItemResponse(BaseModel):
     change_kind: str
     related_count: int = 0
     document_id: str | None = None
+    significance_score: float = 0.0
+    significance_components: dict[str, Any] | None = None
+    file_role: str | None = None
+    auto_route_reason: str | None = None
+    complexity_score: float | None = None
+    safety_tags: list[str] = FieldWithDefault(list)
+    pagerank_centrality: float | None = None
+    fanin_count: int = 0
 
 
 class CodebaseChunksResponse(BaseModel):
@@ -1014,6 +1022,91 @@ class CodebaseImpactResponse(BaseModel):
 
 
 CodebaseChunkDetailResponse.model_rebuild()
+
+
+class CodebaseRepoMapResponse(BaseModel):
+    """Snapshot Repo Map artifact response."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    generated_at: str | None = None
+    repo_map: dict[str, Any] | None = None
+
+
+class CodebaseModuleBriefsResponse(BaseModel):
+    """List of Module Brief artifacts for a snapshot."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    items: list[dict[str, Any]] = FieldWithDefault(list)
+
+
+class CodebaseSymbolCardResponse(BaseModel):
+    """One Symbol Card artifact."""
+
+    codebase_id: str
+    snapshot_id: str
+    symbol_card: dict[str, Any]
+
+
+class CodebaseSymbolCardListResponse(BaseModel):
+    """Paginated Symbol Card artifact list."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    items: list[dict[str, Any]] = FieldWithDefault(list)
+    next_cursor: str | None = None
+    has_more: bool = False
+
+
+class CodebaseCurateRequest(BaseModel):
+    """Intent-driven curation request body."""
+
+    intent: str
+    scope_hint: str | None = None
+    snapshot_id: str | None = None
+    top_k_clusters: int = Field(default=10, ge=1, le=50)
+    top_k_symbols: int = Field(default=20, ge=1, le=100)
+    include_dismissed: bool = False
+
+
+class CodebaseCurateClusterResponse(BaseModel):
+    cluster_id: str
+    cluster_label: str | None = None
+    score: float
+    size: int
+    chunks: list[dict[str, Any]] = FieldWithDefault(list)
+
+
+class CodebaseCurateResponse(BaseModel):
+    """Intent-driven curation response."""
+
+    codebase_id: str
+    snapshot_id: str | None = None
+    intent: str
+    scope_hint: str | None = None
+    clusters: list[CodebaseCurateClusterResponse] = FieldWithDefault(list)
+    symbol_cards: list[dict[str, Any]] = FieldWithDefault(list)
+    unclustered: list[dict[str, Any]] = FieldWithDefault(list)
+    total_candidates: int = 0
+
+
+class CodebaseTriageSettings(BaseModel):
+    """Per-codebase triage thresholds and provider toggles."""
+
+    score_threshold_high: float = Field(default=0.62, ge=0.0, le=1.0)
+    centrality_threshold: float = Field(default=0.35, ge=0.0, le=1.0)
+    safety_threshold: float = Field(default=0.25, ge=0.0, le=1.0)
+    embedding_provider: str = Field(default="jina_local")
+    enable_safety_scan: bool = True
+    enable_semgrep: bool = False
+    semgrep_rulepack: str | None = None
+    scip_index_path: str | None = None
+
+
+class CodebaseTriageSettingsResponse(BaseModel):
+    codebase_id: str
+    settings: CodebaseTriageSettings
 
 
 class FactsIncludeOptions(BaseModel):
@@ -6635,6 +6728,15 @@ def _register_routes(app: FastAPI):
         limit: int = Query(default=25, ge=1, le=100),
         cursor: str | None = Query(default=None),
         snapshot_id: str | None = Query(default=None),
+        min_significance: float | None = Query(default=None, ge=0.0, le=1.0),
+        max_significance: float | None = Query(default=None, ge=0.0, le=1.0),
+        file_role: str | None = Query(default=None),
+        auto_route_reason: str | None = Query(default=None),
+        has_safety_tag: bool | None = Query(default=None),
+        route_source: str | None = Query(default=None),
+        order_by: str | None = Query(
+            default=None, description="One of significance | review | path | complexity | pagerank"
+        ),
         request_context: RequestContext = Depends(get_request_context),
     ):
         """List semantic chunks for a codebase snapshot."""
@@ -6652,6 +6754,13 @@ def _register_routes(app: FastAPI):
                 limit=limit,
                 cursor=cursor,
                 snapshot_id=snapshot_id,
+                min_significance=min_significance,
+                max_significance=max_significance,
+                file_role=file_role,
+                auto_route_reason=auto_route_reason,
+                has_safety_tag=has_safety_tag,
+                route_source=route_source,
+                order_by=order_by,
                 request_context=request_context,
             )
             return CodebaseChunksResponse.model_validate(
@@ -6791,6 +6900,262 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/{codebase_id}/research: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/repo-map",
+        response_model=CodebaseRepoMapResponse,
+        summary="Get codebase Repo Map",
+        description="Return the snapshot Repo Map artifact (top-K ranked tags + module dependency edges).",
+        operation_id="get_codebase_repo_map",
+        tags=["Codebases"],
+    )
+    async def api_get_codebase_repo_map(
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str | None = Query(default=None),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.get_codebase_repo_map(
+                bank_id,
+                codebase_id,
+                snapshot_id=snapshot_id,
+                request_context=request_context,
+            )
+            return CodebaseRepoMapResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error fetching repo map for {codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/modules",
+        response_model=CodebaseModuleBriefsResponse,
+        summary="List Module Briefs",
+        description="Return Module Brief artifacts for a snapshot.",
+        operation_id="list_codebase_modules",
+        tags=["Codebases"],
+    )
+    async def api_list_codebase_modules(
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str | None = Query(default=None),
+        limit: int = Query(default=100, ge=1, le=500),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.list_codebase_modules(
+                bank_id,
+                codebase_id,
+                snapshot_id=snapshot_id,
+                limit=limit,
+                request_context=request_context,
+            )
+            return CodebaseModuleBriefsResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error listing module briefs for {codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols",
+        response_model=CodebaseSymbolCardListResponse,
+        summary="List Symbol Cards",
+        description="Return paginated Symbol Card artifacts ordered by significance.",
+        operation_id="list_codebase_symbol_cards",
+        tags=["Codebases"],
+    )
+    async def api_list_codebase_symbol_cards(
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str | None = Query(default=None),
+        limit: int = Query(default=100, ge=1, le=500),
+        cursor: str | None = Query(default=None),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.list_codebase_symbol_cards(
+                bank_id,
+                codebase_id,
+                snapshot_id=snapshot_id,
+                limit=limit,
+                cursor=cursor,
+                request_context=request_context,
+            )
+            return CodebaseSymbolCardListResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error listing symbol cards for {codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols/{symbol_id:path}",
+        response_model=CodebaseSymbolCardResponse,
+        summary="Get a Symbol Card",
+        description="Return one Symbol Card artifact by fully-qualified symbol id.",
+        operation_id="get_codebase_symbol_card",
+        tags=["Codebases"],
+    )
+    async def api_get_codebase_symbol_card(
+        bank_id: str,
+        codebase_id: str,
+        symbol_id: str,
+        snapshot_id: str | None = Query(default=None),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.get_codebase_symbol_card(
+                bank_id,
+                codebase_id,
+                symbol_id,
+                snapshot_id=snapshot_id,
+                request_context=request_context,
+            )
+            return CodebaseSymbolCardResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error fetching symbol card for {codebase_id}/{symbol_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/curate",
+        response_model=CodebaseCurateResponse,
+        summary="Curate codebase by intent",
+        description="Rank Symbol Cards + chunks against a free-text intent. Returns top clusters and symbol cards.",
+        operation_id="curate_codebase_by_intent",
+        tags=["Codebases"],
+    )
+    async def api_curate_codebase_by_intent(
+        bank_id: str,
+        codebase_id: str,
+        request: CodebaseCurateRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.curate_codebase_by_intent(
+                bank_id,
+                codebase_id,
+                intent=request.intent,
+                scope_hint=request.scope_hint,
+                snapshot_id=request.snapshot_id,
+                top_k_clusters=request.top_k_clusters,
+                top_k_symbols=request.top_k_symbols,
+                include_dismissed=request.include_dismissed,
+                request_context=request_context,
+            )
+            return CodebaseCurateResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error curating codebase {codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings",
+        response_model=CodebaseTriageSettingsResponse,
+        summary="Get triage settings",
+        description="Return per-codebase auto-triage settings.",
+        operation_id="get_codebase_triage_settings",
+        tags=["Codebases"],
+    )
+    async def api_get_codebase_triage_settings(
+        bank_id: str,
+        codebase_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.get_codebase_triage_settings(
+                bank_id,
+                codebase_id,
+                request_context=request_context,
+            )
+            return CodebaseTriageSettingsResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error fetching triage settings for {codebase_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.put(
+        "/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings",
+        response_model=CodebaseTriageSettingsResponse,
+        summary="Update triage settings",
+        description="Replace per-codebase auto-triage settings.",
+        operation_id="update_codebase_triage_settings",
+        tags=["Codebases"],
+    )
+    async def api_update_codebase_triage_settings(
+        bank_id: str,
+        codebase_id: str,
+        request: CodebaseTriageSettings,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.update_codebase_triage_settings(
+                bank_id,
+                codebase_id,
+                settings=request.model_dump(),
+                request_context=request_context,
+            )
+            return CodebaseTriageSettingsResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error updating triage settings for {codebase_id}: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(

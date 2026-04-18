@@ -817,6 +817,122 @@ export interface CodebaseChunkItem {
   change_kind: string;
   related_count: number;
   document_id: string | null;
+  significance_score?: number;
+  significance_components?: Record<string, unknown> | null;
+  file_role?: string | null;
+  auto_route_reason?: string | null;
+  complexity_score?: number | null;
+  safety_tags?: string[];
+  pagerank_centrality?: number | null;
+  fanin_count?: number;
+}
+
+export interface CodebaseRepoMapResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  generated_at: string | null;
+  repo_map: {
+    top_symbols?: Array<{
+      fq_name: string;
+      name: string;
+      kind: string;
+      language: string | null;
+      path: string;
+      start_line: number;
+      signature: string;
+      pagerank: number;
+      fanin: number;
+      safety_tags?: string[];
+    }>;
+    module_edges?: Array<{ from: string; to: string; weight: number }>;
+    summary?: Record<string, unknown>;
+  } | null;
+}
+
+export interface CodebaseModuleBrief {
+  module: string;
+  purpose: string;
+  public_surface: string[];
+  internal_dependencies: string[];
+  external_consumers: string[];
+  top_symbols: string[];
+  file_count: number;
+  dominant_language: string | null;
+  dominant_role: string | null;
+}
+
+export interface CodebaseModuleBriefsResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  items: CodebaseModuleBrief[];
+}
+
+export interface CodebaseSymbolCard {
+  fq_name: string;
+  name: string;
+  kind: string;
+  language: string | null;
+  path: string;
+  start_line: number;
+  end_line: number;
+  signature: string;
+  purpose: string;
+  top_callers: string[];
+  top_callees: string[];
+  cyclomatic_complexity?: number | null;
+  nloc?: number | null;
+  safety_tags: string[];
+  pagerank: number;
+  fanin: number;
+  significance_score: number;
+  cluster_id: string | null;
+  chunk_key: string | null;
+  change_kind: string | null;
+  intent_score?: number;
+  explain?: string;
+}
+
+export interface CodebaseSymbolCardListResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  items: CodebaseSymbolCard[];
+  next_cursor: string | null;
+  has_more: boolean;
+}
+
+export interface CodebaseCurateClusterResult {
+  cluster_id: string;
+  cluster_label: string | null;
+  score: number;
+  size: number;
+  chunks: Array<CodebaseChunkItem & { intent_score: number; explain: string }>;
+}
+
+export interface CodebaseCurateResult {
+  codebase_id: string;
+  snapshot_id: string | null;
+  intent: string;
+  scope_hint: string | null;
+  clusters: CodebaseCurateClusterResult[];
+  symbol_cards: CodebaseSymbolCard[];
+  unclustered: Array<CodebaseChunkItem & { intent_score: number; explain: string }>;
+  total_candidates: number;
+}
+
+export interface CodebaseTriageSettings {
+  score_threshold_high: number;
+  centrality_threshold: number;
+  safety_threshold: number;
+  embedding_provider: string;
+  enable_safety_scan: boolean;
+  enable_semgrep: boolean;
+  semgrep_rulepack: string | null;
+  scip_index_path: string | null;
+}
+
+export interface CodebaseTriageSettingsResult {
+  codebase_id: string;
+  settings: CodebaseTriageSettings;
 }
 
 export interface CodebaseChunksResult {
@@ -2395,6 +2511,13 @@ export class ControlPlaneClient {
       limit?: number;
       cursor?: string;
       snapshot_id?: string;
+      min_significance?: number;
+      max_significance?: number;
+      file_role?: string;
+      auto_route_reason?: string;
+      has_safety_tag?: string;
+      route_source?: string;
+      order_by?: "significance" | "complexity" | "pagerank" | "default";
     }
   ) {
     const queryParams = new URLSearchParams();
@@ -2408,10 +2531,123 @@ export class ControlPlaneClient {
     if (params?.limit) queryParams.set("limit", String(params.limit));
     if (params?.cursor) queryParams.set("cursor", params.cursor);
     if (params?.snapshot_id) queryParams.set("snapshot_id", params.snapshot_id);
+    if (params?.min_significance !== undefined)
+      queryParams.set("min_significance", String(params.min_significance));
+    if (params?.max_significance !== undefined)
+      queryParams.set("max_significance", String(params.max_significance));
+    if (params?.file_role) queryParams.set("file_role", params.file_role);
+    if (params?.auto_route_reason) queryParams.set("auto_route_reason", params.auto_route_reason);
+    if (params?.has_safety_tag) queryParams.set("has_safety_tag", params.has_safety_tag);
+    if (params?.route_source) queryParams.set("route_source", params.route_source);
+    if (params?.order_by && params.order_by !== "default")
+      queryParams.set("order_by", params.order_by);
     const suffix = queryParams.toString() ? `?${queryParams.toString()}` : "";
     return this.fetchApi<CodebaseChunksResult>(
       `/api/banks/${bankId}/codebases/${codebaseId}/chunks${suffix}`,
       { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async getCodebaseRepoMap(bankId: string, codebaseId: string, params?: { snapshot_id?: string }) {
+    const qp = new URLSearchParams();
+    if (params?.snapshot_id) qp.set("snapshot_id", params.snapshot_id);
+    const suffix = qp.toString() ? `?${qp.toString()}` : "";
+    return this.fetchApi<CodebaseRepoMapResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/artifacts/repo-map${suffix}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async listCodebaseModuleBriefs(
+    bankId: string,
+    codebaseId: string,
+    params?: { snapshot_id?: string }
+  ) {
+    const qp = new URLSearchParams();
+    if (params?.snapshot_id) qp.set("snapshot_id", params.snapshot_id);
+    const suffix = qp.toString() ? `?${qp.toString()}` : "";
+    return this.fetchApi<CodebaseModuleBriefsResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/artifacts/modules${suffix}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async listCodebaseSymbolCards(
+    bankId: string,
+    codebaseId: string,
+    params?: {
+      snapshot_id?: string;
+      q?: string;
+      file_role?: string;
+      has_safety_tag?: string;
+      limit?: number;
+      cursor?: string;
+    }
+  ) {
+    const qp = new URLSearchParams();
+    if (params?.snapshot_id) qp.set("snapshot_id", params.snapshot_id);
+    if (params?.q) qp.set("q", params.q);
+    if (params?.file_role) qp.set("file_role", params.file_role);
+    if (params?.has_safety_tag) qp.set("has_safety_tag", params.has_safety_tag);
+    if (params?.limit) qp.set("limit", String(params.limit));
+    if (params?.cursor) qp.set("cursor", params.cursor);
+    const suffix = qp.toString() ? `?${qp.toString()}` : "";
+    return this.fetchApi<CodebaseSymbolCardListResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/artifacts/symbols${suffix}`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async curateCodebaseByIntent(
+    bankId: string,
+    codebaseId: string,
+    body: {
+      intent: string;
+      scope_hint?: string | null;
+      top_k_clusters?: number;
+      top_k_symbols?: number;
+      include_dismissed?: boolean;
+      snapshot_id?: string | null;
+      // Aliases kept for callers using the legacy max_* names.
+      max_clusters?: number;
+      max_symbols?: number;
+    }
+  ) {
+    const payload = {
+      intent: body.intent,
+      scope_hint: body.scope_hint ?? null,
+      snapshot_id: body.snapshot_id ?? null,
+      top_k_clusters: body.top_k_clusters ?? body.max_clusters ?? 10,
+      top_k_symbols: body.top_k_symbols ?? body.max_symbols ?? 20,
+      include_dismissed: body.include_dismissed ?? false,
+    };
+    return this.fetchApi<CodebaseCurateResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/curate`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    );
+  }
+
+  async getCodebaseTriageSettings(bankId: string, codebaseId: string) {
+    return this.fetchApi<CodebaseTriageSettingsResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/triage-settings`,
+      { cache: "no-store" as RequestCache }
+    );
+  }
+
+  async updateCodebaseTriageSettings(
+    bankId: string,
+    codebaseId: string,
+    settings: Partial<CodebaseTriageSettings>
+  ) {
+    return this.fetchApi<CodebaseTriageSettingsResult>(
+      `/api/banks/${bankId}/codebases/${codebaseId}/triage-settings`,
+      {
+        method: "PUT",
+        body: JSON.stringify(settings),
+      }
     );
   }
 
