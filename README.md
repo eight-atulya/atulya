@@ -7,6 +7,8 @@
 
 [Read the Atulya product principles](./ATULYA_PRINCIPLES.md)
 
+>One time setup ~> [scripts/dev/SETUP.md](./scripts/dev/SETUP.md).
+
 **A living algorithm for machine intelligence (MI).**
 
 Atulya is built on one simple idea:  
