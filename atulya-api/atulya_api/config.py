@@ -165,6 +165,7 @@ ENV_CONSOLIDATION_LLM_MAX_RETRIES = "ATULYA_API_CONSOLIDATION_LLM_MAX_RETRIES"
 ENV_CONSOLIDATION_LLM_INITIAL_BACKOFF = "ATULYA_API_CONSOLIDATION_LLM_INITIAL_BACKOFF"
 ENV_CONSOLIDATION_LLM_MAX_BACKOFF = "ATULYA_API_CONSOLIDATION_LLM_MAX_BACKOFF"
 ENV_CONSOLIDATION_LLM_TIMEOUT = "ATULYA_API_CONSOLIDATION_LLM_TIMEOUT"
+ENV_CONSOLIDATION_MAX_ATTEMPTS = "ATULYA_API_CONSOLIDATION_MAX_ATTEMPTS"
 
 ENV_EMBEDDINGS_PROVIDER = "ATULYA_API_EMBEDDINGS_PROVIDER"
 ENV_EMBEDDINGS_LOCAL_MODEL = "ATULYA_API_EMBEDDINGS_LOCAL_MODEL"
@@ -214,6 +215,7 @@ ENV_RERANKER_LOCAL_TRUST_REMOTE_CODE = "ATULYA_API_RERANKER_LOCAL_TRUST_REMOTE_C
 ENV_RERANKER_TEI_URL = "ATULYA_API_RERANKER_TEI_URL"
 ENV_RERANKER_TEI_BATCH_SIZE = "ATULYA_API_RERANKER_TEI_BATCH_SIZE"
 ENV_RERANKER_TEI_MAX_CONCURRENT = "ATULYA_API_RERANKER_TEI_MAX_CONCURRENT"
+ENV_RERANKER_TEI_HTTP_TIMEOUT = "ATULYA_API_RERANKER_TEI_HTTP_TIMEOUT"
 ENV_RERANKER_MAX_CANDIDATES = "ATULYA_API_RERANKER_MAX_CANDIDATES"
 ENV_RERANKER_OBSERVATION_TYPE_BOOST = "ATULYA_API_RERANKER_OBSERVATION_TYPE_BOOST"
 ENV_RERANKER_EXPERIENCE_TYPE_BOOST = "ATULYA_API_RERANKER_EXPERIENCE_TYPE_BOOST"
@@ -395,10 +397,14 @@ PROVIDER_DEFAULT_MODELS = {
 }
 DEFAULT_LLM_MODEL = "gpt-4o-mini"  # Fallback if provider not in table
 DEFAULT_LLM_MAX_CONCURRENT = 32
-DEFAULT_LLM_MAX_RETRIES = 10  # Max retry attempts for LLM API calls
+DEFAULT_LLM_MAX_RETRIES = 3  # Max retry attempts for LLM API calls (was 10; lowered to fail-fast under outage)
 DEFAULT_LLM_INITIAL_BACKOFF = 1.0  # Initial backoff in seconds for retry exponential backoff
 DEFAULT_LLM_MAX_BACKOFF = 60.0  # Max backoff cap in seconds for retry exponential backoff
 DEFAULT_LLM_TIMEOUT = 120.0  # seconds
+
+# Max LLM-driven action attempts per consolidation batch. Bounds the worst-case
+# blast radius of malformed LLM output so a single bad batch can't pin a worker.
+DEFAULT_CONSOLIDATION_MAX_ATTEMPTS = 3
 
 # Vertex AI defaults
 DEFAULT_LLM_VERTEXAI_PROJECT_ID = None  # Required for Vertex AI
@@ -424,6 +430,11 @@ DEFAULT_RERANKER_LOCAL_TRUST_REMOTE_CODE = (
 )
 DEFAULT_RERANKER_TEI_BATCH_SIZE = 128
 DEFAULT_RERANKER_TEI_MAX_CONCURRENT = 8
+# Default HTTP timeout (seconds) for the remote TEI cross-encoder. Previously
+# the value was hard-coded inside the factory and could not be tuned per
+# environment; this constant lets operators raise it for slow backends or
+# lower it to fail-fast on a wedged TEI host.
+DEFAULT_RERANKER_TEI_HTTP_TIMEOUT = 30.0
 DEFAULT_RERANKER_MAX_CANDIDATES = 300
 DEFAULT_RERANKER_OBSERVATION_TYPE_BOOST = 1.03
 DEFAULT_RERANKER_EXPERIENCE_TYPE_BOOST = 1.02
@@ -740,6 +751,10 @@ class AtulyaConfig:
     consolidation_llm_initial_backoff: float | None
     consolidation_llm_max_backoff: float | None
     consolidation_llm_timeout: float | None
+    # Maximum LLM-driven action attempts per consolidation batch. Each attempt
+    # may itself retry up to ``consolidation_llm_max_retries`` times at the
+    # transport layer, so worst-case API calls = max_attempts * (max_retries+1).
+    consolidation_max_attempts: int
 
     # Embeddings
     embeddings_provider: str
@@ -767,6 +782,10 @@ class AtulyaConfig:
     reranker_tei_url: str | None
     reranker_tei_batch_size: int
     reranker_tei_max_concurrent: int
+    # HTTP request timeout (seconds) for the remote TEI cross-encoder. Operators
+    # need to tune this independently of generic LLM timeouts because TEI
+    # inference latency varies sharply with batch size and model.
+    reranker_tei_http_timeout: float
     reranker_max_candidates: int
     reranker_observation_type_boost: float
     reranker_experience_type_boost: float
@@ -989,6 +1008,9 @@ class AtulyaConfig:
         "consolidation_source_facts_max_tokens_per_observation",
         "max_observations_per_scope",
         "observations_mission",
+        "consolidation_max_attempts",
+        # Reranker tuning
+        "reranker_tei_http_timeout",
         # Reflect settings
         "reflect_mission",
         # Dream/Trance settings
@@ -1228,6 +1250,9 @@ class AtulyaConfig:
             consolidation_llm_timeout=float(os.getenv(ENV_CONSOLIDATION_LLM_TIMEOUT))
             if os.getenv(ENV_CONSOLIDATION_LLM_TIMEOUT)
             else None,
+            consolidation_max_attempts=int(
+                os.getenv(ENV_CONSOLIDATION_MAX_ATTEMPTS, str(DEFAULT_CONSOLIDATION_MAX_ATTEMPTS))
+            ),
             # Embeddings
             embeddings_provider=os.getenv(ENV_EMBEDDINGS_PROVIDER, DEFAULT_EMBEDDINGS_PROVIDER),
             embeddings_local_model=os.getenv(ENV_EMBEDDINGS_LOCAL_MODEL, DEFAULT_EMBEDDINGS_LOCAL_MODEL),
@@ -1274,6 +1299,9 @@ class AtulyaConfig:
             reranker_tei_batch_size=int(os.getenv(ENV_RERANKER_TEI_BATCH_SIZE, str(DEFAULT_RERANKER_TEI_BATCH_SIZE))),
             reranker_tei_max_concurrent=int(
                 os.getenv(ENV_RERANKER_TEI_MAX_CONCURRENT, str(DEFAULT_RERANKER_TEI_MAX_CONCURRENT))
+            ),
+            reranker_tei_http_timeout=float(
+                os.getenv(ENV_RERANKER_TEI_HTTP_TIMEOUT, str(DEFAULT_RERANKER_TEI_HTTP_TIMEOUT))
             ),
             reranker_max_candidates=int(os.getenv(ENV_RERANKER_MAX_CANDIDATES, str(DEFAULT_RERANKER_MAX_CANDIDATES))),
             reranker_observation_type_boost=float(

@@ -68,7 +68,7 @@ from . import (
     fact_storage,
     link_creation,
 )
-from .types import EntityLink, ExtractedFact, ProcessedFact, RetainContent, RetainContentDict
+from .types import EntityLink, ProcessedFact, RetainContent, RetainContentDict
 
 logger = logging.getLogger(__name__)
 
@@ -547,8 +547,15 @@ async def retain_batch(
                 f"[11] Anomaly intelligence: {len(anomaly_event_ids)} events, {correction_count} corrections in {time.time() - step_start:.3f}s"
             )
 
-            # Map results back to original content items
-            result_unit_ids = _map_results_to_contents(contents, extracted_facts, unit_ids)
+            # Map results back to original content items.
+            # We pass `processed_facts` (not `extracted_facts`) so the mapping
+            # is correct-by-construction: insert_facts_batch returns one
+            # unit_id per processed_fact, and ProcessedFact preserves the
+            # original content_index. Iterating extracted_facts here was the
+            # historical bug — if the embeddings backend silently dropped a
+            # row, len(extracted_facts) > len(processed_facts) == len(unit_ids)
+            # and the loop indexed past the end of unit_ids.
+            result_unit_ids = _map_results_to_contents(contents, processed_facts, unit_ids)
 
             # Transactional outbox: queue any side-effect tasks (e.g. webhook deliveries)
             # inside the same transaction so they are atomically committed with the retain data.
@@ -574,21 +581,23 @@ async def retain_batch(
 
 def _map_results_to_contents(
     contents: list[RetainContent],
-    extracted_facts: list[ExtractedFact],
+    processed_facts: list[ProcessedFact],
     unit_ids: list[str],
 ) -> list[list[str]]:
-    """Map created unit IDs back to original content items."""
-    facts_by_content: dict[int, list[int]] = {i: [] for i in range(len(contents))}
-    for i, fact in enumerate(extracted_facts):
-        facts_by_content[fact.content_index].append(i)
+    """Map inserted unit_ids back to original content items.
 
-    result_unit_ids = []
-    unit_idx = 0
-    for content_index in range(len(contents)):
-        content_unit_ids = []
-        for _ in facts_by_content[content_index]:
-            content_unit_ids.append(unit_ids[unit_idx])
-            unit_idx += 1
-        result_unit_ids.append(content_unit_ids)
+    Invariant: ``len(processed_facts) == len(unit_ids)``. This is guaranteed
+    by ``fact_storage.insert_facts_batch`` (one inserted row per processed
+    fact). We assert it explicitly so any future divergence fails loudly here
+    rather than silently at the IndexError site downstream.
+    """
+    if len(processed_facts) != len(unit_ids):
+        raise RuntimeError(
+            f"retain pipeline invariant violated: {len(processed_facts)} processed_facts "
+            f"vs {len(unit_ids)} unit_ids; insert_facts_batch must return one id per fact"
+        )
 
+    result_unit_ids: list[list[str]] = [[] for _ in range(len(contents))]
+    for fact, unit_id in zip(processed_facts, unit_ids):
+        result_unit_ids[fact.content_index].append(unit_id)
     return result_unit_ids

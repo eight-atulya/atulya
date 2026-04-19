@@ -154,9 +154,24 @@ class AtulyaEmbedded:
             self._started = True
             logger.info(f"Connected to daemon at {daemon_url}")
 
+    # Maximum time we are willing to block on the cleanup lock before
+    # bailing out. Cleanup is reachable from interrupt handlers (Ctrl+C),
+    # ``__del__`` finalizers and ``atexit`` hooks, so an unbounded
+    # ``with self._lock:`` here can hang the entire interpreter when another
+    # thread is mid-call. Five seconds is long enough to let an in-flight
+    # request finish in the common case, and short enough that a wedged
+    # cleanup never blocks process exit indefinitely.
+    _CLEANUP_LOCK_TIMEOUT_SECONDS: float = 5.0
+
     def _cleanup(self, stop_daemon_on_close: bool = False):
         """
-        Cleanup client resources (idempotent).
+        Cleanup client resources (idempotent, bounded).
+
+        Uses a bounded ``acquire(timeout=...)`` instead of ``with self._lock:``
+        so finalizer / atexit / signal-handler callers never block forever.
+        If we cannot acquire the lock in time we still mark the client closed
+        — a stuck thread is the operator's problem; preventing process exit
+        is ours.
 
         Args:
             stop_daemon_on_close: If True, stops the daemon. Otherwise, daemon continues
@@ -165,20 +180,42 @@ class AtulyaEmbedded:
         if self._closed:
             return
 
-        with self._lock:
+        acquired = self._lock.acquire(timeout=self._CLEANUP_LOCK_TIMEOUT_SECONDS)
+        if not acquired:
+            logger.warning(
+                "embedded._cleanup: lock acquisition timed out after %.1fs; "
+                "marking client closed without releasing daemon",
+                self._CLEANUP_LOCK_TIMEOUT_SECONDS,
+            )
+            self._closed = True
+            return
+
+        try:
             if self._closed:
                 return
 
             if self._client is not None:
-                self._client.close()
-                self._client = None
+                try:
+                    self._client.close()
+                except Exception:
+                    # Client may be in an inconsistent state during interrupted
+                    # shutdown; we still want to fall through to daemon stop /
+                    # _closed = True so that subsequent calls fail fast.
+                    logger.exception("embedded._cleanup: client.close() raised; continuing")
+                finally:
+                    self._client = None
 
             # Optionally stop daemon (daemon has idle timeout, so not required)
             if stop_daemon_on_close and self._started:
                 logger.info(f"Stopping daemon for profile '{self.profile}'...")
-                self._manager.stop(self.profile)
+                try:
+                    self._manager.stop(self.profile)
+                except Exception:
+                    logger.exception("embedded._cleanup: manager.stop() raised; continuing")
 
             self._closed = True
+        finally:
+            self._lock.release()
 
     def close(self, stop_daemon: bool = False):
         """

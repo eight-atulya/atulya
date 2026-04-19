@@ -197,17 +197,31 @@ class BrokerTaskBackend(TaskBackend):
         table = fq_table("async_operations", schema)
 
         if operation_id:
-            # Update existing operation with task payload
-            await pool.execute(
+            # Publish step: only set task_payload if it hasn't been set already.
+            # Without the `AND task_payload IS NULL` guard, a late retry of the
+            # submitter could overwrite a payload that's already been claimed
+            # and is mid-execution by a worker, corrupting the operation. The
+            # claim is the source of truth; submit is publish-once.
+            result = await pool.execute(
                 f"""
                 UPDATE {table}
                 SET task_payload = $1::jsonb, updated_at = now()
-                WHERE operation_id = $2
+                WHERE operation_id = $2 AND task_payload IS NULL
                 """,
                 payload_json,
                 operation_id,
             )
-            logger.debug(f"Updated task payload for operation {operation_id}")
+            # asyncpg returns "UPDATE n" — extract the rowcount for logging.
+            try:
+                rowcount = int(result.split()[-1]) if isinstance(result, str) else 0
+            except (ValueError, AttributeError):
+                rowcount = 0
+            if rowcount == 0:
+                logger.debug(
+                    f"Skipped publish for operation {operation_id}: payload already set (task likely already claimed)"
+                )
+            else:
+                logger.debug(f"Published task payload for operation {operation_id} (rowcount={rowcount})")
         else:
             # Insert new operation (for tasks without pre-created records)
             # e.g., access_count_update tasks

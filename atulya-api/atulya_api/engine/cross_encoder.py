@@ -1116,6 +1116,7 @@ def create_cross_encoder_from_env() -> CrossEncoderModel:
             raise ValueError(f"{ENV_RERANKER_TEI_URL} is required when {ENV_RERANKER_PROVIDER} is 'tei'")
         return RemoteTEICrossEncoder(
             base_url=url,
+            timeout=config.reranker_tei_http_timeout,
             batch_size=config.reranker_tei_batch_size,
             max_concurrent=config.reranker_tei_max_concurrent,
         )

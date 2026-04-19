@@ -2,12 +2,14 @@
 Cross-encoder neural reranking for search results.
 """
 
+import logging
 from datetime import datetime, timezone
 
 from ...config import get_config
 from .types import MergedCandidate, ScoredResult
 
 UTC = timezone.utc
+logger = logging.getLogger(__name__)
 
 # Multiplicative boost alphas for recency and temporal proximity.
 # Each signal contributes at most ±(alpha/2) relative adjustment to the base CE score,
@@ -64,6 +66,28 @@ def apply_combined_scoring(
     """
     if now.tzinfo is None:
         now = now.replace(tzinfo=UTC)
+
+    # Detect a passthrough / misconfigured cross-encoder. If the reranker
+    # produced fewer than 2 distinct normalized scores across multiple results,
+    # the model is not actually ranking — every result has the same combined
+    # score and the original RRF order is destroyed. Fall back to the RRF rank
+    # via a stable monotone mapping so recall still produces a useful order.
+    if len(scored_results) >= 2:
+        unique_ce_scores = {round(sr.cross_encoder_score_normalized, 6) for sr in scored_results}
+        if len(unique_ce_scores) <= 1:
+            logger.warning(
+                "reranker passthrough detected (%d results, %d unique CE scores); falling back to RRF order",
+                len(scored_results),
+                len(unique_ce_scores),
+            )
+            n = len(scored_results)
+            # Stable monotone map: best RRF rank → highest CE proxy.
+            # rrf_rank is 1-based ascending (1 = best). Map to (N - rank + 1) / N
+            # so the best rank gets 1.0 and the worst gets 1/N — strictly
+            # decreasing, never zero.
+            for sr in scored_results:
+                rank = sr.candidate.rrf_rank or n
+                sr.cross_encoder_score_normalized = (n - rank + 1) / n
 
     for sr in scored_results:
         # Recency: linear decay over 365 days → [0.1, 1.0]; neutral 0.5 if no date.

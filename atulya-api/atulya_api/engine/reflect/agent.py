@@ -339,6 +339,19 @@ OUTPUT:"""
 _TIKTOKEN_ENCODING = tiktoken.get_encoding("cl100k_base")
 
 
+def _estimate_tokens(text: str) -> int:
+    """Estimate the token count of ``text`` using cl100k_base encoding.
+
+    This is used to enforce ``max_tokens`` on short-circuit answers (no tool
+    calls) where the LLM may have ignored the cap. We deliberately use the
+    same encoder as :func:`_count_messages_tokens` so the comparison is
+    apples-to-apples.
+    """
+    if not text:
+        return 0
+    return len(_TIKTOKEN_ENCODING.encode(text))
+
+
 def _count_messages_tokens(messages: list[dict[str, Any]]) -> int:
     """Estimate the token count of the messages list using cl100k_base encoding."""
     total = 0
@@ -718,6 +731,44 @@ async def run_reflect_agent(
         if not result.tool_calls:
             if result.content:
                 answer = _clean_answer_text(result.content.strip())
+
+                # Enforce max_tokens cap on short-circuit answers. Some
+                # providers (notably Gemini until Group 5) silently dropped
+                # ``max_completion_tokens`` and others ignored the cap when no
+                # tool calls were emitted, so the caller could not rely on the
+                # final answer fitting its budget. Re-issue a single capped
+                # rewrite when we exceed the cap.
+                if max_tokens is not None and answer and _estimate_tokens(answer) > max_tokens:
+                    rewrite_prompt = (
+                        f"Rewrite the following answer to fit within {max_tokens} tokens "
+                        "while preserving its meaning, citations, and key facts. Output only "
+                        "the rewritten answer with no preface.\n\n--- ORIGINAL ANSWER ---\n"
+                        f"{answer}"
+                    )
+                    rewrite_start = time.time()
+                    rewrite_response, rewrite_usage = await llm_config.call(
+                        messages=[
+                            {"role": "system", "content": FINAL_SYSTEM_PROMPT},
+                            {"role": "user", "content": rewrite_prompt},
+                        ],
+                        scope="reflect",
+                        max_completion_tokens=max_tokens,
+                        return_usage=True,
+                    )
+                    rewrite_duration = int((time.time() - rewrite_start) * 1000)
+                    total_input_tokens += rewrite_usage.input_tokens
+                    total_output_tokens += rewrite_usage.output_tokens
+                    llm_trace.append(
+                        {
+                            "scope": "reflect_rewrite",
+                            "duration_ms": rewrite_duration,
+                            "input_tokens": rewrite_usage.input_tokens,
+                            "output_tokens": rewrite_usage.output_tokens,
+                        }
+                    )
+                    rewritten = _clean_answer_text(rewrite_response.strip())
+                    if rewritten:
+                        answer = rewritten
 
                 # Generate structured output if schema provided
                 structured_output = None

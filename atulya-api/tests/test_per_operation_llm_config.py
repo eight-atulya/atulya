@@ -286,8 +286,9 @@ class TestRetryAndBackoffConfiguration:
 
         config = get_config()
 
-        # Verify global defaults
-        assert config.llm_max_retries == 10
+        # Default lowered from 10 → 3 in Group 5 of the bugfix backport so that
+        # transient outages fail fast rather than burning ~10 minutes per call.
+        assert config.llm_max_retries == 3
         assert config.llm_initial_backoff == 1.0
         assert config.llm_max_backoff == 60.0
 
@@ -319,8 +320,8 @@ class TestRetryAndBackoffConfiguration:
             assert config.reflect_llm_initial_backoff == 1.5
             assert config.reflect_llm_max_backoff == 90.0
 
-            # Verify global defaults remain unchanged
-            assert config.llm_max_retries == 10
+            # Verify global defaults remain unchanged (default is now 3, see Group 5)
+            assert config.llm_max_retries == 3
             assert config.llm_initial_backoff == 1.0
             assert config.llm_max_backoff == 60.0
         finally:

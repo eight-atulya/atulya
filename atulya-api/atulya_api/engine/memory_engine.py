@@ -278,6 +278,7 @@ from .response_models import (
 )
 from .response_models import RecallResult as RecallResultModel
 from .retain import bank_utils, embedding_utils
+from .retain.embedding_utils import EmbeddingBackendContractError
 from .retain.types import RetainContentDict
 from .search import think_utils
 from .search.reranking import CrossEncoderReranker, apply_combined_scoring
@@ -289,6 +290,32 @@ from .temporal import (
     infer_direction,
     serialize_temporal_metadata,
 )
+
+
+def _is_retryable_task_error(exc: BaseException) -> bool:
+    """Classify whether ``execute_task`` should retry on the given exception.
+
+    Returns False for deterministic / contract-violation errors that will
+    reproduce on every retry attempt — retrying them just wastes worker
+    capacity and floods logs. Returns True for everything else (transient
+    network errors, LLM rate limits, DB connectivity blips, etc).
+
+    Centralizing this policy here keeps the retry decision in one place rather
+    than scattered through the exception handler.
+    """
+    # asyncpg.exceptions.IntegrityConstraintViolationError is the parent of
+    # UniqueViolation, ForeignKeyViolation, NotNullViolation, CheckViolation,
+    # and ExclusionViolation — all of which indicate a deterministic bug,
+    # bad input, or a missed idempotency guard. Retrying produces the same
+    # error.
+    if isinstance(exc, asyncpg.exceptions.IntegrityConstraintViolationError):
+        return False
+    # Embedding backend returned the wrong number of vectors for the input.
+    # Same backend + same input will reproduce; mark failed and surface to
+    # operators rather than burn 3 retries.
+    if isinstance(exc, EmbeddingBackendContractError):
+        return False
+    return True
 
 
 class Budget(str, Enum):
@@ -3567,15 +3594,23 @@ class MemoryEngine(MemoryEngineInterface):
         tags = mental_model.get("tags")
         tags_match = "all_strict" if tags else "any"
 
+        # Forward the stored max_tokens cap so the refresh respects whatever
+        # cap the mental model was originally created with. The reflect path
+        # short-circuits oversized answers via a capped rewrite (Group 6 fix).
+        stored_max_tokens = mental_model.get("max_tokens")
+        reflect_kwargs: dict[str, Any] = {
+            "bank_id": bank_id,
+            "query": source_query,
+            "request_context": internal_context,
+            "tags": tags,
+            "tags_match": tags_match,
+            "exclude_mental_model_ids": [mental_model_id],
+        }
+        if stored_max_tokens is not None:
+            reflect_kwargs["max_tokens"] = stored_max_tokens
+
         # Run reflect to generate new content, excluding the mental model being refreshed
-        reflect_result = await self.reflect_async(
-            bank_id=bank_id,
-            query=source_query,
-            request_context=internal_context,
-            tags=tags,
-            tags_match=tags_match,
-            exclude_mental_model_ids=[mental_model_id],
-        )
+        reflect_result = await self.reflect_async(**reflect_kwargs)
 
         generated_content = reflect_result.text or "No content generated"
 
@@ -4113,6 +4148,12 @@ class MemoryEngine(MemoryEngineInterface):
         This method is called by the task backend to execute tasks.
         It receives a plain dict that can be serialized and sent over the network.
 
+        Retry policy: ``RetryTaskAt`` is honored as task-owned scheduling. Other
+        exceptions are classified by ``_is_retryable_task_error`` — deterministic
+        contract violations (integrity errors, embedding-length contract) are
+        marked failed immediately, all other unexpected errors are retried up
+        to 3 times via ``RetryTaskAt``.
+
         Args:
             task_dict: Task dictionary with 'type' key and other payload data
                       Example: {'type': 'batch_retain', 'bank_id': '...', 'contents': [...]}
@@ -4215,6 +4256,22 @@ class MemoryEngine(MemoryEngineInterface):
                 logger.error(f"Not retrying task {task_type} (non-retryable), marking as failed")
                 if operation_id:
                     await self._mark_operation_failed(operation_id, str(e), error_traceback)
+            elif not _is_retryable_task_error(e):
+                # Deterministic / contract-violation failures will not improve on retry.
+                # Examples: integrity constraint violations, embedding-backend length-
+                # contract violations. Retrying just wastes worker capacity and floods logs.
+                logger.error(f"task: non-retryable {type(e).__name__}, marking failed: {type(e).__name__}: {e}")
+                if operation_id:
+                    await self._mark_operation_failed(operation_id, str(e), error_traceback)
+                if task_type == "consolidation" and operation_id:
+                    await self._fire_consolidation_webhook(
+                        bank_id=task_dict.get("bank_id", ""),
+                        operation_id=operation_id,
+                        status="failed",
+                        result=None,
+                        error_message=str(e),
+                        schema=schema,
+                    )
             else:
                 if task_type == "consolidation" and operation_id:
                     # Fire failure webhook (non-transactional — operation not yet marked failed;
@@ -6067,7 +6124,8 @@ class MemoryEngine(MemoryEngineInterface):
             embedding_span.set_attribute("atulya.query", query[:100])
 
             try:
-                query_embedding = embedding_utils.generate_embedding(self.embeddings, query)
+                query_embeddings = await embedding_utils.generate_embeddings_batch(self.embeddings, [query])
+                query_embedding = query_embeddings[0]
                 step_duration = time.time() - step_start
                 log_buffer.append(f"  [1] Generate query embedding: {step_duration:.3f}s")
             finally:
@@ -6782,10 +6840,12 @@ class MemoryEngine(MemoryEngineInterface):
             )
 
         except Exception as e:
-            log_buffer.append(f"[RECALL {recall_id}] ERROR after {time.time() - recall_start:.3f}s: {str(e)}")
+            log_buffer.append(
+                f"[RECALL {recall_id}] ERROR after {time.time() - recall_start:.3f}s: {type(e).__name__}: {e}"
+            )
             if not quiet:
                 logger.error("\n" + "\n".join(log_buffer))
-            raise Exception(f"Failed to search memories: {str(e)}")
+            raise Exception(f"Failed to search memories: {type(e).__name__}: {e}")
 
     def _filter_by_token_budget(
         self, results: list[dict[str, Any]], max_tokens: int
@@ -6913,16 +6973,21 @@ class MemoryEngine(MemoryEngineInterface):
                     f"SELECT COUNT(*) FROM {fq_table('memory_units')} WHERE document_id = $1", document_id
                 )
 
-                # Invalidate observations referencing these memories before deletion
-                if unit_ids:
-                    invalidated_obs = await self._delete_stale_observations_for_memories(conn, bank_id, unit_ids)
-
-                # Delete document (cascades to memory_units and all their links)
+                # Delete document first (cascades to memory_units and all their links).
+                # The stale-observation sweep runs AFTER the delete so it also catches
+                # observations inserted concurrently by consolidation. Otherwise, a
+                # consolidation insert that commits between the sweep and the delete
+                # would leave an orphan observation referencing the just-deleted source
+                # memory. Paired with consolidator._filter_live_source_memories(),
+                # this closes the orphan-observation race window under READ COMMITTED.
                 deleted = await conn.fetchval(
                     f"DELETE FROM {fq_table('documents')} WHERE id = $1 AND bank_id = $2 RETURNING id",
                     document_id,
                     bank_id,
                 )
+
+                if unit_ids:
+                    invalidated_obs = await self._delete_stale_observations_for_memories(conn, bank_id, unit_ids)
 
                 result = {
                     "document_deleted": 1 if deleted else 0,
@@ -6972,16 +7037,18 @@ class MemoryEngine(MemoryEngineInterface):
                 bank_id = row["bank_id"] if row else None
                 fact_type = row["fact_type"] if row else None
 
-                # Invalidate observations before deletion (only for source memory types)
+                # Delete the memory unit first (cascades to links and associations).
+                # The stale-observation sweep runs AFTER the delete so it also catches
+                # observations inserted concurrently by consolidation. See delete_document
+                # above for the full invariant rationale.
+                deleted = await conn.fetchval(
+                    f"DELETE FROM {fq_table('memory_units')} WHERE id = $1 RETURNING id", unit_id
+                )
+
                 if bank_id and fact_type in ("experience", "world"):
                     invalidated_obs = await self._delete_stale_observations_for_memories(conn, bank_id, [unit_id])
                     if invalidated_obs > 0:
                         bank_id_for_consolidation = bank_id
-
-                # Delete the memory unit (cascades to links and associations)
-                deleted = await conn.fetchval(
-                    f"DELETE FROM {fq_table('memory_units')} WHERE id = $1 RETURNING id", unit_id
-                )
 
                 result = {
                     "success": deleted is not None,
@@ -7038,7 +7105,12 @@ class MemoryEngine(MemoryEngineInterface):
             async with conn.transaction():
                 try:
                     if fact_type:
-                        # For source memory types, clean up observations before deletion
+                        # For source memory types, capture ids so we can invalidate
+                        # dependent observations AFTER the delete below. Running the
+                        # stale-observation sweep post-delete ensures we also catch
+                        # observations inserted concurrently by consolidation. See
+                        # delete_document for the full invariant rationale.
+                        unit_ids: list[str] = []
                         if fact_type in ("experience", "world"):
                             unit_id_rows = await conn.fetch(
                                 f"SELECT id FROM {fq_table('memory_units')} WHERE bank_id = $1 AND fact_type = $2",
@@ -7046,10 +7118,6 @@ class MemoryEngine(MemoryEngineInterface):
                                 fact_type,
                             )
                             unit_ids = [str(row["id"]) for row in unit_id_rows]
-                            if unit_ids:
-                                invalidated_obs = await self._delete_stale_observations_for_memories(
-                                    conn, bank_id, unit_ids
-                                )
 
                         # Delete only memories of a specific fact type
                         units_count = await conn.fetchval(
@@ -7062,6 +7130,11 @@ class MemoryEngine(MemoryEngineInterface):
                             bank_id,
                             fact_type,
                         )
+
+                        if unit_ids:
+                            invalidated_obs = await self._delete_stale_observations_for_memories(
+                                conn, bank_id, unit_ids
+                            )
 
                         # Note: We don't delete entities when fact_type is specified,
                         # as they may be referenced by other memory units
@@ -10809,17 +10882,25 @@ class MemoryEngine(MemoryEngineInterface):
             tags = mental_model.get("tags")
             tags_match = "all_strict" if tags else "any"
 
+            # Forward the stored max_tokens cap so the refresh respects whatever
+            # cap the mental model was originally created with. The reflect path
+            # short-circuits oversized answers via a capped rewrite (Group 6 fix).
+            stored_max_tokens = mental_model.get("max_tokens")
+            reflect_kwargs: dict[str, Any] = {
+                "bank_id": bank_id,
+                "query": mental_model["source_query"],
+                "request_context": request_context,
+                "tags": tags,
+                "tags_match": tags_match,
+                "exclude_mental_model_ids": [mental_model_id],
+                "_skip_span": True,
+            }
+            if stored_max_tokens is not None:
+                reflect_kwargs["max_tokens"] = stored_max_tokens
+
             # Run reflect with the source query, excluding the mental model being refreshed
             # Skip creating a nested "atulya.reflect" span since we already have "atulya.mental_model_refresh"
-            reflect_result = await self.reflect_async(
-                bank_id=bank_id,
-                query=mental_model["source_query"],
-                request_context=request_context,
-                tags=tags,
-                tags_match=tags_match,
-                exclude_mental_model_ids=[mental_model_id],
-                _skip_span=True,
-            )
+            reflect_result = await self.reflect_async(**reflect_kwargs)
 
             # Build reflect_response payload to store
             # based_on contains MemoryFact objects for most types, but plain dicts for directives
