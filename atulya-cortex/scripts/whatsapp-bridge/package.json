@@ -1,0 +1,20 @@
+{
+  "name": "atulya-cortex-whatsapp-bridge",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local Node bridge that lets atulya-cortex (Python) talk to WhatsApp Web via Baileys.",
+  "main": "whatsapp-bridge.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node whatsapp-bridge.js",
+    "pair": "CORTEX_WA_PAIR_ONLY=1 CORTEX_WA_PRINT_QR=1 node whatsapp-bridge.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.9",
+    "pino": "^9.0.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}

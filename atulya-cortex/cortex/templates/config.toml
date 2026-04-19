@@ -1,0 +1,154 @@
+# Atulya Cortex configuration
+#
+# Edit by hand or via `atulya-cortex config edit`. Values may reference
+# environment variables with `${NAME}` and they will be expanded on load.
+# Secrets belong in `.env` next to this file, NOT here.
+#
+# Schema-validated: `atulya-cortex config check` will reject unknown keys.
+
+[general]
+# Display name for this brain instance.
+name = "atulya-cortex"
+# Local peer id; becomes the suffix of the `tui:` channel.
+peer = "local"
+# Display name of the human running this brain. Used by the cortex to
+# tell remote peers (WhatsApp, Telegram) "you are not <operator>" so the
+# persona's local-operator anchoring doesn't bleed across channels.
+# Leave empty to fall back to `general.name`.
+operator = ""
+# Logging verbosity: DEBUG, INFO, WARNING, ERROR, CRITICAL.
+log_level = "INFO"
+
+[model]
+# Provider id: lm_studio | ollama | vllm | openai | anthropic | groq |
+# together | fireworks | cerebras | mistral | perplexity | deepseek |
+# openrouter | xai | google.
+provider = "lm_studio"
+# Model identifier (provider-specific tag).
+model = "google/gemma-3-4b"
+# Override base URL only if your provider runs on a non-default port.
+base_url = "http://localhost:1234/v1"
+# Name of the env var that holds the API key (ignored for local providers).
+api_key_env = "OPENAI_API_KEY"
+temperature = 0.4
+max_tokens = 512
+timeout_s = 120.0
+max_retries = 1
+
+[memory]
+# atulya-embed bank id used by Hippocampus for recall + retain.
+bank_id = "atulya-cortex"
+# One vector-memory bank per (cortex profile, remote peer). Banks are
+# created automatically on first WhatsApp/Telegram message. Requires the
+# atulya-embed daemon (see `atulya` package). Off by default — set true
+# when your local stack is up.
+peer_banks_enabled = true
+# Channel roots that get a dedicated bank per contact (see `peer_banks.py`).
+peer_banks_channels = ["whatsapp", "telegram"]
+# Optional: atulya-embed daemon profile name. Empty = same as cortex profile.
+embed_profile = ""
+# atulya-api endpoint (atulya-embed daemon). Leave default for the local stack.
+api_url = "http://localhost:8888"
+# Env var that holds the atulya-api auth token, if your deployment requires one.
+api_key_env = "ATULYA_API_KEY"
+# Maximum recollections per kind passed to the cortex.
+recall_top_k = 4
+# Memory kinds queried per stimulus, in priority order.
+recall_kinds = ["episodic", "semantic"]
+# Working memory: how many recent turns (per channel+peer) to replay back
+# into the system prompt so the model has continuity across messages.
+# Conservative defaults targeted at small local LLMs (gemma-4-e2b etc).
+history_turns = 8
+# Char budget for replayed history. Trims oldest turns first when exceeded.
+history_char_budget = 1500
+# Long-term memory: how many semantic facts about THIS peer and how many
+# salient past episodes get spliced into the system prompt every turn.
+# Facts are short and dense; episodes are richer but pricier. Lower these
+# (or set to 0) on very small models.
+recall_facts_top_k = 8
+recall_episodes_top_k = 3
+# Sleep-time consolidation: episode -> fact distillation. One LLM call
+# per pass, gated so it doesn't fire on idle chitchat. Increase
+# `min_salience` to be stricter, lower `min_episodes` to consolidate
+# faster. `cooldown_s` is a per-peer rate limit.
+consolidation_min_episodes = 4
+consolidation_min_salience = 0.6
+consolidation_cooldown_s = 60.0
+
+[telegram]
+enabled = false
+# Env var that holds the Telegram bot token created via @BotFather.
+token_env = "TELEGRAM_BOT_TOKEN"
+# Optional allowlist of Telegram user ids; empty list = anyone may DM (still
+# subject to DMPairing).
+allowed_users = []
+# How long to long-poll Telegram per request (seconds).
+poll_timeout_s = 30
+
+[whatsapp]
+enabled = false
+# Backend: `baileys` (local Node bridge, dev) or `cloud` (Meta WhatsApp Cloud API, prod).
+backend = "baileys"
+# Path to the Node bridge directory (relative to ATULYA_CORTEX_HOME or absolute).
+bridge_path = "scripts/whatsapp-bridge"
+# Cloud backend env vars.
+phone_number_id_env = "WHATSAPP_PHONE_NUMBER_ID"
+access_token_env = "WHATSAPP_ACCESS_TOKEN"
+verify_token_env = "WHATSAPP_VERIFY_TOKEN"
+
+[dashboard]
+enabled = true
+host = "127.0.0.1"
+port = 9120
+
+[breathing]
+# Global rate limits applied by Brainstem.Breathing.
+max_actions_per_minute = 60
+max_tokens_per_minute = 60000
+
+[breathing.per_channel]
+telegram = 30
+whatsapp = 30
+tui = 600
+
+[skills]
+# Copy bundled skill markdown into the home skills/ folder on every start.
+sync_on_start = true
+# Allow loading user-authored skills from the home skills/ folder.
+allow_user_skills = true
+
+[dream]
+consolidation_enabled = true
+consolidation_interval_s = 1800
+distill_enabled = true
+
+[logging]
+# Path is resolved relative to the home logs/ dir if not absolute.
+file = "cortex.log"
+rotate_bytes = 5242880
+rotate_backups = 3
+
+[tools]
+# The deliberation arc — when the cortex is allowed to *act*, not just talk.
+# Off by default; flip on once you've reviewed `safe_root` below. With this
+# enabled the cortex closes the think -> act -> observe loop and can call
+# bash, read/write files, and fetch URLs as part of producing one reply.
+enabled = false
+# Hard cap on tool calls per stimulus before the cortex must answer.
+# Small local models stay sharper at 2-3; raise carefully.
+max_actions = 3
+# Channels allowed to trigger tool dispatch. TUI only by default —
+# remote contacts (whatsapp, telegram) cannot run shell commands until
+# you add their channel here AND trust everyone who can reach the bot
+# over that channel.
+allowed_channels = ["tui"]
+# Filesystem confinement for read_file / write_file / edit_file tools.
+# Empty string = $ATULYA_CORTEX_HOME (the cortex's own profile).
+safe_root = ""
+# Per-tool toggles. Disable any tool you don't want to expose to the model.
+bash_enabled = true
+bash_timeout_s = 30.0
+web_fetch_enabled = true
+web_fetch_timeout_s = 30.0
+web_fetch_max_bytes = 2000000
+fs_write_enabled = true

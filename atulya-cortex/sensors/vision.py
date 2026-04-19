@@ -9,7 +9,7 @@ A full-fledged 'Vision Engine' that models human-like vision concepts:
 """
 
 import logging
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 try:
     import cv2  # Requires OpenCV
@@ -21,6 +21,7 @@ except ImportError as e:
 
 class VisionError(Exception):
     """Custom exception for vision-related errors."""
+
     pass
 
 
@@ -88,15 +89,13 @@ class VisualCortex:
 
     def __init__(self, eyes_config: List[int] = None):
         """
-        Initializes multiple Eyes. 
+        Initializes multiple Eyes.
         :param eyes_config: A list of camera indices (e.g., [0, 1]) or paths for video streams.
         """
         if eyes_config is None:
             eyes_config = [0]  # Default to a single camera at index 0
 
-        self.eyes = [
-            Eye(eye_name=f"Eye_{idx}", camera_index=idx) for idx in eyes_config
-        ]
+        self.eyes = [Eye(eye_name=f"Eye_{idx}", camera_index=idx) for idx in eyes_config]
 
     def awaken_eyes(self) -> None:
         """
