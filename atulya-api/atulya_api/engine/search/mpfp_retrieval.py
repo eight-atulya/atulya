@@ -622,9 +622,7 @@ class MPFPGraphRetriever(GraphRetriever):
         if tags or tag_groups:
             from .tags import filter_results_by_tags_and_groups
 
-            results = filter_results_by_tags_and_groups(
-                results, tags, tag_groups, tags_match=tags_match
-            )
+            results = filter_results_by_tags_and_groups(results, tags, tag_groups, tags_match=tags_match)
 
         timings.result_count = len(results)
 
@@ -671,9 +669,7 @@ class MPFPGraphRetriever(GraphRetriever):
         """Fallback: find semantic seeds via embedding search."""
         from .tags import build_combined_tag_filter
 
-        tags_clause, tag_params, _ = build_combined_tag_filter(
-            tags, tags_match, tag_groups, param_offset=6
-        )
+        tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=6)
         params = [query_embedding_str, bank_id, fact_type, threshold, limit]
         params.extend(tag_params)
 

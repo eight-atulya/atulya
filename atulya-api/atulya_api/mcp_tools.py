@@ -535,9 +535,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             """
             try:
                 if tags is not None and tag_groups:
-                    return json.dumps(
-                        {"error": "`tags` and `tag_groups` are mutually exclusive.", "results": []}
-                    )
+                    return json.dumps({"error": "`tags` and `tag_groups` are mutually exclusive.", "results": []})
 
                 target_bank = bank_id or config.bank_id_resolver()
                 if target_bank is None:
@@ -692,9 +690,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
             """
             try:
                 if tags is not None and tag_groups:
-                    return json.dumps(
-                        {"error": "`tags` and `tag_groups` are mutually exclusive."}
-                    )
+                    return json.dumps({"error": "`tags` and `tag_groups` are mutually exclusive."})
 
                 target_bank = bank_id or config.bank_id_resolver()
                 if target_bank is None:

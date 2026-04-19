@@ -249,13 +249,9 @@ def _build_leaf_clause(
     operator, include_untagged = _parse_tags_match(leaf.match)
 
     if include_untagged:
-        clause = (
-            f"({column} IS NULL OR {column} = '{{}}' OR {column} {operator} ${param_offset})"
-        )
+        clause = f"({column} IS NULL OR {column} = '{{}}' OR {column} {operator} ${param_offset})"
     else:
-        clause = (
-            f"({column} IS NOT NULL AND {column} != '{{}}' AND {column} {operator} ${param_offset})"
-        )
+        clause = f"({column} IS NOT NULL AND {column} != '{{}}' AND {column} {operator} ${param_offset})"
     return clause, [list(leaf.tags)], param_offset + 1
 
 

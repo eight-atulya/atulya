@@ -3500,9 +3500,7 @@ class MemoryEngine(MemoryEngineInterface):
             return _TGLeaf(**raw)
 
         raw_tag_groups = task_dict.get("tag_groups")
-        rehydrated_tag_groups = (
-            [_rehydrate_tag_group(g) for g in raw_tag_groups] if raw_tag_groups else None
-        )
+        rehydrated_tag_groups = [_rehydrate_tag_group(g) for g in raw_tag_groups] if raw_tag_groups else None
 
         reflect_result = await self.reflect_async(
             bank_id=bank_id,
@@ -14390,9 +14388,7 @@ class MemoryEngine(MemoryEngineInterface):
             "tags": tags,
             "tags_match": tags_match,
             "tag_groups": (
-                [g.model_dump(by_alias=True, exclude_none=True) for g in tag_groups]
-                if tag_groups
-                else None
+                [g.model_dump(by_alias=True, exclude_none=True) for g in tag_groups] if tag_groups else None
             ),
         }
         if request_context.tenant_id:

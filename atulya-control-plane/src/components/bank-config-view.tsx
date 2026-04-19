@@ -628,9 +628,7 @@ export function BankConfigView() {
               onChange={(e) =>
                 setObservationsEdits((prev) => ({
                   ...prev,
-                  max_observations_per_scope: e.target.value
-                    ? parseInt(e.target.value, 10)
-                    : null,
+                  max_observations_per_scope: e.target.value ? parseInt(e.target.value, 10) : null,
                 }))
               }
               placeholder="Unlimited"

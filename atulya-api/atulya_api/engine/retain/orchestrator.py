@@ -133,11 +133,7 @@ async def retain_batch(
     # text, so the resulting document contains both the prior and the new facts.
     # Guarded by is_first_batch so paged batches do not re-prepend on every page.
     if is_first_batch:
-        append_targets = [
-            (idx, item)
-            for idx, item in enumerate(contents_dicts)
-            if item.get("update_mode") == "append"
-        ]
+        append_targets = [(idx, item) for idx, item in enumerate(contents_dicts) if item.get("update_mode") == "append"]
         if append_targets:
             async with acquire_with_retry(pool) as conn:
                 for idx, item in append_targets:

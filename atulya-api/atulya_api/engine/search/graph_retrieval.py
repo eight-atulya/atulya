@@ -163,9 +163,7 @@ class BFSGraphRetriever(GraphRetriever):
         """Internal implementation with connection."""
         from .tags import build_combined_tag_filter
 
-        tags_clause, tag_params, _ = build_combined_tag_filter(
-            tags, tags_match, tag_groups, param_offset=6
-        )
+        tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=6)
         params = [query_embedding_str, bank_id, fact_type, self.entry_point_threshold, self.entry_point_limit]
         params.extend(tag_params)
 
@@ -270,8 +268,6 @@ class BFSGraphRetriever(GraphRetriever):
 
         # Apply tags + tag_groups filtering (BFS may traverse into memories that don't match)
         if tags or tag_groups:
-            results = filter_results_by_tags_and_groups(
-                results, tags, tag_groups, tags_match=tags_match
-            )
+            results = filter_results_by_tags_and_groups(results, tags, tag_groups, tags_match=tags_match)
 
         return results

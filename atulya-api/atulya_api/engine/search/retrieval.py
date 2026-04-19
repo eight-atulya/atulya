@@ -121,9 +121,7 @@ async def retrieve_semantic_bm25_combined(
 
     # If no valid tokens for BM25, just run semantic
     if not tokens:
-        tags_clause, tag_params, _ = build_combined_tag_filter(
-            tags, tags_match, tag_groups, param_offset=5
-        )
+        tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=5)
         params = [query_emb_str, bank_id, fact_types, limit]
         params.extend(tag_params)
         results = await conn.fetch(
@@ -164,9 +162,7 @@ async def retrieve_semantic_bm25_combined(
     config = get_config()
 
     # Build combined tags + tag_groups clause - starts at param 6
-    tags_clause, tag_params, _ = build_combined_tag_filter(
-        tags, tags_match, tag_groups, param_offset=6
-    )
+    tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=6)
 
     # Build backend-specific BM25 parts
     if config.text_search_extension == "vchord":
@@ -296,9 +292,7 @@ async def retrieve_temporal_combined(
         end_date = end_date.replace(tzinfo=UTC)
 
     # Build combined tags + tag_groups clause - starts at param 7
-    tags_clause, tag_params, _ = build_combined_tag_filter(
-        tags, tags_match, tag_groups, param_offset=7
-    )
+    tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=7)
     params = [query_emb_str, bank_id, fact_types, start_date, end_date, semantic_threshold]
     params.extend(tag_params)
 
