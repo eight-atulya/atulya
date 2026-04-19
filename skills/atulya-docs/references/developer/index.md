@@ -73,6 +73,7 @@ That keeps the developer workflow fast and deterministic without silently growin
 | Learn the workbench and modal review UX | [Codebases Control Plane](/developer/codebases-control-plane) |
 | Optimize workflows for coding agents | [Codebases For Coding Agents](/developer/codebases-for-coding-agents) |
 | Integrate import, review, routing, and approval via API | [Codebases API](/developer/codebases-api) |
+| Tune retain/reflect for repos and seed developer guides | [Bank presets](/developer/bank-presets) |
 
 ## Featured: Graph Intelligence
 

@@ -249,6 +249,10 @@ class TestWorkerPoller:
             worker_id="test-worker-1",
             executor=lambda x: None,
             max_slots=3,  # Limit to 3 concurrent tasks
+            # Reservation semantics: zero out reserved budgets so the standard
+            # pool gets the full 3-slot budget for this test.
+            consolidation_max_slots=0,
+            sub_routine_max_slots=0,
         )
 
         claimed = await poller.claim_batch()
@@ -1375,7 +1379,10 @@ async def test_worker_slot_limits_enforced(pool, clean_operations):
         executor=controlled_executor,
         poll_interval_ms=50,
         max_slots=3,  # Only allow 3 concurrent tasks
-        consolidation_max_slots=1,
+        # Reservation semantics: dedicate all 3 slots to the standard pool
+        # so this test verifies the standard slot cap end-to-end.
+        consolidation_max_slots=0,
+        sub_routine_max_slots=0,
     )
 
     # Submit 10 tasks

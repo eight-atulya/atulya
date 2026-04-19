@@ -61,6 +61,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CopyButton } from "@/components/ui/copy-button";
 import { MemoryDetailModal } from "./memory-detail-modal";
 import { DirectiveDetailModal } from "./directive-detail-modal";
@@ -87,6 +94,7 @@ interface MentalModel {
   tags: string[];
   max_tokens: number;
   trigger: {
+    mode?: "full" | "delta";
     refresh_after_consolidation: boolean;
   };
   last_refreshed_at: string;
@@ -595,6 +603,7 @@ function CreateMentalModelDialog({
     maxTokens: "2048",
     tags: "",
     autoRefresh: false,
+    mode: "full" as "full" | "delta",
   });
 
   const handleCreate = async () => {
@@ -616,7 +625,7 @@ function CreateMentalModelDialog({
         source_query: form.sourceQuery.trim(),
         tags: tags.length > 0 ? tags : undefined,
         max_tokens: maxTokens,
-        trigger: { refresh_after_consolidation: form.autoRefresh },
+        trigger: { mode: form.mode, refresh_after_consolidation: form.autoRefresh },
       });
 
       setForm({
@@ -626,6 +635,7 @@ function CreateMentalModelDialog({
         maxTokens: "2048",
         tags: "",
         autoRefresh: false,
+        mode: "full",
       });
       onCreated();
     } catch (error) {
@@ -647,12 +657,13 @@ function CreateMentalModelDialog({
             maxTokens: "2048",
             tags: "",
             autoRefresh: false,
+            mode: "full",
           });
           onClose();
         }
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Create Mental Model</DialogTitle>
           <DialogDescription>
@@ -661,7 +672,7 @@ function CreateMentalModelDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
           <div className="space-y-2">
             <label className="text-sm font-medium text-foreground">
               ID <span className="text-muted-foreground font-normal">(optional)</span>
@@ -736,6 +747,26 @@ function CreateMentalModelDialog({
           <p className="text-xs text-muted-foreground -mt-2 ml-6">
             Automatically refresh this mental model when memories are consolidated.
           </p>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Refresh Mode</label>
+            <Select
+              value={form.mode}
+              onValueChange={(v) => setForm({ ...form, mode: v as "full" | "delta" })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Full — regenerate from scratch</SelectItem>
+                <SelectItem value="delta">Delta — surgical edits</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Delta mode applies minimal changes to the structured document, leaving untouched
+              sections byte-identical. Falls back to a full rewrite on the first refresh and
+              whenever the source query changes.
+            </p>
+          </div>
         </div>
 
         <DialogFooter>
@@ -780,6 +811,7 @@ function UpdateMentalModelDialog({
     maxTokens: String(mentalModel.max_tokens || 2048),
     tags: mentalModel.tags.join(", "),
     autoRefresh: mentalModel.trigger?.refresh_after_consolidation || false,
+    mode: (mentalModel.trigger?.mode || "full") as "full" | "delta",
   });
 
   // Reset form when mental model changes or dialog opens
@@ -791,6 +823,7 @@ function UpdateMentalModelDialog({
         maxTokens: String(mentalModel.max_tokens || 2048),
         tags: mentalModel.tags.join(", "),
         autoRefresh: mentalModel.trigger?.refresh_after_consolidation || false,
+        mode: (mentalModel.trigger?.mode || "full") as "full" | "delta",
       });
     }
   }, [open, mentalModel]);
@@ -812,7 +845,7 @@ function UpdateMentalModelDialog({
         source_query: form.sourceQuery.trim(),
         tags: tags.length > 0 ? tags : undefined,
         max_tokens: maxTokens,
-        trigger: { refresh_after_consolidation: form.autoRefresh },
+        trigger: { mode: form.mode, refresh_after_consolidation: form.autoRefresh },
       });
 
       onUpdated(updated);
@@ -826,7 +859,7 @@ function UpdateMentalModelDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Update Mental Model</DialogTitle>
           <DialogDescription>
@@ -834,7 +867,7 @@ function UpdateMentalModelDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1">
           <div className="space-y-2">
             <label className="text-sm font-medium text-muted-foreground">ID</label>
             <Input value={mentalModel.id} disabled className="bg-muted" />
@@ -901,6 +934,26 @@ function UpdateMentalModelDialog({
           <p className="text-xs text-muted-foreground -mt-2 ml-6">
             Automatically refresh this mental model when memories are consolidated.
           </p>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Refresh Mode</label>
+            <Select
+              value={form.mode}
+              onValueChange={(v) => setForm({ ...form, mode: v as "full" | "delta" })}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="full">Full — regenerate from scratch</SelectItem>
+                <SelectItem value="delta">Delta — surgical edits</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Delta mode applies minimal changes to the structured document, leaving untouched
+              sections byte-identical. Falls back to a full rewrite on the first refresh and
+              whenever the source query changes.
+            </p>
+          </div>
         </div>
 
         <DialogFooter>

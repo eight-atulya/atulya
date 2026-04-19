@@ -42,6 +42,14 @@ func NewBrainLearnRequest(remoteEndpoint string, remoteBankId string) *BrainLear
 	this := BrainLearnRequest{}
 	this.RemoteEndpoint = remoteEndpoint
 	this.RemoteBankId = remoteBankId
+	var remoteApiKey string = ""
+	this.RemoteApiKey = &remoteApiKey
+	var learningType string = "auto"
+	this.LearningType = &learningType
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
 	return &this
 }
 
@@ -50,6 +58,14 @@ func NewBrainLearnRequest(remoteEndpoint string, remoteBankId string) *BrainLear
 // but it doesn't guarantee that properties required by API are set
 func NewBrainLearnRequestWithDefaults() *BrainLearnRequest {
 	this := BrainLearnRequest{}
+	var remoteApiKey string = ""
+	this.RemoteApiKey = &remoteApiKey
+	var learningType string = "auto"
+	this.LearningType = &learningType
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
 	return &this
 }
 

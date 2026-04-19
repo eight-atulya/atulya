@@ -207,15 +207,15 @@ flowchart LR
 flowchart TD
     Start["Per-chunk score + components + tags"] --> RoleCheck{"file_role in dismiss set?"}
     RoleCheck -->|yes| Dismiss["dismiss<br/>reason: dismiss_role"]
-    RoleCheck -->|no| BoilCheck{"chunk_lines < 3<br/>and no symbol?"}
+    RoleCheck -->|no| BoilCheck{"chunk_lines &lt; 3<br/>and no symbol?"}
     BoilCheck -->|yes| Boiler["dismiss<br/>reason: trivial_chunk"]
-    BoilCheck -->|no| HighScore{"score >= thresholds.high?"}
+    BoilCheck -->|no| HighScore{"score &gt;= thresholds.high?"}
     HighScore -->|yes| Memory1["memory<br/>reason: high_significance"]
     HighScore -->|no| HighRole{"is_high_value_role + has symbol?"}
     HighRole -->|yes| Memory2["memory<br/>reason: high_value_role"]
-    HighRole -->|no| Safety{"safety_priority >= thresholds.safety?"}
+    HighRole -->|no| Safety{"safety_priority &gt;= thresholds.safety?"}
     Safety -->|yes| Review1["review<br/>reason: safety_sensitive"]
-    Safety -->|no| Centrality{"pagerank >= thresholds.centrality?"}
+    Safety -->|no| Centrality{"pagerank &gt;= thresholds.centrality?"}
     Centrality -->|yes| Review2["review<br/>reason: structural_centrality"]
     Centrality -->|no| Review3["review<br/>reason: gray_zone"]
 ```

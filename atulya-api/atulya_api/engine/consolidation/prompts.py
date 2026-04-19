@@ -71,18 +71,31 @@ Rules:
 - Return {{"creates": [], "updates": [], "deletes": []}} if nothing mission-relevant is found."""
 
 
-def build_batch_consolidation_prompt(observations_mission: str | None = None) -> str:
+def build_batch_consolidation_prompt(
+    observations_mission: str | None = None,
+    capacity_note: str | None = None,
+) -> str:
     """
     Build the consolidation prompt for batch mode (multiple facts per LLM call).
 
     The mission defines *what* to track (customisable per bank).
     Processing rules and output format are always present regardless of mission.
+
+    Args:
+        observations_mission: Optional bank-specific override for the MISSION block.
+        capacity_note: Optional banner inserted near the top of the prompt to
+            convey the current observation-cap state for this scope (used by
+            the ``max_observations_per_scope`` enforcement). When set, the LLM
+            is instructed not to emit any new ``creates`` for the current pass.
     """
     mission = observations_mission or _DEFAULT_MISSION
+
+    capacity_block = f"\n## CAPACITY\n{capacity_note}\n" if capacity_note else ""
 
     return (
         "You are a memory consolidation system. Synthesize facts into observations "
         "and merge with existing observations when appropriate.\n\n"
-        f"## MISSION\n{mission}\n\n"
+        f"## MISSION\n{mission}\n"
+        f"{capacity_block}\n"
         f"{_PROCESSING_RULES}" + _BATCH_DATA_SECTION + _BATCH_OUTPUT_FORMAT
     )

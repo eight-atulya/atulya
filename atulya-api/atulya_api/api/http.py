@@ -76,7 +76,7 @@ from atulya_api.bank_presets import merge_bank_preset
 from atulya_api.config import get_config
 from atulya_api.engine.memory_engine import Budget, _current_schema, _get_tiktoken_encoding, fq_table
 from atulya_api.engine.response_models import VALID_RECALL_FACT_TYPES, MemoryFact, TokenUsage
-from atulya_api.engine.search.tags import TagsMatch
+from atulya_api.engine.search.tags import TagGroup, TagsMatch
 from atulya_api.extensions import HttpExtension, OperationValidationError, load_extension
 from atulya_api.metrics import create_metrics_collector, get_metrics_collector, initialize_metrics
 from atulya_api.models import RequestContext
@@ -169,6 +169,23 @@ class RecallRequest(BaseModel):
         description="How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), "
         "'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).",
     )
+    tag_groups: list[TagGroup] | None = Field(
+        default=None,
+        description=(
+            "Compound boolean tag predicates. Each entry is a leaf "
+            '(``{"tags": [...], "match": "any|all|any_strict|all_strict"}``) or a '
+            'nested group (``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``). '
+            "Top-level entries are AND-ed together. Mutually exclusive with `tags`."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _validate_tag_inputs(self) -> "RecallRequest":
+        if self.tags and self.tag_groups:
+            raise ValueError(
+                "`tags` and `tag_groups` are mutually exclusive. Use `tag_groups` for compound predicates."
+            )
+        return self
 
 
 class RecallResult(BaseModel):
@@ -453,6 +470,16 @@ class MemoryItem(BaseModel):
             "'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. "
             "'combined' (default) runs a single pass with all tags together. "
             "A list of tag lists runs one pass per inner list, giving full control over which combinations to use."
+        ),
+    )
+    update_mode: Literal["replace", "append"] | None = Field(
+        default=None,
+        description=(
+            "How to handle an existing document with the same document_id. "
+            "'replace' (default) deletes prior data for the document and reprocesses from scratch. "
+            "'append' concatenates the new content onto the existing document text and reprocesses; "
+            "delta-aware retain skips chunks that did not change so only the new content triggers extraction. "
+            "Requires document_id."
         ),
     )
 
@@ -1187,6 +1214,23 @@ class ReflectRequest(BaseModel):
         description="How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), "
         "'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).",
     )
+    tag_groups: list[TagGroup] | None = Field(
+        default=None,
+        description=(
+            "Compound boolean tag predicates. Each entry is a leaf "
+            '(``{"tags": [...], "match": "any|all|any_strict|all_strict"}``) or a '
+            'nested group (``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``). '
+            "Top-level entries are AND-ed together. Mutually exclusive with `tags`."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def _validate_tag_inputs(self) -> "ReflectRequest":
+        if self.tags and self.tag_groups:
+            raise ValueError(
+                "`tags` and `tag_groups` are mutually exclusive. Use `tag_groups` for compound predicates."
+            )
+        return self
 
 
 class ReflectFact(BaseModel):
@@ -2234,6 +2278,18 @@ class UpdateDirectiveRequest(BaseModel):
 class MentalModelTrigger(BaseModel):
     """Trigger settings for a mental model."""
 
+    mode: Literal["full", "delta"] = Field(
+        default="full",
+        description=(
+            "Refresh mode. 'full' (default) regenerates the entire mental model from "
+            "the reflect synthesis on every refresh. 'delta' performs surgical edits "
+            "against the stored structured representation, leaving sections that no new "
+            "fact contradicts physically untouched (no LLM-mediated re-emission of "
+            "unchanged content). If the mental model has no existing content, or if the "
+            "source_query has changed since the last refresh, delta mode falls back to "
+            "a full regeneration automatically."
+        ),
+    )
     refresh_after_consolidation: bool = Field(
         default=False,
         description="If true, refresh this mental model after observations consolidation (real-time mode)",
@@ -3599,6 +3655,7 @@ def _register_routes(app: FastAPI):
                     request_context=request_context,
                     tags=request.tags,
                     tags_match=request.tags_match,
+                    tag_groups=request.tag_groups,
                 )
 
             # Convert core MemoryFact objects to API RecallResult objects (excluding internal metrics)
@@ -3731,6 +3788,7 @@ def _register_routes(app: FastAPI):
                     request_context=request_context,
                     tags=request.tags,
                     tags_match=request.tags_match,
+                    tag_groups=request.tag_groups,
                 )
 
             return serialize_reflect_response(
@@ -3785,6 +3843,7 @@ def _register_routes(app: FastAPI):
                 response_schema=request.response_schema,
                 tags=request.tags,
                 tags_match=request.tags_match,
+                tag_groups=request.tag_groups,
                 request_context=request_context,
             )
             return AsyncOperationSubmitResponse(operation_id=result["operation_id"], status="queued")
@@ -6210,6 +6269,8 @@ def _register_routes(app: FastAPI):
                     content_dict["tags"] = item.tags
                 if item.observation_scopes is not None:
                     content_dict["observation_scopes"] = item.observation_scopes
+                if item.update_mode is not None:
+                    content_dict["update_mode"] = item.update_mode
                 contents.append(content_dict)
 
             if request.async_:

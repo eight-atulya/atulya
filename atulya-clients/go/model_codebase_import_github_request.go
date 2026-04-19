@@ -35,6 +35,8 @@ type CodebaseImportGithubRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseImportGithubRequest() *CodebaseImportGithubRequest {
 	this := CodebaseImportGithubRequest{}
+	var refreshExisting bool = false
+	this.RefreshExisting = &refreshExisting
 	return &this
 }
 
@@ -43,6 +45,8 @@ func NewCodebaseImportGithubRequest() *CodebaseImportGithubRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseImportGithubRequestWithDefaults() *CodebaseImportGithubRequest {
 	this := CodebaseImportGithubRequest{}
+	var refreshExisting bool = false
+	this.RefreshExisting = &refreshExisting
 	return &this
 }
 

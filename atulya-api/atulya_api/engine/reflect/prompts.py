@@ -508,3 +508,121 @@ CRITICAL: Output ONLY the final synthesized answer. Do NOT include:
 Just provide the direct answer with proper markdown formatting.
 
 CRITICAL: This is a NON-CONVERSATIONAL system. NEVER ask follow-up questions, offer to search again, suggest alternatives, or end with anything like "Would you like me to..." or "Let me know if...". The user cannot reply. Your answer must be complete and self-contained."""
+
+
+STRUCTURED_DELTA_SYSTEM_PROMPT = """You are computing a *minimal patch* to a structured document.
+
+You will be given:
+1. CURRENT DOCUMENT (JSON) — the existing structured mental model. Each section
+   has a stable ``id``, a ``heading``, a ``level`` (1..6), and an ordered list
+   of ``blocks``. Blocks are typed: ``paragraph``, ``bullet_list``,
+   ``ordered_list``, or ``code``.
+2. CANDIDATE SUMMARY (markdown) — a freshly generated synthesis of the latest
+   memories, useful only as a hint about *what new information exists*. You
+   MUST NOT copy its formatting or wording wholesale; it is not the target.
+3. SUPPORTING FACTS — the observations and facts the candidate is grounded in.
+   Treat these as the only source of new information.
+
+Your task: output a JSON object ``{"operations": [...]}``. Applied to CURRENT
+DOCUMENT, the operations must produce the smallest possible change that
+reflects the new facts.
+
+ABSOLUTE RULES
+- If CURRENT DOCUMENT already covers all the supporting facts, output
+  exactly ``{"operations": []}``. An empty operation list IS the correct
+  answer when nothing new has come in. This is the most common case.
+- Operations target sections by ``section_id`` (use the ``id`` field of the
+  section in CURRENT DOCUMENT, NOT the heading). Block operations target
+  blocks by ``index`` (0-based, against the section's current block list).
+- Add new content with ``append_block``, ``insert_block``, or ``add_section``.
+  Prefer extending an existing section over creating a new one.
+- Modify existing content with ``replace_block`` or ``replace_section_blocks``
+  ONLY when the supporting facts contradict the current text. Do NOT rewrite
+  for style, brevity, or "improvement".
+- Remove stale content with ``remove_block`` or ``remove_section`` ONLY when
+  the supporting facts directly contradict it.
+- NEVER emit operations whose only effect is to reword unchanged content.
+- NEVER emit operations to "normalize" formatting (numbered → bulleted, casing
+  changes, paragraph → list, etc).
+- Every operation MUST be justifiable by a specific fact in SUPPORTING FACTS.
+
+ALLOWED OPERATIONS (each line shows the JSON shape)
+- ``{"op": "append_block", "section_id": "...", "block": {...}}``
+- ``{"op": "insert_block", "section_id": "...", "index": N, "block": {...}}``
+- ``{"op": "replace_block", "section_id": "...", "index": N, "block": {...}}``
+- ``{"op": "remove_block", "section_id": "...", "index": N}``
+- ``{"op": "add_section", "heading": "...", "level": 2, "blocks": [...], "after_section_id": "..."}``
+- ``{"op": "remove_section", "section_id": "..."}``
+- ``{"op": "replace_section_blocks", "section_id": "...", "blocks": [...]}``
+- ``{"op": "rename_section", "section_id": "...", "new_heading": "..."}``
+
+Block shapes
+- ``{"type": "paragraph", "text": "..."}``
+- ``{"type": "bullet_list", "items": ["...", "..."]}``
+- ``{"type": "ordered_list", "items": ["...", "..."]}``
+- ``{"type": "code", "language": "json", "text": "..."}``
+
+OUTPUT FORMAT
+Return ONLY a single JSON object on its own, with no prose before or after,
+no markdown code fences, no commentary. The object must have exactly one
+top-level key, ``operations``, whose value is an array of operation objects
+(empty array when nothing changes).
+
+Examples
+- No changes needed → ``{"operations": []}``
+- Add one bullet to an existing "Members" section →
+  ``{"operations": [{"op": "append_block", "section_id": "members",
+  "block": {"type": "bullet_list", "items": ["Carol — junior engineer"]}}]}``"""
+
+
+def build_structured_delta_prompt(
+    *,
+    current_document_json: str,
+    candidate_markdown: str,
+    supporting_facts: list[dict[str, Any]],
+    source_query: str,
+    max_output_tokens: int | None = None,
+) -> str:
+    """Build the user prompt for a structured-delta mental model refresh.
+
+    The LLM's job is to emit operations against ``current_document_json``;
+    the surrounding ``candidate_markdown`` and ``supporting_facts`` are
+    references for *what new information exists*, not templates to mimic.
+
+    ``max_output_tokens`` is surfaced in the prompt so the model can keep its
+    op list within the provider's response cap. The actual cap is enforced by
+    the caller; this is just an advisory anchor — without it the model often
+    returns op lists whose JSON gets truncated mid-string.
+    """
+    fact_lines: list[str] = []
+    for f in supporting_facts:
+        fid = f.get("id", "")
+        text = (f.get("text") or "").strip().replace("\n", " ")
+        ftype = f.get("type", "")
+        fact_lines.append(f"- [{ftype}:{fid}] {text}")
+    facts_block = "\n".join(fact_lines) if fact_lines else "(no supporting facts retrieved)"
+
+    budget_hint = ""
+    if max_output_tokens is not None:
+        budget_hint = (
+            f"\n\n## Output budget\n"
+            f"Your JSON response must fit within ~{max_output_tokens} tokens. If you "
+            "would need more than this to express every change, prefer the highest-"
+            "leverage edits first (a few ``replace_section_blocks`` ops over many "
+            "block-level ops) so the response always parses as valid JSON."
+        )
+
+    return (
+        f"## Topic\n{source_query}\n\n"
+        f"## CURRENT DOCUMENT (apply ops to this; reference section ids as listed)\n"
+        f"```json\n{current_document_json}\n```\n\n"
+        f"## CANDIDATE SUMMARY (hint only — do NOT copy wording wholesale)\n"
+        f"```markdown\n{candidate_markdown}\n```\n\n"
+        f"## SUPPORTING FACTS (the only source of new information)\n{facts_block}"
+        f"{budget_hint}\n\n"
+        "## Task\n"
+        "Output a JSON object matching the operations schema. Use an empty list "
+        "if no new fact requires a change. Otherwise, emit the smallest set of "
+        "operations that reflects the new facts in CURRENT DOCUMENT, preserving "
+        "all unchanged sections and blocks by simply not mentioning them."
+    )

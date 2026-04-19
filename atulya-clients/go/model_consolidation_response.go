@@ -36,6 +36,8 @@ type _ConsolidationResponse ConsolidationResponse
 func NewConsolidationResponse(operationId string) *ConsolidationResponse {
 	this := ConsolidationResponse{}
 	this.OperationId = operationId
+	var deduplicated bool = false
+	this.Deduplicated = &deduplicated
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewConsolidationResponse(operationId string) *ConsolidationResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewConsolidationResponseWithDefaults() *ConsolidationResponse {
 	this := ConsolidationResponse{}
+	var deduplicated bool = false
+	this.Deduplicated = &deduplicated
 	return &this
 }
 

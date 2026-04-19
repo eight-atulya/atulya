@@ -45,7 +45,20 @@ import type {
     BankConfigResponse,
     CreateBankRequest,
     Budget,
+    TagGroupLeaf,
+    TagGroupAnd,
+    TagGroupOr,
+    TagGroupNot,
 } from '../generated/types.gen';
+
+/**
+ * Compound boolean tag predicate. Mirrors the recursive Pydantic union on the
+ * server. The generator inlines this union per property instead of emitting a
+ * named alias, so we re-export a stable name here for downstream consumers.
+ */
+export type TagGroup = TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot;
+
+export type { TagGroupLeaf, TagGroupAnd, TagGroupOr, TagGroupNot } from '../generated/types.gen';
 
 export interface AtulyaClientOptions {
     baseUrl: string;
@@ -85,6 +98,12 @@ export interface MemoryItemInput {
     entities?: EntityInput[];
     tags?: string[];
     observation_scopes?: "per_tag" | "combined" | "all_combinations" | string[][];
+    /**
+     * How to handle an existing document with the same document_id.
+     * "replace" (default) wipes prior data and reprocesses; "append" concatenates
+     * onto the existing document text and reprocesses. "append" requires document_id.
+     */
+    update_mode?: "replace" | "append";
 }
 
 export class AtulyaClient {
@@ -139,6 +158,12 @@ export class AtulyaClient {
             entities?: EntityInput[];
             /** Optional list of tags for this memory */
             tags?: string[];
+            /**
+             * How to handle an existing document with the same document_id.
+             * "replace" (default) wipes prior data and reprocesses; "append" concatenates
+             * onto the existing document text and reprocesses. "append" requires documentId.
+             */
+            updateMode?: "replace" | "append";
         }
     ): Promise<RetainResponse> {
         const item: {
@@ -149,6 +174,7 @@ export class AtulyaClient {
             document_id?: string;
             entities?: EntityInput[];
             tags?: string[];
+            update_mode?: "replace" | "append";
         } = { content };
         if (options?.timestamp) {
             item.timestamp =
@@ -170,6 +196,9 @@ export class AtulyaClient {
         }
         if (options?.tags) {
             item.tags = options.tags;
+        }
+        if (options?.updateMode) {
+            item.update_mode = options.updateMode;
         }
 
         const response = await sdk.retainMemories({
@@ -193,6 +222,7 @@ export class AtulyaClient {
             entities: item.entities,
             tags: item.tags,
             observation_scopes: item.observation_scopes,
+            update_mode: item.update_mode,
             timestamp:
                 item.timestamp instanceof Date
                     ? item.timestamp.toISOString()
@@ -276,6 +306,8 @@ export class AtulyaClient {
             tags?: string[];
             /** How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged). Default: 'any' */
             tagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
+            /** Compound boolean tag predicates. Each entry is a leaf {tags, match} or nested {and|or|not}. Top-level entries are AND-ed. Mutually exclusive with `tags`. */
+            tagGroups?: TagGroup[];
         }
     ): Promise<RecallResponse> {
         const response = await sdk.recallMemories({
@@ -295,6 +327,7 @@ export class AtulyaClient {
                 },
                 tags: options?.tags,
                 tags_match: options?.tagsMatch,
+                tag_groups: options?.tagGroups,
             },
         });
 
@@ -314,6 +347,8 @@ export class AtulyaClient {
             tags?: string[];
             /** How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged). Default: 'any' */
             tagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
+            /** Compound boolean tag predicates. Mutually exclusive with `tags`. */
+            tagGroups?: TagGroup[];
         }
     ): Promise<ReflectResponse> {
         const response = await sdk.reflect({
@@ -325,6 +360,7 @@ export class AtulyaClient {
                 budget: options?.budget || 'low',
                 tags: options?.tags,
                 tags_match: options?.tagsMatch,
+                tag_groups: options?.tagGroups,
             },
         });
 
@@ -346,6 +382,7 @@ export class AtulyaClient {
             responseSchema?: Record<string, unknown>;
             tags?: string[];
             tagsMatch?: 'any' | 'all' | 'any_strict' | 'all_strict';
+            tagGroups?: TagGroup[];
         }
     ): Promise<AsyncOperationSubmitResponse> {
         const response = await sdk.submitAsyncReflect({
@@ -363,6 +400,7 @@ export class AtulyaClient {
                 response_schema: options?.responseSchema,
                 tags: options?.tags,
                 tags_match: options?.tagsMatch,
+                tag_groups: options?.tagGroups,
             },
         });
 

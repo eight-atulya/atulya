@@ -42,6 +42,7 @@ type ObservationsEdits = {
   consolidation_llm_batch_size: number | null;
   consolidation_source_facts_max_tokens: number | null;
   consolidation_source_facts_max_tokens_per_observation: number | null;
+  max_observations_per_scope: number | null;
   observations_mission: string | null;
 };
 
@@ -150,6 +151,7 @@ function observationsSlice(config: Record<string, any>): ObservationsEdits {
     consolidation_source_facts_max_tokens: config.consolidation_source_facts_max_tokens ?? null,
     consolidation_source_facts_max_tokens_per_observation:
       config.consolidation_source_facts_max_tokens_per_observation ?? null,
+    max_observations_per_scope: config.max_observations_per_scope ?? null,
     observations_mission: config.observations_mission ?? null,
   };
 }
@@ -613,6 +615,23 @@ export function BankConfigView() {
                 }))
               }
               placeholder="Server default"
+            />
+          </FieldRow>
+          <FieldRow
+            label="Max Observations Per Scope"
+            description="Hard cap on the number of observations the consolidator may keep per tag scope. When the limit is reached, the LLM is constrained to only update or delete existing observations. Leave blank for unlimited."
+          >
+            <Input
+              type="number"
+              min={0}
+              value={observationsEdits.max_observations_per_scope ?? ""}
+              onChange={(e) =>
+                setObservationsEdits((prev) => ({
+                  ...prev,
+                  max_observations_per_scope: e.target.value ? parseInt(e.target.value, 10) : null,
+                }))
+              }
+              placeholder="Unlimited"
             />
           </FieldRow>
         </ConfigSection>

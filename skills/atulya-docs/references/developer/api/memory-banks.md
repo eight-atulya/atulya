@@ -22,6 +22,8 @@ You don't need to pre-create a bank. Atulya will automatically create it with de
 > **💡 Prerequisites**
 > 
 Make sure you've completed the [Quick Start](./quickstart) to install the client and start the server.
+:::info Bank presets
+Optional **`bank_preset`** (e.g. `codebase`) on create/update applies curated retain/reflect defaults and can seed pinned guides — see [Bank presets](/developer/bank-presets).
 ## Creating a Memory Bank
 
 ### Python

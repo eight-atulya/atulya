@@ -21,14 +21,13 @@ from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseApproveRequest(BaseModel):
     """
     Approve a parsed codebase snapshot for memory hydration.
     """ # noqa: E501
     snapshot_id: Optional[StrictStr] = None
-    memory_ingest_mode: Optional[StrictStr] = None
+    memory_ingest_mode: Optional[StrictStr] = 'direct'
     __properties: ClassVar[List[str]] = ["snapshot_id", "memory_ingest_mode"]
 
     @field_validator('memory_ingest_mode')
@@ -42,8 +41,7 @@ class CodebaseApproveRequest(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -55,7 +53,8 @@ class CodebaseApproveRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -98,7 +97,7 @@ class CodebaseApproveRequest(BaseModel):
 
         _obj = cls.model_validate({
             "snapshot_id": obj.get("snapshot_id"),
-            "memory_ingest_mode": obj.get("memory_ingest_mode")
+            "memory_ingest_mode": obj.get("memory_ingest_mode") if obj.get("memory_ingest_mode") is not None else 'direct'
         })
         return _obj
 

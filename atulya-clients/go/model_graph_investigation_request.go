@@ -40,6 +40,14 @@ type _GraphInvestigationRequest GraphInvestigationRequest
 func NewGraphInvestigationRequest(query string) *GraphInvestigationRequest {
 	this := GraphInvestigationRequest{}
 	this.Query = query
+	var tagsMatch string = "all_strict"
+	this.TagsMatch = &tagsMatch
+	var confidenceMin float32 = 0.55
+	this.ConfidenceMin = &confidenceMin
+	var nodeKind string = "all"
+	this.NodeKind = &nodeKind
+	var limit int32 = 18
+	this.Limit = &limit
 	return &this
 }
 
@@ -48,6 +56,14 @@ func NewGraphInvestigationRequest(query string) *GraphInvestigationRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGraphInvestigationRequestWithDefaults() *GraphInvestigationRequest {
 	this := GraphInvestigationRequest{}
+	var tagsMatch string = "all_strict"
+	this.TagsMatch = &tagsMatch
+	var confidenceMin float32 = 0.55
+	this.ConfidenceMin = &confidenceMin
+	var nodeKind string = "all"
+	this.NodeKind = &nodeKind
+	var limit int32 = 18
+	this.Limit = &limit
 	return &this
 }
 

@@ -956,6 +956,40 @@ export type CodebaseChunkDetailResponse = {
      */
     document_id?: string | null;
     /**
+     * CodebaseChunkDetailResponseSignificanceScore
+     */
+    significance_score?: number;
+    /**
+     * CodebaseChunkDetailResponseSignificanceComponents
+     */
+    significance_components?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * CodebaseChunkDetailResponseFileRole
+     */
+    file_role?: string | null;
+    /**
+     * CodebaseChunkDetailResponseAutoRouteReason
+     */
+    auto_route_reason?: string | null;
+    /**
+     * CodebaseChunkDetailResponseComplexityScore
+     */
+    complexity_score?: number | null;
+    /**
+     * CodebaseChunkDetailResponseSafetyTags
+     */
+    safety_tags?: Array<string>;
+    /**
+     * CodebaseChunkDetailResponsePagerankCentrality
+     */
+    pagerank_centrality?: number | null;
+    /**
+     * CodebaseChunkDetailResponseFaninCount
+     */
+    fanin_count?: number;
+    /**
      * CodebaseChunkDetailResponseSnapshotId
      */
     snapshot_id: string;
@@ -1067,6 +1101,40 @@ export type CodebaseChunkItemResponse = {
      * CodebaseChunkItemResponseDocumentId
      */
     document_id?: string | null;
+    /**
+     * CodebaseChunkItemResponseSignificanceScore
+     */
+    significance_score?: number;
+    /**
+     * CodebaseChunkItemResponseSignificanceComponents
+     */
+    significance_components?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * CodebaseChunkItemResponseFileRole
+     */
+    file_role?: string | null;
+    /**
+     * CodebaseChunkItemResponseAutoRouteReason
+     */
+    auto_route_reason?: string | null;
+    /**
+     * CodebaseChunkItemResponseComplexityScore
+     */
+    complexity_score?: number | null;
+    /**
+     * CodebaseChunkItemResponseSafetyTags
+     */
+    safety_tags?: Array<string>;
+    /**
+     * CodebaseChunkItemResponsePagerankCentrality
+     */
+    pagerank_centrality?: number | null;
+    /**
+     * CodebaseChunkItemResponseFaninCount
+     */
+    fanin_count?: number;
 };
 
 /**
@@ -1135,6 +1203,110 @@ export type CodebaseChunksResponse = {
      * CodebaseChunksResponseHasMore
      */
     has_more?: boolean;
+};
+
+/**
+ * CodebaseCurateClusterResponse
+ */
+export type CodebaseCurateClusterResponse = {
+    /**
+     * CodebaseCurateClusterResponseClusterId
+     */
+    cluster_id: string;
+    /**
+     * CodebaseCurateClusterResponseClusterLabel
+     */
+    cluster_label?: string | null;
+    /**
+     * CodebaseCurateClusterResponseScore
+     */
+    score: number;
+    /**
+     * CodebaseCurateClusterResponseSize
+     */
+    size: number;
+    /**
+     * CodebaseCurateClusterResponseChunks
+     */
+    chunks?: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * CodebaseCurateRequest
+ *
+ * Intent-driven curation request body.
+ */
+export type CodebaseCurateRequest = {
+    /**
+     * CodebaseCurateRequestIntent
+     */
+    intent: string;
+    /**
+     * CodebaseCurateRequestScopeHint
+     */
+    scope_hint?: string | null;
+    /**
+     * CodebaseCurateRequestSnapshotId
+     */
+    snapshot_id?: string | null;
+    /**
+     * CodebaseCurateRequestTopKClusters
+     */
+    top_k_clusters?: number;
+    /**
+     * CodebaseCurateRequestTopKSymbols
+     */
+    top_k_symbols?: number;
+    /**
+     * CodebaseCurateRequestIncludeDismissed
+     */
+    include_dismissed?: boolean;
+};
+
+/**
+ * CodebaseCurateResponse
+ *
+ * Intent-driven curation response.
+ */
+export type CodebaseCurateResponse = {
+    /**
+     * CodebaseCurateResponseCodebaseId
+     */
+    codebase_id: string;
+    /**
+     * CodebaseCurateResponseSnapshotId
+     */
+    snapshot_id?: string | null;
+    /**
+     * CodebaseCurateResponseIntent
+     */
+    intent: string;
+    /**
+     * CodebaseCurateResponseScopeHint
+     */
+    scope_hint?: string | null;
+    /**
+     * CodebaseCurateResponseClusters
+     */
+    clusters?: Array<CodebaseCurateClusterResponse>;
+    /**
+     * CodebaseCurateResponseSymbolCards
+     */
+    symbol_cards?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * CodebaseCurateResponseUnclustered
+     */
+    unclustered?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * CodebaseCurateResponseTotalCandidates
+     */
+    total_candidates?: number;
 };
 
 /**
@@ -1475,6 +1647,28 @@ export type CodebaseListResponse = {
 };
 
 /**
+ * CodebaseModuleBriefsResponse
+ *
+ * List of Module Brief artifacts for a snapshot.
+ */
+export type CodebaseModuleBriefsResponse = {
+    /**
+     * CodebaseModuleBriefsResponseCodebaseId
+     */
+    codebase_id: string;
+    /**
+     * CodebaseModuleBriefsResponseSnapshotId
+     */
+    snapshot_id?: string | null;
+    /**
+     * CodebaseModuleBriefsResponseItems
+     */
+    items?: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
  * CodebaseRefreshRequest
  *
  * Explicit codebase refresh request.
@@ -1524,6 +1718,32 @@ export type CodebaseRefreshResponse = {
      * CodebaseRefreshResponseNoop
      */
     noop?: boolean;
+};
+
+/**
+ * CodebaseRepoMapResponse
+ *
+ * Snapshot Repo Map artifact response.
+ */
+export type CodebaseRepoMapResponse = {
+    /**
+     * CodebaseRepoMapResponseCodebaseId
+     */
+    codebase_id: string;
+    /**
+     * CodebaseRepoMapResponseSnapshotId
+     */
+    snapshot_id?: string | null;
+    /**
+     * CodebaseRepoMapResponseGeneratedAt
+     */
+    generated_at?: string | null;
+    /**
+     * CodebaseRepoMapResponseRepoMap
+     */
+    repo_map?: {
+        [key: string]: unknown;
+    } | null;
 };
 
 /**
@@ -1902,6 +2122,58 @@ export type CodebaseSourceConfigResponse = {
 };
 
 /**
+ * CodebaseSymbolCardListResponse
+ *
+ * Paginated Symbol Card artifact list.
+ */
+export type CodebaseSymbolCardListResponse = {
+    /**
+     * CodebaseSymbolCardListResponseCodebaseId
+     */
+    codebase_id: string;
+    /**
+     * CodebaseSymbolCardListResponseSnapshotId
+     */
+    snapshot_id?: string | null;
+    /**
+     * CodebaseSymbolCardListResponseItems
+     */
+    items?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * CodebaseSymbolCardListResponseNextCursor
+     */
+    next_cursor?: string | null;
+    /**
+     * CodebaseSymbolCardListResponseHasMore
+     */
+    has_more?: boolean;
+};
+
+/**
+ * CodebaseSymbolCardResponse
+ *
+ * One Symbol Card artifact.
+ */
+export type CodebaseSymbolCardResponse = {
+    /**
+     * CodebaseSymbolCardResponseCodebaseId
+     */
+    codebase_id: string;
+    /**
+     * CodebaseSymbolCardResponseSnapshotId
+     */
+    snapshot_id: string;
+    /**
+     * CodebaseSymbolCardResponseSymbolCard
+     */
+    symbol_card: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * CodebaseSymbolMatchResponse
  *
  * Single deterministic symbol match.
@@ -1967,6 +2239,57 @@ export type CodebaseSymbolsResponse = {
      * CodebaseSymbolsResponseItems
      */
     items: Array<CodebaseSymbolMatchResponse>;
+};
+
+/**
+ * CodebaseTriageSettings
+ *
+ * Per-codebase triage thresholds and provider toggles.
+ */
+export type CodebaseTriageSettings = {
+    /**
+     * CodebaseTriageSettingsScoreThresholdHigh
+     */
+    score_threshold_high?: number;
+    /**
+     * CodebaseTriageSettingsCentralityThreshold
+     */
+    centrality_threshold?: number;
+    /**
+     * CodebaseTriageSettingsSafetyThreshold
+     */
+    safety_threshold?: number;
+    /**
+     * CodebaseTriageSettingsEmbeddingProvider
+     */
+    embedding_provider?: string;
+    /**
+     * CodebaseTriageSettingsEnableSafetyScan
+     */
+    enable_safety_scan?: boolean;
+    /**
+     * CodebaseTriageSettingsEnableSemgrep
+     */
+    enable_semgrep?: boolean;
+    /**
+     * CodebaseTriageSettingsSemgrepRulepack
+     */
+    semgrep_rulepack?: string | null;
+    /**
+     * CodebaseTriageSettingsScipIndexPath
+     */
+    scip_index_path?: string | null;
+};
+
+/**
+ * CodebaseTriageSettingsResponse
+ */
+export type CodebaseTriageSettingsResponse = {
+    /**
+     * CodebaseTriageSettingsResponseCodebaseId
+     */
+    codebase_id: string;
+    settings: CodebaseTriageSettings;
 };
 
 /**
@@ -3797,6 +4120,12 @@ export type MemoryItem = {
      * How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
      */
     observation_scopes?: 'per_tag' | 'combined' | 'all_combinations' | Array<Array<string>> | null;
+    /**
+     * MemoryItemUpdateMode
+     *
+     * How to handle an existing document with the same document_id. 'replace' (default) deletes prior data for the document and reprocesses from scratch. 'append' concatenates the new content onto the existing document text and reprocesses; delta-aware retain skips chunks that did not change so only the new content triggers extraction. Requires document_id.
+     */
+    update_mode?: 'replace' | 'append' | null;
 };
 
 /**
@@ -3872,6 +4201,12 @@ export type MentalModelResponse = {
  * Trigger settings for a mental model.
  */
 export type MentalModelTrigger = {
+    /**
+     * MentalModelTriggerMode
+     *
+     * Refresh mode. 'full' (default) regenerates the entire mental model from the reflect synthesis on every refresh. 'delta' performs surgical edits against the stored structured representation, leaving sections that no new fact contradicts physically untouched (no LLM-mediated re-emission of unchanged content). If the mental model has no existing content, or if the source_query has changed since the last refresh, delta mode falls back to a full regeneration automatically.
+     */
+    mode?: 'full' | 'delta';
     /**
      * MentalModelTriggerRefreshAfterConsolidation
      *
@@ -4107,6 +4442,12 @@ export type RecallRequest = {
      * How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
      */
     tags_match?: 'any' | 'all' | 'any_strict' | 'all_strict';
+    /**
+     * RecallRequestTagGroups
+     *
+     * Compound boolean tag predicates. Each entry is a leaf (``{"tags": [...], "match": "any|all|any_strict|all_strict"}``) or a nested group (``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``). Top-level entries are AND-ed together. Mutually exclusive with `tags`.
+     */
+    tag_groups?: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot> | null;
 };
 
 /**
@@ -4410,6 +4751,12 @@ export type ReflectRequest = {
      * How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
      */
     tags_match?: 'any' | 'all' | 'any_strict' | 'all_strict';
+    /**
+     * ReflectRequestTagGroups
+     *
+     * Compound boolean tag predicates. Each entry is a leaf (``{"tags": [...], "match": "any|all|any_strict|all_strict"}``) or a nested group (``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``). Top-level entries are AND-ed together. Mutually exclusive with `tags`.
+     */
+    tag_groups?: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot> | null;
 };
 
 /**
@@ -4662,6 +5009,62 @@ export type SubRoutineSubmitRequest = {
      * SubRoutineSubmitRequestForceRebuild
      */
     force_rebuild?: boolean;
+};
+
+/**
+ * TagGroupAnd
+ *
+ * Logical AND over a list of nested groups.
+ */
+export type TagGroupAnd = {
+    /**
+     * TagGroupAndAnd
+     */
+    and: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot>;
+};
+
+/**
+ * TagGroupLeaf
+ *
+ * A single tag predicate, semantically identical to the flat `tags` field.
+ *
+ * `tags` is a non-empty list of tag strings; `match` controls AND/OR semantics
+ * and whether untagged memories are included, exactly mirroring the existing
+ * `TagsMatch` enum.
+ */
+export type TagGroupLeaf = {
+    /**
+     * TagGroupLeafTags
+     */
+    tags: Array<string>;
+    /**
+     * TagGroupLeafMatch
+     */
+    match?: 'any' | 'all' | 'any_strict' | 'all_strict';
+};
+
+/**
+ * TagGroupNot
+ *
+ * Logical NOT around a single nested group.
+ */
+export type TagGroupNot = {
+    /**
+     * TagGroupNotNot
+     */
+    not: TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot;
+};
+
+/**
+ * TagGroupOr
+ *
+ * Logical OR over a list of nested groups.
+ */
+export type TagGroupOr = {
+    /**
+     * TagGroupOrOr
+     */
+    or: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot>;
 };
 
 /**
@@ -8725,6 +9128,36 @@ export type ListCodebaseChunksData = {
          * Snapshot Id
          */
         snapshot_id?: string | null;
+        /**
+         * Min Significance
+         */
+        min_significance?: number | null;
+        /**
+         * Max Significance
+         */
+        max_significance?: number | null;
+        /**
+         * File Role
+         */
+        file_role?: string | null;
+        /**
+         * Auto Route Reason
+         */
+        auto_route_reason?: string | null;
+        /**
+         * Has Safety Tag
+         */
+        has_safety_tag?: boolean | null;
+        /**
+         * Route Source
+         */
+        route_source?: string | null;
+        /**
+         * Order By
+         *
+         * One of significance | review | path | complexity | pagerank
+         */
+        order_by?: string | null;
     };
     url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/chunks';
 };
@@ -8879,6 +9312,322 @@ export type ListCodebaseResearchQueueResponses = {
 };
 
 export type ListCodebaseResearchQueueResponse = ListCodebaseResearchQueueResponses[keyof ListCodebaseResearchQueueResponses];
+
+export type GetCodebaseRepoMapData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+    };
+    query?: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id?: string | null;
+    };
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/repo-map';
+};
+
+export type GetCodebaseRepoMapErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetCodebaseRepoMapError = GetCodebaseRepoMapErrors[keyof GetCodebaseRepoMapErrors];
+
+export type GetCodebaseRepoMapResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseRepoMapResponse;
+};
+
+export type GetCodebaseRepoMapResponse = GetCodebaseRepoMapResponses[keyof GetCodebaseRepoMapResponses];
+
+export type ListCodebaseModulesData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+    };
+    query?: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/modules';
+};
+
+export type ListCodebaseModulesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListCodebaseModulesError = ListCodebaseModulesErrors[keyof ListCodebaseModulesErrors];
+
+export type ListCodebaseModulesResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseModuleBriefsResponse;
+};
+
+export type ListCodebaseModulesResponse = ListCodebaseModulesResponses[keyof ListCodebaseModulesResponses];
+
+export type ListCodebaseSymbolCardsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+    };
+    query?: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Cursor
+         */
+        cursor?: string | null;
+    };
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols';
+};
+
+export type ListCodebaseSymbolCardsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListCodebaseSymbolCardsError = ListCodebaseSymbolCardsErrors[keyof ListCodebaseSymbolCardsErrors];
+
+export type ListCodebaseSymbolCardsResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseSymbolCardListResponse;
+};
+
+export type ListCodebaseSymbolCardsResponse = ListCodebaseSymbolCardsResponses[keyof ListCodebaseSymbolCardsResponses];
+
+export type GetCodebaseSymbolCardData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+        /**
+         * Symbol Id
+         */
+        symbol_id: string;
+    };
+    query?: {
+        /**
+         * Snapshot Id
+         */
+        snapshot_id?: string | null;
+    };
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols/{symbol_id}';
+};
+
+export type GetCodebaseSymbolCardErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetCodebaseSymbolCardError = GetCodebaseSymbolCardErrors[keyof GetCodebaseSymbolCardErrors];
+
+export type GetCodebaseSymbolCardResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseSymbolCardResponse;
+};
+
+export type GetCodebaseSymbolCardResponse = GetCodebaseSymbolCardResponses[keyof GetCodebaseSymbolCardResponses];
+
+export type CurateCodebaseByIntentData = {
+    body: CodebaseCurateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/curate';
+};
+
+export type CurateCodebaseByIntentErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CurateCodebaseByIntentError = CurateCodebaseByIntentErrors[keyof CurateCodebaseByIntentErrors];
+
+export type CurateCodebaseByIntentResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseCurateResponse;
+};
+
+export type CurateCodebaseByIntentResponse = CurateCodebaseByIntentResponses[keyof CurateCodebaseByIntentResponses];
+
+export type GetCodebaseTriageSettingsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings';
+};
+
+export type GetCodebaseTriageSettingsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetCodebaseTriageSettingsError = GetCodebaseTriageSettingsErrors[keyof GetCodebaseTriageSettingsErrors];
+
+export type GetCodebaseTriageSettingsResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseTriageSettingsResponse;
+};
+
+export type GetCodebaseTriageSettingsResponse = GetCodebaseTriageSettingsResponses[keyof GetCodebaseTriageSettingsResponses];
+
+export type UpdateCodebaseTriageSettingsData = {
+    body: CodebaseTriageSettings;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Codebase Id
+         */
+        codebase_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings';
+};
+
+export type UpdateCodebaseTriageSettingsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateCodebaseTriageSettingsError = UpdateCodebaseTriageSettingsErrors[keyof UpdateCodebaseTriageSettingsErrors];
+
+export type UpdateCodebaseTriageSettingsResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseTriageSettingsResponse;
+};
+
+export type UpdateCodebaseTriageSettingsResponse = UpdateCodebaseTriageSettingsResponses[keyof UpdateCodebaseTriageSettingsResponses];
 
 export type ListCodebaseFilesData = {
     body?: never;

@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseImpactRequest(BaseModel):
     """
@@ -31,13 +30,12 @@ class CodebaseImpactRequest(BaseModel):
     path: Optional[StrictStr] = None
     symbol: Optional[StrictStr] = None
     query: Optional[StrictStr] = None
-    max_depth: Optional[Annotated[int, Field(le=8, strict=True, ge=1)]] = None
-    limit: Optional[Annotated[int, Field(le=200, strict=True, ge=1)]] = None
+    max_depth: Optional[Annotated[int, Field(le=8, strict=True, ge=1)]] = 2
+    limit: Optional[Annotated[int, Field(le=200, strict=True, ge=1)]] = 50
     __properties: ClassVar[List[str]] = ["path", "symbol", "query", "max_depth", "limit"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -49,7 +47,8 @@ class CodebaseImpactRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -104,8 +103,8 @@ class CodebaseImpactRequest(BaseModel):
             "path": obj.get("path"),
             "symbol": obj.get("symbol"),
             "query": obj.get("query"),
-            "max_depth": obj.get("max_depth"),
-            "limit": obj.get("limit")
+            "max_depth": obj.get("max_depth") if obj.get("max_depth") is not None else 2,
+            "limit": obj.get("limit") if obj.get("limit") is not None else 50
         })
         return _obj
 

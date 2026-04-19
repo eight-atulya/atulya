@@ -48,6 +48,8 @@ func NewMentalModelResponse(id string, bankId string, name string, sourceQuery s
 	this.Name = name
 	this.SourceQuery = sourceQuery
 	this.Content = content
+	var maxTokens int32 = 2048
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -56,6 +58,8 @@ func NewMentalModelResponse(id string, bankId string, name string, sourceQuery s
 // but it doesn't guarantee that properties required by API are set
 func NewMentalModelResponseWithDefaults() *MentalModelResponse {
 	this := MentalModelResponse{}
+	var maxTokens int32 = 2048
+	this.MaxTokens = &maxTokens
 	return &this
 }
 

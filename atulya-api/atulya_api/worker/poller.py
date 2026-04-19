@@ -97,6 +97,13 @@ class WorkerPoller:
         self._max_slots = max_slots
         self._consolidation_max_slots = consolidation_max_slots
         self._sub_routine_max_slots = sub_routine_max_slots
+        # Standard tasks (anything that isn't consolidation/sub_routine/brain_learn)
+        # share the remaining budget after consolidation and sub_routine reservations.
+        # Reservation (not ceiling): consolidation_max_slots are guaranteed available
+        # for consolidation tasks even when the standard pool is fully utilized. The
+        # previous "ceiling" model used `_max_slots - in_flight` for standard tasks,
+        # which let standard tasks starve consolidation under heavy retain load.
+        self._standard_max_slots = max(0, max_slots - consolidation_max_slots - sub_routine_max_slots)
         self._shutdown = asyncio.Event()
         self._current_tasks: set[asyncio.Task] = set()
         self._in_flight_count = 0
@@ -108,6 +115,12 @@ class WorkerPoller:
         # Track in-flight tasks by operation type
         self._in_flight_by_type: dict[str, int] = {}
         self._last_dream_cron_scan = 0.0
+        # Round-robin index over tenant schemas. Without rotation, the
+        # deterministic schema order in claim_batch lets a single heavy
+        # tenant fill every slot before the next tenant is even checked.
+        # Advancing this index after each claim ensures small tenants get
+        # serviced within one rotation cycle.
+        self._next_schema_idx = 0
 
     async def _get_schemas(self) -> list[str | None]:
         """Get list of schemas to poll. Returns [None] for default schema (no prefix)."""
@@ -122,18 +135,27 @@ class WorkerPoller:
         Calculate available slots for claiming tasks.
 
         Returns:
-            (total_available, consolidation_available, sub_routine_available) tuple
+            (standard_available, consolidation_available, sub_routine_available) tuple
+
+        Reservation semantics: each operation class has its own independent
+        slot budget. Consolidation and sub_routine slots are reserved (not
+        capped); standard tasks cannot consume them. Total concurrent
+        tasks is bounded by ``standard_max + consolidation_max + sub_routine_max``,
+        which equals ``max_slots`` after construction.
         """
         async with self._in_flight_lock:
-            total_in_flight = self._in_flight_count
             consolidation_in_flight = self._in_flight_by_type.get("consolidation", 0)
-            sub_routine_in_flight = self._in_flight_by_type.get("sub_routine", 0)
+            sub_routine_in_flight = self._in_flight_by_type.get("sub_routine", 0) + self._in_flight_by_type.get(
+                "brain_learn", 0
+            )
+            # Standard = everything not in the dedicated pools.
+            standard_in_flight = self._in_flight_count - consolidation_in_flight - sub_routine_in_flight
 
-        total_available = max(0, self._max_slots - total_in_flight)
+        standard_available = max(0, self._standard_max_slots - standard_in_flight)
         consolidation_available = max(0, self._consolidation_max_slots - consolidation_in_flight)
         sub_routine_available = max(0, self._sub_routine_max_slots - sub_routine_in_flight)
 
-        return total_available, consolidation_available, sub_routine_available
+        return standard_available, consolidation_available, sub_routine_available
 
     async def wait_for_active_tasks(self, timeout: float = 10.0) -> bool:
         """
@@ -164,59 +186,105 @@ class WorkerPoller:
     async def claim_batch(self) -> list[ClaimedTask]:
         """
         Claim pending tasks atomically across all tenant schemas,
-        respecting slot limits (total and consolidation).
+        respecting per-class slot reservations and rotating schemas to
+        prevent any single tenant from monopolizing the worker.
+
+        Two-pass rotation: in pass 1, each schema claims at most one task per
+        operation class (fairness floor — every tenant in the rotation gets
+        a turn before any tenant gets seconds). In pass 2, remaining capacity
+        is backfilled greedily by tenant order (efficiency — no slots left
+        idle when work is available). The rotation index advances by one per
+        cycle so the head moves predictably even when the head schema has
+        nothing pending.
 
         Uses FOR UPDATE SKIP LOCKED to ensure no conflicts with other workers.
 
         Returns:
             List of ClaimedTask objects containing operation_id, task_dict, and schema
         """
-        # Calculate available slots
-        total_available, consolidation_available, sub_routine_available = await self._get_available_slots()
+        standard_available, consolidation_available, sub_routine_available = await self._get_available_slots()
 
-        if total_available <= 0:
+        if standard_available <= 0 and consolidation_available <= 0 and sub_routine_available <= 0:
             return []
 
         schemas = await self._get_schemas()
+        if not schemas:
+            return []
+
+        # Rotate the schema list so the head moves each cycle. We modulo by
+        # current length to tolerate schema additions/removals between calls.
+        start = self._next_schema_idx % len(schemas)
+        rotated = schemas[start:] + schemas[:start]
+
         all_tasks: list[ClaimedTask] = []
-        remaining_total = total_available
+        remaining_standard = standard_available
         remaining_consolidation = consolidation_available
         remaining_sub_routine = sub_routine_available
 
-        for schema in schemas:
-            if remaining_total <= 0:
+        # Pass 1: at most 1 task per (schema, class) — fairness floor.
+        for schema in rotated:
+            if remaining_standard <= 0 and remaining_consolidation <= 0 and remaining_sub_routine <= 0:
                 break
+
+            standard_cap = 1 if remaining_standard > 0 else 0
+            consolidation_cap = 1 if remaining_consolidation > 0 else 0
+            sub_routine_cap = 1 if remaining_sub_routine > 0 else 0
 
             tasks = await self._claim_batch_for_schema(
                 schema,
-                remaining_total,
-                remaining_consolidation,
-                remaining_sub_routine,
+                standard_limit=standard_cap,
+                consolidation_limit=consolidation_cap,
+                sub_routine_limit=sub_routine_cap,
             )
-
-            # Update remaining slots based on what was claimed
             for task in tasks:
                 op_type = task.task_dict.get("operation_type", "unknown")
                 if op_type == "consolidation":
                     remaining_consolidation -= 1
-                elif op_type == "sub_routine":
+                elif op_type in ("sub_routine", "brain_learn"):
                     remaining_sub_routine -= 1
-
+                else:
+                    remaining_standard -= 1
             all_tasks.extend(tasks)
-            remaining_total -= len(tasks)
 
+        # Pass 2: greedy backfill of leftover capacity by tenant order.
+        for schema in rotated:
+            if remaining_standard <= 0 and remaining_consolidation <= 0 and remaining_sub_routine <= 0:
+                break
+            tasks = await self._claim_batch_for_schema(
+                schema,
+                standard_limit=remaining_standard,
+                consolidation_limit=remaining_consolidation,
+                sub_routine_limit=remaining_sub_routine,
+            )
+            for task in tasks:
+                op_type = task.task_dict.get("operation_type", "unknown")
+                if op_type == "consolidation":
+                    remaining_consolidation -= 1
+                elif op_type in ("sub_routine", "brain_learn"):
+                    remaining_sub_routine -= 1
+                else:
+                    remaining_standard -= 1
+            all_tasks.extend(tasks)
+
+        # Advance rotation by exactly one per cycle so the head moves
+        # deterministically even when the current head has nothing pending
+        # (otherwise an idle head schema would always be checked first and
+        # block fairness rotation entirely).
+        self._next_schema_idx = (start + 1) % len(schemas)
         return all_tasks
 
     async def _claim_batch_for_schema(
         self,
         schema: str | None,
-        limit: int,
+        standard_limit: int,
         consolidation_limit: int,
         sub_routine_limit: int,
     ) -> list[ClaimedTask]:
-        """Claim tasks from a specific schema respecting slot limits."""
+        """Claim tasks from a specific schema respecting per-class slot limits."""
         try:
-            return await self._claim_batch_for_schema_inner(schema, limit, consolidation_limit, sub_routine_limit)
+            return await self._claim_batch_for_schema_inner(
+                schema, standard_limit, consolidation_limit, sub_routine_limit
+            )
         except Exception as e:
             # Format schema for logging: custom schemas in quotes, None as-is
             schema_display = f'"{schema}"' if schema else str(schema)
@@ -226,42 +294,44 @@ class WorkerPoller:
     async def _claim_batch_for_schema_inner(
         self,
         schema: str | None,
-        limit: int,
+        standard_limit: int,
         consolidation_limit: int,
         sub_routine_limit: int,
     ) -> list[ClaimedTask]:
-        """Inner implementation for claiming tasks from a specific schema with slot limits."""
+        """Inner implementation for claiming tasks from a specific schema with
+        independent per-class slot limits.
+
+        Each class (standard / consolidation / sub_routine) draws from its
+        own reserved slot budget; one class cannot starve another.
+        """
+        if standard_limit <= 0 and consolidation_limit <= 0 and sub_routine_limit <= 0:
+            return []
+
         table = fq_table("async_operations", schema)
 
         async with self._pool.acquire() as conn:
             async with conn.transaction():
-                # Strategy:
-                # 1) normal tasks
-                # 2) consolidation tasks (dedicated slot cap)
-                # 3) sub_routine tasks (dedicated slot cap)
+                # 1. Standard tasks (anything not in the dedicated queues).
+                non_consolidation_rows = []
+                if standard_limit > 0:
+                    non_consolidation_rows = await conn.fetch(
+                        f"""
+                        SELECT operation_id, task_payload, retry_count, operation_type
+                        FROM {table}
+                        WHERE status = 'pending'
+                          AND task_payload IS NOT NULL
+                          AND operation_type NOT IN ('consolidation', 'sub_routine', 'brain_learn')
+                          AND (next_retry_at IS NULL OR next_retry_at <= NOW())
+                        ORDER BY created_at
+                        LIMIT $1
+                        FOR UPDATE SKIP LOCKED
+                        """,
+                        standard_limit,
+                    )
 
-                # 1. Claim standard tasks (exclude special queues with dedicated caps)
-                non_consolidation_rows = await conn.fetch(
-                    f"""
-                    SELECT operation_id, task_payload, retry_count, operation_type
-                    FROM {table}
-                    WHERE status = 'pending'
-                      AND task_payload IS NOT NULL
-                      AND operation_type NOT IN ('consolidation', 'sub_routine', 'brain_learn')
-                      AND (next_retry_at IS NULL OR next_retry_at <= NOW())
-                    ORDER BY created_at
-                    LIMIT $1
-                    FOR UPDATE SKIP LOCKED
-                    """,
-                    limit,
-                )
-
-                claimed_count = len(non_consolidation_rows)
-                remaining_limit = limit - claimed_count
-
-                # 2. Claim consolidation tasks (up to consolidation_limit and remaining_limit)
+                # 2. Consolidation tasks (dedicated reserved budget).
                 consolidation_rows = []
-                if consolidation_limit > 0 and remaining_limit > 0:
+                if consolidation_limit > 0:
                     consolidation_rows = await conn.fetch(
                         f"""
                         SELECT operation_id, task_payload, retry_count, operation_type
@@ -280,15 +350,12 @@ class WorkerPoller:
                         LIMIT $1
                         FOR UPDATE SKIP LOCKED
                         """,
-                        min(consolidation_limit, remaining_limit),
+                        consolidation_limit,
                     )
 
-                claimed_count += len(consolidation_rows)
-                remaining_limit = limit - claimed_count
-
-                # 3. Claim sub_routine + brain_learn tasks (shared slot pool)
+                # 3. Sub_routine + brain_learn tasks (dedicated reserved budget).
                 sub_routine_rows = []
-                if sub_routine_limit > 0 and remaining_limit > 0:
+                if sub_routine_limit > 0:
                     sub_routine_rows = await conn.fetch(
                         f"""
                         SELECT operation_id, task_payload, retry_count, operation_type
@@ -307,7 +374,7 @@ class WorkerPoller:
                         LIMIT $1
                         FOR UPDATE SKIP LOCKED
                         """,
-                        min(sub_routine_limit, remaining_limit),
+                        sub_routine_limit,
                     )
 
                 all_rows = non_consolidation_rows + consolidation_rows + sub_routine_rows
@@ -777,10 +844,11 @@ class WorkerPoller:
                 active_tasks = dict(self._active_tasks)
 
             consolidation_count = in_flight_by_type.get("consolidation", 0)
-            sub_routine_count = in_flight_by_type.get("sub_routine", 0)
-            available_slots = self._max_slots - in_flight
-            available_consolidation_slots = self._consolidation_max_slots - consolidation_count
-            available_sub_routine_slots = self._sub_routine_max_slots - sub_routine_count
+            sub_routine_count = in_flight_by_type.get("sub_routine", 0) + in_flight_by_type.get("brain_learn", 0)
+            standard_count = in_flight - consolidation_count - sub_routine_count
+            available_slots = max(0, self._standard_max_slots - standard_count)
+            available_consolidation_slots = max(0, self._consolidation_max_slots - consolidation_count)
+            available_sub_routine_slots = max(0, self._sub_routine_max_slots - sub_routine_count)
 
             # Build local processing breakdown
             task_groups: dict[tuple[str, str], int] = {}
@@ -828,11 +896,12 @@ class WorkerPoller:
             logger.info(
                 f"[WORKER_STATS] worker={self._worker_id} "
                 f"slots={in_flight}/{self._max_slots} "
-                f"(consolidation={consolidation_count}/{self._consolidation_max_slots}, "
+                f"(standard={standard_count}/{self._standard_max_slots}, "
+                f"consolidation={consolidation_count}/{self._consolidation_max_slots}, "
                 f"sub_routine={sub_routine_count}/{self._sub_routine_max_slots}) | "
-                f"available={available_slots} "
-                f"(consolidation={available_consolidation_slots}, "
-                f"sub_routine={available_sub_routine_slots}) | "
+                f"available standard={available_slots} "
+                f"consolidation={available_consolidation_slots} "
+                f"sub_routine={available_sub_routine_slots} | "
                 f"global: pending={global_pending} (schemas: {schemas_str}) | "
                 f"others: {others_str} | "
                 f"my_active: {processing_str}"

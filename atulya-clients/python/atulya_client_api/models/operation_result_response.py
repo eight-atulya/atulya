@@ -19,10 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from atulya_client_api.models.operation_result_response_result import OperationResultResponseResult
+from atulya_client_api.models.result import Result
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class OperationResultResponse(BaseModel):
     """
@@ -36,7 +35,7 @@ class OperationResultResponse(BaseModel):
     completed_at: Optional[StrictStr] = None
     error_message: Optional[StrictStr] = None
     stage: Optional[StrictStr] = None
-    result: Optional[OperationResultResponseResult] = None
+    result: Optional[Result] = None
     __properties: ClassVar[List[str]] = ["operation_id", "status", "operation_type", "created_at", "updated_at", "completed_at", "error_message", "stage", "result"]
 
     @field_validator('status')
@@ -47,8 +46,7 @@ class OperationResultResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -60,7 +58,8 @@ class OperationResultResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -143,7 +142,7 @@ class OperationResultResponse(BaseModel):
             "completed_at": obj.get("completed_at"),
             "error_message": obj.get("error_message"),
             "stage": obj.get("stage"),
-            "result": OperationResultResponseResult.from_dict(obj["result"]) if obj.get("result") is not None else None
+            "result": Result.from_dict(obj["result"]) if obj.get("result") is not None else None
         })
         return _obj
 

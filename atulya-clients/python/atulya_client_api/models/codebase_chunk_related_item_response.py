@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseChunkRelatedItemResponse(BaseModel):
     """
@@ -34,12 +33,11 @@ class CodebaseChunkRelatedItemResponse(BaseModel):
     start_line: StrictInt
     end_line: StrictInt
     cluster_label: Optional[StrictStr] = None
-    score: Optional[Union[StrictFloat, StrictInt]] = None
+    score: Optional[Union[StrictFloat, StrictInt]] = 0.0
     __properties: ClassVar[List[str]] = ["id", "label", "path", "kind", "start_line", "end_line", "cluster_label", "score"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -51,7 +49,8 @@ class CodebaseChunkRelatedItemResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -100,7 +99,7 @@ class CodebaseChunkRelatedItemResponse(BaseModel):
             "start_line": obj.get("start_line"),
             "end_line": obj.get("end_line"),
             "cluster_label": obj.get("cluster_label"),
-            "score": obj.get("score")
+            "score": obj.get("score") if obj.get("score") is not None else 0.0
         })
         return _obj
 

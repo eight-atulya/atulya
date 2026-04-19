@@ -21,18 +21,16 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ChunkIncludeOptions(BaseModel):
     """
     Options for including chunks in recall results.
     """ # noqa: E501
-    max_tokens: Optional[StrictInt] = Field(default=None, description="Maximum tokens for chunks (chunks may be truncated)")
+    max_tokens: Optional[StrictInt] = Field(default=8192, description="Maximum tokens for chunks (chunks may be truncated)")
     __properties: ClassVar[List[str]] = ["max_tokens"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -44,7 +42,8 @@ class ChunkIncludeOptions(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -81,7 +80,7 @@ class ChunkIncludeOptions(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "max_tokens": obj.get("max_tokens")
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 8192
         })
         return _obj
 

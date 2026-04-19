@@ -2,6 +2,13 @@
 Chunk storage for retain pipeline.
 
 Handles storage of document chunks in the database.
+
+Idempotency contract: ``store_chunks_batch`` is safe to call repeatedly with
+the same ``(bank_id, document_id, chunk_index)`` tuples. Existing chunk rows
+are overwritten via ``ON CONFLICT (chunk_id) DO UPDATE``. This is required so
+that retain task retries (after transient failures, worker restarts, or
+at-least-once task delivery) do not deterministically fail with a primary-key
+violation on the second attempt.
 """
 
 import logging
@@ -41,11 +48,16 @@ async def store_chunks_batch(conn, bank_id: str, document_id: str, chunks: list[
         chunk_indices.append(chunk.chunk_index)
         chunk_id_map[chunk.chunk_index] = chunk_id
 
-    # Batch insert all chunks
+    # Batch upsert all chunks. ON CONFLICT makes this operation idempotent:
+    # re-running with the same chunk_id overwrites the chunk_text/chunk_index,
+    # which is the correct behavior for retain task retries.
     await conn.execute(
         f"""
         INSERT INTO {fq_table("chunks")} (chunk_id, document_id, bank_id, chunk_text, chunk_index)
         SELECT * FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::integer[])
+        ON CONFLICT (chunk_id) DO UPDATE
+        SET chunk_text = EXCLUDED.chunk_text,
+            chunk_index = EXCLUDED.chunk_index
         """,
         chunk_ids,
         [document_id] * len(chunk_texts),

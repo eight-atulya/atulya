@@ -172,7 +172,8 @@ class GeminiLLM(LLMInterface):
         Args:
             messages: List of message dicts with 'role' and 'content'.
             response_format: Optional Pydantic model for structured output.
-            max_completion_tokens: Maximum tokens in response (not supported by Gemini).
+            max_completion_tokens: Maximum tokens in response. Forwarded to
+                Gemini's ``GenerateContentConfig.max_output_tokens``.
             temperature: Sampling temperature (0.0-2.0).
             scope: Scope identifier for tracking.
             max_retries: Maximum retry attempts.
@@ -224,6 +225,8 @@ class GeminiLLM(LLMInterface):
             config_kwargs["response_schema"] = response_format
         if temperature is not None:
             config_kwargs["temperature"] = temperature
+        if max_completion_tokens is not None:
+            config_kwargs["max_output_tokens"] = max_completion_tokens
 
         # Apply safety settings: context var (per-request bank override) takes precedence over instance default
         effective_safety_settings = _safety_settings_ctx.get()
@@ -396,7 +399,8 @@ class GeminiLLM(LLMInterface):
         Args:
             messages: List of message dicts. Can include tool results with role='tool'.
             tools: List of tool definitions in OpenAI format.
-            max_completion_tokens: Maximum tokens (not supported by Gemini).
+            max_completion_tokens: Maximum tokens. Forwarded to Gemini's
+                ``GenerateContentConfig.max_output_tokens``.
             temperature: Sampling temperature.
             scope: Scope identifier for tracking.
             max_retries: Maximum retry attempts.
@@ -485,6 +489,8 @@ class GeminiLLM(LLMInterface):
             config_kwargs["system_instruction"] = system_instruction
         if temperature is not None:
             config_kwargs["temperature"] = temperature
+        if max_completion_tokens is not None:
+            config_kwargs["max_output_tokens"] = max_completion_tokens
 
         # Map OpenAI-style tool_choice to Gemini FunctionCallingConfig
         if tool_choice == "required":

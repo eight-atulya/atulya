@@ -68,7 +68,7 @@ from . import (
     fact_storage,
     link_creation,
 )
-from .types import EntityLink, ExtractedFact, ProcessedFact, RetainContent, RetainContentDict
+from .types import EntityLink, ProcessedFact, RetainContent, RetainContentDict
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +125,31 @@ async def retain_batch(
     # Get bank profile
     profile = await bank_utils.get_bank_profile(pool, bank_id)
     agent_name = profile["name"]
+
+    # --- Append mode: prepend existing document content before extraction ---
+    # When an item requests update_mode="append", fetch the prior original_text
+    # and concatenate it onto the new content. The existing document row will be
+    # replaced (cascading away its old units) and reprocessed against the merged
+    # text, so the resulting document contains both the prior and the new facts.
+    # Guarded by is_first_batch so paged batches do not re-prepend on every page.
+    if is_first_batch:
+        append_targets = [(idx, item) for idx, item in enumerate(contents_dicts) if item.get("update_mode") == "append"]
+        if append_targets:
+            async with acquire_with_retry(pool) as conn:
+                for idx, item in append_targets:
+                    item_doc_id = item.get("document_id") or document_id
+                    if not item_doc_id:
+                        # Validated upstream in MemoryEngine; defensive guard here.
+                        continue
+                    existing_text = await fact_storage.get_document_content(conn, bank_id, item_doc_id)
+                    if existing_text:
+                        new_content = item.get("content", "") or ""
+                        # Use a newline separator so chunkers see a clean boundary.
+                        item["content"] = existing_text + "\n" + new_content
+                        log_buffer.append(
+                            f"[append] Prepended {len(existing_text):,} chars from existing document "
+                            f"{item_doc_id} (item index {idx})"
+                        )
 
     # Convert dicts to RetainContent objects
     contents = []
@@ -522,8 +547,15 @@ async def retain_batch(
                 f"[11] Anomaly intelligence: {len(anomaly_event_ids)} events, {correction_count} corrections in {time.time() - step_start:.3f}s"
             )
 
-            # Map results back to original content items
-            result_unit_ids = _map_results_to_contents(contents, extracted_facts, unit_ids)
+            # Map results back to original content items.
+            # We pass `processed_facts` (not `extracted_facts`) so the mapping
+            # is correct-by-construction: insert_facts_batch returns one
+            # unit_id per processed_fact, and ProcessedFact preserves the
+            # original content_index. Iterating extracted_facts here was the
+            # historical bug — if the embeddings backend silently dropped a
+            # row, len(extracted_facts) > len(processed_facts) == len(unit_ids)
+            # and the loop indexed past the end of unit_ids.
+            result_unit_ids = _map_results_to_contents(contents, processed_facts, unit_ids)
 
             # Transactional outbox: queue any side-effect tasks (e.g. webhook deliveries)
             # inside the same transaction so they are atomically committed with the retain data.
@@ -549,21 +581,23 @@ async def retain_batch(
 
 def _map_results_to_contents(
     contents: list[RetainContent],
-    extracted_facts: list[ExtractedFact],
+    processed_facts: list[ProcessedFact],
     unit_ids: list[str],
 ) -> list[list[str]]:
-    """Map created unit IDs back to original content items."""
-    facts_by_content: dict[int, list[int]] = {i: [] for i in range(len(contents))}
-    for i, fact in enumerate(extracted_facts):
-        facts_by_content[fact.content_index].append(i)
+    """Map inserted unit_ids back to original content items.
 
-    result_unit_ids = []
-    unit_idx = 0
-    for content_index in range(len(contents)):
-        content_unit_ids = []
-        for _ in facts_by_content[content_index]:
-            content_unit_ids.append(unit_ids[unit_idx])
-            unit_idx += 1
-        result_unit_ids.append(content_unit_ids)
+    Invariant: ``len(processed_facts) == len(unit_ids)``. This is guaranteed
+    by ``fact_storage.insert_facts_batch`` (one inserted row per processed
+    fact). We assert it explicitly so any future divergence fails loudly here
+    rather than silently at the IndexError site downstream.
+    """
+    if len(processed_facts) != len(unit_ids):
+        raise RuntimeError(
+            f"retain pipeline invariant violated: {len(processed_facts)} processed_facts "
+            f"vs {len(unit_ids)} unit_ids; insert_facts_batch must return one id per fact"
+        )
 
+    result_unit_ids: list[list[str]] = [[] for _ in range(len(contents))]
+    for fact, unit_id in zip(processed_facts, unit_ids):
+        result_unit_ids[fact.content_index].append(unit_id)
     return result_unit_ids

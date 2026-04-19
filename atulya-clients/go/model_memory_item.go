@@ -22,13 +22,14 @@ var _ MappedNullable = &MemoryItem{}
 // MemoryItem Single memory item for retain.
 type MemoryItem struct {
 	Content string `json:"content"`
-	Timestamp NullableMemoryItemTimestamp `json:"timestamp,omitempty"`
+	Timestamp NullableTimestamp `json:"timestamp,omitempty"`
 	Context NullableString `json:"context,omitempty"`
 	Metadata map[string]string `json:"metadata,omitempty"`
 	DocumentId NullableString `json:"document_id,omitempty"`
 	Entities []EntityInput `json:"entities,omitempty"`
 	Tags []string `json:"tags,omitempty"`
-	ObservationScopes NullableMemoryItemObservationScopes `json:"observation_scopes,omitempty"`
+	ObservationScopes NullableObservationScopes `json:"observation_scopes,omitempty"`
+	UpdateMode NullableString `json:"update_mode,omitempty"`
 }
 
 type _MemoryItem MemoryItem
@@ -76,9 +77,9 @@ func (o *MemoryItem) SetContent(v string) {
 }
 
 // GetTimestamp returns the Timestamp field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *MemoryItem) GetTimestamp() MemoryItemTimestamp {
+func (o *MemoryItem) GetTimestamp() Timestamp {
 	if o == nil || IsNil(o.Timestamp.Get()) {
-		var ret MemoryItemTimestamp
+		var ret Timestamp
 		return ret
 	}
 	return *o.Timestamp.Get()
@@ -87,7 +88,7 @@ func (o *MemoryItem) GetTimestamp() MemoryItemTimestamp {
 // GetTimestampOk returns a tuple with the Timestamp field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *MemoryItem) GetTimestampOk() (*MemoryItemTimestamp, bool) {
+func (o *MemoryItem) GetTimestampOk() (*Timestamp, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -103,8 +104,8 @@ func (o *MemoryItem) HasTimestamp() bool {
 	return false
 }
 
-// SetTimestamp gets a reference to the given NullableMemoryItemTimestamp and assigns it to the Timestamp field.
-func (o *MemoryItem) SetTimestamp(v MemoryItemTimestamp) {
+// SetTimestamp gets a reference to the given NullableTimestamp and assigns it to the Timestamp field.
+func (o *MemoryItem) SetTimestamp(v Timestamp) {
 	o.Timestamp.Set(&v)
 }
 // SetTimestampNil sets the value for Timestamp to be an explicit nil
@@ -301,9 +302,9 @@ func (o *MemoryItem) SetTags(v []string) {
 }
 
 // GetObservationScopes returns the ObservationScopes field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *MemoryItem) GetObservationScopes() MemoryItemObservationScopes {
+func (o *MemoryItem) GetObservationScopes() ObservationScopes {
 	if o == nil || IsNil(o.ObservationScopes.Get()) {
-		var ret MemoryItemObservationScopes
+		var ret ObservationScopes
 		return ret
 	}
 	return *o.ObservationScopes.Get()
@@ -312,7 +313,7 @@ func (o *MemoryItem) GetObservationScopes() MemoryItemObservationScopes {
 // GetObservationScopesOk returns a tuple with the ObservationScopes field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *MemoryItem) GetObservationScopesOk() (*MemoryItemObservationScopes, bool) {
+func (o *MemoryItem) GetObservationScopesOk() (*ObservationScopes, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -328,8 +329,8 @@ func (o *MemoryItem) HasObservationScopes() bool {
 	return false
 }
 
-// SetObservationScopes gets a reference to the given NullableMemoryItemObservationScopes and assigns it to the ObservationScopes field.
-func (o *MemoryItem) SetObservationScopes(v MemoryItemObservationScopes) {
+// SetObservationScopes gets a reference to the given NullableObservationScopes and assigns it to the ObservationScopes field.
+func (o *MemoryItem) SetObservationScopes(v ObservationScopes) {
 	o.ObservationScopes.Set(&v)
 }
 // SetObservationScopesNil sets the value for ObservationScopes to be an explicit nil
@@ -340,6 +341,48 @@ func (o *MemoryItem) SetObservationScopesNil() {
 // UnsetObservationScopes ensures that no value is present for ObservationScopes, not even an explicit nil
 func (o *MemoryItem) UnsetObservationScopes() {
 	o.ObservationScopes.Unset()
+}
+
+// GetUpdateMode returns the UpdateMode field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *MemoryItem) GetUpdateMode() string {
+	if o == nil || IsNil(o.UpdateMode.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.UpdateMode.Get()
+}
+
+// GetUpdateModeOk returns a tuple with the UpdateMode field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *MemoryItem) GetUpdateModeOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.UpdateMode.Get(), o.UpdateMode.IsSet()
+}
+
+// HasUpdateMode returns a boolean if a field has been set.
+func (o *MemoryItem) HasUpdateMode() bool {
+	if o != nil && o.UpdateMode.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetUpdateMode gets a reference to the given NullableString and assigns it to the UpdateMode field.
+func (o *MemoryItem) SetUpdateMode(v string) {
+	o.UpdateMode.Set(&v)
+}
+// SetUpdateModeNil sets the value for UpdateMode to be an explicit nil
+func (o *MemoryItem) SetUpdateModeNil() {
+	o.UpdateMode.Set(nil)
+}
+
+// UnsetUpdateMode ensures that no value is present for UpdateMode, not even an explicit nil
+func (o *MemoryItem) UnsetUpdateMode() {
+	o.UpdateMode.Unset()
 }
 
 func (o MemoryItem) MarshalJSON() ([]byte, error) {
@@ -373,6 +416,9 @@ func (o MemoryItem) ToMap() (map[string]interface{}, error) {
 	}
 	if o.ObservationScopes.IsSet() {
 		toSerialize["observation_scopes"] = o.ObservationScopes.Get()
+	}
+	if o.UpdateMode.IsSet() {
+		toSerialize["update_mode"] = o.UpdateMode.Get()
 	}
 	return toSerialize, nil
 }

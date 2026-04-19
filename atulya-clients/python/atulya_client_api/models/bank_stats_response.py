@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class BankStatsResponse(BaseModel):
     """
@@ -38,13 +37,12 @@ class BankStatsResponse(BaseModel):
     pending_operations: StrictInt
     failed_operations: StrictInt
     last_consolidated_at: Optional[StrictStr] = None
-    pending_consolidation: Optional[StrictInt] = Field(default=None, description="Number of memories not yet processed into observations")
-    total_observations: Optional[StrictInt] = Field(default=None, description="Total number of observations")
+    pending_consolidation: Optional[StrictInt] = Field(default=0, description="Number of memories not yet processed into observations")
+    total_observations: Optional[StrictInt] = Field(default=0, description="Total number of observations")
     __properties: ClassVar[List[str]] = ["bank_id", "total_nodes", "total_links", "total_documents", "nodes_by_fact_type", "links_by_link_type", "links_by_fact_type", "links_breakdown", "pending_operations", "failed_operations", "last_consolidated_at", "pending_consolidation", "total_observations"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -56,7 +54,8 @@ class BankStatsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -109,8 +108,8 @@ class BankStatsResponse(BaseModel):
             "pending_operations": obj.get("pending_operations"),
             "failed_operations": obj.get("failed_operations"),
             "last_consolidated_at": obj.get("last_consolidated_at"),
-            "pending_consolidation": obj.get("pending_consolidation"),
-            "total_observations": obj.get("total_observations")
+            "pending_consolidation": obj.get("pending_consolidation") if obj.get("pending_consolidation") is not None else 0,
+            "total_observations": obj.get("total_observations") if obj.get("total_observations") is not None else 0
         })
         return _obj
 

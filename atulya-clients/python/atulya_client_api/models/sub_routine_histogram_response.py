@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.prediction_point import PredictionPoint
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class SubRoutineHistogramResponse(BaseModel):
     """
@@ -30,14 +29,13 @@ class SubRoutineHistogramResponse(BaseModel):
     """ # noqa: E501
     bank_id: StrictStr
     histogram: List[PredictionPoint]
-    sample_count: Optional[StrictInt] = None
+    sample_count: Optional[StrictInt] = 0
     source_snapshot_id: Optional[StrictStr] = None
     model_signature: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["bank_id", "histogram", "sample_count", "source_snapshot_id", "model_signature"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -49,7 +47,8 @@ class SubRoutineHistogramResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -105,7 +104,7 @@ class SubRoutineHistogramResponse(BaseModel):
         _obj = cls.model_validate({
             "bank_id": obj.get("bank_id"),
             "histogram": [PredictionPoint.from_dict(_item) for _item in obj["histogram"]] if obj.get("histogram") is not None else None,
-            "sample_count": obj.get("sample_count"),
+            "sample_count": obj.get("sample_count") if obj.get("sample_count") is not None else 0,
             "source_snapshot_id": obj.get("source_snapshot_id"),
             "model_signature": obj.get("model_signature")
         })

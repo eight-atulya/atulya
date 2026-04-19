@@ -433,6 +433,13 @@ enum MemoryCommands {
         #[arg(short = 'c', long)]
         context: Option<String>,
 
+        /// How to handle an existing document with the same document_id.
+        /// 'replace' (default) wipes prior data and reprocesses; 'append'
+        /// concatenates onto the existing document text and reprocesses.
+        /// 'append' requires --doc-id.
+        #[arg(long, value_parser = ["replace", "append"])]
+        update_mode: Option<String>,
+
         /// Queue for background processing
         #[arg(long)]
         r#async: bool,
@@ -982,8 +989,8 @@ fn run() -> Result<()> {
             MemoryCommands::Reflect { bank_id, query, budget, context, max_tokens, schema } => {
                 commands::memory::reflect(&client, &bank_id, query, budget, context, max_tokens, schema, verbose, output_format)
             }
-            MemoryCommands::Retain { bank_id, content, doc_id, context, r#async } => {
-                commands::memory::retain(&client, &bank_id, content, doc_id, context, r#async, verbose, output_format)
+            MemoryCommands::Retain { bank_id, content, doc_id, context, update_mode, r#async } => {
+                commands::memory::retain(&client, &bank_id, content, doc_id, context, update_mode, r#async, verbose, output_format)
             }
             MemoryCommands::RetainFiles { bank_id, path, recursive, context, r#async } => {
                 commands::memory::retain_files(&client, &bank_id, path, recursive, context, r#async, verbose, output_format)

@@ -59,6 +59,14 @@ func NewDreamRunResponse(runId string, bankId string, status string, runType str
 	this.RunType = runType
 	this.TriggerSource = triggerSource
 	this.CreatedAt = createdAt
+	var noveltyScore float32 = 0.0
+	this.NoveltyScore = &noveltyScore
+	var maturityTier string = "sparse"
+	this.MaturityTier = &maturityTier
+	var qualityScore float32 = 0.0
+	this.QualityScore = &qualityScore
+	var legacyRun bool = false
+	this.LegacyRun = &legacyRun
 	return &this
 }
 
@@ -67,6 +75,14 @@ func NewDreamRunResponse(runId string, bankId string, status string, runType str
 // but it doesn't guarantee that properties required by API are set
 func NewDreamRunResponseWithDefaults() *DreamRunResponse {
 	this := DreamRunResponse{}
+	var noveltyScore float32 = 0.0
+	this.NoveltyScore = &noveltyScore
+	var maturityTier string = "sparse"
+	this.MaturityTier = &maturityTier
+	var qualityScore float32 = 0.0
+	this.QualityScore = &qualityScore
+	var legacyRun bool = false
+	this.LegacyRun = &legacyRun
 	return &this
 }
 

@@ -25,6 +25,11 @@ class RetainContentDict(TypedDict, total=False):
         observation_scopes: How to scope observations for consolidation (optional).
             "per_tag" runs one pass per individual tag; "combined" (default) runs a
             single pass with all tags; a list[list[str]] specifies exact passes.
+        update_mode: How to handle an existing document with the same document_id (optional).
+            "replace" (default) deletes prior data and reprocesses from scratch.
+            "append" concatenates new content onto the existing document text and
+            reprocesses; delta-aware retain skips chunks that did not change.
+            Requires document_id when set to "append".
     """
 
     content: str  # Required
@@ -37,6 +42,7 @@ class RetainContentDict(TypedDict, total=False):
     observation_scopes: (
         Literal["per_tag", "combined", "all_combinations"] | list[list[str]]
     )  # Observation scopes for consolidation
+    update_mode: Literal["replace", "append"]  # How to handle existing documents
 
 
 @dataclass

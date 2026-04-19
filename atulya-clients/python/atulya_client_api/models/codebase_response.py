@@ -24,7 +24,6 @@ from atulya_client_api.models.codebase_snapshot_stats_response import CodebaseSn
 from atulya_client_api.models.codebase_source_config_response import CodebaseSourceConfigResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseResponse(BaseModel):
     """
@@ -47,9 +46,9 @@ class CodebaseResponse(BaseModel):
     memory_status: Optional[StrictStr] = None
     stats: Optional[CodebaseSnapshotStatsResponse] = None
     review_counts: Optional[CodebaseReviewCountsResponse] = None
-    cluster_count: Optional[StrictInt] = None
-    related_chunk_count: Optional[StrictInt] = None
-    parse_coverage: Optional[Union[StrictFloat, StrictInt]] = None
+    cluster_count: Optional[StrictInt] = 0
+    related_chunk_count: Optional[StrictInt] = 0
+    parse_coverage: Optional[Union[StrictFloat, StrictInt]] = 0.0
     created_at: Optional[StrictStr] = None
     updated_at: Optional[StrictStr] = None
     snapshot_created_at: Optional[StrictStr] = None
@@ -58,8 +57,7 @@ class CodebaseResponse(BaseModel):
     __properties: ClassVar[List[str]] = ["id", "bank_id", "name", "source_type", "source_config", "current_snapshot_id", "approved_snapshot_id", "source_ref", "source_commit_sha", "snapshot_status", "approved_source_ref", "approved_source_commit_sha", "approved_snapshot_status", "approval_status", "memory_status", "stats", "review_counts", "cluster_count", "related_chunk_count", "parse_coverage", "created_at", "updated_at", "snapshot_created_at", "snapshot_updated_at", "approved_snapshot_updated_at"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -71,7 +69,8 @@ class CodebaseResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -209,9 +208,9 @@ class CodebaseResponse(BaseModel):
             "memory_status": obj.get("memory_status"),
             "stats": CodebaseSnapshotStatsResponse.from_dict(obj["stats"]) if obj.get("stats") is not None else None,
             "review_counts": CodebaseReviewCountsResponse.from_dict(obj["review_counts"]) if obj.get("review_counts") is not None else None,
-            "cluster_count": obj.get("cluster_count"),
-            "related_chunk_count": obj.get("related_chunk_count"),
-            "parse_coverage": obj.get("parse_coverage"),
+            "cluster_count": obj.get("cluster_count") if obj.get("cluster_count") is not None else 0,
+            "related_chunk_count": obj.get("related_chunk_count") if obj.get("related_chunk_count") is not None else 0,
+            "parse_coverage": obj.get("parse_coverage") if obj.get("parse_coverage") is not None else 0.0,
             "created_at": obj.get("created_at"),
             "updated_at": obj.get("updated_at"),
             "snapshot_created_at": obj.get("snapshot_created_at"),

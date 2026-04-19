@@ -24,9 +24,9 @@ from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-MEMORYITEMTIMESTAMP_ANY_OF_SCHEMAS = ["datetime", "str"]
+TIMESTAMP_ANY_OF_SCHEMAS = ["datetime", "str"]
 
-class MemoryItemTimestamp(BaseModel):
+class Timestamp(BaseModel):
     """
     When the content occurred. Accepts an ISO 8601 datetime string (e.g. '2024-01-15T10:30:00Z'), null/omitted (defaults to now), or the special string 'unset' to explicitly store without any timestamp (use this for timeless content such as fictional documents or static reference material).
     """
@@ -61,7 +61,7 @@ class MemoryItemTimestamp(BaseModel):
         if v is None:
             return v
 
-        instance = MemoryItemTimestamp.model_construct()
+        instance = Timestamp.model_construct()
         error_messages = []
         # validate data type: datetime
         try:
@@ -77,7 +77,7 @@ class MemoryItemTimestamp(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in MemoryItemTimestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in Timestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -114,7 +114,7 @@ class MemoryItemTimestamp(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into MemoryItemTimestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into Timestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
         else:
             return instance
 

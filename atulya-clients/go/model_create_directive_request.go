@@ -43,6 +43,10 @@ func NewCreateDirectiveRequest(name string, content string) *CreateDirectiveRequ
 	this := CreateDirectiveRequest{}
 	this.Name = name
 	this.Content = content
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -51,6 +55,10 @@ func NewCreateDirectiveRequest(name string, content string) *CreateDirectiveRequ
 // but it doesn't guarantee that properties required by API are set
 func NewCreateDirectiveRequestWithDefaults() *CreateDirectiveRequest {
 	this := CreateDirectiveRequest{}
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 

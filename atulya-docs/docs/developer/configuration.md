@@ -163,7 +163,7 @@ To switch between backends:
 | `ATULYA_API_LLM_MODEL` | Model name | `gpt-5-mini` |
 | `ATULYA_API_LLM_BASE_URL` | Custom LLM endpoint | Provider default |
 | `ATULYA_API_LLM_MAX_CONCURRENT` | Max concurrent LLM requests | `32` |
-| `ATULYA_API_LLM_MAX_RETRIES` | Max retry attempts for LLM API calls | `10` |
+| `ATULYA_API_LLM_MAX_RETRIES` | Max retry attempts for LLM API calls | `3` |
 | `ATULYA_API_LLM_INITIAL_BACKOFF` | Initial retry backoff in seconds (exponential backoff) | `1.0` |
 | `ATULYA_API_LLM_MAX_BACKOFF` | Max retry backoff cap in seconds | `60.0` |
 | `ATULYA_API_LLM_TIMEOUT` | LLM request timeout in seconds | `120` |
@@ -269,6 +269,7 @@ Different memory operations have different requirements. **Retain** (fact extrac
 | `ATULYA_API_CONSOLIDATION_LLM_INITIAL_BACKOFF` | Initial backoff for consolidation retries (seconds) | Falls back to `ATULYA_API_LLM_INITIAL_BACKOFF` |
 | `ATULYA_API_CONSOLIDATION_LLM_MAX_BACKOFF` | Max backoff cap for consolidation retries (seconds) | Falls back to `ATULYA_API_LLM_MAX_BACKOFF` |
 | `ATULYA_API_CONSOLIDATION_LLM_TIMEOUT` | Timeout for consolidation requests (seconds) | Falls back to `ATULYA_API_LLM_TIMEOUT` |
+| `ATULYA_API_CONSOLIDATION_MAX_ATTEMPTS` | Max LLM-driven action attempts per consolidation batch. Bounds worst-case API calls per batch to `consolidation_max_attempts × (consolidation_llm_max_retries + 1)`. | `3` |
 
 :::tip When to Use Per-Operation Config
 - **Retain**: Use models with strong structured output (e.g., GPT-4o, Claude) for accurate fact extraction
@@ -415,6 +416,7 @@ Supported OpenAI embedding dimensions:
 | `ATULYA_API_RERANKER_TEI_URL` | TEI server URL | - |
 | `ATULYA_API_RERANKER_TEI_BATCH_SIZE` | Batch size for TEI reranking | `128` |
 | `ATULYA_API_RERANKER_TEI_MAX_CONCURRENT` | Max concurrent TEI reranking requests | `8` |
+| `ATULYA_API_RERANKER_TEI_HTTP_TIMEOUT` | HTTP request timeout (seconds) for the TEI cross-encoder. Tunable independently of LLM timeouts. | `30.0` |
 | `ATULYA_API_RERANKER_COHERE_API_KEY` | Cohere API key for reranking | - |
 | `ATULYA_API_RERANKER_COHERE_MODEL` | Cohere rerank model | `rerank-english-v3.0` |
 | `ATULYA_API_RERANKER_COHERE_BASE_URL` | Custom base URL for Cohere-compatible API (e.g., Azure-hosted) | - |
@@ -769,6 +771,7 @@ Observations are consolidated knowledge synthesized from facts.
 | `ATULYA_API_CONSOLIDATION_LLM_BATCH_SIZE` | Number of facts sent to the LLM in a single consolidation call. Higher values reduce LLM calls and improve throughput at the cost of larger prompts. Set to `1` to disable batching. Configurable per bank. | `8` |
 | `ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS` | Total token budget for source facts included with observations in the consolidation prompt. `-1` = unlimited. Configurable per bank. | `-1` |
 | `ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION` | Per-observation token cap for source facts in the consolidation prompt. Each observation independently gets at most this many tokens of source facts. `-1` = unlimited. Configurable per bank. | `256` |
+| `ATULYA_API_MAX_OBSERVATIONS_PER_SCOPE` | Hard cap on the number of observations the consolidator may keep per tag scope (`per_tag`, `combined`, or `all_combinations`, depending on `observation_scopes`). When the limit is reached, the consolidator passes `remaining_slots = 0` to the LLM, the response model is constrained to `max_length=0` for new creations, and only updates and deletes flow through. Untagged observations are exempt. Set to a non-negative integer to enable; leave unset (or empty) for unlimited. Configurable per bank. | unlimited |
 | `ATULYA_API_OBSERVATIONS_MISSION` | What this bank should synthesise into durable observations. Replaces the built-in consolidation rules — leave unset to use the server default. | - |
 
 #### Customizing observations: when to use what

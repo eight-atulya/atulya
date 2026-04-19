@@ -43,9 +43,21 @@ export function MentalModelDetailContent({ mentalModel }: MentalModelDetailConte
             {mentalModel.name}
           </h3>
           {mentalModel.trigger?.refresh_after_consolidation && (
-            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium">
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 text-xs font-medium">
               <Zap className="w-3 h-3" />
               Auto refresh
+            </span>
+          )}
+          {(mentalModel.trigger?.mode === "delta" || mentalModel.trigger?.mode === "full") && (
+            <span
+              className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                mentalModel.trigger.mode === "delta"
+                  ? "bg-purple-500/10 text-purple-600 dark:text-purple-400"
+                  : "bg-slate-500/10 text-slate-600 dark:text-slate-400"
+              }`}
+              title="Refresh strategy used by this mental model"
+            >
+              {mentalModel.trigger.mode === "delta" ? "Delta" : "Full"}
             </span>
           )}
         </div>

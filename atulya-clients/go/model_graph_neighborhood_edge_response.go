@@ -44,6 +44,16 @@ func NewGraphNeighborhoodEdgeResponse(id string, source string, target string) *
 	this.Id = id
 	this.Source = source
 	this.Target = target
+	var kind string = "relation"
+	this.Kind = &kind
+	var dashed bool = false
+	this.Dashed = &dashed
+	var width float32 = 1.6
+	this.Width = &width
+	var animated bool = true
+	this.Animated = &animated
+	var priority float32 = 0.0
+	this.Priority = &priority
 	return &this
 }
 
@@ -52,6 +62,16 @@ func NewGraphNeighborhoodEdgeResponse(id string, source string, target string) *
 // but it doesn't guarantee that properties required by API are set
 func NewGraphNeighborhoodEdgeResponseWithDefaults() *GraphNeighborhoodEdgeResponse {
 	this := GraphNeighborhoodEdgeResponse{}
+	var kind string = "relation"
+	this.Kind = &kind
+	var dashed bool = false
+	this.Dashed = &dashed
+	var width float32 = 1.6
+	this.Width = &width
+	var animated bool = true
+	this.Animated = &animated
+	var priority float32 = 0.0
+	this.Priority = &priority
 	return &this
 }
 

@@ -455,3 +455,84 @@ class TestClearObservationsForMemory:
             assert await _get_consolidated_at(conn, m2) is None
 
         await memory.delete_bank(bank_id, request_context=request_context)
+
+
+# ---------------------------------------------------------------------------
+# Tests: handle_document_tracking upsert (production bug regression)
+# ---------------------------------------------------------------------------
+
+
+class TestDocumentUpsertObservationCleanup:
+
+    @pytest.mark.asyncio
+    async def test_document_upsert_invalidates_observations(
+        self, memory: MemoryEngine, request_context: RequestContext
+    ):
+        """Re-ingesting a document via the retain upsert path must sweep
+        observations whose source memories belonged to the prior version of
+        the document. Previously the upsert cascade-deleted the memory_units
+        but left the observations orphaned.
+        """
+        from atulya_api.engine.retain.fact_storage import handle_document_tracking
+
+        bank_id = f"test-doc-upsert-obs-{uuid.uuid4().hex[:8]}"
+        await _ensure_bank(memory, bank_id, request_context)
+
+        pool = await memory._get_pool()
+        doc_id = str(uuid.uuid4())
+
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO documents (id, bank_id, original_text, content_hash, created_at, updated_at)
+                VALUES ($1, $2, 'old doc body', 'hash-old', NOW(), NOW())
+                """,
+                doc_id,
+                bank_id,
+            )
+            m1 = uuid.uuid4()
+            m2 = uuid.uuid4()
+            for mem_id, text in [(m1, "Carol joined the team."), (m2, "Carol is a junior engineer.")]:
+                await conn.execute(
+                    """
+                    INSERT INTO memory_units (id, bank_id, text, fact_type, event_date, document_id, created_at, updated_at, consolidated_at)
+                    VALUES ($1, $2, $3, 'experience', NOW(), $4, NOW(), NOW(), NOW())
+                    """,
+                    mem_id,
+                    bank_id,
+                    text,
+                    doc_id,
+                )
+
+            # Standalone co-source memory not tied to this document.
+            m3 = await _insert_memory(conn, bank_id, "Engineers were hired in Q1.")
+
+            obs_id = await _insert_observation(
+                conn, bank_id, "Carol is a new engineering hire.", [m1, m2, m3]
+            )
+
+        # Re-ingest the same document. handle_document_tracking is the
+        # internal entry point used by retain when a document is
+        # re-processed; we invoke it directly so the test stays narrow.
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                await handle_document_tracking(
+                    conn,
+                    bank_id=bank_id,
+                    document_id=doc_id,
+                    combined_content="brand new doc body",
+                    is_first_batch=True,
+                )
+
+        async with pool.acquire() as conn:
+            obs_ids = await _get_observation_ids(conn, bank_id)
+            assert str(obs_id) not in obs_ids, (
+                "Re-ingesting a document must sweep observations whose source "
+                "memories belonged to the previous version (production bug)"
+            )
+            # Surviving co-source memory (m3) must be reset for re-consolidation.
+            assert await _get_consolidated_at(conn, m3) is None, (
+                "Remaining co-source memory should be reset for re-consolidation"
+            )
+
+        await memory.delete_bank(bank_id, request_context=request_context)

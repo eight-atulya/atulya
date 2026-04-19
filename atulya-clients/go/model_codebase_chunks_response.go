@@ -38,6 +38,8 @@ func NewCodebaseChunksResponse(codebaseId string, items []CodebaseChunkItemRespo
 	this := CodebaseChunksResponse{}
 	this.CodebaseId = codebaseId
 	this.Items = items
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 
@@ -46,6 +48,8 @@ func NewCodebaseChunksResponse(codebaseId string, items []CodebaseChunkItemRespo
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunksResponseWithDefaults() *CodebaseChunksResponse {
 	this := CodebaseChunksResponse{}
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 

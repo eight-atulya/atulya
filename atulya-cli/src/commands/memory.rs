@@ -284,6 +284,7 @@ pub fn recall(
         include,
         tags: None,
         tags_match: Some(RecallRequestTagsMatch::Any),
+        tag_groups: None,
     };
 
     let response = client.recall(agent_id, &request, verbose);
@@ -342,6 +343,7 @@ pub fn reflect(
         response_schema,
         tags: None,
         tags_match: Some(ReflectRequestTagsMatch::Any),
+        tag_groups: None,
     };
 
     let response = client.reflect(agent_id, &request, verbose);
@@ -369,6 +371,7 @@ pub fn retain(
     content: String,
     doc_id: Option<String>,
     context: Option<String>,
+    update_mode: Option<String>,
     r#async: bool,
     verbose: bool,
     output_format: OutputFormat,
@@ -381,6 +384,18 @@ pub fn retain(
         None
     };
 
+    let update_mode_value = match update_mode.as_deref() {
+        None => None,
+        Some("replace") => Some(atulya_client::types::MemoryItemUpdateMode::Replace),
+        Some("append") => Some(atulya_client::types::MemoryItemUpdateMode::Append),
+        Some(other) => {
+            anyhow::bail!(
+                "Invalid --update-mode '{}'. Must be 'replace' or 'append'.",
+                other
+            );
+        }
+    };
+
     let item = MemoryItem {
         content: content.clone(),
         context,
@@ -390,6 +405,7 @@ pub fn retain(
         entities: None,
         tags: None,
         observation_scopes: None,
+        update_mode: update_mode_value,
     };
 
     let request = RetainRequest {

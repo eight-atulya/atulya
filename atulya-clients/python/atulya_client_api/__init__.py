@@ -16,373 +16,203 @@
 
 __version__ = "0.8.3"
 
-# Define package exports
-__all__ = [
-    "BanksApi",
-    "CodebasesApi",
-    "DirectivesApi",
-    "DocumentsApi",
-    "EntitiesApi",
-    "FilesApi",
-    "MemoryApi",
-    "MentalModelsApi",
-    "MonitoringApi",
-    "OperationsApi",
-    "WebhooksApi",
-    "ApiResponse",
-    "ApiClient",
-    "Configuration",
-    "OpenApiException",
-    "ApiTypeError",
-    "ApiValueError",
-    "ApiKeyError",
-    "ApiAttributeError",
-    "ApiException",
-    "AddBackgroundRequest",
-    "AnomalyCorrectionResponse",
-    "AnomalyEventResponse",
-    "AnomalyIntelligenceRequest",
-    "AnomalyIntelligenceResponse",
-    "AnomalyIntelligenceSummaryResponse",
-    "AsyncOperationSubmitResponse",
-    "BackgroundResponse",
-    "BankConfigResponse",
-    "BankConfigUpdate",
-    "BankListItem",
-    "BankListResponse",
-    "BankProfileResponse",
-    "BankStatsResponse",
-    "BrainImportResponse",
-    "BrainImportValidationResponse",
-    "BrainInfluenceResponse",
-    "BrainLearnRequest",
-    "BrainLearnResponse",
-    "BrainRuntimeStatusResponse",
-    "Budget",
-    "CancelOperationResponse",
-    "ChildOperationStatus",
-    "ChunkData",
-    "ChunkIncludeOptions",
-    "ChunkResponse",
-    "ClearMemoryObservationsResponse",
-    "CodebaseApproveRequest",
-    "CodebaseApproveResponse",
-    "CodebaseChunkDetailResponse",
-    "CodebaseChunkItemResponse",
-    "CodebaseChunkRelatedItemResponse",
-    "CodebaseChunksResponse",
-    "CodebaseFileItemResponse",
-    "CodebaseFilesResponse",
-    "CodebaseGithubImportResponse",
-    "CodebaseImpactEdgeResponse",
-    "CodebaseImpactFileResponse",
-    "CodebaseImpactRequest",
-    "CodebaseImpactResponse",
-    "CodebaseImpactSeedResponse",
-    "CodebaseImportGithubRequest",
-    "CodebaseImportResponse",
-    "CodebaseListResponse",
-    "CodebaseRefreshRequest",
-    "CodebaseRefreshResponse",
-    "CodebaseResponse",
-    "CodebaseReviewChangedSummaryResponse",
-    "CodebaseReviewCountsResponse",
-    "CodebaseReviewDiagnosticResponse",
-    "CodebaseReviewResponse",
-    "CodebaseRouteRequest",
-    "CodebaseRouteResponse",
-    "CodebaseSnapshotStatsResponse",
-    "CodebaseSourceConfigResponse",
-    "CodebaseSymbolMatchResponse",
-    "CodebaseSymbolsResponse",
-    "ConsolidationResponse",
-    "CreateBankRequest",
-    "CreateDirectiveRequest",
-    "CreateMentalModelRequest",
-    "CreateMentalModelResponse",
-    "CreateWebhookRequest",
-    "DeleteDocumentResponse",
-    "DeleteResponse",
-    "DirectiveListResponse",
-    "DirectiveResponse",
-    "DispositionTraits",
-    "DocumentResponse",
-    "DreamPredictionOutcomeRequest",
-    "DreamProposalReviewRequest",
-    "DreamRunListResponse",
-    "DreamRunResponse",
-    "DreamStatsResponse",
-    "DreamSubmitRequest",
-    "EntityDetailResponse",
-    "EntityIncludeOptions",
-    "EntityInput",
-    "EntityListItem",
-    "EntityListResponse",
-    "EntityObservationResponse",
-    "EntityStateResponse",
-    "EntityTrajectoryRecomputeResponse",
-    "EntityTrajectoryResponse",
-    "FeaturesInfo",
-    "FileRetainResponse",
-    "GraphChangeEventResponse",
-    "GraphDataResponse",
-    "GraphEvidencePathStepResponse",
-    "GraphIntelligenceResponse",
-    "GraphInvestigationRequest",
-    "GraphInvestigationResponse",
-    "GraphNeighborhoodEdgeResponse",
-    "GraphNeighborhoodNodeResponse",
-    "GraphNeighborhoodResponse",
-    "GraphRelationEdgeResponse",
-    "GraphStateNodeResponse",
-    "GraphSummaryEdgeResponse",
-    "GraphSummaryItemResponse",
-    "GraphSummaryResponse",
-    "HTTPValidationError",
-    "IncludeOptions",
-    "InfluenceContribution",
-    "InfluenceHeatmapPoint",
-    "InfluenceRow",
-    "InfluenceTrendPoint",
-    "ListDocumentsResponse",
-    "ListMemoryUnitsResponse",
-    "ListTagsResponse",
-    "MemoryItem",
-    "MemoryItemObservationScopes",
-    "MemoryItemTimestamp",
-    "MentalModelListResponse",
-    "MentalModelResponse",
-    "MentalModelTrigger",
-    "OperationResponse",
-    "OperationResultResponse",
-    "OperationResultResponseResult",
-    "OperationStatusResponse",
-    "OperationsListResponse",
-    "PredictionPoint",
-    "RecallRequest",
-    "RecallResponse",
-    "RecallResult",
-    "ReflectBasedOn",
-    "ReflectDirective",
-    "ReflectFact",
-    "ReflectIncludeOptions",
-    "ReflectLLMCall",
-    "ReflectMentalModel",
-    "ReflectRequest",
-    "ReflectResponse",
-    "ReflectToolCall",
-    "ReflectTrace",
-    "RetainRequest",
-    "RetainResponse",
-    "SourceFactsIncludeOptions",
-    "SubRoutineHistogramResponse",
-    "SubRoutinePredictionResponse",
-    "SubRoutineSubmitRequest",
-    "TagItem",
-    "TimelineEdgeResponse",
-    "TimelineItemResponse",
-    "TimelineResponse",
-    "TimelineTemporalResponse",
-    "TokenUsage",
-    "ToolCallsIncludeOptions",
-    "TrajectoryViterbiStepResponse",
-    "UpdateDirectiveRequest",
-    "UpdateDispositionRequest",
-    "UpdateMentalModelRequest",
-    "UpdateWebhookRequest",
-    "ValidationError",
-    "ValidationErrorLocInner",
-    "VersionResponse",
-    "WebhookDeliveryListResponse",
-    "WebhookDeliveryResponse",
-    "WebhookHttpConfig",
-    "WebhookListResponse",
-    "WebhookResponse",
-]
-
 # import apis into sdk package
-from atulya_client_api.api.banks_api import BanksApi as BanksApi
-from atulya_client_api.api.codebases_api import CodebasesApi as CodebasesApi
-from atulya_client_api.api.directives_api import DirectivesApi as DirectivesApi
-from atulya_client_api.api.documents_api import DocumentsApi as DocumentsApi
-from atulya_client_api.api.entities_api import EntitiesApi as EntitiesApi
-from atulya_client_api.api.files_api import FilesApi as FilesApi
-from atulya_client_api.api.memory_api import MemoryApi as MemoryApi
-from atulya_client_api.api.mental_models_api import MentalModelsApi as MentalModelsApi
-from atulya_client_api.api.monitoring_api import MonitoringApi as MonitoringApi
-from atulya_client_api.api.operations_api import OperationsApi as OperationsApi
-from atulya_client_api.api.webhooks_api import WebhooksApi as WebhooksApi
+from atulya_client_api.api.banks_api import BanksApi
+from atulya_client_api.api.codebases_api import CodebasesApi
+from atulya_client_api.api.directives_api import DirectivesApi
+from atulya_client_api.api.documents_api import DocumentsApi
+from atulya_client_api.api.entities_api import EntitiesApi
+from atulya_client_api.api.files_api import FilesApi
+from atulya_client_api.api.memory_api import MemoryApi
+from atulya_client_api.api.mental_models_api import MentalModelsApi
+from atulya_client_api.api.monitoring_api import MonitoringApi
+from atulya_client_api.api.operations_api import OperationsApi
+from atulya_client_api.api.webhooks_api import WebhooksApi
 
 # import ApiClient
-from atulya_client_api.api_response import ApiResponse as ApiResponse
-from atulya_client_api.api_client import ApiClient as ApiClient
-from atulya_client_api.configuration import Configuration as Configuration
-from atulya_client_api.exceptions import OpenApiException as OpenApiException
-from atulya_client_api.exceptions import ApiTypeError as ApiTypeError
-from atulya_client_api.exceptions import ApiValueError as ApiValueError
-from atulya_client_api.exceptions import ApiKeyError as ApiKeyError
-from atulya_client_api.exceptions import ApiAttributeError as ApiAttributeError
-from atulya_client_api.exceptions import ApiException as ApiException
+from atulya_client_api.api_response import ApiResponse
+from atulya_client_api.api_client import ApiClient
+from atulya_client_api.configuration import Configuration
+from atulya_client_api.exceptions import OpenApiException
+from atulya_client_api.exceptions import ApiTypeError
+from atulya_client_api.exceptions import ApiValueError
+from atulya_client_api.exceptions import ApiKeyError
+from atulya_client_api.exceptions import ApiAttributeError
+from atulya_client_api.exceptions import ApiException
 
 # import models into sdk package
-from atulya_client_api.models.add_background_request import AddBackgroundRequest as AddBackgroundRequest
-from atulya_client_api.models.anomaly_correction_response import AnomalyCorrectionResponse as AnomalyCorrectionResponse
-from atulya_client_api.models.anomaly_event_response import AnomalyEventResponse as AnomalyEventResponse
-from atulya_client_api.models.anomaly_intelligence_request import AnomalyIntelligenceRequest as AnomalyIntelligenceRequest
-from atulya_client_api.models.anomaly_intelligence_response import AnomalyIntelligenceResponse as AnomalyIntelligenceResponse
-from atulya_client_api.models.anomaly_intelligence_summary_response import AnomalyIntelligenceSummaryResponse as AnomalyIntelligenceSummaryResponse
-from atulya_client_api.models.async_operation_submit_response import AsyncOperationSubmitResponse as AsyncOperationSubmitResponse
-from atulya_client_api.models.background_response import BackgroundResponse as BackgroundResponse
-from atulya_client_api.models.bank_config_response import BankConfigResponse as BankConfigResponse
-from atulya_client_api.models.bank_config_update import BankConfigUpdate as BankConfigUpdate
-from atulya_client_api.models.bank_list_item import BankListItem as BankListItem
-from atulya_client_api.models.bank_list_response import BankListResponse as BankListResponse
-from atulya_client_api.models.bank_profile_response import BankProfileResponse as BankProfileResponse
-from atulya_client_api.models.bank_stats_response import BankStatsResponse as BankStatsResponse
-from atulya_client_api.models.brain_import_response import BrainImportResponse as BrainImportResponse
-from atulya_client_api.models.brain_import_validation_response import BrainImportValidationResponse as BrainImportValidationResponse
-from atulya_client_api.models.brain_influence_response import BrainInfluenceResponse as BrainInfluenceResponse
-from atulya_client_api.models.brain_learn_request import BrainLearnRequest as BrainLearnRequest
-from atulya_client_api.models.brain_learn_response import BrainLearnResponse as BrainLearnResponse
-from atulya_client_api.models.brain_runtime_status_response import BrainRuntimeStatusResponse as BrainRuntimeStatusResponse
-from atulya_client_api.models.budget import Budget as Budget
-from atulya_client_api.models.cancel_operation_response import CancelOperationResponse as CancelOperationResponse
-from atulya_client_api.models.child_operation_status import ChildOperationStatus as ChildOperationStatus
-from atulya_client_api.models.chunk_data import ChunkData as ChunkData
-from atulya_client_api.models.chunk_include_options import ChunkIncludeOptions as ChunkIncludeOptions
-from atulya_client_api.models.chunk_response import ChunkResponse as ChunkResponse
-from atulya_client_api.models.clear_memory_observations_response import ClearMemoryObservationsResponse as ClearMemoryObservationsResponse
-from atulya_client_api.models.codebase_approve_request import CodebaseApproveRequest as CodebaseApproveRequest
-from atulya_client_api.models.codebase_approve_response import CodebaseApproveResponse as CodebaseApproveResponse
-from atulya_client_api.models.codebase_chunk_detail_response import CodebaseChunkDetailResponse as CodebaseChunkDetailResponse
-from atulya_client_api.models.codebase_chunk_item_response import CodebaseChunkItemResponse as CodebaseChunkItemResponse
-from atulya_client_api.models.codebase_chunk_related_item_response import CodebaseChunkRelatedItemResponse as CodebaseChunkRelatedItemResponse
-from atulya_client_api.models.codebase_chunks_response import CodebaseChunksResponse as CodebaseChunksResponse
-from atulya_client_api.models.codebase_file_item_response import CodebaseFileItemResponse as CodebaseFileItemResponse
-from atulya_client_api.models.codebase_files_response import CodebaseFilesResponse as CodebaseFilesResponse
-from atulya_client_api.models.codebase_github_import_response import CodebaseGithubImportResponse as CodebaseGithubImportResponse
-from atulya_client_api.models.codebase_impact_edge_response import CodebaseImpactEdgeResponse as CodebaseImpactEdgeResponse
-from atulya_client_api.models.codebase_impact_file_response import CodebaseImpactFileResponse as CodebaseImpactFileResponse
-from atulya_client_api.models.codebase_impact_request import CodebaseImpactRequest as CodebaseImpactRequest
-from atulya_client_api.models.codebase_impact_response import CodebaseImpactResponse as CodebaseImpactResponse
-from atulya_client_api.models.codebase_impact_seed_response import CodebaseImpactSeedResponse as CodebaseImpactSeedResponse
-from atulya_client_api.models.codebase_import_github_request import CodebaseImportGithubRequest as CodebaseImportGithubRequest
-from atulya_client_api.models.codebase_import_response import CodebaseImportResponse as CodebaseImportResponse
-from atulya_client_api.models.codebase_list_response import CodebaseListResponse as CodebaseListResponse
-from atulya_client_api.models.codebase_refresh_request import CodebaseRefreshRequest as CodebaseRefreshRequest
-from atulya_client_api.models.codebase_refresh_response import CodebaseRefreshResponse as CodebaseRefreshResponse
-from atulya_client_api.models.codebase_response import CodebaseResponse as CodebaseResponse
-from atulya_client_api.models.codebase_review_changed_summary_response import CodebaseReviewChangedSummaryResponse as CodebaseReviewChangedSummaryResponse
-from atulya_client_api.models.codebase_review_counts_response import CodebaseReviewCountsResponse as CodebaseReviewCountsResponse
-from atulya_client_api.models.codebase_review_diagnostic_response import CodebaseReviewDiagnosticResponse as CodebaseReviewDiagnosticResponse
-from atulya_client_api.models.codebase_review_response import CodebaseReviewResponse as CodebaseReviewResponse
-from atulya_client_api.models.codebase_route_request import CodebaseRouteRequest as CodebaseRouteRequest
-from atulya_client_api.models.codebase_route_response import CodebaseRouteResponse as CodebaseRouteResponse
-from atulya_client_api.models.codebase_snapshot_stats_response import CodebaseSnapshotStatsResponse as CodebaseSnapshotStatsResponse
-from atulya_client_api.models.codebase_source_config_response import CodebaseSourceConfigResponse as CodebaseSourceConfigResponse
-from atulya_client_api.models.codebase_symbol_match_response import CodebaseSymbolMatchResponse as CodebaseSymbolMatchResponse
-from atulya_client_api.models.codebase_symbols_response import CodebaseSymbolsResponse as CodebaseSymbolsResponse
-from atulya_client_api.models.consolidation_response import ConsolidationResponse as ConsolidationResponse
-from atulya_client_api.models.create_bank_request import CreateBankRequest as CreateBankRequest
-from atulya_client_api.models.create_directive_request import CreateDirectiveRequest as CreateDirectiveRequest
-from atulya_client_api.models.create_mental_model_request import CreateMentalModelRequest as CreateMentalModelRequest
-from atulya_client_api.models.create_mental_model_response import CreateMentalModelResponse as CreateMentalModelResponse
-from atulya_client_api.models.create_webhook_request import CreateWebhookRequest as CreateWebhookRequest
-from atulya_client_api.models.delete_document_response import DeleteDocumentResponse as DeleteDocumentResponse
-from atulya_client_api.models.delete_response import DeleteResponse as DeleteResponse
-from atulya_client_api.models.directive_list_response import DirectiveListResponse as DirectiveListResponse
-from atulya_client_api.models.directive_response import DirectiveResponse as DirectiveResponse
-from atulya_client_api.models.disposition_traits import DispositionTraits as DispositionTraits
-from atulya_client_api.models.document_response import DocumentResponse as DocumentResponse
-from atulya_client_api.models.dream_prediction_outcome_request import DreamPredictionOutcomeRequest as DreamPredictionOutcomeRequest
-from atulya_client_api.models.dream_proposal_review_request import DreamProposalReviewRequest as DreamProposalReviewRequest
-from atulya_client_api.models.dream_run_list_response import DreamRunListResponse as DreamRunListResponse
-from atulya_client_api.models.dream_run_response import DreamRunResponse as DreamRunResponse
-from atulya_client_api.models.dream_stats_response import DreamStatsResponse as DreamStatsResponse
-from atulya_client_api.models.dream_submit_request import DreamSubmitRequest as DreamSubmitRequest
-from atulya_client_api.models.entity_detail_response import EntityDetailResponse as EntityDetailResponse
-from atulya_client_api.models.entity_include_options import EntityIncludeOptions as EntityIncludeOptions
-from atulya_client_api.models.entity_input import EntityInput as EntityInput
-from atulya_client_api.models.entity_list_item import EntityListItem as EntityListItem
-from atulya_client_api.models.entity_list_response import EntityListResponse as EntityListResponse
-from atulya_client_api.models.entity_observation_response import EntityObservationResponse as EntityObservationResponse
-from atulya_client_api.models.entity_state_response import EntityStateResponse as EntityStateResponse
-from atulya_client_api.models.entity_trajectory_recompute_response import EntityTrajectoryRecomputeResponse as EntityTrajectoryRecomputeResponse
-from atulya_client_api.models.entity_trajectory_response import EntityTrajectoryResponse as EntityTrajectoryResponse
-from atulya_client_api.models.features_info import FeaturesInfo as FeaturesInfo
-from atulya_client_api.models.file_retain_response import FileRetainResponse as FileRetainResponse
-from atulya_client_api.models.graph_change_event_response import GraphChangeEventResponse as GraphChangeEventResponse
-from atulya_client_api.models.graph_data_response import GraphDataResponse as GraphDataResponse
-from atulya_client_api.models.graph_evidence_path_step_response import GraphEvidencePathStepResponse as GraphEvidencePathStepResponse
-from atulya_client_api.models.graph_intelligence_response import GraphIntelligenceResponse as GraphIntelligenceResponse
-from atulya_client_api.models.graph_investigation_request import GraphInvestigationRequest as GraphInvestigationRequest
-from atulya_client_api.models.graph_investigation_response import GraphInvestigationResponse as GraphInvestigationResponse
-from atulya_client_api.models.graph_neighborhood_edge_response import GraphNeighborhoodEdgeResponse as GraphNeighborhoodEdgeResponse
-from atulya_client_api.models.graph_neighborhood_node_response import GraphNeighborhoodNodeResponse as GraphNeighborhoodNodeResponse
-from atulya_client_api.models.graph_neighborhood_response import GraphNeighborhoodResponse as GraphNeighborhoodResponse
-from atulya_client_api.models.graph_relation_edge_response import GraphRelationEdgeResponse as GraphRelationEdgeResponse
-from atulya_client_api.models.graph_state_node_response import GraphStateNodeResponse as GraphStateNodeResponse
-from atulya_client_api.models.graph_summary_edge_response import GraphSummaryEdgeResponse as GraphSummaryEdgeResponse
-from atulya_client_api.models.graph_summary_item_response import GraphSummaryItemResponse as GraphSummaryItemResponse
-from atulya_client_api.models.graph_summary_response import GraphSummaryResponse as GraphSummaryResponse
-from atulya_client_api.models.http_validation_error import HTTPValidationError as HTTPValidationError
-from atulya_client_api.models.include_options import IncludeOptions as IncludeOptions
-from atulya_client_api.models.influence_contribution import InfluenceContribution as InfluenceContribution
-from atulya_client_api.models.influence_heatmap_point import InfluenceHeatmapPoint as InfluenceHeatmapPoint
-from atulya_client_api.models.influence_row import InfluenceRow as InfluenceRow
-from atulya_client_api.models.influence_trend_point import InfluenceTrendPoint as InfluenceTrendPoint
-from atulya_client_api.models.list_documents_response import ListDocumentsResponse as ListDocumentsResponse
-from atulya_client_api.models.list_memory_units_response import ListMemoryUnitsResponse as ListMemoryUnitsResponse
-from atulya_client_api.models.list_tags_response import ListTagsResponse as ListTagsResponse
-from atulya_client_api.models.memory_item import MemoryItem as MemoryItem
-from atulya_client_api.models.memory_item_observation_scopes import MemoryItemObservationScopes as MemoryItemObservationScopes
-from atulya_client_api.models.memory_item_timestamp import MemoryItemTimestamp as MemoryItemTimestamp
-from atulya_client_api.models.mental_model_list_response import MentalModelListResponse as MentalModelListResponse
-from atulya_client_api.models.mental_model_response import MentalModelResponse as MentalModelResponse
-from atulya_client_api.models.mental_model_trigger import MentalModelTrigger as MentalModelTrigger
-from atulya_client_api.models.operation_response import OperationResponse as OperationResponse
-from atulya_client_api.models.operation_result_response import OperationResultResponse as OperationResultResponse
-from atulya_client_api.models.operation_result_response_result import OperationResultResponseResult as OperationResultResponseResult
-from atulya_client_api.models.operation_status_response import OperationStatusResponse as OperationStatusResponse
-from atulya_client_api.models.operations_list_response import OperationsListResponse as OperationsListResponse
-from atulya_client_api.models.prediction_point import PredictionPoint as PredictionPoint
-from atulya_client_api.models.recall_request import RecallRequest as RecallRequest
-from atulya_client_api.models.recall_response import RecallResponse as RecallResponse
-from atulya_client_api.models.recall_result import RecallResult as RecallResult
-from atulya_client_api.models.reflect_based_on import ReflectBasedOn as ReflectBasedOn
-from atulya_client_api.models.reflect_directive import ReflectDirective as ReflectDirective
-from atulya_client_api.models.reflect_fact import ReflectFact as ReflectFact
-from atulya_client_api.models.reflect_include_options import ReflectIncludeOptions as ReflectIncludeOptions
-from atulya_client_api.models.reflect_llm_call import ReflectLLMCall as ReflectLLMCall
-from atulya_client_api.models.reflect_mental_model import ReflectMentalModel as ReflectMentalModel
-from atulya_client_api.models.reflect_request import ReflectRequest as ReflectRequest
-from atulya_client_api.models.reflect_response import ReflectResponse as ReflectResponse
-from atulya_client_api.models.reflect_tool_call import ReflectToolCall as ReflectToolCall
-from atulya_client_api.models.reflect_trace import ReflectTrace as ReflectTrace
-from atulya_client_api.models.retain_request import RetainRequest as RetainRequest
-from atulya_client_api.models.retain_response import RetainResponse as RetainResponse
-from atulya_client_api.models.source_facts_include_options import SourceFactsIncludeOptions as SourceFactsIncludeOptions
-from atulya_client_api.models.sub_routine_histogram_response import SubRoutineHistogramResponse as SubRoutineHistogramResponse
-from atulya_client_api.models.sub_routine_prediction_response import SubRoutinePredictionResponse as SubRoutinePredictionResponse
-from atulya_client_api.models.sub_routine_submit_request import SubRoutineSubmitRequest as SubRoutineSubmitRequest
-from atulya_client_api.models.tag_item import TagItem as TagItem
-from atulya_client_api.models.timeline_edge_response import TimelineEdgeResponse as TimelineEdgeResponse
-from atulya_client_api.models.timeline_item_response import TimelineItemResponse as TimelineItemResponse
-from atulya_client_api.models.timeline_response import TimelineResponse as TimelineResponse
-from atulya_client_api.models.timeline_temporal_response import TimelineTemporalResponse as TimelineTemporalResponse
-from atulya_client_api.models.token_usage import TokenUsage as TokenUsage
-from atulya_client_api.models.tool_calls_include_options import ToolCallsIncludeOptions as ToolCallsIncludeOptions
-from atulya_client_api.models.trajectory_viterbi_step_response import TrajectoryViterbiStepResponse as TrajectoryViterbiStepResponse
-from atulya_client_api.models.update_directive_request import UpdateDirectiveRequest as UpdateDirectiveRequest
-from atulya_client_api.models.update_disposition_request import UpdateDispositionRequest as UpdateDispositionRequest
-from atulya_client_api.models.update_mental_model_request import UpdateMentalModelRequest as UpdateMentalModelRequest
-from atulya_client_api.models.update_webhook_request import UpdateWebhookRequest as UpdateWebhookRequest
-from atulya_client_api.models.validation_error import ValidationError as ValidationError
-from atulya_client_api.models.validation_error_loc_inner import ValidationErrorLocInner as ValidationErrorLocInner
-from atulya_client_api.models.version_response import VersionResponse as VersionResponse
-from atulya_client_api.models.webhook_delivery_list_response import WebhookDeliveryListResponse as WebhookDeliveryListResponse
-from atulya_client_api.models.webhook_delivery_response import WebhookDeliveryResponse as WebhookDeliveryResponse
-from atulya_client_api.models.webhook_http_config import WebhookHttpConfig as WebhookHttpConfig
-from atulya_client_api.models.webhook_list_response import WebhookListResponse as WebhookListResponse
-from atulya_client_api.models.webhook_response import WebhookResponse as WebhookResponse
-
+from atulya_client_api.models.add_background_request import AddBackgroundRequest
+from atulya_client_api.models.anomaly_correction_response import AnomalyCorrectionResponse
+from atulya_client_api.models.anomaly_event_response import AnomalyEventResponse
+from atulya_client_api.models.anomaly_intelligence_request import AnomalyIntelligenceRequest
+from atulya_client_api.models.anomaly_intelligence_response import AnomalyIntelligenceResponse
+from atulya_client_api.models.anomaly_intelligence_summary_response import AnomalyIntelligenceSummaryResponse
+from atulya_client_api.models.async_operation_submit_response import AsyncOperationSubmitResponse
+from atulya_client_api.models.background_response import BackgroundResponse
+from atulya_client_api.models.bank_config_response import BankConfigResponse
+from atulya_client_api.models.bank_config_update import BankConfigUpdate
+from atulya_client_api.models.bank_list_item import BankListItem
+from atulya_client_api.models.bank_list_response import BankListResponse
+from atulya_client_api.models.bank_profile_response import BankProfileResponse
+from atulya_client_api.models.bank_stats_response import BankStatsResponse
+from atulya_client_api.models.brain_import_response import BrainImportResponse
+from atulya_client_api.models.brain_import_validation_response import BrainImportValidationResponse
+from atulya_client_api.models.brain_influence_response import BrainInfluenceResponse
+from atulya_client_api.models.brain_learn_request import BrainLearnRequest
+from atulya_client_api.models.brain_learn_response import BrainLearnResponse
+from atulya_client_api.models.brain_runtime_status_response import BrainRuntimeStatusResponse
+from atulya_client_api.models.budget import Budget
+from atulya_client_api.models.cancel_operation_response import CancelOperationResponse
+from atulya_client_api.models.child_operation_status import ChildOperationStatus
+from atulya_client_api.models.chunk_data import ChunkData
+from atulya_client_api.models.chunk_include_options import ChunkIncludeOptions
+from atulya_client_api.models.chunk_response import ChunkResponse
+from atulya_client_api.models.clear_memory_observations_response import ClearMemoryObservationsResponse
+from atulya_client_api.models.codebase_approve_request import CodebaseApproveRequest
+from atulya_client_api.models.codebase_approve_response import CodebaseApproveResponse
+from atulya_client_api.models.codebase_chunk_detail_response import CodebaseChunkDetailResponse
+from atulya_client_api.models.codebase_chunk_item_response import CodebaseChunkItemResponse
+from atulya_client_api.models.codebase_chunk_related_item_response import CodebaseChunkRelatedItemResponse
+from atulya_client_api.models.codebase_chunks_response import CodebaseChunksResponse
+from atulya_client_api.models.codebase_curate_cluster_response import CodebaseCurateClusterResponse
+from atulya_client_api.models.codebase_curate_request import CodebaseCurateRequest
+from atulya_client_api.models.codebase_curate_response import CodebaseCurateResponse
+from atulya_client_api.models.codebase_file_item_response import CodebaseFileItemResponse
+from atulya_client_api.models.codebase_files_response import CodebaseFilesResponse
+from atulya_client_api.models.codebase_github_import_response import CodebaseGithubImportResponse
+from atulya_client_api.models.codebase_impact_edge_response import CodebaseImpactEdgeResponse
+from atulya_client_api.models.codebase_impact_file_response import CodebaseImpactFileResponse
+from atulya_client_api.models.codebase_impact_request import CodebaseImpactRequest
+from atulya_client_api.models.codebase_impact_response import CodebaseImpactResponse
+from atulya_client_api.models.codebase_impact_seed_response import CodebaseImpactSeedResponse
+from atulya_client_api.models.codebase_import_github_request import CodebaseImportGithubRequest
+from atulya_client_api.models.codebase_import_response import CodebaseImportResponse
+from atulya_client_api.models.codebase_list_response import CodebaseListResponse
+from atulya_client_api.models.codebase_module_briefs_response import CodebaseModuleBriefsResponse
+from atulya_client_api.models.codebase_refresh_request import CodebaseRefreshRequest
+from atulya_client_api.models.codebase_refresh_response import CodebaseRefreshResponse
+from atulya_client_api.models.codebase_repo_map_response import CodebaseRepoMapResponse
+from atulya_client_api.models.codebase_response import CodebaseResponse
+from atulya_client_api.models.codebase_review_changed_summary_response import CodebaseReviewChangedSummaryResponse
+from atulya_client_api.models.codebase_review_counts_response import CodebaseReviewCountsResponse
+from atulya_client_api.models.codebase_review_diagnostic_response import CodebaseReviewDiagnosticResponse
+from atulya_client_api.models.codebase_review_response import CodebaseReviewResponse
+from atulya_client_api.models.codebase_route_request import CodebaseRouteRequest
+from atulya_client_api.models.codebase_route_response import CodebaseRouteResponse
+from atulya_client_api.models.codebase_snapshot_stats_response import CodebaseSnapshotStatsResponse
+from atulya_client_api.models.codebase_source_config_response import CodebaseSourceConfigResponse
+from atulya_client_api.models.codebase_symbol_card_list_response import CodebaseSymbolCardListResponse
+from atulya_client_api.models.codebase_symbol_card_response import CodebaseSymbolCardResponse
+from atulya_client_api.models.codebase_symbol_match_response import CodebaseSymbolMatchResponse
+from atulya_client_api.models.codebase_symbols_response import CodebaseSymbolsResponse
+from atulya_client_api.models.codebase_triage_settings import CodebaseTriageSettings
+from atulya_client_api.models.codebase_triage_settings_response import CodebaseTriageSettingsResponse
+from atulya_client_api.models.consolidation_response import ConsolidationResponse
+from atulya_client_api.models.create_bank_request import CreateBankRequest
+from atulya_client_api.models.create_directive_request import CreateDirectiveRequest
+from atulya_client_api.models.create_mental_model_request import CreateMentalModelRequest
+from atulya_client_api.models.create_mental_model_response import CreateMentalModelResponse
+from atulya_client_api.models.create_webhook_request import CreateWebhookRequest
+from atulya_client_api.models.delete_document_response import DeleteDocumentResponse
+from atulya_client_api.models.delete_response import DeleteResponse
+from atulya_client_api.models.directive_list_response import DirectiveListResponse
+from atulya_client_api.models.directive_response import DirectiveResponse
+from atulya_client_api.models.disposition_traits import DispositionTraits
+from atulya_client_api.models.document_response import DocumentResponse
+from atulya_client_api.models.dream_prediction_outcome_request import DreamPredictionOutcomeRequest
+from atulya_client_api.models.dream_proposal_review_request import DreamProposalReviewRequest
+from atulya_client_api.models.dream_run_list_response import DreamRunListResponse
+from atulya_client_api.models.dream_run_response import DreamRunResponse
+from atulya_client_api.models.dream_stats_response import DreamStatsResponse
+from atulya_client_api.models.dream_submit_request import DreamSubmitRequest
+from atulya_client_api.models.entity_detail_response import EntityDetailResponse
+from atulya_client_api.models.entity_include_options import EntityIncludeOptions
+from atulya_client_api.models.entity_input import EntityInput
+from atulya_client_api.models.entity_list_item import EntityListItem
+from atulya_client_api.models.entity_list_response import EntityListResponse
+from atulya_client_api.models.entity_observation_response import EntityObservationResponse
+from atulya_client_api.models.entity_state_response import EntityStateResponse
+from atulya_client_api.models.entity_trajectory_recompute_response import EntityTrajectoryRecomputeResponse
+from atulya_client_api.models.entity_trajectory_response import EntityTrajectoryResponse
+from atulya_client_api.models.features_info import FeaturesInfo
+from atulya_client_api.models.file_retain_response import FileRetainResponse
+from atulya_client_api.models.graph_change_event_response import GraphChangeEventResponse
+from atulya_client_api.models.graph_data_response import GraphDataResponse
+from atulya_client_api.models.graph_evidence_path_step_response import GraphEvidencePathStepResponse
+from atulya_client_api.models.graph_intelligence_response import GraphIntelligenceResponse
+from atulya_client_api.models.graph_investigation_request import GraphInvestigationRequest
+from atulya_client_api.models.graph_investigation_response import GraphInvestigationResponse
+from atulya_client_api.models.graph_neighborhood_edge_response import GraphNeighborhoodEdgeResponse
+from atulya_client_api.models.graph_neighborhood_node_response import GraphNeighborhoodNodeResponse
+from atulya_client_api.models.graph_neighborhood_response import GraphNeighborhoodResponse
+from atulya_client_api.models.graph_relation_edge_response import GraphRelationEdgeResponse
+from atulya_client_api.models.graph_state_node_response import GraphStateNodeResponse
+from atulya_client_api.models.graph_summary_edge_response import GraphSummaryEdgeResponse
+from atulya_client_api.models.graph_summary_item_response import GraphSummaryItemResponse
+from atulya_client_api.models.graph_summary_response import GraphSummaryResponse
+from atulya_client_api.models.http_validation_error import HTTPValidationError
+from atulya_client_api.models.include_options import IncludeOptions
+from atulya_client_api.models.influence_contribution import InfluenceContribution
+from atulya_client_api.models.influence_heatmap_point import InfluenceHeatmapPoint
+from atulya_client_api.models.influence_row import InfluenceRow
+from atulya_client_api.models.influence_trend_point import InfluenceTrendPoint
+from atulya_client_api.models.list_documents_response import ListDocumentsResponse
+from atulya_client_api.models.list_memory_units_response import ListMemoryUnitsResponse
+from atulya_client_api.models.list_tags_response import ListTagsResponse
+from atulya_client_api.models.memory_item import MemoryItem
+from atulya_client_api.models.mental_model_list_response import MentalModelListResponse
+from atulya_client_api.models.mental_model_response import MentalModelResponse
+from atulya_client_api.models.mental_model_trigger import MentalModelTrigger
+from atulya_client_api.models.model_not import ModelNot
+from atulya_client_api.models.observation_scopes import ObservationScopes
+from atulya_client_api.models.operation_response import OperationResponse
+from atulya_client_api.models.operation_result_response import OperationResultResponse
+from atulya_client_api.models.operation_status_response import OperationStatusResponse
+from atulya_client_api.models.operations_list_response import OperationsListResponse
+from atulya_client_api.models.prediction_point import PredictionPoint
+from atulya_client_api.models.recall_request import RecallRequest
+from atulya_client_api.models.recall_request_tag_groups_inner import RecallRequestTagGroupsInner
+from atulya_client_api.models.recall_response import RecallResponse
+from atulya_client_api.models.recall_result import RecallResult
+from atulya_client_api.models.reflect_based_on import ReflectBasedOn
+from atulya_client_api.models.reflect_directive import ReflectDirective
+from atulya_client_api.models.reflect_fact import ReflectFact
+from atulya_client_api.models.reflect_include_options import ReflectIncludeOptions
+from atulya_client_api.models.reflect_llm_call import ReflectLLMCall
+from atulya_client_api.models.reflect_mental_model import ReflectMentalModel
+from atulya_client_api.models.reflect_request import ReflectRequest
+from atulya_client_api.models.reflect_response import ReflectResponse
+from atulya_client_api.models.reflect_tool_call import ReflectToolCall
+from atulya_client_api.models.reflect_trace import ReflectTrace
+from atulya_client_api.models.result import Result
+from atulya_client_api.models.retain_request import RetainRequest
+from atulya_client_api.models.retain_response import RetainResponse
+from atulya_client_api.models.source_facts_include_options import SourceFactsIncludeOptions
+from atulya_client_api.models.sub_routine_histogram_response import SubRoutineHistogramResponse
+from atulya_client_api.models.sub_routine_prediction_response import SubRoutinePredictionResponse
+from atulya_client_api.models.sub_routine_submit_request import SubRoutineSubmitRequest
+from atulya_client_api.models.tag_group_and import TagGroupAnd
+from atulya_client_api.models.tag_group_leaf import TagGroupLeaf
+from atulya_client_api.models.tag_group_not import TagGroupNot
+from atulya_client_api.models.tag_group_or import TagGroupOr
+from atulya_client_api.models.tag_item import TagItem
+from atulya_client_api.models.timeline_edge_response import TimelineEdgeResponse
+from atulya_client_api.models.timeline_item_response import TimelineItemResponse
+from atulya_client_api.models.timeline_response import TimelineResponse
+from atulya_client_api.models.timeline_temporal_response import TimelineTemporalResponse
+from atulya_client_api.models.timestamp import Timestamp
+from atulya_client_api.models.token_usage import TokenUsage
+from atulya_client_api.models.tool_calls_include_options import ToolCallsIncludeOptions
+from atulya_client_api.models.trajectory_viterbi_step_response import TrajectoryViterbiStepResponse
+from atulya_client_api.models.update_directive_request import UpdateDirectiveRequest
+from atulya_client_api.models.update_disposition_request import UpdateDispositionRequest
+from atulya_client_api.models.update_mental_model_request import UpdateMentalModelRequest
+from atulya_client_api.models.update_webhook_request import UpdateWebhookRequest
+from atulya_client_api.models.validation_error import ValidationError
+from atulya_client_api.models.validation_error_loc_inner import ValidationErrorLocInner
+from atulya_client_api.models.version_response import VersionResponse
+from atulya_client_api.models.webhook_delivery_list_response import WebhookDeliveryListResponse
+from atulya_client_api.models.webhook_delivery_response import WebhookDeliveryResponse
+from atulya_client_api.models.webhook_http_config import WebhookHttpConfig
+from atulya_client_api.models.webhook_list_response import WebhookListResponse
+from atulya_client_api.models.webhook_response import WebhookResponse

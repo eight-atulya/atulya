@@ -23,9 +23,9 @@ from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-MEMORYITEMOBSERVATIONSCOPES_ANY_OF_SCHEMAS = ["List[List[str]]", "str"]
+OBSERVATIONSCOPES_ANY_OF_SCHEMAS = ["List[List[str]]", "str"]
 
-class MemoryItemObservationScopes(BaseModel):
+class ObservationScopes(BaseModel):
     """
     How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
     """
@@ -60,7 +60,7 @@ class MemoryItemObservationScopes(BaseModel):
         if v is None:
             return v
 
-        instance = MemoryItemObservationScopes.model_construct()
+        instance = ObservationScopes.model_construct()
         error_messages = []
         # validate data type: str
         try:
@@ -76,7 +76,7 @@ class MemoryItemObservationScopes(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in MemoryItemObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in ObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -113,7 +113,7 @@ class MemoryItemObservationScopes(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into MemoryItemObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into ObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
         else:
             return instance
 
