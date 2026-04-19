@@ -32,6 +32,15 @@ const config: Config = {
           foreground: "hsl(var(--muted-foreground))",
         },
       },
+      keyframes: {
+        "indeterminate-bar": {
+          "0%": { transform: "translateX(-100%)" },
+          "100%": { transform: "translateX(320%)" },
+        },
+      },
+      animation: {
+        "indeterminate-bar": "indeterminate-bar 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+      },
     },
   },
   plugins: [typography],

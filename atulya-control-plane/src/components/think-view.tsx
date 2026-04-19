@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { client } from "@/lib/api";
 import { useBank } from "@/lib/bank-context";
 import { Button } from "@/components/ui/button";
@@ -35,10 +35,19 @@ import { MemoryDetailModal } from "./memory-detail-modal";
 import { MentalModelDetailModal } from "./mental-model-detail-modal";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useSecondTick } from "@/hooks/use-second-tick";
 
 type TagsMatch = "any" | "all" | "any_strict" | "all_strict";
 type ViewMode = "answer" | "trace" | "json";
 type BasedOnTab = "directives" | "mental_models" | "observations" | "world" | "experience";
+
+function formatReflectElapsed(startedAt: number | null): string {
+  if (!startedAt) return "—";
+  const totalSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}
 
 export function ThinkView() {
   const { currentBank } = useBank();
@@ -71,6 +80,7 @@ export function ThinkView() {
   const [operationStage, setOperationStage] = useState<string | null>(null);
   const [operationError, setOperationError] = useState<string | null>(null);
   const [operationStartedAt, setOperationStartedAt] = useState<number | null>(null);
+  const operationStartedAtRef = useRef<number | null>(null);
 
   const FEEDBACK_DIRECTIVE_NAME = "General Feedback";
   const activeReflectStorageKey = currentBank ? `reflect:active:${currentBank}` : null;
@@ -161,13 +171,11 @@ export function ThinkView() {
     window.sessionStorage.removeItem(activeReflectStorageKey);
   };
 
-  const formatElapsed = (startedAt: number | null) => {
-    if (!startedAt) return "0s";
-    const totalSeconds = Math.max(0, Math.floor((Date.now() - startedAt) / 1000));
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-  };
+  const reflectElapsedTick = useSecondTick(Boolean(loading && operationStartedAt != null));
+  const reflectElapsedLabel = useMemo(
+    () => formatReflectElapsed(operationStartedAt),
+    [operationStartedAt, reflectElapsedTick]
+  );
 
   const compactOperationId = currentOperationId ? currentOperationId.slice(-8) : null;
 
@@ -205,6 +213,10 @@ export function ThinkView() {
       window.sessionStorage.removeItem(activeReflectStorageKey);
     }
   }, [activeReflectStorageKey, currentBank]);
+
+  useEffect(() => {
+    operationStartedAtRef.current = operationStartedAt;
+  }, [operationStartedAt]);
 
   useEffect(() => {
     if (!currentBank || !currentOperationId) return;
@@ -258,7 +270,8 @@ export function ThinkView() {
         }
 
         setLoading(true);
-        const elapsedMs = operationStartedAt ? Date.now() - operationStartedAt : 0;
+        const startedAt = operationStartedAtRef.current;
+        const elapsedMs = startedAt != null ? Date.now() - startedAt : 0;
         timeoutId = window.setTimeout(pollOperation, elapsedMs < 15_000 ? 1000 : 2000);
       } catch (error) {
         if (cancelled) return;
@@ -275,7 +288,7 @@ export function ThinkView() {
         window.clearTimeout(timeoutId);
       }
     };
-  }, [activeReflectStorageKey, currentBank, currentOperationId, operationStartedAt]);
+  }, [activeReflectStorageKey, currentBank, currentOperationId]);
 
   const cancelReflect = async () => {
     if (!currentBank || !currentOperationId) return;
@@ -451,51 +464,98 @@ export function ThinkView() {
       {/* Loading State */}
       {loading && (
         <Card>
-          <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4" />
-            <div className="space-y-2">
-              <p className="text-foreground font-medium">
-                {operationStage === "queued" ? "Reflect queued" : "Reflect running"}
-              </p>
-              <p className="text-muted-foreground">
-                {operationStage === "queued"
-                  ? "Waiting for a worker to pick up the job."
-                  : "The reflect worker is generating the answer in the background."}
-              </p>
-            </div>
-            {currentOperationId && (
-              <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-left text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-muted-foreground">Operation</span>
-                  <code className="font-mono text-xs" title={currentOperationId}>
-                    #{compactOperationId}
-                  </code>
+          <CardContent className="mx-auto flex max-w-lg flex-col items-center px-6 py-14 text-center sm:px-8">
+            <div className="flex w-full flex-col items-center">
+              <div className="mb-10 flex w-full max-w-md flex-col items-center gap-5">
+                <div
+                  className="flex w-full flex-col items-center gap-4"
+                  role="status"
+                  aria-live="polite"
+                >
+                  <Sparkles
+                    className="size-9 shrink-0 text-primary motion-reduce:opacity-90"
+                    aria-hidden
+                  />
+                  <div
+                    className="relative h-2 w-full overflow-hidden rounded-full bg-muted/90 ring-1 ring-border/60 sm:h-2.5"
+                    aria-hidden
+                  >
+                    <div className="absolute inset-y-0 left-0 w-[30%] rounded-full bg-primary shadow-[0_0_16px_hsl(var(--primary)/0.3)] will-change-transform motion-reduce:w-full motion-reduce:animate-pulse motion-reduce:shadow-none motion-safe:animate-indeterminate-bar sm:w-[28%]" />
+                  </div>
                 </div>
-                <div className="mt-2 flex items-center gap-4">
-                  <span className="text-muted-foreground">
-                    Stage: <span className="text-foreground">{operationStage ?? "queued"}</span>
-                  </span>
-                  <span className="text-muted-foreground">
-                    Elapsed:{" "}
-                    <span className="text-foreground">{formatElapsed(operationStartedAt)}</span>
-                  </span>
+                <div className="max-w-md space-y-2">
+                  <p className="text-lg font-semibold tracking-tight text-foreground">
+                    {operationStage === "queued" ? "Reflect queued" : "Reflect running"}
+                  </p>
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {operationStage === "queued"
+                      ? "Waiting for a worker to pick up the job."
+                      : "The reflect worker is generating the answer in the background."}
+                  </p>
                 </div>
               </div>
-            )}
-            {currentOperationId && (
-              <Button
-                variant="outline"
-                onClick={cancelReflect}
-                disabled={operationStage !== "queued"}
-              >
-                Cancel
-              </Button>
-            )}
-            {currentOperationId && operationStage !== "queued" && (
-              <p className="text-xs text-muted-foreground">
-                Cancellation is only available while the job is still queued.
-              </p>
-            )}
+
+              {currentOperationId && (
+                <div className="w-full space-y-6">
+                  <div className="rounded-xl border border-border bg-muted/50 px-5 py-4 text-left shadow-sm sm:px-6">
+                    <dl className="space-y-4 text-sm">
+                      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                        <dt className="shrink-0 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Operation
+                        </dt>
+                        <dd className="min-w-0">
+                          <code
+                            className="block truncate font-mono text-xs text-foreground"
+                            title={currentOperationId}
+                          >
+                            #{compactOperationId}
+                          </code>
+                        </dd>
+                      </div>
+                      <div className="h-px bg-border" />
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Stage
+                          </dt>
+                          <dd className="font-medium capitalize text-foreground">
+                            {operationStage ?? "queued"}
+                          </dd>
+                        </div>
+                        <div className="space-y-1">
+                          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Elapsed
+                          </dt>
+                          <dd className="inline-flex items-center gap-1.5 font-medium tabular-nums text-foreground">
+                            <Clock
+                              className="size-3.5 shrink-0 text-muted-foreground"
+                              aria-hidden
+                            />
+                            {reflectElapsedLabel}
+                          </dd>
+                        </div>
+                      </div>
+                    </dl>
+                  </div>
+
+                  {operationStage === "queued" ? (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      className="min-h-10 min-w-[10rem] shadow-sm"
+                      onClick={cancelReflect}
+                    >
+                      <X className="size-4" aria-hidden />
+                      Cancel job
+                    </Button>
+                  ) : (
+                    <p className="text-center text-sm text-muted-foreground">
+                      This operation has already started, so it can no longer be cancelled.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
