@@ -17,7 +17,7 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
@@ -26,8 +26,19 @@ class MentalModelTrigger(BaseModel):
     """
     Trigger settings for a mental model.
     """ # noqa: E501
+    mode: Optional[StrictStr] = Field(default='full', description="Refresh mode. 'full' (default) regenerates the entire mental model from the reflect synthesis on every refresh. 'delta' performs surgical edits against the stored structured representation, leaving sections that no new fact contradicts physically untouched (no LLM-mediated re-emission of unchanged content). If the mental model has no existing content, or if the source_query has changed since the last refresh, delta mode falls back to a full regeneration automatically.")
     refresh_after_consolidation: Optional[StrictBool] = Field(default=False, description="If true, refresh this mental model after observations consolidation (real-time mode)")
-    __properties: ClassVar[List[str]] = ["refresh_after_consolidation"]
+    __properties: ClassVar[List[str]] = ["mode", "refresh_after_consolidation"]
+
+    @field_validator('mode')
+    def mode_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['full', 'delta']):
+            raise ValueError("must be one of enum values ('full', 'delta')")
+        return value
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -80,6 +91,7 @@ class MentalModelTrigger(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "mode": obj.get("mode") if obj.get("mode") is not None else 'full',
             "refresh_after_consolidation": obj.get("refresh_after_consolidation") if obj.get("refresh_after_consolidation") is not None else False
         })
         return _obj

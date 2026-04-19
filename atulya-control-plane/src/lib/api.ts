@@ -71,7 +71,7 @@ export interface MentalModel {
   content: string;
   tags: string[];
   max_tokens: number;
-  trigger: { refresh_after_consolidation: boolean };
+  trigger: { mode?: "full" | "delta"; refresh_after_consolidation: boolean };
   last_refreshed_at: string;
   created_at: string;
   reflect_response?: any;
@@ -1947,7 +1947,7 @@ export class ControlPlaneClient {
         content: string;
         tags: string[];
         max_tokens: number;
-        trigger: { refresh_after_consolidation: boolean };
+        trigger: { mode?: "full" | "delta"; refresh_after_consolidation: boolean };
         last_refreshed_at: string;
         created_at: string;
         reflect_response?: {
@@ -1970,7 +1970,7 @@ export class ControlPlaneClient {
       source_query: string;
       tags?: string[];
       max_tokens?: number;
-      trigger?: { refresh_after_consolidation: boolean };
+      trigger?: { mode?: "full" | "delta"; refresh_after_consolidation: boolean };
     }
   ) {
     return this.fetchApi<{
@@ -1999,7 +1999,7 @@ export class ControlPlaneClient {
       source_query?: string;
       max_tokens?: number;
       tags?: string[];
-      trigger?: { refresh_after_consolidation: boolean };
+      trigger?: { mode?: "full" | "delta"; refresh_after_consolidation: boolean };
     }
   ) {
     return this.fetchApi<{
@@ -2010,7 +2010,7 @@ export class ControlPlaneClient {
       content: string;
       tags: string[];
       max_tokens: number;
-      trigger: { refresh_after_consolidation: boolean };
+      trigger: { mode?: "full" | "delta"; refresh_after_consolidation: boolean };
       last_refreshed_at: string;
       created_at: string;
       reflect_response?: {

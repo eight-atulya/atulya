@@ -237,6 +237,89 @@ async def ensure_bank_exists(conn, bank_id: str) -> None:
     )
 
 
+async def delete_stale_observations_for_memories(
+    conn,
+    bank_id: str,
+    fact_ids: list[str],
+) -> int:
+    """Cascade-clean observations whose source memories are about to disappear.
+
+    For each observation referencing any of the given fact IDs:
+      1. Delete the observation (its text is stale once the source memories
+         vanish — keeping it would orphan it).
+      2. Reset ``consolidated_at = NULL`` on the surviving co-source memories
+         (fact_type ``experience``/``world``) so they get re-consolidated into
+         a fresh observation.
+
+    Must be called within an active transaction, BEFORE the source memories
+    themselves are deleted (otherwise the ``source_memory_ids && $units``
+    intersection would not match).
+
+    Args:
+        conn: Database connection (must be in an active transaction).
+        bank_id: Bank identifier.
+        fact_ids: List of memory_unit IDs (as strings) about to be removed.
+
+    Returns:
+        Number of observations deleted.
+    """
+    if not fact_ids:
+        return 0
+
+    import uuid as uuid_module
+
+    fact_uuids = [uuid_module.UUID(fid) for fid in fact_ids]
+
+    affected_obs = await conn.fetch(
+        f"""
+        SELECT id, source_memory_ids
+        FROM {fq_table("memory_units")}
+        WHERE bank_id = $1
+          AND fact_type = 'observation'
+          AND source_memory_ids && $2::uuid[]
+        """,
+        bank_id,
+        fact_uuids,
+    )
+
+    if not affected_obs:
+        return 0
+
+    deleted_set = {str(uid) for uid in fact_uuids}
+    obs_ids = [obs["id"] for obs in affected_obs]
+    seen_remaining: set[str] = set()
+    remaining_source_ids: list[uuid_module.UUID] = []
+
+    for obs in affected_obs:
+        for src_id in obs["source_memory_ids"] or []:
+            src_str = str(src_id)
+            if src_str not in deleted_set and src_str not in seen_remaining:
+                remaining_source_ids.append(src_id)
+                seen_remaining.add(src_str)
+
+    await conn.execute(
+        f"DELETE FROM {fq_table('memory_units')} WHERE id = ANY($1::uuid[])",
+        obs_ids,
+    )
+
+    if remaining_source_ids:
+        await conn.execute(
+            f"""
+            UPDATE {fq_table("memory_units")}
+            SET consolidated_at = NULL
+            WHERE id = ANY($1::uuid[])
+              AND fact_type IN ('experience', 'world')
+            """,
+            remaining_source_ids,
+        )
+
+    logger.info(
+        f"[OBSERVATIONS] Deleted {len(obs_ids)} observations, reset {len(remaining_source_ids)} "
+        f"source memories for re-consolidation in bank {bank_id}"
+    )
+    return len(obs_ids)
+
+
 async def handle_document_tracking(
     conn,
     bank_id: str,
@@ -265,8 +348,35 @@ async def handle_document_tracking(
     content_hash = hashlib.sha256(combined_content.encode()).hexdigest()
 
     # Always delete old document first if it exists (cascades to units and links)
-    # Only delete on the first batch to avoid deleting data we just inserted
+    # Only delete on the first batch to avoid deleting data we just inserted.
+    #
+    # Production bug fix: before cascading the document delete (which removes
+    # the experience/world memory_units belonging to it), sweep observations
+    # whose ``source_memory_ids`` reference those units. Otherwise the
+    # observations are left orphaned in the bank — they survive the cascade
+    # because the cascade only follows direct foreign keys, not the
+    # ``source_memory_ids`` array.
     if is_first_batch:
+        existing_unit_rows = await conn.fetch(
+            f"""
+            SELECT id
+            FROM {fq_table("memory_units")}
+            WHERE bank_id = $1
+              AND document_id = $2
+              AND fact_type IN ('experience', 'world')
+            """,
+            bank_id,
+            document_id,
+        )
+        existing_unit_ids = [str(r["id"]) for r in existing_unit_rows]
+        if existing_unit_ids:
+            invalidated = await delete_stale_observations_for_memories(conn, bank_id, existing_unit_ids)
+            if invalidated:
+                logger.info(
+                    f"[RETAIN] Document {document_id} re-ingested: invalidated "
+                    f"{invalidated} observation(s) referencing now-stale source memories"
+                )
+
         await conn.fetchval(
             f"DELETE FROM {fq_table('documents')} WHERE id = $1 AND bank_id = $2 RETURNING id", document_id, bank_id
         )

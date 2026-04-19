@@ -2278,6 +2278,18 @@ class UpdateDirectiveRequest(BaseModel):
 class MentalModelTrigger(BaseModel):
     """Trigger settings for a mental model."""
 
+    mode: Literal["full", "delta"] = Field(
+        default="full",
+        description=(
+            "Refresh mode. 'full' (default) regenerates the entire mental model from "
+            "the reflect synthesis on every refresh. 'delta' performs surgical edits "
+            "against the stored structured representation, leaving sections that no new "
+            "fact contradicts physically untouched (no LLM-mediated re-emission of "
+            "unchanged content). If the mental model has no existing content, or if the "
+            "source_query has changed since the last refresh, delta mode falls back to "
+            "a full regeneration automatically."
+        ),
+    )
     refresh_after_consolidation: bool = Field(
         default=False,
         description="If true, refresh this mental model after observations consolidation (real-time mode)",

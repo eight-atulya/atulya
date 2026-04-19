@@ -4202,6 +4202,12 @@ export type MentalModelResponse = {
  */
 export type MentalModelTrigger = {
     /**
+     * MentalModelTriggerMode
+     *
+     * Refresh mode. 'full' (default) regenerates the entire mental model from the reflect synthesis on every refresh. 'delta' performs surgical edits against the stored structured representation, leaving sections that no new fact contradicts physically untouched (no LLM-mediated re-emission of unchanged content). If the mental model has no existing content, or if the source_query has changed since the last refresh, delta mode falls back to a full regeneration automatically.
+     */
+    mode?: 'full' | 'delta';
+    /**
      * MentalModelTriggerRefreshAfterConsolidation
      *
      * If true, refresh this mental model after observations consolidation (real-time mode)
