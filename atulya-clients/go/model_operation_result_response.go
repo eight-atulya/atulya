@@ -29,7 +29,7 @@ type OperationResultResponse struct {
 	CompletedAt NullableString `json:"completed_at,omitempty"`
 	ErrorMessage NullableString `json:"error_message,omitempty"`
 	Stage NullableString `json:"stage,omitempty"`
-	Result NullableOperationResultResponseResult `json:"result,omitempty"`
+	Result NullableResult `json:"result,omitempty"`
 }
 
 type _OperationResultResponse OperationResultResponse
@@ -354,9 +354,9 @@ func (o *OperationResultResponse) UnsetStage() {
 }
 
 // GetResult returns the Result field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OperationResultResponse) GetResult() OperationResultResponseResult {
+func (o *OperationResultResponse) GetResult() Result {
 	if o == nil || IsNil(o.Result.Get()) {
-		var ret OperationResultResponseResult
+		var ret Result
 		return ret
 	}
 	return *o.Result.Get()
@@ -365,7 +365,7 @@ func (o *OperationResultResponse) GetResult() OperationResultResponseResult {
 // GetResultOk returns a tuple with the Result field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OperationResultResponse) GetResultOk() (*OperationResultResponseResult, bool) {
+func (o *OperationResultResponse) GetResultOk() (*Result, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -381,8 +381,8 @@ func (o *OperationResultResponse) HasResult() bool {
 	return false
 }
 
-// SetResult gets a reference to the given NullableOperationResultResponseResult and assigns it to the Result field.
-func (o *OperationResultResponse) SetResult(v OperationResultResponseResult) {
+// SetResult gets a reference to the given NullableResult and assigns it to the Result field.
+func (o *OperationResultResponse) SetResult(v Result) {
 	o.Result.Set(&v)
 }
 // SetResultNil sets the value for Result to be an explicit nil

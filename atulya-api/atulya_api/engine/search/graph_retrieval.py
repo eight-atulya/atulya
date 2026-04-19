@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 
 from ..db_utils import acquire_with_retry
 from ..memory_engine import fq_table
-from .tags import TagsMatch, filter_results_by_tags
+from .tags import TagGroup, TagsMatch, filter_results_by_tags_and_groups
 from .types import MPFPTimings, RetrievalResult
 
 logger = logging.getLogger(__name__)
@@ -46,6 +46,7 @@ class GraphRetriever(ABC):
         adjacency=None,  # TypedAdjacency, optional pre-loaded graph
         tags: list[str] | None = None,  # Visibility scope tags for filtering
         tags_match: TagsMatch = "any",  # How to match tags: 'any' (OR) or 'all' (AND)
+        tag_groups: list[TagGroup] | None = None,  # Compound boolean tag predicates
     ) -> tuple[list[RetrievalResult], MPFPTimings | None]:
         """
         Retrieve relevant facts via graph traversal.
@@ -120,6 +121,7 @@ class BFSGraphRetriever(GraphRetriever):
         adjacency=None,  # Not used by BFS
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
+        tag_groups: list[TagGroup] | None = None,
     ) -> tuple[list[RetrievalResult], MPFPTimings | None]:
         """
         Retrieve facts using BFS spreading activation.
@@ -136,7 +138,14 @@ class BFSGraphRetriever(GraphRetriever):
         """
         async with acquire_with_retry(pool) as conn:
             results = await self._retrieve_with_conn(
-                conn, query_embedding_str, bank_id, fact_type, budget, tags=tags, tags_match=tags_match
+                conn,
+                query_embedding_str,
+                bank_id,
+                fact_type,
+                budget,
+                tags=tags,
+                tags_match=tags_match,
+                tag_groups=tag_groups,
             )
             return results, None
 
@@ -149,14 +158,16 @@ class BFSGraphRetriever(GraphRetriever):
         budget: int,
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
+        tag_groups: list[TagGroup] | None = None,
     ) -> list[RetrievalResult]:
         """Internal implementation with connection."""
-        from .tags import build_tags_where_clause_simple
+        from .tags import build_combined_tag_filter
 
-        tags_clause = build_tags_where_clause_simple(tags, 6, match=tags_match)
+        tags_clause, tag_params, _ = build_combined_tag_filter(
+            tags, tags_match, tag_groups, param_offset=6
+        )
         params = [query_embedding_str, bank_id, fact_type, self.entry_point_threshold, self.entry_point_limit]
-        if tags:
-            params.append(tags)
+        params.extend(tag_params)
 
         # Step 1: Find entry points
         entry_points = await conn.fetch(
@@ -257,8 +268,10 @@ class BFSGraphRetriever(GraphRetriever):
                             neighbor_result = RetrievalResult.from_db_row(dict(n))
                             queue.append((neighbor_result, new_activation))
 
-        # Apply tags filtering (BFS may traverse into memories that don't match tags criteria)
-        if tags:
-            results = filter_results_by_tags(results, tags, match=tags_match)
+        # Apply tags + tag_groups filtering (BFS may traverse into memories that don't match)
+        if tags or tag_groups:
+            results = filter_results_by_tags_and_groups(
+                results, tags, tag_groups, tags_match=tags_match
+            )
 
         return results

@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr, f
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphNeighborhoodNodeResponse(BaseModel):
     """
@@ -33,7 +32,7 @@ class GraphNeighborhoodNodeResponse(BaseModel):
     subtitle: Optional[StrictStr] = None
     preview: Optional[StrictStr] = None
     status_label: Optional[StrictStr] = None
-    status_tone: Optional[StrictStr] = None
+    status_tone: Optional[StrictStr] = 'neutral'
     confidence: Optional[Union[StrictFloat, StrictInt]] = None
     evidence_count: Optional[StrictInt] = None
     kind_label: Optional[StrictStr] = None
@@ -41,10 +40,10 @@ class GraphNeighborhoodNodeResponse(BaseModel):
     timestamp_label: Optional[StrictStr] = None
     reason: Optional[StrictStr] = None
     accent_color: Optional[StrictStr] = None
-    display_priority: Optional[Union[StrictFloat, StrictInt]] = None
-    node_density_hint: Optional[Union[StrictFloat, StrictInt]] = None
+    display_priority: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    node_density_hint: Optional[Union[StrictFloat, StrictInt]] = 0.0
     cluster_membership: Optional[StrictStr] = None
-    render_mode_hint: Optional[StrictStr] = None
+    render_mode_hint: Optional[StrictStr] = 'detail'
     __properties: ClassVar[List[str]] = ["id", "node_type", "title", "subtitle", "preview", "status_label", "status_tone", "confidence", "evidence_count", "kind_label", "meta", "timestamp_label", "reason", "accent_color", "display_priority", "node_density_hint", "cluster_membership", "render_mode_hint"]
 
     @field_validator('node_type')
@@ -75,8 +74,7 @@ class GraphNeighborhoodNodeResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -88,7 +86,8 @@ class GraphNeighborhoodNodeResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -186,7 +185,7 @@ class GraphNeighborhoodNodeResponse(BaseModel):
             "subtitle": obj.get("subtitle"),
             "preview": obj.get("preview"),
             "status_label": obj.get("status_label"),
-            "status_tone": obj.get("status_tone"),
+            "status_tone": obj.get("status_tone") if obj.get("status_tone") is not None else 'neutral',
             "confidence": obj.get("confidence"),
             "evidence_count": obj.get("evidence_count"),
             "kind_label": obj.get("kind_label"),
@@ -194,10 +193,10 @@ class GraphNeighborhoodNodeResponse(BaseModel):
             "timestamp_label": obj.get("timestamp_label"),
             "reason": obj.get("reason"),
             "accent_color": obj.get("accent_color"),
-            "display_priority": obj.get("display_priority"),
-            "node_density_hint": obj.get("node_density_hint"),
+            "display_priority": obj.get("display_priority") if obj.get("display_priority") is not None else 0.0,
+            "node_density_hint": obj.get("node_density_hint") if obj.get("node_density_hint") is not None else 0.0,
             "cluster_membership": obj.get("cluster_membership"),
-            "render_mode_hint": obj.get("render_mode_hint")
+            "render_mode_hint": obj.get("render_mode_hint") if obj.get("render_mode_hint") is not None else 'detail'
         })
         return _obj
 

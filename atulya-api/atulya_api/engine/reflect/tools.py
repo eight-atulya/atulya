@@ -10,13 +10,14 @@ Implements hierarchical retrieval:
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     from asyncpg import Connection
 
     from ...api.http import RequestContext
     from ..memory_engine import MemoryEngine
+    from ..search.tags import TagGroup
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ async def tool_search_mental_models(
     max_results: int = 5,
     tags: list[str] | None = None,
     tags_match: str = "any",
+    tag_groups: "list[TagGroup] | None" = None,
     exclude_ids: list[str] | None = None,
     pending_consolidation: int = 0,
 ) -> dict[str, Any]:
@@ -52,18 +54,24 @@ async def tool_search_mental_models(
         Dict with matching mental models including content and freshness info
     """
     from ..memory_engine import fq_table
-    from ..search.tags import build_tags_where_clause
+    from ..search.tags import build_combined_tag_filter
 
     # Build filters dynamically
     filters = ""
     params: list[Any] = [bank_id, str(query_embedding), max_results]
     next_param = 4
 
-    # Use the centralized tag filtering logic
-    if tags:
-        tag_clause, tag_params, next_param = build_tags_where_clause(tags, param_offset=next_param, match=tags_match)
-        filters += f" {tag_clause}"
-        params.extend(tag_params)
+    # Combined tags + tag_groups filter (AND-ed at the SQL level)
+    if tags or tag_groups:
+        combined_clause, combined_params, next_param = build_combined_tag_filter(
+            tags=tags,
+            tags_match=cast(Any, tags_match),
+            tag_groups=tag_groups,
+            param_offset=next_param,
+        )
+        if combined_clause:
+            filters += f" {combined_clause}"
+            params.extend(combined_params)
 
     if exclude_ids:
         filters += f" AND id != ALL(${next_param}::text[])"
@@ -125,6 +133,7 @@ async def tool_search_observations(
     max_tokens: int = 5000,
     tags: list[str] | None = None,
     tags_match: str = "any",
+    tag_groups: "list[TagGroup] | None" = None,
     last_consolidated_at: datetime | None = None,
     pending_consolidation: int = 0,
 ) -> dict[str, Any]:
@@ -156,7 +165,8 @@ async def tool_search_observations(
         enable_trace=False,
         request_context=request_context,
         tags=tags,
-        tags_match=tags_match,
+        tags_match=cast(Any, tags_match),
+        tag_groups=tag_groups,
         include_source_facts=True,
         max_source_facts_tokens=-1,  # No token limit — include all source facts
         _connection_budget=1,
@@ -190,6 +200,7 @@ async def tool_recall(
     max_tokens: int = 2048,
     tags: list[str] | None = None,
     tags_match: str = "any",
+    tag_groups: "list[TagGroup] | None" = None,
     connection_budget: int = 1,
     max_chunk_tokens: int = 1000,
 ) -> dict[str, Any]:
@@ -222,7 +233,8 @@ async def tool_recall(
         enable_trace=False,
         request_context=request_context,
         tags=tags,
-        tags_match=tags_match,
+        tags_match=cast(Any, tags_match),
+        tag_groups=tag_groups,
         _connection_budget=connection_budget,
         _quiet=True,  # Suppress logging for internal operations
         _record_access_telemetry=False,

@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from atulya_client_api.models.trajectory_viterbi_step_response import TrajectoryViterbiStepResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class EntityTrajectoryResponse(BaseModel):
     """
@@ -32,7 +31,7 @@ class EntityTrajectoryResponse(BaseModel):
     bank_id: StrictStr
     computed_at: Optional[StrictStr] = None
     state_vocabulary: List[StrictStr]
-    vocabulary_hash: Optional[StrictStr] = None
+    vocabulary_hash: Optional[StrictStr] = ''
     transition_matrix: List[List[Union[StrictFloat, StrictInt]]]
     current_state: StrictStr
     viterbi_path: List[TrajectoryViterbiStepResponse]
@@ -40,13 +39,12 @@ class EntityTrajectoryResponse(BaseModel):
     forecast_distribution: Dict[str, Union[StrictFloat, StrictInt]]
     forward_log_prob: Optional[Union[StrictFloat, StrictInt]] = None
     anomaly_score: Optional[Union[StrictFloat, StrictInt]] = None
-    llm_model: Optional[StrictStr] = None
-    prompt_version: Optional[StrictStr] = None
+    llm_model: Optional[StrictStr] = ''
+    prompt_version: Optional[StrictStr] = ''
     __properties: ClassVar[List[str]] = ["entity_id", "bank_id", "computed_at", "state_vocabulary", "vocabulary_hash", "transition_matrix", "current_state", "viterbi_path", "forecast_horizon", "forecast_distribution", "forward_log_prob", "anomaly_score", "llm_model", "prompt_version"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -58,7 +56,8 @@ class EntityTrajectoryResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -121,7 +120,7 @@ class EntityTrajectoryResponse(BaseModel):
             "bank_id": obj.get("bank_id"),
             "computed_at": obj.get("computed_at"),
             "state_vocabulary": obj.get("state_vocabulary"),
-            "vocabulary_hash": obj.get("vocabulary_hash"),
+            "vocabulary_hash": obj.get("vocabulary_hash") if obj.get("vocabulary_hash") is not None else '',
             "transition_matrix": obj.get("transition_matrix"),
             "current_state": obj.get("current_state"),
             "viterbi_path": [TrajectoryViterbiStepResponse.from_dict(_item) for _item in obj["viterbi_path"]] if obj.get("viterbi_path") is not None else None,
@@ -129,8 +128,8 @@ class EntityTrajectoryResponse(BaseModel):
             "forecast_distribution": obj.get("forecast_distribution"),
             "forward_log_prob": obj.get("forward_log_prob"),
             "anomaly_score": obj.get("anomaly_score"),
-            "llm_model": obj.get("llm_model"),
-            "prompt_version": obj.get("prompt_version")
+            "llm_model": obj.get("llm_model") if obj.get("llm_model") is not None else '',
+            "prompt_version": obj.get("prompt_version") if obj.get("prompt_version") is not None else ''
         })
         return _obj
 

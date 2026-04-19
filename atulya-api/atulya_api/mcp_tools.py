@@ -20,10 +20,43 @@ from atulya_api.config import (
 )
 from atulya_api.engine.memory_engine import Budget
 from atulya_api.engine.response_models import VALID_RECALL_FACT_TYPES
+from atulya_api.engine.search.tags import (
+    TagGroup,
+    TagGroupAnd,
+    TagGroupLeaf,
+    TagGroupNot,
+    TagGroupOr,
+)
 from atulya_api.extensions import OperationValidationError
 from atulya_api.models import RequestContext
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_tag_groups(raw: list[dict] | None) -> list[TagGroup] | None:
+    """Coerce JSON-style tag_groups payloads into the recursive Pydantic models.
+
+    Accepts the same shape exposed at the HTTP layer:
+      - leaves: ``{"tags": [...], "match": "any|all|any_strict|all_strict"}``
+      - groups: ``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``
+    Raises ``ValueError`` (caught by the calling tool and surfaced to the LLM)
+    when the payload does not match the schema.
+    """
+    if not raw:
+        return None
+
+    def _build(node: Any) -> Any:
+        if not isinstance(node, dict):
+            raise ValueError(f"tag_groups entries must be objects, got {type(node).__name__}")
+        if "and" in node:
+            return TagGroupAnd(**{"and": [_build(c) for c in node["and"]]})
+        if "or" in node:
+            return TagGroupOr(**{"or": [_build(c) for c in node["or"]]})
+        if "not" in node:
+            return TagGroupNot(**{"not": _build(node["not"])})
+        return TagGroupLeaf(**node)
+
+    return [_build(g) for g in raw]
 
 
 @dataclass
@@ -95,6 +128,7 @@ def build_content_dict(
     tags: list[str] | None = None,
     metadata: dict[str, str] | None = None,
     document_id: str | None = None,
+    update_mode: str | None = None,
 ) -> tuple[dict[str, Any], str | None]:
     """Build a content dict for retain operations.
 
@@ -105,6 +139,10 @@ def build_content_dict(
         tags: Optional tags for scoped visibility filtering
         metadata: Optional key-value metadata to attach to the memory
         document_id: Optional document ID to associate the memory with
+        update_mode: Optional document update strategy. 'replace' (default) wipes
+            the prior document and reprocesses; 'append' concatenates the new
+            content onto the existing document text and reprocesses. 'append'
+            requires document_id.
 
     Returns:
         Tuple of (content_dict, error_message). error_message is None if successful.
@@ -124,6 +162,12 @@ def build_content_dict(
         content_dict["metadata"] = metadata
     if document_id is not None:
         content_dict["document_id"] = document_id
+    if update_mode is not None:
+        if update_mode not in ("replace", "append"):
+            return {}, f"Invalid update_mode '{update_mode}'. Must be 'replace' or 'append'."
+        if update_mode == "append" and not document_id:
+            return {}, "update_mode='append' requires document_id."
+        content_dict["update_mode"] = update_mode
 
     return content_dict, None
 
@@ -356,6 +400,7 @@ def _register_retain(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             tags: list[str] | None = None,
             metadata: dict[str, str] | None = None,
             document_id: str | None = None,
+            update_mode: str | None = None,
             bank_id: str | None = None,
         ) -> dict:
             """
@@ -366,13 +411,18 @@ def _register_retain(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
                 tags: Optional tags for scoped visibility filtering (e.g., ['project:alpha', 'user:123'])
                 metadata: Optional key-value metadata to attach (e.g., {'source': 'slack', 'channel': 'general'})
                 document_id: Optional document ID to associate this memory with
+                update_mode: How to handle an existing document with the same document_id.
+                    'replace' (default) wipes prior data and reprocesses; 'append' concatenates
+                    onto the existing document text and reprocesses. 'append' requires document_id.
                 bank_id: Optional bank to store in (defaults to session bank). Use for cross-bank operations.
             """
             target_bank = bank_id or config.bank_id_resolver()
             if target_bank is None:
                 return {"status": "error", "message": "No bank_id configured"}
 
-            content_dict, error = build_content_dict(content, context, timestamp, tags, metadata, document_id)
+            content_dict, error = build_content_dict(
+                content, context, timestamp, tags, metadata, document_id, update_mode
+            )
             if error:
                 return {"status": "error", "message": error}
 
@@ -406,6 +456,7 @@ def _register_retain(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             tags: list[str] | None = None,
             metadata: dict[str, str] | None = None,
             document_id: str | None = None,
+            update_mode: str | None = None,
         ) -> dict:
             """
             Args:
@@ -415,12 +466,17 @@ def _register_retain(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
                 tags: Optional tags for scoped visibility filtering (e.g., ['project:alpha', 'user:123'])
                 metadata: Optional key-value metadata to attach (e.g., {'source': 'slack', 'channel': 'general'})
                 document_id: Optional document ID to associate this memory with
+                update_mode: How to handle an existing document with the same document_id.
+                    'replace' (default) wipes prior data and reprocesses; 'append' concatenates
+                    onto the existing document text and reprocesses. 'append' requires document_id.
             """
             target_bank = config.bank_id_resolver()
             if target_bank is None:
                 return {"status": "error", "message": "No bank_id configured"}
 
-            content_dict, error = build_content_dict(content, context, timestamp, tags, metadata, document_id)
+            content_dict, error = build_content_dict(
+                content, context, timestamp, tags, metadata, document_id, update_mode
+            )
             if error:
                 return {"status": "error", "message": error}
 
@@ -459,6 +515,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             types: list[str] | None = None,
             tags: list[str] | None = None,
             tags_match: str = "any",
+            tag_groups: list[dict] | None = None,
             query_timestamp: str | None = None,
             bank_id: str | None = None,
         ) -> str | dict:
@@ -470,10 +527,18 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
                 types: Fact types to include (e.g., ['world', 'experience']). Default: all types.
                 tags: Optional tags to filter results by (e.g., ['project:alpha'])
                 tags_match: How to match tags - 'any' (match any tag) or 'all' (match all tags). Default: 'any'
+                tag_groups: Optional compound boolean tag predicates. Mutually exclusive with `tags`.
+                    Each entry is a leaf ``{"tags": [...], "match": "any|all|any_strict|all_strict"}``
+                    or a nested group ``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``.
                 query_timestamp: Temporal context for the query (ISO format, e.g., '2024-01-15T10:30:00Z'). Helps retrieve time-relevant memories.
                 bank_id: Optional bank to search in (defaults to session bank). Use for cross-bank operations.
             """
             try:
+                if tags is not None and tag_groups:
+                    return json.dumps(
+                        {"error": "`tags` and `tag_groups` are mutually exclusive.", "results": []}
+                    )
+
                 target_bank = bank_id or config.bank_id_resolver()
                 if target_bank is None:
                     return "Error: No bank_id configured"
@@ -493,6 +558,8 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
                 if tags is not None:
                     recall_kwargs["tags"] = tags
                     recall_kwargs["tags_match"] = tags_match
+                if tag_groups:
+                    recall_kwargs["tag_groups"] = _parse_tag_groups(tag_groups)
                 if query_timestamp is not None:
                     recall_kwargs["question_date"] = parse_timestamp(query_timestamp)
 
@@ -518,6 +585,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             types: list[str] | None = None,
             tags: list[str] | None = None,
             tags_match: str = "any",
+            tag_groups: list[dict] | None = None,
             query_timestamp: str | None = None,
         ) -> dict:
             """
@@ -528,9 +596,15 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
                 types: Fact types to include (e.g., ['world', 'experience']). Default: all types.
                 tags: Optional tags to filter results by (e.g., ['project:alpha'])
                 tags_match: How to match tags - 'any' (match any tag) or 'all' (match all tags). Default: 'any'
+                tag_groups: Optional compound boolean tag predicates. Mutually exclusive with `tags`.
+                    Each entry is a leaf ``{"tags": [...], "match": "any|all|any_strict|all_strict"}``
+                    or a nested group ``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``.
                 query_timestamp: Temporal context for the query (ISO format, e.g., '2024-01-15T10:30:00Z'). Helps retrieve time-relevant memories.
             """
             try:
+                if tags is not None and tag_groups:
+                    return {"error": "`tags` and `tag_groups` are mutually exclusive.", "results": []}
+
                 target_bank = config.bank_id_resolver()
                 if target_bank is None:
                     return {"error": "No bank_id configured", "results": []}
@@ -550,6 +624,8 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
                 if tags is not None:
                     recall_kwargs["tags"] = tags
                     recall_kwargs["tags_match"] = tags_match
+                if tag_groups:
+                    recall_kwargs["tag_groups"] = _parse_tag_groups(tag_groups)
                 if query_timestamp is not None:
                     recall_kwargs["question_date"] = parse_timestamp(query_timestamp)
 
@@ -580,6 +656,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
             response_schema: dict | None = None,
             tags: list[str] | None = None,
             tags_match: str = "any",
+            tag_groups: list[dict] | None = None,
             bank_id: str | None = None,
         ) -> str:
             """
@@ -609,9 +686,16 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
                 response_schema: Optional JSON schema for structured output. When provided, the response includes a 'structured_output' field.
                 tags: Optional tags to filter memories by (e.g., ['project:alpha'])
                 tags_match: How to match tags - 'any' (match any tag) or 'all' (match all tags). Default: 'any'
+                tag_groups: Optional compound boolean tag predicates. Mutually exclusive with `tags`.
+                    Same shape as the recall tool's `tag_groups` argument.
                 bank_id: Optional bank to reflect in (defaults to session bank). Use for cross-bank operations.
             """
             try:
+                if tags is not None and tag_groups:
+                    return json.dumps(
+                        {"error": "`tags` and `tag_groups` are mutually exclusive."}
+                    )
+
                 target_bank = bank_id or config.bank_id_resolver()
                 if target_bank is None:
                     return "Error: No bank_id configured"
@@ -632,6 +716,8 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
                 if tags is not None:
                     reflect_kwargs["tags"] = tags
                     reflect_kwargs["tags_match"] = tags_match
+                if tag_groups:
+                    reflect_kwargs["tag_groups"] = _parse_tag_groups(tag_groups)
 
                 reflect_result = await memory.reflect_async(**reflect_kwargs)
 
@@ -657,6 +743,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
             response_schema: dict | None = None,
             tags: list[str] | None = None,
             tags_match: str = "any",
+            tag_groups: list[dict] | None = None,
         ) -> dict:
             """
             Generate thoughtful analysis by synthesizing stored memories with the bank's personality.
@@ -685,8 +772,13 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
                 response_schema: Optional JSON schema for structured output. When provided, the response includes a 'structured_output' field.
                 tags: Optional tags to filter memories by (e.g., ['project:alpha'])
                 tags_match: How to match tags - 'any' (match any tag) or 'all' (match all tags). Default: 'any'
+                tag_groups: Optional compound boolean tag predicates. Mutually exclusive with `tags`.
+                    Same shape as the recall tool's `tag_groups` argument.
             """
             try:
+                if tags is not None and tag_groups:
+                    return {"error": "`tags` and `tag_groups` are mutually exclusive.", "text": ""}
+
                 target_bank = config.bank_id_resolver()
                 if target_bank is None:
                     return {"error": "No bank_id configured", "text": ""}
@@ -707,6 +799,8 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
                 if tags is not None:
                     reflect_kwargs["tags"] = tags
                     reflect_kwargs["tags_match"] = tags_match
+                if tag_groups:
+                    reflect_kwargs["tag_groups"] = _parse_tag_groups(tag_groups)
 
                 reflect_result = await memory.reflect_async(**reflect_kwargs)
 

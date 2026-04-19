@@ -28,7 +28,7 @@ import time
 from ..db_utils import acquire_with_retry
 from ..memory_engine import fq_table
 from .graph_retrieval import GraphRetriever
-from .tags import TagsMatch, filter_results_by_tags
+from .tags import TagGroup, TagsMatch, filter_results_by_tags_and_groups
 from .types import MPFPTimings, RetrievalResult
 
 logger = logging.getLogger(__name__)
@@ -43,14 +43,16 @@ async def _find_semantic_seeds(
     threshold: float = 0.3,
     tags: list[str] | None = None,
     tags_match: TagsMatch = "any",
+    tag_groups: list[TagGroup] | None = None,
 ) -> list[RetrievalResult]:
     """Find semantic seeds via embedding search."""
-    from .tags import build_tags_where_clause_simple
+    from .tags import build_combined_tag_filter
 
-    tags_clause = build_tags_where_clause_simple(tags, 6, match=tags_match)
+    tags_clause, tag_params, _ = build_combined_tag_filter(
+        tags, tags_match, tag_groups, param_offset=6
+    )
     params = [query_embedding_str, bank_id, fact_type, threshold, limit]
-    if tags:
-        params.append(tags)
+    params.extend(tag_params)
 
     rows = await conn.fetch(
         f"""
@@ -110,6 +112,7 @@ class LinkExpansionRetriever(GraphRetriever):
         adjacency=None,
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
+        tag_groups: list[TagGroup] | None = None,
     ) -> tuple[list[RetrievalResult], MPFPTimings | None]:
         """
         Retrieve facts by expanding links from seeds.
@@ -147,11 +150,12 @@ class LinkExpansionRetriever(GraphRetriever):
                     threshold=0.3,
                     tags=tags,
                     tags_match=tags_match,
+                    tag_groups=tag_groups,
                 )
                 timings.seeds_time = time.time() - seeds_start
                 logger.debug(
                     f"[LinkExpansion] Found {len(all_seeds)} semantic seeds for fact_type={fact_type} "
-                    f"(tags={tags}, tags_match={tags_match})"
+                    f"(tags={tags}, tags_match={tags_match}, tag_groups={'present' if tag_groups else 'none'})"
                 )
 
             if temporal_seeds:
@@ -218,8 +222,10 @@ class LinkExpansionRetriever(GraphRetriever):
             result.activation = row["score"]
             results.append(result)
 
-        if tags:
-            results = filter_results_by_tags(results, tags, match=tags_match)
+        if tags or tag_groups:
+            results = filter_results_by_tags_and_groups(
+                results, tags, tag_groups, tags_match=tags_match
+            )
 
         timings.result_count = len(results)
         timings.traverse = time.time() - start_time

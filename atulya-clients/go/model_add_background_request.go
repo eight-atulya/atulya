@@ -36,6 +36,8 @@ type _AddBackgroundRequest AddBackgroundRequest
 func NewAddBackgroundRequest(content string) *AddBackgroundRequest {
 	this := AddBackgroundRequest{}
 	this.Content = content
+	var updateDisposition bool = true
+	this.UpdateDisposition = &updateDisposition
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewAddBackgroundRequest(content string) *AddBackgroundRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewAddBackgroundRequestWithDefaults() *AddBackgroundRequest {
 	this := AddBackgroundRequest{}
+	var updateDisposition bool = true
+	this.UpdateDisposition = &updateDisposition
 	return &this
 }
 

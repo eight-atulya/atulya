@@ -41,6 +41,14 @@ type CodebaseChunkItemResponse struct {
 	ChangeKind string `json:"change_kind"`
 	RelatedCount *int32 `json:"related_count,omitempty"`
 	DocumentId NullableString `json:"document_id,omitempty"`
+	SignificanceScore *float32 `json:"significance_score,omitempty"`
+	SignificanceComponents map[string]interface{} `json:"significance_components,omitempty"`
+	FileRole NullableString `json:"file_role,omitempty"`
+	AutoRouteReason NullableString `json:"auto_route_reason,omitempty"`
+	ComplexityScore NullableFloat32 `json:"complexity_score,omitempty"`
+	SafetyTags []string `json:"safety_tags,omitempty"`
+	PagerankCentrality NullableFloat32 `json:"pagerank_centrality,omitempty"`
+	FaninCount *int32 `json:"fanin_count,omitempty"`
 }
 
 type _CodebaseChunkItemResponse CodebaseChunkItemResponse
@@ -59,8 +67,16 @@ func NewCodebaseChunkItemResponse(id string, chunkKey string, path string, kind 
 	this.PreviewText = previewText
 	this.StartLine = startLine
 	this.EndLine = endLine
+	var parseConfidence float32 = 0.0
+	this.ParseConfidence = &parseConfidence
 	this.RouteTarget = routeTarget
 	this.ChangeKind = changeKind
+	var relatedCount int32 = 0
+	this.RelatedCount = &relatedCount
+	var significanceScore float32 = 0.0
+	this.SignificanceScore = &significanceScore
+	var faninCount int32 = 0
+	this.FaninCount = &faninCount
 	return &this
 }
 
@@ -69,6 +85,14 @@ func NewCodebaseChunkItemResponse(id string, chunkKey string, path string, kind 
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunkItemResponseWithDefaults() *CodebaseChunkItemResponse {
 	this := CodebaseChunkItemResponse{}
+	var parseConfidence float32 = 0.0
+	this.ParseConfidence = &parseConfidence
+	var relatedCount int32 = 0
+	this.RelatedCount = &relatedCount
+	var significanceScore float32 = 0.0
+	this.SignificanceScore = &significanceScore
+	var faninCount int32 = 0
+	this.FaninCount = &faninCount
 	return &this
 }
 
@@ -712,6 +736,303 @@ func (o *CodebaseChunkItemResponse) UnsetDocumentId() {
 	o.DocumentId.Unset()
 }
 
+// GetSignificanceScore returns the SignificanceScore field value if set, zero value otherwise.
+func (o *CodebaseChunkItemResponse) GetSignificanceScore() float32 {
+	if o == nil || IsNil(o.SignificanceScore) {
+		var ret float32
+		return ret
+	}
+	return *o.SignificanceScore
+}
+
+// GetSignificanceScoreOk returns a tuple with the SignificanceScore field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CodebaseChunkItemResponse) GetSignificanceScoreOk() (*float32, bool) {
+	if o == nil || IsNil(o.SignificanceScore) {
+		return nil, false
+	}
+	return o.SignificanceScore, true
+}
+
+// HasSignificanceScore returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasSignificanceScore() bool {
+	if o != nil && !IsNil(o.SignificanceScore) {
+		return true
+	}
+
+	return false
+}
+
+// SetSignificanceScore gets a reference to the given float32 and assigns it to the SignificanceScore field.
+func (o *CodebaseChunkItemResponse) SetSignificanceScore(v float32) {
+	o.SignificanceScore = &v
+}
+
+// GetSignificanceComponents returns the SignificanceComponents field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CodebaseChunkItemResponse) GetSignificanceComponents() map[string]interface{} {
+	if o == nil {
+		var ret map[string]interface{}
+		return ret
+	}
+	return o.SignificanceComponents
+}
+
+// GetSignificanceComponentsOk returns a tuple with the SignificanceComponents field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CodebaseChunkItemResponse) GetSignificanceComponentsOk() (map[string]interface{}, bool) {
+	if o == nil || IsNil(o.SignificanceComponents) {
+		return map[string]interface{}{}, false
+	}
+	return o.SignificanceComponents, true
+}
+
+// HasSignificanceComponents returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasSignificanceComponents() bool {
+	if o != nil && !IsNil(o.SignificanceComponents) {
+		return true
+	}
+
+	return false
+}
+
+// SetSignificanceComponents gets a reference to the given map[string]interface{} and assigns it to the SignificanceComponents field.
+func (o *CodebaseChunkItemResponse) SetSignificanceComponents(v map[string]interface{}) {
+	o.SignificanceComponents = v
+}
+
+// GetFileRole returns the FileRole field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CodebaseChunkItemResponse) GetFileRole() string {
+	if o == nil || IsNil(o.FileRole.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.FileRole.Get()
+}
+
+// GetFileRoleOk returns a tuple with the FileRole field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CodebaseChunkItemResponse) GetFileRoleOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.FileRole.Get(), o.FileRole.IsSet()
+}
+
+// HasFileRole returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasFileRole() bool {
+	if o != nil && o.FileRole.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetFileRole gets a reference to the given NullableString and assigns it to the FileRole field.
+func (o *CodebaseChunkItemResponse) SetFileRole(v string) {
+	o.FileRole.Set(&v)
+}
+// SetFileRoleNil sets the value for FileRole to be an explicit nil
+func (o *CodebaseChunkItemResponse) SetFileRoleNil() {
+	o.FileRole.Set(nil)
+}
+
+// UnsetFileRole ensures that no value is present for FileRole, not even an explicit nil
+func (o *CodebaseChunkItemResponse) UnsetFileRole() {
+	o.FileRole.Unset()
+}
+
+// GetAutoRouteReason returns the AutoRouteReason field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CodebaseChunkItemResponse) GetAutoRouteReason() string {
+	if o == nil || IsNil(o.AutoRouteReason.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.AutoRouteReason.Get()
+}
+
+// GetAutoRouteReasonOk returns a tuple with the AutoRouteReason field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CodebaseChunkItemResponse) GetAutoRouteReasonOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.AutoRouteReason.Get(), o.AutoRouteReason.IsSet()
+}
+
+// HasAutoRouteReason returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasAutoRouteReason() bool {
+	if o != nil && o.AutoRouteReason.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetAutoRouteReason gets a reference to the given NullableString and assigns it to the AutoRouteReason field.
+func (o *CodebaseChunkItemResponse) SetAutoRouteReason(v string) {
+	o.AutoRouteReason.Set(&v)
+}
+// SetAutoRouteReasonNil sets the value for AutoRouteReason to be an explicit nil
+func (o *CodebaseChunkItemResponse) SetAutoRouteReasonNil() {
+	o.AutoRouteReason.Set(nil)
+}
+
+// UnsetAutoRouteReason ensures that no value is present for AutoRouteReason, not even an explicit nil
+func (o *CodebaseChunkItemResponse) UnsetAutoRouteReason() {
+	o.AutoRouteReason.Unset()
+}
+
+// GetComplexityScore returns the ComplexityScore field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CodebaseChunkItemResponse) GetComplexityScore() float32 {
+	if o == nil || IsNil(o.ComplexityScore.Get()) {
+		var ret float32
+		return ret
+	}
+	return *o.ComplexityScore.Get()
+}
+
+// GetComplexityScoreOk returns a tuple with the ComplexityScore field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CodebaseChunkItemResponse) GetComplexityScoreOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.ComplexityScore.Get(), o.ComplexityScore.IsSet()
+}
+
+// HasComplexityScore returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasComplexityScore() bool {
+	if o != nil && o.ComplexityScore.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetComplexityScore gets a reference to the given NullableFloat32 and assigns it to the ComplexityScore field.
+func (o *CodebaseChunkItemResponse) SetComplexityScore(v float32) {
+	o.ComplexityScore.Set(&v)
+}
+// SetComplexityScoreNil sets the value for ComplexityScore to be an explicit nil
+func (o *CodebaseChunkItemResponse) SetComplexityScoreNil() {
+	o.ComplexityScore.Set(nil)
+}
+
+// UnsetComplexityScore ensures that no value is present for ComplexityScore, not even an explicit nil
+func (o *CodebaseChunkItemResponse) UnsetComplexityScore() {
+	o.ComplexityScore.Unset()
+}
+
+// GetSafetyTags returns the SafetyTags field value if set, zero value otherwise.
+func (o *CodebaseChunkItemResponse) GetSafetyTags() []string {
+	if o == nil || IsNil(o.SafetyTags) {
+		var ret []string
+		return ret
+	}
+	return o.SafetyTags
+}
+
+// GetSafetyTagsOk returns a tuple with the SafetyTags field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CodebaseChunkItemResponse) GetSafetyTagsOk() ([]string, bool) {
+	if o == nil || IsNil(o.SafetyTags) {
+		return nil, false
+	}
+	return o.SafetyTags, true
+}
+
+// HasSafetyTags returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasSafetyTags() bool {
+	if o != nil && !IsNil(o.SafetyTags) {
+		return true
+	}
+
+	return false
+}
+
+// SetSafetyTags gets a reference to the given []string and assigns it to the SafetyTags field.
+func (o *CodebaseChunkItemResponse) SetSafetyTags(v []string) {
+	o.SafetyTags = v
+}
+
+// GetPagerankCentrality returns the PagerankCentrality field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *CodebaseChunkItemResponse) GetPagerankCentrality() float32 {
+	if o == nil || IsNil(o.PagerankCentrality.Get()) {
+		var ret float32
+		return ret
+	}
+	return *o.PagerankCentrality.Get()
+}
+
+// GetPagerankCentralityOk returns a tuple with the PagerankCentrality field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *CodebaseChunkItemResponse) GetPagerankCentralityOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PagerankCentrality.Get(), o.PagerankCentrality.IsSet()
+}
+
+// HasPagerankCentrality returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasPagerankCentrality() bool {
+	if o != nil && o.PagerankCentrality.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPagerankCentrality gets a reference to the given NullableFloat32 and assigns it to the PagerankCentrality field.
+func (o *CodebaseChunkItemResponse) SetPagerankCentrality(v float32) {
+	o.PagerankCentrality.Set(&v)
+}
+// SetPagerankCentralityNil sets the value for PagerankCentrality to be an explicit nil
+func (o *CodebaseChunkItemResponse) SetPagerankCentralityNil() {
+	o.PagerankCentrality.Set(nil)
+}
+
+// UnsetPagerankCentrality ensures that no value is present for PagerankCentrality, not even an explicit nil
+func (o *CodebaseChunkItemResponse) UnsetPagerankCentrality() {
+	o.PagerankCentrality.Unset()
+}
+
+// GetFaninCount returns the FaninCount field value if set, zero value otherwise.
+func (o *CodebaseChunkItemResponse) GetFaninCount() int32 {
+	if o == nil || IsNil(o.FaninCount) {
+		var ret int32
+		return ret
+	}
+	return *o.FaninCount
+}
+
+// GetFaninCountOk returns a tuple with the FaninCount field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *CodebaseChunkItemResponse) GetFaninCountOk() (*int32, bool) {
+	if o == nil || IsNil(o.FaninCount) {
+		return nil, false
+	}
+	return o.FaninCount, true
+}
+
+// HasFaninCount returns a boolean if a field has been set.
+func (o *CodebaseChunkItemResponse) HasFaninCount() bool {
+	if o != nil && !IsNil(o.FaninCount) {
+		return true
+	}
+
+	return false
+}
+
+// SetFaninCount gets a reference to the given int32 and assigns it to the FaninCount field.
+func (o *CodebaseChunkItemResponse) SetFaninCount(v int32) {
+	o.FaninCount = &v
+}
+
 func (o CodebaseChunkItemResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -761,6 +1082,30 @@ func (o CodebaseChunkItemResponse) ToMap() (map[string]interface{}, error) {
 	}
 	if o.DocumentId.IsSet() {
 		toSerialize["document_id"] = o.DocumentId.Get()
+	}
+	if !IsNil(o.SignificanceScore) {
+		toSerialize["significance_score"] = o.SignificanceScore
+	}
+	if o.SignificanceComponents != nil {
+		toSerialize["significance_components"] = o.SignificanceComponents
+	}
+	if o.FileRole.IsSet() {
+		toSerialize["file_role"] = o.FileRole.Get()
+	}
+	if o.AutoRouteReason.IsSet() {
+		toSerialize["auto_route_reason"] = o.AutoRouteReason.Get()
+	}
+	if o.ComplexityScore.IsSet() {
+		toSerialize["complexity_score"] = o.ComplexityScore.Get()
+	}
+	if !IsNil(o.SafetyTags) {
+		toSerialize["safety_tags"] = o.SafetyTags
+	}
+	if o.PagerankCentrality.IsSet() {
+		toSerialize["pagerank_centrality"] = o.PagerankCentrality.Get()
+	}
+	if !IsNil(o.FaninCount) {
+		toSerialize["fanin_count"] = o.FaninCount
 	}
 	return toSerialize, nil
 }

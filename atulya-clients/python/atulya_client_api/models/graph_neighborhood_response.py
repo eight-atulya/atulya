@@ -23,7 +23,6 @@ from atulya_client_api.models.graph_neighborhood_edge_response import GraphNeigh
 from atulya_client_api.models.graph_neighborhood_node_response import GraphNeighborhoodNodeResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphNeighborhoodResponse(BaseModel):
     """
@@ -36,10 +35,10 @@ class GraphNeighborhoodResponse(BaseModel):
     edges: Optional[List[GraphNeighborhoodEdgeResponse]] = None
     total_nodes: StrictInt
     total_edges: StrictInt
-    has_more: Optional[StrictBool] = None
+    has_more: Optional[StrictBool] = False
     cursor: Optional[StrictStr] = None
     generated_at: StrictStr
-    cached: Optional[StrictBool] = None
+    cached: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["surface", "mode_hint", "focus_ids", "nodes", "edges", "total_nodes", "total_edges", "has_more", "cursor", "generated_at", "cached"]
 
     @field_validator('surface')
@@ -57,8 +56,7 @@ class GraphNeighborhoodResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -70,7 +68,8 @@ class GraphNeighborhoodResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -133,10 +132,10 @@ class GraphNeighborhoodResponse(BaseModel):
             "edges": [GraphNeighborhoodEdgeResponse.from_dict(_item) for _item in obj["edges"]] if obj.get("edges") is not None else None,
             "total_nodes": obj.get("total_nodes"),
             "total_edges": obj.get("total_edges"),
-            "has_more": obj.get("has_more"),
+            "has_more": obj.get("has_more") if obj.get("has_more") is not None else False,
             "cursor": obj.get("cursor"),
             "generated_at": obj.get("generated_at"),
-            "cached": obj.get("cached")
+            "cached": obj.get("cached") if obj.get("cached") is not None else False
         })
         return _obj
 

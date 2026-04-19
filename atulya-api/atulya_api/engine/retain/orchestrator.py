@@ -126,6 +126,35 @@ async def retain_batch(
     profile = await bank_utils.get_bank_profile(pool, bank_id)
     agent_name = profile["name"]
 
+    # --- Append mode: prepend existing document content before extraction ---
+    # When an item requests update_mode="append", fetch the prior original_text
+    # and concatenate it onto the new content. The existing document row will be
+    # replaced (cascading away its old units) and reprocessed against the merged
+    # text, so the resulting document contains both the prior and the new facts.
+    # Guarded by is_first_batch so paged batches do not re-prepend on every page.
+    if is_first_batch:
+        append_targets = [
+            (idx, item)
+            for idx, item in enumerate(contents_dicts)
+            if item.get("update_mode") == "append"
+        ]
+        if append_targets:
+            async with acquire_with_retry(pool) as conn:
+                for idx, item in append_targets:
+                    item_doc_id = item.get("document_id") or document_id
+                    if not item_doc_id:
+                        # Validated upstream in MemoryEngine; defensive guard here.
+                        continue
+                    existing_text = await fact_storage.get_document_content(conn, bank_id, item_doc_id)
+                    if existing_text:
+                        new_content = item.get("content", "") or ""
+                        # Use a newline separator so chunkers see a clean boundary.
+                        item["content"] = existing_text + "\n" + new_content
+                        log_buffer.append(
+                            f"[append] Prepended {len(existing_text):,} chars from existing document "
+                            f"{item_doc_id} (item index {idx})"
+                        )
+
     # Convert dicts to RetainContent objects
     contents = []
     for item in contents_dicts:

@@ -6652,6 +6652,124 @@
             }
           },
           {
+            "name": "min_significance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Min Significance"
+            }
+          },
+          {
+            "name": "max_significance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Max Significance"
+            }
+          },
+          {
+            "name": "file_role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "File Role"
+            }
+          },
+          {
+            "name": "auto_route_reason",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Auto Route Reason"
+            }
+          },
+          {
+            "name": "has_safety_tag",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Has Safety Tag"
+            }
+          },
+          {
+            "name": "route_source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Route Source"
+            }
+          },
+          {
+            "name": "order_by",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "One of significance | review | path | complexity | pagerank",
+              "title": "Order By"
+            },
+            "description": "One of significance | review | path | complexity | pagerank"
+          },
+          {
             "name": "authorization",
             "in": "header",
             "required": false,
@@ -6926,6 +7044,613 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CodebaseChunksResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/repo-map": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Get codebase Repo Map",
+        "description": "Return the snapshot Repo Map artifact (top-K ranked tags + module dependency edges).",
+        "operationId": "get_codebase_repo_map",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseRepoMapResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/modules": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "List Module Briefs",
+        "description": "Return Module Brief artifacts for a snapshot.",
+        "operationId": "list_codebase_modules",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseModuleBriefsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "List Symbol Cards",
+        "description": "Return paginated Symbol Card artifacts ordered by significance.",
+        "operationId": "list_codebase_symbol_cards",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseSymbolCardListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols/{symbol_id}": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Get a Symbol Card",
+        "description": "Return one Symbol Card artifact by fully-qualified symbol id.",
+        "operationId": "get_codebase_symbol_card",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "symbol_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Symbol Id"
+            }
+          },
+          {
+            "name": "snapshot_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseSymbolCardResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/curate": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Curate codebase by intent",
+        "description": "Rank Symbol Cards + chunks against a free-text intent. Returns top clusters and symbol cards.",
+        "operationId": "curate_codebase_by_intent",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseCurateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseCurateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings": {
+      "get": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Get triage settings",
+        "description": "Return per-codebase auto-triage settings.",
+        "operationId": "get_codebase_triage_settings",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseTriageSettingsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Update triage settings",
+        "description": "Replace per-codebase auto-triage settings.",
+        "operationId": "update_codebase_triage_settings",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "codebase_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Codebase Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CodebaseTriageSettings"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseTriageSettingsResponse"
                 }
               }
             }
@@ -8826,6 +9551,80 @@
             ],
             "title": "Document Id"
           },
+          "significance_score": {
+            "type": "number",
+            "title": "Significance Score",
+            "default": 0.0
+          },
+          "significance_components": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Significance Components"
+          },
+          "file_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Role"
+          },
+          "auto_route_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Route Reason"
+          },
+          "complexity_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complexity Score"
+          },
+          "safety_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Safety Tags",
+            "default": []
+          },
+          "pagerank_centrality": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pagerank Centrality"
+          },
+          "fanin_count": {
+            "type": "integer",
+            "title": "Fanin Count",
+            "default": 0
+          },
           "snapshot_id": {
             "type": "string",
             "title": "Snapshot Id"
@@ -9024,6 +9823,80 @@
               }
             ],
             "title": "Document Id"
+          },
+          "significance_score": {
+            "type": "number",
+            "title": "Significance Score",
+            "default": 0.0
+          },
+          "significance_components": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Significance Components"
+          },
+          "file_role": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File Role"
+          },
+          "auto_route_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auto Route Reason"
+          },
+          "complexity_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Complexity Score"
+          },
+          "safety_tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Safety Tags",
+            "default": []
+          },
+          "pagerank_centrality": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pagerank Centrality"
+          },
+          "fanin_count": {
+            "type": "integer",
+            "title": "Fanin Count",
+            "default": 0
           }
         },
         "type": "object",
@@ -9145,6 +10018,176 @@
         ],
         "title": "CodebaseChunksResponse",
         "description": "Paginated reviewable chunk response."
+      },
+      "CodebaseCurateClusterResponse": {
+        "properties": {
+          "cluster_id": {
+            "type": "string",
+            "title": "Cluster Id"
+          },
+          "cluster_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cluster Label"
+          },
+          "score": {
+            "type": "number",
+            "title": "Score"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size"
+          },
+          "chunks": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Chunks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "cluster_id",
+          "score",
+          "size"
+        ],
+        "title": "CodebaseCurateClusterResponse"
+      },
+      "CodebaseCurateRequest": {
+        "properties": {
+          "intent": {
+            "type": "string",
+            "title": "Intent"
+          },
+          "scope_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Hint"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "top_k_clusters": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Top K Clusters",
+            "default": 10
+          },
+          "top_k_symbols": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Top K Symbols",
+            "default": 20
+          },
+          "include_dismissed": {
+            "type": "boolean",
+            "title": "Include Dismissed",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "intent"
+        ],
+        "title": "CodebaseCurateRequest",
+        "description": "Intent-driven curation request body."
+      },
+      "CodebaseCurateResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "intent": {
+            "type": "string",
+            "title": "Intent"
+          },
+          "scope_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope Hint"
+          },
+          "clusters": {
+            "items": {
+              "$ref": "#/components/schemas/CodebaseCurateClusterResponse"
+            },
+            "type": "array",
+            "title": "Clusters",
+            "default": []
+          },
+          "symbol_cards": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Symbol Cards",
+            "default": []
+          },
+          "unclustered": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Unclustered",
+            "default": []
+          },
+          "total_candidates": {
+            "type": "integer",
+            "title": "Total Candidates",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "intent"
+        ],
+        "title": "CodebaseCurateResponse",
+        "description": "Intent-driven curation response."
       },
       "CodebaseFileItemResponse": {
         "properties": {
@@ -9724,6 +10767,40 @@
         "title": "CodebaseListResponse",
         "description": "List of codebases for a bank."
       },
+      "CodebaseModuleBriefsResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id"
+        ],
+        "title": "CodebaseModuleBriefsResponse",
+        "description": "List of Module Brief artifacts for a snapshot."
+      },
       "CodebaseRefreshRequest": {
         "properties": {
           "ref": {
@@ -9802,6 +10879,54 @@
         ],
         "title": "CodebaseRefreshResponse",
         "description": "Explicit codebase refresh response."
+      },
+      "CodebaseRepoMapResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "generated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generated At"
+          },
+          "repo_map": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo Map"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id"
+        ],
+        "title": "CodebaseRepoMapResponse",
+        "description": "Snapshot Repo Map artifact response."
       },
       "CodebaseResponse": {
         "properties": {
@@ -10449,6 +11574,81 @@
         "title": "CodebaseSourceConfigResponse",
         "description": "Normalized source configuration for a codebase."
       },
+      "CodebaseSymbolCardListResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snapshot Id"
+          },
+          "items": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Items",
+            "default": []
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id"
+        ],
+        "title": "CodebaseSymbolCardListResponse",
+        "description": "Paginated Symbol Card artifact list."
+      },
+      "CodebaseSymbolCardResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "symbol_card": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Symbol Card"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "snapshot_id",
+          "symbol_card"
+        ],
+        "title": "CodebaseSymbolCardResponse",
+        "description": "One Symbol Card artifact."
+      },
       "CodebaseSymbolMatchResponse": {
         "properties": {
           "name": {
@@ -10561,6 +11761,88 @@
         ],
         "title": "CodebaseSymbolsResponse",
         "description": "Symbol search results for a codebase."
+      },
+      "CodebaseTriageSettings": {
+        "properties": {
+          "score_threshold_high": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Score Threshold High",
+            "default": 0.62
+          },
+          "centrality_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Centrality Threshold",
+            "default": 0.35
+          },
+          "safety_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Safety Threshold",
+            "default": 0.25
+          },
+          "embedding_provider": {
+            "type": "string",
+            "title": "Embedding Provider",
+            "default": "jina_local"
+          },
+          "enable_safety_scan": {
+            "type": "boolean",
+            "title": "Enable Safety Scan",
+            "default": true
+          },
+          "enable_semgrep": {
+            "type": "boolean",
+            "title": "Enable Semgrep",
+            "default": false
+          },
+          "semgrep_rulepack": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semgrep Rulepack"
+          },
+          "scip_index_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scip Index Path"
+          }
+        },
+        "type": "object",
+        "title": "CodebaseTriageSettings",
+        "description": "Per-codebase triage thresholds and provider toggles."
+      },
+      "CodebaseTriageSettingsResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/CodebaseTriageSettings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "settings"
+        ],
+        "title": "CodebaseTriageSettingsResponse"
       },
       "ConsolidationResponse": {
         "properties": {
@@ -13619,6 +14901,22 @@
             ],
             "title": "ObservationScopes",
             "description": "How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use."
+          },
+          "update_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "replace",
+                  "append"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Update Mode",
+            "description": "How to handle an existing document with the same document_id. 'replace' (default) deletes prior data for the document and reprocesses from scratch. 'append' concatenates the new content onto the existing document text and reprocesses; delta-aware retain skips chunks that did not change so only the new content triggers extraction. Requires document_id."
           }
         },
         "type": "object",
@@ -14225,6 +15523,34 @@
             "title": "Tags Match",
             "description": "How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).",
             "default": "any"
+          },
+          "tag_groups": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TagGroupLeaf"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupAnd"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupOr"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupNot"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag Groups",
+            "description": "Compound boolean tag predicates. Each entry is a leaf (``{\"tags\": [...], \"match\": \"any|all|any_strict|all_strict\"}``) or a nested group (``{\"and\": [...]}``, ``{\"or\": [...]}``, ``{\"not\": {...}}``). Top-level entries are AND-ed together. Mutually exclusive with `tags`."
           }
         },
         "type": "object",
@@ -14837,6 +16163,34 @@
             "title": "Tags Match",
             "description": "How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).",
             "default": "any"
+          },
+          "tag_groups": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TagGroupLeaf"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupAnd"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupOr"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TagGroupNot"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tag Groups",
+            "description": "Compound boolean tag predicates. Each entry is a leaf (``{\"tags\": [...], \"match\": \"any|all|any_strict|all_strict\"}``) or a nested group (``{\"and\": [...]}``, ``{\"or\": [...]}``, ``{\"not\": {...}}``). Top-level entries are AND-ed together. Mutually exclusive with `tags`."
           }
         },
         "type": "object",
@@ -15328,6 +16682,128 @@
         },
         "type": "object",
         "title": "SubRoutineSubmitRequest"
+      },
+      "TagGroupAnd": {
+        "properties": {
+          "and": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TagGroupLeaf"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupAnd"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupOr"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupNot"
+                }
+              ]
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "And"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "and"
+        ],
+        "title": "TagGroupAnd",
+        "description": "Logical AND over a list of nested groups."
+      },
+      "TagGroupLeaf": {
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Tags"
+          },
+          "match": {
+            "type": "string",
+            "enum": [
+              "any",
+              "all",
+              "any_strict",
+              "all_strict"
+            ],
+            "title": "Match",
+            "default": "any"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tags"
+        ],
+        "title": "TagGroupLeaf",
+        "description": "A single tag predicate, semantically identical to the flat `tags` field.\n\n`tags` is a non-empty list of tag strings; `match` controls AND/OR semantics\nand whether untagged memories are included, exactly mirroring the existing\n`TagsMatch` enum."
+      },
+      "TagGroupNot": {
+        "properties": {
+          "not": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TagGroupLeaf"
+              },
+              {
+                "$ref": "#/components/schemas/TagGroupAnd"
+              },
+              {
+                "$ref": "#/components/schemas/TagGroupOr"
+              },
+              {
+                "$ref": "#/components/schemas/TagGroupNot"
+              }
+            ],
+            "title": "Not"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "not"
+        ],
+        "title": "TagGroupNot",
+        "description": "Logical NOT around a single nested group."
+      },
+      "TagGroupOr": {
+        "properties": {
+          "or": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/TagGroupLeaf"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupAnd"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupOr"
+                },
+                {
+                  "$ref": "#/components/schemas/TagGroupNot"
+                }
+              ]
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Or"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "or"
+        ],
+        "title": "TagGroupOr",
+        "description": "Logical OR over a list of nested groups."
       },
       "TagItem": {
         "properties": {

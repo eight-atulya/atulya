@@ -357,6 +357,9 @@ func (a *WebhooksAPIService) ListWebhookDeliveriesExecute(r ApiListWebhookDelive
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")

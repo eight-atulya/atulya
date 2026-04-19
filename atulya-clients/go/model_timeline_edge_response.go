@@ -38,6 +38,8 @@ func NewTimelineEdgeResponse(source string, target string, edgeKind string) *Tim
 	this.Source = source
 	this.Target = target
 	this.EdgeKind = edgeKind
+	var weight float32 = 1.0
+	this.Weight = &weight
 	return &this
 }
 
@@ -46,6 +48,8 @@ func NewTimelineEdgeResponse(source string, target string, edgeKind string) *Tim
 // but it doesn't guarantee that properties required by API are set
 func NewTimelineEdgeResponseWithDefaults() *TimelineEdgeResponse {
 	this := TimelineEdgeResponse{}
+	var weight float32 = 1.0
+	this.Weight = &weight
 	return &this
 }
 

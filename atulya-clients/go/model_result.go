@@ -16,14 +16,14 @@ import (
 )
 
 
-// OperationResultResponseResult struct for OperationResultResponseResult
-type OperationResultResponseResult struct {
+// Result struct for Result
+type Result struct {
 	ReflectResponse *ReflectResponse
 	MapmapOfStringAny *map[string]interface{}
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
-func (dst *OperationResultResponseResult) UnmarshalJSON(data []byte) error {
+func (dst *Result) UnmarshalJSON(data []byte) error {
 	var err error
 	// this object is nullable so check if the payload is null or empty string
 	if string(data) == "" || string(data) == "{}" {
@@ -56,11 +56,11 @@ func (dst *OperationResultResponseResult) UnmarshalJSON(data []byte) error {
 		dst.MapmapOfStringAny = nil
 	}
 
-	return fmt.Errorf("data failed to match schemas in anyOf(OperationResultResponseResult)")
+	return fmt.Errorf("data failed to match schemas in anyOf(Result)")
 }
 
 // Marshal data from the first non-nil pointers in the struct to JSON
-func (src OperationResultResponseResult) MarshalJSON() ([]byte, error) {
+func (src *Result) MarshalJSON() ([]byte, error) {
 	if src.ReflectResponse != nil {
 		return json.Marshal(&src.ReflectResponse)
 	}
@@ -73,38 +73,38 @@ func (src OperationResultResponseResult) MarshalJSON() ([]byte, error) {
 }
 
 
-type NullableOperationResultResponseResult struct {
-	value *OperationResultResponseResult
+type NullableResult struct {
+	value *Result
 	isSet bool
 }
 
-func (v NullableOperationResultResponseResult) Get() *OperationResultResponseResult {
+func (v NullableResult) Get() *Result {
 	return v.value
 }
 
-func (v *NullableOperationResultResponseResult) Set(val *OperationResultResponseResult) {
+func (v *NullableResult) Set(val *Result) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableOperationResultResponseResult) IsSet() bool {
+func (v NullableResult) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableOperationResultResponseResult) Unset() {
+func (v *NullableResult) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableOperationResultResponseResult(val *OperationResultResponseResult) *NullableOperationResultResponseResult {
-	return &NullableOperationResultResponseResult{value: val, isSet: true}
+func NewNullableResult(val *Result) *NullableResult {
+	return &NullableResult{value: val, isSet: true}
 }
 
-func (v NullableOperationResultResponseResult) MarshalJSON() ([]byte, error) {
+func (v NullableResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableOperationResultResponseResult) UnmarshalJSON(src []byte) error {
+func (v *NullableResult) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

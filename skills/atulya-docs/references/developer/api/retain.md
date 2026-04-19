@@ -172,6 +172,9 @@ Controls which [observations](../observations) this memory contributes to during
 
 :::info Scope isolation
 During consolidation, Atulya uses `all_strict` matching to find existing observations to update — only observations whose tags exactly match the current scope are considered. This keeps scopes isolated: a memory consolidated under `["student:alice"]` will never bleed into an observation tagged `["student:alice", "teacher:bob"]`.
+> **💡 Per-scope cap**
+> 
+Each scope is also bounded by the bank-level [`max_observations_per_scope`](../configuration#max_observations_per_scope) cap. When a scope reaches its limit the consolidator is constrained to only `update` or `delete` existing observations during that pass — no new ones are created until existing ones are retired. Untagged consolidation passes are exempt from the cap.
 The examples below use a lesson transcript retained with `tags: ["student:alice", "teacher:bob", "session-id:s1"]`.
 
 #### combined *(default)*
@@ -224,6 +227,32 @@ Pass an explicit list of tag sets. Each inner list is one scope.
 
 **Use when** you know exactly which combinations are meaningful and want to avoid unnecessary passes.
 
+### update_mode
+
+Controls how Atulya treats an existing document with the same `document_id`.
+
+- `replace` *(default)* — wipes the prior document, its memory units, chunks, and links, then reprocesses the new content from scratch. This is the safe, idempotent re-ingest behavior.
+- `append` — fetches the existing `original_text`, prepends it to the new content, and reprocesses the combined document. Use this when the underlying document is genuinely growing (e.g., a transcript that gained a new turn) and you want the new content to be parsed in the context of what came before.
+
+`append` requires a `document_id`; submitting `update_mode="append"` without one raises a 422.
+
+If no document with that `document_id` exists yet, `append` falls back to a clean insert — there is no error.
+
+```json
+{
+  "items": [
+    {
+      "content": "Carol followed up: she will own the rollout playbook.",
+      "document_id": "standup-2024-04-19",
+      "update_mode": "append"
+    }
+  ]
+}
+```
+
+> **💡 Pair with observation_scopes**
+> 
+`append` updates the document body but observations are still gated by [`observation_scopes`](#observation_scopes) and the bank-level [`max_observations_per_scope`](../configuration#max_observations_per_scope) cap. New facts may consolidate into existing observations rather than creating new ones — that is by design.
 ### Response
 
 The synchronous retain response includes:

@@ -315,6 +315,7 @@ ENV_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED = "ATULYA_API_CONSOLIDATION_DUPLIC
 ENV_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD = "ATULYA_API_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD"
 ENV_CONSOLIDATION_DUPLICATE_CE_ENABLED = "ATULYA_API_CONSOLIDATION_DUPLICATE_CE_ENABLED"
 ENV_CONSOLIDATION_DUPLICATE_CE_THRESHOLD = "ATULYA_API_CONSOLIDATION_DUPLICATE_CE_THRESHOLD"
+ENV_MAX_OBSERVATIONS_PER_SCOPE = "ATULYA_API_MAX_OBSERVATIONS_PER_SCOPE"
 ENV_OBSERVATIONS_MISSION = "ATULYA_API_OBSERVATIONS_MISSION"
 ENV_ENABLE_OBSERVATION_HISTORY = "ATULYA_API_ENABLE_OBSERVATION_HISTORY"
 ENV_ENABLE_MENTAL_MODEL_HISTORY = "ATULYA_API_ENABLE_MENTAL_MODEL_HISTORY"
@@ -514,6 +515,7 @@ DEFAULT_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED = False
 DEFAULT_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD = 0.85
 DEFAULT_CONSOLIDATION_DUPLICATE_CE_ENABLED = False
 DEFAULT_CONSOLIDATION_DUPLICATE_CE_THRESHOLD = 0.5
+DEFAULT_MAX_OBSERVATIONS_PER_SCOPE: int | None = None  # None = unlimited; int >= 0 caps the number of observations per scope
 DEFAULT_OBSERVATIONS_MISSION = None  # Declarative spec of what observations are for this bank
 DEFAULT_GRAPH_CONTRADICTION_COSINE_MIN = 0.55
 DEFAULT_GRAPH_CONTRADICTION_COSINE_MAX = 0.96
@@ -853,6 +855,7 @@ class AtulyaConfig:
     consolidation_duplicate_cosine_threshold: float
     consolidation_duplicate_ce_enabled: bool
     consolidation_duplicate_ce_threshold: float
+    max_observations_per_scope: int | None
     graph_contradiction_cosine_min: float
     graph_contradiction_cosine_max: float
     graph_contradiction_confidence_penalty: float
@@ -982,6 +985,7 @@ class AtulyaConfig:
         "consolidation_llm_batch_size",
         "consolidation_source_facts_max_tokens",
         "consolidation_source_facts_max_tokens_per_observation",
+        "max_observations_per_scope",
         "observations_mission",
         # Reflect settings
         "reflect_mission",
@@ -1104,6 +1108,8 @@ class AtulyaConfig:
             raise ValueError("consolidation_duplicate_cosine_threshold must be in [0.0, 1.0]")
         if self.consolidation_duplicate_ce_threshold < 0.0 or self.consolidation_duplicate_ce_threshold > 1.0:
             raise ValueError("consolidation_duplicate_ce_threshold must be in [0.0, 1.0]")
+        if self.max_observations_per_scope is not None and self.max_observations_per_scope < 0:
+            raise ValueError("max_observations_per_scope must be None (unlimited) or a non-negative integer")
         if self.reranker_proof_boost_max_count < 0:
             raise ValueError("reranker_proof_boost_max_count must be >= 0")
         if self.entity_trajectory_max_facts_per_entity < 1:
@@ -1454,6 +1460,9 @@ class AtulyaConfig:
                     str(DEFAULT_CONSOLIDATION_DUPLICATE_CE_THRESHOLD),
                 )
             ),
+            max_observations_per_scope=int(os.getenv(ENV_MAX_OBSERVATIONS_PER_SCOPE))
+            if os.getenv(ENV_MAX_OBSERVATIONS_PER_SCOPE)
+            else DEFAULT_MAX_OBSERVATIONS_PER_SCOPE,
             graph_contradiction_cosine_min=float(
                 os.getenv(
                     ENV_GRAPH_CONTRADICTION_COSINE_MIN,

@@ -20,7 +20,7 @@ from ..memory_engine import fq_table
 from .graph_retrieval import BFSGraphRetriever, GraphRetriever
 from .link_expansion_retrieval import LinkExpansionRetriever
 from .mpfp_retrieval import MPFPGraphRetriever
-from .tags import TagsMatch, build_tags_where_clause_simple
+from .tags import TagGroup, TagsMatch, build_combined_tag_filter
 from .types import MPFPTimings, RetrievalResult
 
 logger = logging.getLogger(__name__)
@@ -94,6 +94,7 @@ async def retrieve_semantic_bm25_combined(
     limit: int,
     tags: list[str] | None = None,
     tags_match: TagsMatch = "any",
+    tag_groups: list[TagGroup] | None = None,
 ) -> dict[str, tuple[list[RetrievalResult], list[RetrievalResult]]]:
     """
     Combined semantic + BM25 retrieval for multiple fact types in a single query.
@@ -120,10 +121,11 @@ async def retrieve_semantic_bm25_combined(
 
     # If no valid tokens for BM25, just run semantic
     if not tokens:
-        tags_clause = build_tags_where_clause_simple(tags, 5, match=tags_match)
+        tags_clause, tag_params, _ = build_combined_tag_filter(
+            tags, tags_match, tag_groups, param_offset=5
+        )
         params = [query_emb_str, bank_id, fact_types, limit]
-        if tags:
-            params.append(tags)
+        params.extend(tag_params)
         results = await conn.fetch(
             f"""
             WITH semantic_ranked AS (
@@ -161,8 +163,10 @@ async def retrieve_semantic_bm25_combined(
     # Build BM25 query based on text search backend
     config = get_config()
 
-    # Build tags clause - param 6 if tags provided
-    tags_clause = build_tags_where_clause_simple(tags, 6, match=tags_match)
+    # Build combined tags + tag_groups clause - starts at param 6
+    tags_clause, tag_params, _ = build_combined_tag_filter(
+        tags, tags_match, tag_groups, param_offset=6
+    )
 
     # Build backend-specific BM25 parts
     if config.text_search_extension == "vchord":
@@ -188,8 +192,7 @@ async def retrieve_semantic_bm25_combined(
         bm25_where_filter = "AND search_vector @@ to_tsquery('english', $5)"
         params = [query_emb_str, bank_id, fact_types, limit, query_tsquery]
 
-    if tags:
-        params.append(tags)
+    params.extend(tag_params)
 
     # Single query template with backend-specific parts injected
     query = f"""
@@ -263,6 +266,7 @@ async def retrieve_temporal_combined(
     semantic_threshold: float = 0.1,
     tags: list[str] | None = None,
     tags_match: TagsMatch = "any",
+    tag_groups: list[TagGroup] | None = None,
 ) -> dict[str, list[RetrievalResult]]:
     """
     Temporal retrieval for multiple fact types in a single query.
@@ -291,11 +295,12 @@ async def retrieve_temporal_combined(
     if end_date.tzinfo is None:
         end_date = end_date.replace(tzinfo=UTC)
 
-    # Build tags clause
-    tags_clause = build_tags_where_clause_simple(tags, 7, match=tags_match)
+    # Build combined tags + tag_groups clause - starts at param 7
+    tags_clause, tag_params, _ = build_combined_tag_filter(
+        tags, tags_match, tag_groups, param_offset=7
+    )
     params = [query_emb_str, bank_id, fact_types, start_date, end_date, semantic_threshold]
-    if tags:
-        params.append(tags)
+    params.extend(tag_params)
 
     # Two-phase entry point query:
     # Phase 1 (date_ranked): rank by date only — no embedding computation — for all units in
@@ -410,18 +415,19 @@ async def retrieve_temporal_combined(
         max_iterations = 5
         iteration = 0
 
-        # Build tags clause for spreading (use param 7 since 1-6 are used)
-        spreading_tags_clause = build_tags_where_clause_simple(tags, 7, table_alias="mu.", match=tags_match)
+        # Build tags + tag_groups clause for spreading (params 1-6 reserved)
+        spreading_tags_clause, spreading_tag_params, _ = build_combined_tag_filter(
+            tags, tags_match, tag_groups, param_offset=7, table_alias="mu."
+        )
 
         while frontier and budget_remaining > 0 and iteration < max_iterations:
             iteration += 1
             batch_ids = frontier[:batch_size]
             frontier = frontier[batch_size:]
 
-            # $1=query_emb, $2=batch_ids, $3=fact_type, $4=threshold, $5=per_source_limit, $6=bank_id, $7=tags
+            # $1=query_emb, $2=batch_ids, $3=fact_type, $4=threshold, $5=per_source_limit, $6=bank_id, $7+=tags/tag_groups
             spreading_params = [query_emb_str, batch_ids, ft, semantic_threshold, per_source_limit, bank_id]
-            if tags:
-                spreading_params.append(tags)
+            spreading_params.extend(spreading_tag_params)
 
             # LATERAL join: for each source node, fetch top-K neighbors by weight using
             # the existing idx_memory_links_from_type_weight index with early-exit semantics.
@@ -521,6 +527,7 @@ async def retrieve_all_fact_types_parallel(
     graph_retriever: GraphRetriever | None = None,
     tags: list[str] | None = None,
     tags_match: TagsMatch = "any",
+    tag_groups: list[TagGroup] | None = None,
 ) -> MultiFactTypeRetrievalResult:
     """
     Optimized retrieval for multiple fact types using batched queries.
@@ -578,6 +585,7 @@ async def retrieve_all_fact_types_parallel(
             thinking_budget,
             tags=tags,
             tags_match=tags_match,
+            tag_groups=tag_groups,
         )
         semantic_bm25_time = time.time() - semantic_bm25_start
 
@@ -596,6 +604,7 @@ async def retrieve_all_fact_types_parallel(
                 semantic_threshold=0.1,
                 tags=tags,
                 tags_match=tags_match,
+                tag_groups=tag_groups,
             )
             temporal_time = time.time() - temporal_start
 
@@ -616,6 +625,7 @@ async def retrieve_all_fact_types_parallel(
             temporal_seeds=None,
             tags=tags,
             tags_match=tags_match,
+            tag_groups=tag_groups,
         )
         return ft, results, time.time() - graph_start, mpfp_timing
 

@@ -43,6 +43,12 @@ type _CodebaseReviewResponse CodebaseReviewResponse
 func NewCodebaseReviewResponse(codebaseId string) *CodebaseReviewResponse {
 	this := CodebaseReviewResponse{}
 	this.CodebaseId = codebaseId
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -51,6 +57,12 @@ func NewCodebaseReviewResponse(codebaseId string) *CodebaseReviewResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseReviewResponseWithDefaults() *CodebaseReviewResponse {
 	this := CodebaseReviewResponse{}
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 

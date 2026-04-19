@@ -32,6 +32,10 @@ type CodebaseImpactRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseImpactRequest() *CodebaseImpactRequest {
 	this := CodebaseImpactRequest{}
+	var maxDepth int32 = 2
+	this.MaxDepth = &maxDepth
+	var limit int32 = 50
+	this.Limit = &limit
 	return &this
 }
 
@@ -40,6 +44,10 @@ func NewCodebaseImpactRequest() *CodebaseImpactRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseImpactRequestWithDefaults() *CodebaseImpactRequest {
 	this := CodebaseImpactRequest{}
+	var maxDepth int32 = 2
+	this.MaxDepth = &maxDepth
+	var limit int32 = 50
+	this.Limit = &limit
 	return &this
 }
 

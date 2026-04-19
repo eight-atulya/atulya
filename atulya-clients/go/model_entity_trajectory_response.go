@@ -48,11 +48,17 @@ func NewEntityTrajectoryResponse(entityId string, bankId string, stateVocabulary
 	this.EntityId = entityId
 	this.BankId = bankId
 	this.StateVocabulary = stateVocabulary
+	var vocabularyHash string = ""
+	this.VocabularyHash = &vocabularyHash
 	this.TransitionMatrix = transitionMatrix
 	this.CurrentState = currentState
 	this.ViterbiPath = viterbiPath
 	this.ForecastHorizon = forecastHorizon
 	this.ForecastDistribution = forecastDistribution
+	var llmModel string = ""
+	this.LlmModel = &llmModel
+	var promptVersion string = ""
+	this.PromptVersion = &promptVersion
 	return &this
 }
 
@@ -61,6 +67,12 @@ func NewEntityTrajectoryResponse(entityId string, bankId string, stateVocabulary
 // but it doesn't guarantee that properties required by API are set
 func NewEntityTrajectoryResponseWithDefaults() *EntityTrajectoryResponse {
 	this := EntityTrajectoryResponse{}
+	var vocabularyHash string = ""
+	this.VocabularyHash = &vocabularyHash
+	var llmModel string = ""
+	this.LlmModel = &llmModel
+	var promptVersion string = ""
+	this.PromptVersion = &promptVersion
 	return &this
 }
 

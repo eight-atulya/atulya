@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseFileItemResponse(BaseModel):
     """
@@ -35,12 +34,11 @@ class CodebaseFileItemResponse(BaseModel):
     status: StrictStr
     change_kind: StrictStr
     reason: Optional[StrictStr] = None
-    chunk_count: Optional[StrictInt] = None
+    chunk_count: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["path", "language", "size_bytes", "content_hash", "document_id", "status", "change_kind", "reason", "chunk_count"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -52,7 +50,8 @@ class CodebaseFileItemResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -112,7 +111,7 @@ class CodebaseFileItemResponse(BaseModel):
             "status": obj.get("status"),
             "change_kind": obj.get("change_kind"),
             "reason": obj.get("reason"),
-            "chunk_count": obj.get("chunk_count")
+            "chunk_count": obj.get("chunk_count") if obj.get("chunk_count") is not None else 0
         })
         return _obj
 

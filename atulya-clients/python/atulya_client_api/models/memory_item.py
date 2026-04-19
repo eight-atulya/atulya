@@ -17,32 +17,41 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.entity_input import EntityInput
-from atulya_client_api.models.memory_item_observation_scopes import MemoryItemObservationScopes
-from atulya_client_api.models.memory_item_timestamp import MemoryItemTimestamp
+from atulya_client_api.models.observation_scopes import ObservationScopes
+from atulya_client_api.models.timestamp import Timestamp
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class MemoryItem(BaseModel):
     """
     Single memory item for retain.
     """ # noqa: E501
     content: StrictStr
-    timestamp: Optional[MemoryItemTimestamp] = None
+    timestamp: Optional[Timestamp] = None
     context: Optional[StrictStr] = None
     metadata: Optional[Dict[str, StrictStr]] = None
     document_id: Optional[StrictStr] = None
     entities: Optional[List[EntityInput]] = None
     tags: Optional[List[StrictStr]] = None
-    observation_scopes: Optional[MemoryItemObservationScopes] = None
-    __properties: ClassVar[List[str]] = ["content", "timestamp", "context", "metadata", "document_id", "entities", "tags", "observation_scopes"]
+    observation_scopes: Optional[ObservationScopes] = None
+    update_mode: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["content", "timestamp", "context", "metadata", "document_id", "entities", "tags", "observation_scopes", "update_mode"]
+
+    @field_validator('update_mode')
+    def update_mode_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['replace', 'append']):
+            raise ValueError("must be one of enum values ('replace', 'append')")
+        return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -54,7 +63,8 @@ class MemoryItem(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -127,6 +137,11 @@ class MemoryItem(BaseModel):
         if self.observation_scopes is None and "observation_scopes" in self.model_fields_set:
             _dict['observation_scopes'] = None
 
+        # set to None if update_mode (nullable) is None
+        # and model_fields_set contains the field
+        if self.update_mode is None and "update_mode" in self.model_fields_set:
+            _dict['update_mode'] = None
+
         return _dict
 
     @classmethod
@@ -140,13 +155,14 @@ class MemoryItem(BaseModel):
 
         _obj = cls.model_validate({
             "content": obj.get("content"),
-            "timestamp": MemoryItemTimestamp.from_dict(obj["timestamp"]) if obj.get("timestamp") is not None else None,
+            "timestamp": Timestamp.from_dict(obj["timestamp"]) if obj.get("timestamp") is not None else None,
             "context": obj.get("context"),
             "metadata": obj.get("metadata"),
             "document_id": obj.get("document_id"),
             "entities": [EntityInput.from_dict(_item) for _item in obj["entities"]] if obj.get("entities") is not None else None,
             "tags": obj.get("tags"),
-            "observation_scopes": MemoryItemObservationScopes.from_dict(obj["observation_scopes"]) if obj.get("observation_scopes") is not None else None
+            "observation_scopes": ObservationScopes.from_dict(obj["observation_scopes"]) if obj.get("observation_scopes") is not None else None,
+            "update_mode": obj.get("update_mode")
         })
         return _obj
 

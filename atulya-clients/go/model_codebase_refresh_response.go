@@ -39,6 +39,14 @@ type _CodebaseRefreshResponse CodebaseRefreshResponse
 func NewCodebaseRefreshResponse(status string) *CodebaseRefreshResponse {
 	this := CodebaseRefreshResponse{}
 	this.Status = status
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var noop bool = false
+	this.Noop = &noop
 	return &this
 }
 
@@ -47,6 +55,14 @@ func NewCodebaseRefreshResponse(status string) *CodebaseRefreshResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRefreshResponseWithDefaults() *CodebaseRefreshResponse {
 	this := CodebaseRefreshResponse{}
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var noop bool = false
+	this.Noop = &noop
 	return &this
 }
 

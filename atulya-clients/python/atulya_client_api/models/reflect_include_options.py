@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.tool_calls_include_options import ToolCallsIncludeOptions
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ReflectIncludeOptions(BaseModel):
     """
@@ -33,8 +32,7 @@ class ReflectIncludeOptions(BaseModel):
     __properties: ClassVar[List[str]] = ["facts", "tool_calls"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -46,7 +44,8 @@ class ReflectIncludeOptions(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -74,11 +73,6 @@ class ReflectIncludeOptions(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of tool_calls
         if self.tool_calls:
             _dict['tool_calls'] = self.tool_calls.to_dict()
-        # set to None if facts (nullable) is None
-        # and model_fields_set contains the field
-        if self.facts is None and "facts" in self.model_fields_set:
-            _dict['facts'] = None
-
         # set to None if tool_calls (nullable) is None
         # and model_fields_set contains the field
         if self.tool_calls is None and "tool_calls" in self.model_fields_set:

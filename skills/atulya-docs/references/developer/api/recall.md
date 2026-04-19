@@ -333,6 +333,48 @@ Use this for strict scope enforcement where a memory must explicitly belong to *
 > **💡 Extra tags are fine**
 > 
 A memory with tags `["user:alice", "team", "project:x"]` will still match a filter of `["user:alice", "team"]` under `all_strict` — extra tags on the memory are not a problem. The filter only requires the memory to contain **at least** the specified tags.
+### tag_groups
+
+Compound boolean filter over tags, intended for cases where the flat `tags` field is not expressive enough. Each top-level entry is either:
+
+- a **leaf** predicate `{ "tags": [...], "match": "any|all|any_strict|all_strict" }` (semantically identical to the legacy `tags` + `tags_match` pair), or
+- a **nested** predicate `{ "and": [ ... ] }`, `{ "or": [ ... ] }`, or `{ "not": { ... } }`.
+
+Top-level entries are AND-ed together, mirroring the "every filter must hold" mental model of the flat `tags` field. Nested groups can be combined arbitrarily to express predicates such as "(alice OR bob) AND project:x AND NOT confidential".
+
+Filtering happens at the database level for SQL-backed retrieval strategies and is mirrored in Python for graph traversal expansion, so results are consistent across strategies.
+
+`tags` and `tag_groups` are **mutually exclusive** — supplying both yields a `422` validation error. Use `tag_groups` whenever you need OR or NOT logic, and `tags` for simple AND/OR over a single set.
+
+```json
+{
+  "query": "What did Alice talk about that was not confidential?",
+  "tag_groups": [
+    { "tags": ["user:alice"], "match": "any_strict" },
+    { "not": { "tags": ["confidential"], "match": "any_strict" } }
+  ]
+}
+```
+
+```json
+{
+  "query": "What do Alice or Bob know about project X?",
+  "tag_groups": [
+    {
+      "and": [
+        {
+          "or": [
+            { "tags": ["user:alice"], "match": "any_strict" },
+            { "tags": ["user:bob"],   "match": "any_strict" }
+          ]
+        },
+        { "tags": ["project:x"], "match": "any_strict" }
+      ]
+    }
+  ]
+}
+```
+
 ### trace
 
 When set to `true`, the response includes a detailed debug trace covering the query embedding, entry points, per-strategy retrieval results, RRF fusion candidates, reranked results, temporal constraints detected, and per-phase timings. Has no effect on the retrieval logic itself. Useful for understanding why specific memories were or were not returned.

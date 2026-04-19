@@ -22,34 +22,32 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from atulya_client_api.models.codebase_review_counts_response import CodebaseReviewCountsResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseSnapshotStatsResponse(BaseModel):
     """
     Snapshot-level deterministic indexing stats.
     """ # noqa: E501
-    total_files: Optional[StrictInt] = None
-    indexed_files: Optional[StrictInt] = None
-    retained_files: Optional[StrictInt] = None
-    manifest_only_files: Optional[StrictInt] = None
-    excluded_files: Optional[StrictInt] = None
-    symbol_count: Optional[StrictInt] = None
-    edge_count: Optional[StrictInt] = None
-    added_files: Optional[StrictInt] = None
-    changed_files: Optional[StrictInt] = None
-    unchanged_files: Optional[StrictInt] = None
-    deleted_files: Optional[StrictInt] = None
-    chunk_count: Optional[StrictInt] = None
-    cluster_count: Optional[StrictInt] = None
-    related_chunk_count: Optional[StrictInt] = None
-    parse_coverage: Optional[Union[StrictFloat, StrictInt]] = None
+    total_files: Optional[StrictInt] = 0
+    indexed_files: Optional[StrictInt] = 0
+    retained_files: Optional[StrictInt] = 0
+    manifest_only_files: Optional[StrictInt] = 0
+    excluded_files: Optional[StrictInt] = 0
+    symbol_count: Optional[StrictInt] = 0
+    edge_count: Optional[StrictInt] = 0
+    added_files: Optional[StrictInt] = 0
+    changed_files: Optional[StrictInt] = 0
+    unchanged_files: Optional[StrictInt] = 0
+    deleted_files: Optional[StrictInt] = 0
+    chunk_count: Optional[StrictInt] = 0
+    cluster_count: Optional[StrictInt] = 0
+    related_chunk_count: Optional[StrictInt] = 0
+    parse_coverage: Optional[Union[StrictFloat, StrictInt]] = 0.0
     review_counts: Optional[CodebaseReviewCountsResponse] = None
     error: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["total_files", "indexed_files", "retained_files", "manifest_only_files", "excluded_files", "symbol_count", "edge_count", "added_files", "changed_files", "unchanged_files", "deleted_files", "chunk_count", "cluster_count", "related_chunk_count", "parse_coverage", "review_counts", "error"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -61,7 +59,8 @@ class CodebaseSnapshotStatsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -106,21 +105,21 @@ class CodebaseSnapshotStatsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "total_files": obj.get("total_files"),
-            "indexed_files": obj.get("indexed_files"),
-            "retained_files": obj.get("retained_files"),
-            "manifest_only_files": obj.get("manifest_only_files"),
-            "excluded_files": obj.get("excluded_files"),
-            "symbol_count": obj.get("symbol_count"),
-            "edge_count": obj.get("edge_count"),
-            "added_files": obj.get("added_files"),
-            "changed_files": obj.get("changed_files"),
-            "unchanged_files": obj.get("unchanged_files"),
-            "deleted_files": obj.get("deleted_files"),
-            "chunk_count": obj.get("chunk_count"),
-            "cluster_count": obj.get("cluster_count"),
-            "related_chunk_count": obj.get("related_chunk_count"),
-            "parse_coverage": obj.get("parse_coverage"),
+            "total_files": obj.get("total_files") if obj.get("total_files") is not None else 0,
+            "indexed_files": obj.get("indexed_files") if obj.get("indexed_files") is not None else 0,
+            "retained_files": obj.get("retained_files") if obj.get("retained_files") is not None else 0,
+            "manifest_only_files": obj.get("manifest_only_files") if obj.get("manifest_only_files") is not None else 0,
+            "excluded_files": obj.get("excluded_files") if obj.get("excluded_files") is not None else 0,
+            "symbol_count": obj.get("symbol_count") if obj.get("symbol_count") is not None else 0,
+            "edge_count": obj.get("edge_count") if obj.get("edge_count") is not None else 0,
+            "added_files": obj.get("added_files") if obj.get("added_files") is not None else 0,
+            "changed_files": obj.get("changed_files") if obj.get("changed_files") is not None else 0,
+            "unchanged_files": obj.get("unchanged_files") if obj.get("unchanged_files") is not None else 0,
+            "deleted_files": obj.get("deleted_files") if obj.get("deleted_files") is not None else 0,
+            "chunk_count": obj.get("chunk_count") if obj.get("chunk_count") is not None else 0,
+            "cluster_count": obj.get("cluster_count") if obj.get("cluster_count") is not None else 0,
+            "related_chunk_count": obj.get("related_chunk_count") if obj.get("related_chunk_count") is not None else 0,
+            "parse_coverage": obj.get("parse_coverage") if obj.get("parse_coverage") is not None else 0.0,
             "review_counts": CodebaseReviewCountsResponse.from_dict(obj["review_counts"]) if obj.get("review_counts") is not None else None,
             "error": obj.get("error")
         })

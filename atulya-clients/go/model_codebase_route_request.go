@@ -37,6 +37,10 @@ func NewCodebaseRouteRequest(itemIds []string, target string) *CodebaseRouteRequ
 	this := CodebaseRouteRequest{}
 	this.ItemIds = itemIds
 	this.Target = target
+	var queueMemoryImport bool = false
+	this.QueueMemoryImport = &queueMemoryImport
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -45,6 +49,10 @@ func NewCodebaseRouteRequest(itemIds []string, target string) *CodebaseRouteRequ
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRouteRequestWithDefaults() *CodebaseRouteRequest {
 	this := CodebaseRouteRequest{}
+	var queueMemoryImport bool = false
+	this.QueueMemoryImport = &queueMemoryImport
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 

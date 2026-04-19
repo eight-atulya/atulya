@@ -53,6 +53,18 @@ func NewDreamStatsResponse(bankId string, totalRuns int32, lastRunAt NullableStr
 	this.AvgOutputTokens = avgOutputTokens
 	this.DistillationPassRate = distillationPassRate
 	this.DistilledCount = distilledCount
+	var validationRate float32 = 0.0
+	this.ValidationRate = &validationRate
+	var avgNovelty float32 = 0.0
+	this.AvgNovelty = &avgNovelty
+	var failedRunCount int32 = 0
+	this.FailedRunCount = &failedRunCount
+	var duplicateSuppressionCount int32 = 0
+	this.DuplicateSuppressionCount = &duplicateSuppressionCount
+	var predictionConfirmationRate float32 = 0.0
+	this.PredictionConfirmationRate = &predictionConfirmationRate
+	var unresolvedPredictionBacklog int32 = 0
+	this.UnresolvedPredictionBacklog = &unresolvedPredictionBacklog
 	return &this
 }
 
@@ -61,6 +73,18 @@ func NewDreamStatsResponse(bankId string, totalRuns int32, lastRunAt NullableStr
 // but it doesn't guarantee that properties required by API are set
 func NewDreamStatsResponseWithDefaults() *DreamStatsResponse {
 	this := DreamStatsResponse{}
+	var validationRate float32 = 0.0
+	this.ValidationRate = &validationRate
+	var avgNovelty float32 = 0.0
+	this.AvgNovelty = &avgNovelty
+	var failedRunCount int32 = 0
+	this.FailedRunCount = &failedRunCount
+	var duplicateSuppressionCount int32 = 0
+	this.DuplicateSuppressionCount = &duplicateSuppressionCount
+	var predictionConfirmationRate float32 = 0.0
+	this.PredictionConfirmationRate = &predictionConfirmationRate
+	var unresolvedPredictionBacklog int32 = 0
+	this.UnresolvedPredictionBacklog = &unresolvedPredictionBacklog
 	return &this
 }
 

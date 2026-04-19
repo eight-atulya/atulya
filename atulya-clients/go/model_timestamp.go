@@ -17,14 +17,14 @@ import (
 )
 
 
-// MemoryItemTimestamp When the content occurred. Accepts an ISO 8601 datetime string (e.g. '2024-01-15T10:30:00Z'), null/omitted (defaults to now), or the special string 'unset' to explicitly store without any timestamp (use this for timeless content such as fictional documents or static reference material).
-type MemoryItemTimestamp struct {
+// Timestamp When the content occurred. Accepts an ISO 8601 datetime string (e.g. '2024-01-15T10:30:00Z'), null/omitted (defaults to now), or the special string 'unset' to explicitly store without any timestamp (use this for timeless content such as fictional documents or static reference material).
+type Timestamp struct {
 	String *string
 	TimeTime *time.Time
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
-func (dst *MemoryItemTimestamp) UnmarshalJSON(data []byte) error {
+func (dst *Timestamp) UnmarshalJSON(data []byte) error {
 	var err error
 	// this object is nullable so check if the payload is null or empty string
 	if string(data) == "" || string(data) == "{}" {
@@ -57,11 +57,11 @@ func (dst *MemoryItemTimestamp) UnmarshalJSON(data []byte) error {
 		dst.TimeTime = nil
 	}
 
-	return fmt.Errorf("data failed to match schemas in anyOf(MemoryItemTimestamp)")
+	return fmt.Errorf("data failed to match schemas in anyOf(Timestamp)")
 }
 
 // Marshal data from the first non-nil pointers in the struct to JSON
-func (src MemoryItemTimestamp) MarshalJSON() ([]byte, error) {
+func (src *Timestamp) MarshalJSON() ([]byte, error) {
 	if src.String != nil {
 		return json.Marshal(&src.String)
 	}
@@ -74,38 +74,38 @@ func (src MemoryItemTimestamp) MarshalJSON() ([]byte, error) {
 }
 
 
-type NullableMemoryItemTimestamp struct {
-	value *MemoryItemTimestamp
+type NullableTimestamp struct {
+	value *Timestamp
 	isSet bool
 }
 
-func (v NullableMemoryItemTimestamp) Get() *MemoryItemTimestamp {
+func (v NullableTimestamp) Get() *Timestamp {
 	return v.value
 }
 
-func (v *NullableMemoryItemTimestamp) Set(val *MemoryItemTimestamp) {
+func (v *NullableTimestamp) Set(val *Timestamp) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableMemoryItemTimestamp) IsSet() bool {
+func (v NullableTimestamp) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableMemoryItemTimestamp) Unset() {
+func (v *NullableTimestamp) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableMemoryItemTimestamp(val *MemoryItemTimestamp) *NullableMemoryItemTimestamp {
-	return &NullableMemoryItemTimestamp{value: val, isSet: true}
+func NewNullableTimestamp(val *Timestamp) *NullableTimestamp {
+	return &NullableTimestamp{value: val, isSet: true}
 }
 
-func (v NullableMemoryItemTimestamp) MarshalJSON() ([]byte, error) {
+func (v NullableTimestamp) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableMemoryItemTimestamp) UnmarshalJSON(src []byte) error {
+func (v *NullableTimestamp) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

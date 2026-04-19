@@ -29,6 +29,8 @@ type EntityIncludeOptions struct {
 // will change when the set of required properties is changed
 func NewEntityIncludeOptions() *EntityIncludeOptions {
 	this := EntityIncludeOptions{}
+	var maxTokens int32 = 500
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewEntityIncludeOptions() *EntityIncludeOptions {
 // but it doesn't guarantee that properties required by API are set
 func NewEntityIncludeOptionsWithDefaults() *EntityIncludeOptions {
 	this := EntityIncludeOptions{}
+	var maxTokens int32 = 500
+	this.MaxTokens = &maxTokens
 	return &this
 }
 

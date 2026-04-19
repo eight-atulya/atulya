@@ -126,6 +126,7 @@ class Atulya:
         metadata: dict[str, str] | None = None,
         entities: list[dict[str, str]] | None = None,
         tags: list[str] | None = None,
+        update_mode: Literal["replace", "append"] | None = None,
     ) -> RetainResponse:
         """
         Store a single memory (simplified interface).
@@ -139,6 +140,9 @@ class Atulya:
             metadata: Optional user-defined metadata
             entities: Optional list of entities [{"text": "...", "type": "..."}]
             tags: Optional list of tags for filtering memories during recall/reflect
+            update_mode: How to handle an existing document with the same document_id.
+                "replace" (default) wipes prior data and reprocesses; "append" concatenates
+                onto the existing document text and reprocesses. "append" requires document_id.
 
         Returns:
             RetainResponse with success status
@@ -153,6 +157,7 @@ class Atulya:
                     "metadata": metadata,
                     "entities": entities,
                     "tags": tags,
+                    "update_mode": update_mode,
                 }
             ],
             document_id=document_id,
@@ -199,6 +204,7 @@ class Atulya:
                     document_id=item.get("document_id") or document_id,
                     entities=entities,
                     tags=item.get("tags"),
+                    update_mode=item.get("update_mode"),
                 )
             )
 
@@ -262,6 +268,7 @@ class Atulya:
         max_source_facts_tokens: int = 4096,
         tags: list[str] | None = None,
         tags_match: Literal["any", "all", "any_strict", "all_strict"] = "any",
+        tag_groups: list[dict[str, Any]] | None = None,
     ) -> RecallResponse:
         """
         Recall memories using semantic similarity.
@@ -283,6 +290,10 @@ class Atulya:
             tags: Optional list of tags to filter memories by
             tags_match: How to match tags - "any" (OR, includes untagged), "all" (AND, includes untagged),
                 "any_strict" (OR, excludes untagged), "all_strict" (AND, excludes untagged). Default: "any"
+            tag_groups: Optional compound boolean tag predicates. Each entry is a leaf
+                ({"tags": [...], "match": "any|all|any_strict|all_strict"}) or a nested
+                group ({"and": [...]}, {"or": [...]}, {"not": {...}}). Top-level entries are
+                AND-ed together. Mutually exclusive with `tags`.
 
         Returns:
             RecallResponse with results, optional entities, optional chunks, optional source_facts, and optional trace
@@ -314,6 +325,7 @@ class Atulya:
             include=include_opts,
             tags=tags,
             tags_match=tags_match,
+            tag_groups=tag_groups,
         )
 
         return _run_async(self._memory_api.recall_memories(bank_id, request_obj, _request_timeout=self._timeout))
@@ -328,6 +340,7 @@ class Atulya:
         response_schema: dict[str, Any] | None = None,
         tags: list[str] | None = None,
         tags_match: Literal["any", "all", "any_strict", "all_strict"] = "any",
+        tag_groups: list[dict[str, Any]] | None = None,
         include_facts: bool = False,
     ) -> ReflectResponse:
         """
@@ -345,6 +358,10 @@ class Atulya:
             tags: Optional list of tags to filter memories by
             tags_match: How to match tags - "any" (OR, includes untagged), "all" (AND, includes untagged),
                 "any_strict" (OR, excludes untagged), "all_strict" (AND, excludes untagged). Default: "any"
+            tag_groups: Optional compound boolean tag predicates. Each entry is a leaf
+                ({"tags": [...], "match": "any|all|any_strict|all_strict"}) or a nested
+                group ({"and": [...]}, {"or": [...]}, {"not": {...}}). Top-level entries are
+                AND-ed together. Mutually exclusive with `tags`.
             include_facts: If True, the response will include a 'based_on' field listing
                 the memories, mental models, and directives used to construct the answer.
 
@@ -361,6 +378,7 @@ class Atulya:
             response_schema=response_schema,
             tags=tags,
             tags_match=tags_match,
+            tag_groups=tag_groups,
             include=include,
         )
 
@@ -613,6 +631,7 @@ class Atulya:
                     document_id=item.get("document_id") or document_id,
                     entities=entities,
                     tags=item.get("tags"),
+                    update_mode=item.get("update_mode"),
                 )
             )
 
@@ -683,6 +702,7 @@ class Atulya:
         max_source_facts_tokens: int = 4096,
         tags: list[str] | None = None,
         tags_match: Literal["any", "all", "any_strict", "all_strict"] = "any",
+        tag_groups: list[dict[str, Any]] | None = None,
     ) -> RecallResponse:
         """
         Recall memories using semantic similarity (async).
@@ -704,6 +724,10 @@ class Atulya:
             tags: Optional list of tags to filter memories by
             tags_match: How to match tags - "any" (OR, includes untagged), "all" (AND, includes untagged),
                 "any_strict" (OR, excludes untagged), "all_strict" (AND, excludes untagged). Default: "any"
+            tag_groups: Optional compound boolean tag predicates. Each entry is a leaf
+                ({"tags": [...], "match": "any|all|any_strict|all_strict"}) or a nested
+                group ({"and": [...]}, {"or": [...]}, {"not": {...}}). Top-level entries are
+                AND-ed together. Mutually exclusive with `tags`.
 
         Returns:
             RecallResponse with results, optional entities, optional chunks, optional source_facts, and optional trace
@@ -735,6 +759,7 @@ class Atulya:
             include=include_opts,
             tags=tags,
             tags_match=tags_match,
+            tag_groups=tag_groups,
         )
 
         return await self._memory_api.recall_memories(bank_id, request_obj, _request_timeout=self._timeout)
@@ -749,6 +774,7 @@ class Atulya:
         response_schema: dict[str, Any] | None = None,
         tags: list[str] | None = None,
         tags_match: Literal["any", "all", "any_strict", "all_strict"] = "any",
+        tag_groups: list[dict[str, Any]] | None = None,
     ) -> ReflectResponse:
         """
         Generate a contextual answer based on bank identity and memories (async).
@@ -765,6 +791,10 @@ class Atulya:
             tags: Optional list of tags to filter memories by
             tags_match: How to match tags - "any" (OR, includes untagged), "all" (AND, includes untagged),
                 "any_strict" (OR, excludes untagged), "all_strict" (AND, excludes untagged). Default: "any"
+            tag_groups: Optional compound boolean tag predicates. Each entry is a leaf
+                ({"tags": [...], "match": "any|all|any_strict|all_strict"}) or a nested
+                group ({"and": [...]}, {"or": [...]}, {"not": {...}}). Top-level entries are
+                AND-ed together. Mutually exclusive with `tags`.
 
         Returns:
             ReflectResponse with answer text, optionally facts used, and optionally
@@ -778,6 +808,7 @@ class Atulya:
             response_schema=response_schema,
             tags=tags,
             tags_match=tags_match,
+            tag_groups=tag_groups,
         )
 
         return await self._memory_api.reflect(bank_id, request_obj, _request_timeout=self._timeout)

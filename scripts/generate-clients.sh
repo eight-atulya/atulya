@@ -67,13 +67,34 @@ run_openapi_generator() {
     shift
 
     if [ "$OPENAPI_GENERATOR_MODE" = "docker" ]; then
+        # Split caller args at the first `--` separator: anything before goes
+        # to `docker run` (e.g. -v mounts), anything after goes to
+        # openapi-generator-cli inside the container (e.g. -o, -c). If no
+        # separator is given, every arg is treated as a docker flag — matching
+        # the previous behavior for back-compat.
+        local docker_args=()
+        local gen_args=()
+        local seen_separator=0
+        for arg in "$@"; do
+            if [ "$seen_separator" = "0" ] && [ "$arg" = "--" ]; then
+                seen_separator=1
+                continue
+            fi
+            if [ "$seen_separator" = "0" ]; then
+                docker_args+=("$arg")
+            else
+                gen_args+=("$arg")
+            fi
+        done
+
         docker run --rm \
             --platform linux/amd64 \
             --user "$(id -u):$(id -g)" \
-            "$@" \
+            "${docker_args[@]}" \
             "openapitools/openapi-generator-cli:${OPENAPI_GENERATOR_VERSION}" generate \
             -i /local/openapi.json \
-            -g "$generator"
+            -g "$generator" \
+            "${gen_args[@]}"
         return 0
     fi
 
@@ -81,7 +102,7 @@ run_openapi_generator() {
 }
 
 prepare_client_openapi_spec() {
-    CLIENT_OPENAPI_SPEC="$(mktemp -t atulya-openapi-client-spec)"
+    CLIENT_OPENAPI_SPEC="$(mktemp -t atulya-openapi-client-spec.XXXXXX)"
     trap 'rm -f "$CLIENT_OPENAPI_SPEC"' EXIT
 
     python3 "$SCRIPT_DIR/sanitize-openapi-for-clients.py" "$OPENAPI_SPEC" "$CLIENT_OPENAPI_SPEC"
@@ -173,6 +194,7 @@ if [ "$OPENAPI_GENERATOR_MODE" = "docker" ]; then
         -v "$OPENAPI_SPEC:/local/openapi.json" \
         -v "$PYTHON_CLIENT_DIR:/local/out" \
         -v "$PYTHON_CLIENT_DIR/openapi-generator-config.yaml:/local/config.yaml" \
+        -- \
         -o /local/out \
         -c /local/config.yaml
 else
@@ -441,6 +463,7 @@ else
             go \
             -v "$OPENAPI_SPEC:/local/openapi.json" \
             -v "$GO_CLIENT_DIR:/local/out" \
+            -- \
             -o /local/out \
             --package-name atulya \
             --git-user-id eight-atulya \

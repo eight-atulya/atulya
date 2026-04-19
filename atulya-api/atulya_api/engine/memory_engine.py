@@ -281,7 +281,7 @@ from .retain import bank_utils, embedding_utils
 from .retain.types import RetainContentDict
 from .search import think_utils
 from .search.reranking import CrossEncoderReranker, apply_combined_scoring
-from .search.tags import TagsMatch, build_tags_where_clause
+from .search.tags import TagGroup, TagsMatch, build_tags_where_clause
 from .task_backend import BrokerTaskBackend, SyncTaskBackend, TaskBackend
 from .temporal import (
     classify_snapshot_temporal_metadata,
@@ -3484,6 +3484,26 @@ class MemoryEngine(MemoryEngineInterface):
         include_tool_calls = bool(task_dict.get("include_tool_calls", False))
         include_tool_call_output = bool(task_dict.get("include_tool_call_output", True))
 
+        # Re-hydrate tag_groups from the JSON-serialized payload back into Pydantic models.
+        from atulya_api.engine.search.tags import TagGroupAnd as _TGAnd
+        from atulya_api.engine.search.tags import TagGroupLeaf as _TGLeaf
+        from atulya_api.engine.search.tags import TagGroupNot as _TGNot
+        from atulya_api.engine.search.tags import TagGroupOr as _TGOr
+
+        def _rehydrate_tag_group(raw: dict) -> Any:
+            if "and" in raw:
+                return _TGAnd(**{"and": [_rehydrate_tag_group(c) for c in raw["and"]]})
+            if "or" in raw:
+                return _TGOr(**{"or": [_rehydrate_tag_group(c) for c in raw["or"]]})
+            if "not" in raw:
+                return _TGNot(**{"not": _rehydrate_tag_group(raw["not"])})
+            return _TGLeaf(**raw)
+
+        raw_tag_groups = task_dict.get("tag_groups")
+        rehydrated_tag_groups = (
+            [_rehydrate_tag_group(g) for g in raw_tag_groups] if raw_tag_groups else None
+        )
+
         reflect_result = await self.reflect_async(
             bank_id=bank_id,
             query=query,
@@ -3493,6 +3513,7 @@ class MemoryEngine(MemoryEngineInterface):
             request_context=internal_context,
             tags=task_dict.get("tags"),
             tags_match=task_dict.get("tags_match", "any"),
+            tag_groups=rehydrated_tag_groups,
         )
 
         await self._set_operation_stage(operation_id, "persisting_result")
@@ -5248,6 +5269,11 @@ class MemoryEngine(MemoryEngineInterface):
                 f"Each content item in a batch must have a unique document_id to avoid race conditions."
             )
 
+        # Validate update_mode='append' contracts
+        for item in contents:
+            if item.get("update_mode") == "append" and not item.get("document_id"):
+                raise ValueError("update_mode='append' requires a document_id")
+
         # Auto-chunk large batches by token count to avoid timeouts and memory issues
         # Calculate total token count
         total_tokens = sum(count_tokens(item.get("content", "")) for item in contents)
@@ -5494,6 +5520,7 @@ class MemoryEngine(MemoryEngineInterface):
         request_context: "RequestContext",
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
+        tag_groups: list[TagGroup] | None = None,
         _connection_budget: int | None = None,
         _quiet: bool = False,
         _record_access_telemetry: bool = True,
@@ -5629,6 +5656,7 @@ class MemoryEngine(MemoryEngineInterface):
                             semaphore_wait=semaphore_wait,
                             tags=tags,
                             tags_match=tags_match,
+                            tag_groups=tag_groups,
                             connection_budget=_connection_budget,
                             quiet=_quiet,
                             include_source_facts=include_source_facts,
@@ -5974,6 +6002,7 @@ class MemoryEngine(MemoryEngineInterface):
         semaphore_wait: float = 0.0,
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
+        tag_groups: list[TagGroup] | None = None,
         connection_budget: int | None = None,
         quiet: bool = False,
         include_source_facts: bool = False,
@@ -6093,6 +6122,7 @@ class MemoryEngine(MemoryEngineInterface):
                         self.query_analyzer,
                         tags=tags,
                         tags_match=tags_match,
+                        tag_groups=tag_groups,
                     )
                     parallel_duration = time.time() - parallel_start
             finally:
@@ -9326,6 +9356,7 @@ class MemoryEngine(MemoryEngineInterface):
         request_context: "RequestContext",
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
+        tag_groups: list[TagGroup] | None = None,
         exclude_mental_model_ids: list[str] | None = None,
         _skip_span: bool = False,
     ) -> ReflectResult:
@@ -9428,6 +9459,7 @@ class MemoryEngine(MemoryEngineInterface):
                     max_results=max_results,
                     tags=tags,
                     tags_match=tags_match,
+                    tag_groups=tag_groups,
                     exclude_ids=exclude_mental_model_ids,
                     pending_consolidation=pending_consolidation,
                 )
@@ -9441,6 +9473,7 @@ class MemoryEngine(MemoryEngineInterface):
                 max_tokens=max_tokens,
                 tags=tags,
                 tags_match=tags_match,
+                tag_groups=tag_groups,
                 last_consolidated_at=last_consolidated_at,
                 pending_consolidation=pending_consolidation,
             )
@@ -9454,6 +9487,7 @@ class MemoryEngine(MemoryEngineInterface):
                 max_tokens=max_tokens,
                 tags=tags,
                 tags_match=tags_match,
+                tag_groups=tag_groups,
                 max_chunk_tokens=max_chunk_tokens,
             )
 
@@ -14055,6 +14089,11 @@ class MemoryEngine(MemoryEngineInterface):
                 f"Each content item in a batch must have a unique document_id to avoid race conditions."
             )
 
+        # Validate update_mode='append' contracts
+        for item in contents:
+            if item.get("update_mode") == "append" and not item.get("document_id"):
+                raise ValueError("update_mode='append' requires a document_id")
+
         # Calculate total token count and determine if we need to split
         total_tokens = sum(count_tokens(item.get("content", "")) for item in contents)
         config = get_config()
@@ -14323,6 +14362,7 @@ class MemoryEngine(MemoryEngineInterface):
         response_schema: dict[str, Any] | None = None,
         tags: list[str] | None = None,
         tags_match: str = "any",
+        tag_groups: list[TagGroup] | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Submit a reflect operation to run asynchronously."""
@@ -14349,6 +14389,11 @@ class MemoryEngine(MemoryEngineInterface):
             "response_schema": response_schema,
             "tags": tags,
             "tags_match": tags_match,
+            "tag_groups": (
+                [g.model_dump(by_alias=True, exclude_none=True) for g in tag_groups]
+                if tag_groups
+                else None
+            ),
         }
         if request_context.tenant_id:
             task_payload["_tenant_id"] = request_context.tenant_id

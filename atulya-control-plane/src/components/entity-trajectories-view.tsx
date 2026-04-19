@@ -20,7 +20,7 @@ import {
   LineChart,
   ResponsiveContainer,
   Tooltip,
-  type TooltipProps,
+  type TooltipContentProps,
   XAxis,
   YAxis,
 } from "recharts";
@@ -37,7 +37,11 @@ interface EntityRow {
   mention_count: number;
 }
 
-function TrajectoryTooltip({ active, label, payload }: TooltipProps<number, string>) {
+function TrajectoryTooltip({
+  active,
+  label,
+  payload,
+}: Partial<TooltipContentProps<number, string>>) {
   if (!active || !payload?.length) return null;
   const item = payload[0];
   const row = item.payload as {

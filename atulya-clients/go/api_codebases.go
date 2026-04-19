@@ -298,6 +298,143 @@ func (a *CodebasesAPIService) ApproveCodebaseExecute(r ApiApproveCodebaseRequest
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiCurateCodebaseByIntentRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	codebaseCurateRequest *CodebaseCurateRequest
+	authorization *string
+}
+
+func (r ApiCurateCodebaseByIntentRequest) CodebaseCurateRequest(codebaseCurateRequest CodebaseCurateRequest) ApiCurateCodebaseByIntentRequest {
+	r.codebaseCurateRequest = &codebaseCurateRequest
+	return r
+}
+
+func (r ApiCurateCodebaseByIntentRequest) Authorization(authorization string) ApiCurateCodebaseByIntentRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiCurateCodebaseByIntentRequest) Execute() (*CodebaseCurateResponse, *http.Response, error) {
+	return r.ApiService.CurateCodebaseByIntentExecute(r)
+}
+
+/*
+CurateCodebaseByIntent Curate codebase by intent
+
+Rank Symbol Cards + chunks against a free-text intent. Returns top clusters and symbol cards.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @return ApiCurateCodebaseByIntentRequest
+*/
+func (a *CodebasesAPIService) CurateCodebaseByIntent(ctx context.Context, bankId string, codebaseId string) ApiCurateCodebaseByIntentRequest {
+	return ApiCurateCodebaseByIntentRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseCurateResponse
+func (a *CodebasesAPIService) CurateCodebaseByIntentExecute(r ApiCurateCodebaseByIntentRequest) (*CodebaseCurateResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseCurateResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.CurateCodebaseByIntent")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/curate"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.codebaseCurateRequest == nil {
+		return localVarReturnValue, nil, reportError("codebaseCurateRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	// body params
+	localVarPostBody = r.codebaseCurateRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGetCodebaseRequest struct {
 	ctx context.Context
 	ApiService *CodebasesAPIService
@@ -554,6 +691,141 @@ func (a *CodebasesAPIService) GetCodebaseChunkDetailExecute(r ApiGetCodebaseChun
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGetCodebaseRepoMapRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	snapshotId *string
+	authorization *string
+}
+
+func (r ApiGetCodebaseRepoMapRequest) SnapshotId(snapshotId string) ApiGetCodebaseRepoMapRequest {
+	r.snapshotId = &snapshotId
+	return r
+}
+
+func (r ApiGetCodebaseRepoMapRequest) Authorization(authorization string) ApiGetCodebaseRepoMapRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiGetCodebaseRepoMapRequest) Execute() (*CodebaseRepoMapResponse, *http.Response, error) {
+	return r.ApiService.GetCodebaseRepoMapExecute(r)
+}
+
+/*
+GetCodebaseRepoMap Get codebase Repo Map
+
+Return the snapshot Repo Map artifact (top-K ranked tags + module dependency edges).
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @return ApiGetCodebaseRepoMapRequest
+*/
+func (a *CodebasesAPIService) GetCodebaseRepoMap(ctx context.Context, bankId string, codebaseId string) ApiGetCodebaseRepoMapRequest {
+	return ApiGetCodebaseRepoMapRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseRepoMapResponse
+func (a *CodebasesAPIService) GetCodebaseRepoMapExecute(r ApiGetCodebaseRepoMapRequest) (*CodebaseRepoMapResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseRepoMapResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseRepoMap")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/repo-map"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.snapshotId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGetCodebaseReviewRequest struct {
 	ctx context.Context
 	ApiService *CodebasesAPIService
@@ -606,6 +878,271 @@ func (a *CodebasesAPIService) GetCodebaseReviewExecute(r ApiGetCodebaseReviewReq
 	}
 
 	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/review"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGetCodebaseSymbolCardRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	symbolId string
+	snapshotId *string
+	authorization *string
+}
+
+func (r ApiGetCodebaseSymbolCardRequest) SnapshotId(snapshotId string) ApiGetCodebaseSymbolCardRequest {
+	r.snapshotId = &snapshotId
+	return r
+}
+
+func (r ApiGetCodebaseSymbolCardRequest) Authorization(authorization string) ApiGetCodebaseSymbolCardRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiGetCodebaseSymbolCardRequest) Execute() (*CodebaseSymbolCardResponse, *http.Response, error) {
+	return r.ApiService.GetCodebaseSymbolCardExecute(r)
+}
+
+/*
+GetCodebaseSymbolCard Get a Symbol Card
+
+Return one Symbol Card artifact by fully-qualified symbol id.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @param symbolId
+ @return ApiGetCodebaseSymbolCardRequest
+*/
+func (a *CodebasesAPIService) GetCodebaseSymbolCard(ctx context.Context, bankId string, codebaseId string, symbolId string) ApiGetCodebaseSymbolCardRequest {
+	return ApiGetCodebaseSymbolCardRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+		symbolId: symbolId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseSymbolCardResponse
+func (a *CodebasesAPIService) GetCodebaseSymbolCardExecute(r ApiGetCodebaseSymbolCardRequest) (*CodebaseSymbolCardResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseSymbolCardResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseSymbolCard")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols/{symbol_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"symbol_id"+"}", url.PathEscape(parameterValueToString(r.symbolId, "symbolId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.snapshotId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiGetCodebaseTriageSettingsRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	authorization *string
+}
+
+func (r ApiGetCodebaseTriageSettingsRequest) Authorization(authorization string) ApiGetCodebaseTriageSettingsRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiGetCodebaseTriageSettingsRequest) Execute() (*CodebaseTriageSettingsResponse, *http.Response, error) {
+	return r.ApiService.GetCodebaseTriageSettingsExecute(r)
+}
+
+/*
+GetCodebaseTriageSettings Get triage settings
+
+Return per-codebase auto-triage settings.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @return ApiGetCodebaseTriageSettingsRequest
+*/
+func (a *CodebasesAPIService) GetCodebaseTriageSettings(ctx context.Context, bankId string, codebaseId string) ApiGetCodebaseTriageSettingsRequest {
+	return ApiGetCodebaseTriageSettingsRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseTriageSettingsResponse
+func (a *CodebasesAPIService) GetCodebaseTriageSettingsExecute(r ApiGetCodebaseTriageSettingsRequest) (*CodebaseTriageSettingsResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseTriageSettingsResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseTriageSettings")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings"
 	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
 
@@ -986,6 +1523,13 @@ type ApiListCodebaseChunksRequest struct {
 	limit *int32
 	cursor *string
 	snapshotId *string
+	minSignificance *float32
+	maxSignificance *float32
+	fileRole *string
+	autoRouteReason *string
+	hasSafetyTag *bool
+	routeSource *string
+	orderBy *string
 	authorization *string
 }
 
@@ -1036,6 +1580,42 @@ func (r ApiListCodebaseChunksRequest) Cursor(cursor string) ApiListCodebaseChunk
 
 func (r ApiListCodebaseChunksRequest) SnapshotId(snapshotId string) ApiListCodebaseChunksRequest {
 	r.snapshotId = &snapshotId
+	return r
+}
+
+func (r ApiListCodebaseChunksRequest) MinSignificance(minSignificance float32) ApiListCodebaseChunksRequest {
+	r.minSignificance = &minSignificance
+	return r
+}
+
+func (r ApiListCodebaseChunksRequest) MaxSignificance(maxSignificance float32) ApiListCodebaseChunksRequest {
+	r.maxSignificance = &maxSignificance
+	return r
+}
+
+func (r ApiListCodebaseChunksRequest) FileRole(fileRole string) ApiListCodebaseChunksRequest {
+	r.fileRole = &fileRole
+	return r
+}
+
+func (r ApiListCodebaseChunksRequest) AutoRouteReason(autoRouteReason string) ApiListCodebaseChunksRequest {
+	r.autoRouteReason = &autoRouteReason
+	return r
+}
+
+func (r ApiListCodebaseChunksRequest) HasSafetyTag(hasSafetyTag bool) ApiListCodebaseChunksRequest {
+	r.hasSafetyTag = &hasSafetyTag
+	return r
+}
+
+func (r ApiListCodebaseChunksRequest) RouteSource(routeSource string) ApiListCodebaseChunksRequest {
+	r.routeSource = &routeSource
+	return r
+}
+
+// One of significance | review | path | complexity | pagerank
+func (r ApiListCodebaseChunksRequest) OrderBy(orderBy string) ApiListCodebaseChunksRequest {
+	r.orderBy = &orderBy
 	return r
 }
 
@@ -1104,6 +1684,9 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.changedOnly = &defaultValue
 	}
 	if r.kind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "kind", r.kind, "form", "")
@@ -1113,12 +1696,36 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 25
+		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
 	}
 	if r.snapshotId != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
+	}
+	if r.minSignificance != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "min_significance", r.minSignificance, "form", "")
+	}
+	if r.maxSignificance != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "max_significance", r.maxSignificance, "form", "")
+	}
+	if r.fileRole != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "file_role", r.fileRole, "form", "")
+	}
+	if r.autoRouteReason != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "auto_route_reason", r.autoRouteReason, "form", "")
+	}
+	if r.hasSafetyTag != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "has_safety_tag", r.hasSafetyTag, "form", "")
+	}
+	if r.routeSource != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "route_source", r.routeSource, "form", "")
+	}
+	if r.orderBy != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "order_by", r.orderBy, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1282,9 +1889,159 @@ func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesReq
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.changedOnly = &defaultValue
 	}
 	if r.snapshotId != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListCodebaseModulesRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	snapshotId *string
+	limit *int32
+	authorization *string
+}
+
+func (r ApiListCodebaseModulesRequest) SnapshotId(snapshotId string) ApiListCodebaseModulesRequest {
+	r.snapshotId = &snapshotId
+	return r
+}
+
+func (r ApiListCodebaseModulesRequest) Limit(limit int32) ApiListCodebaseModulesRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r ApiListCodebaseModulesRequest) Authorization(authorization string) ApiListCodebaseModulesRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiListCodebaseModulesRequest) Execute() (*CodebaseModuleBriefsResponse, *http.Response, error) {
+	return r.ApiService.ListCodebaseModulesExecute(r)
+}
+
+/*
+ListCodebaseModules List Module Briefs
+
+Return Module Brief artifacts for a snapshot.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @return ApiListCodebaseModulesRequest
+*/
+func (a *CodebasesAPIService) ListCodebaseModules(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseModulesRequest {
+	return ApiListCodebaseModulesRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseModuleBriefsResponse
+func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModulesRequest) (*CodebaseModuleBriefsResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseModuleBriefsResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseModules")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/modules"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.snapshotId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1429,6 +2186,165 @@ func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebase
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 25
+		r.limit = &defaultValue
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListCodebaseSymbolCardsRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	snapshotId *string
+	limit *int32
+	cursor *string
+	authorization *string
+}
+
+func (r ApiListCodebaseSymbolCardsRequest) SnapshotId(snapshotId string) ApiListCodebaseSymbolCardsRequest {
+	r.snapshotId = &snapshotId
+	return r
+}
+
+func (r ApiListCodebaseSymbolCardsRequest) Limit(limit int32) ApiListCodebaseSymbolCardsRequest {
+	r.limit = &limit
+	return r
+}
+
+func (r ApiListCodebaseSymbolCardsRequest) Cursor(cursor string) ApiListCodebaseSymbolCardsRequest {
+	r.cursor = &cursor
+	return r
+}
+
+func (r ApiListCodebaseSymbolCardsRequest) Authorization(authorization string) ApiListCodebaseSymbolCardsRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiListCodebaseSymbolCardsRequest) Execute() (*CodebaseSymbolCardListResponse, *http.Response, error) {
+	return r.ApiService.ListCodebaseSymbolCardsExecute(r)
+}
+
+/*
+ListCodebaseSymbolCards List Symbol Cards
+
+Return paginated Symbol Card artifacts ordered by significance.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @return ApiListCodebaseSymbolCardsRequest
+*/
+func (a *CodebasesAPIService) ListCodebaseSymbolCards(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseSymbolCardsRequest {
+	return ApiListCodebaseSymbolCardsRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseSymbolCardListResponse
+func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSymbolCardsRequest) (*CodebaseSymbolCardListResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseSymbolCardListResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseSymbolCards")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/artifacts/symbols"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.snapshotId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
+	}
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
+	}
+	if r.cursor != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2005,6 +2921,9 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2026,6 +2945,143 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 	if r.authorization != nil {
 		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
 	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiUpdateCodebaseTriageSettingsRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	codebaseId string
+	codebaseTriageSettings *CodebaseTriageSettings
+	authorization *string
+}
+
+func (r ApiUpdateCodebaseTriageSettingsRequest) CodebaseTriageSettings(codebaseTriageSettings CodebaseTriageSettings) ApiUpdateCodebaseTriageSettingsRequest {
+	r.codebaseTriageSettings = &codebaseTriageSettings
+	return r
+}
+
+func (r ApiUpdateCodebaseTriageSettingsRequest) Authorization(authorization string) ApiUpdateCodebaseTriageSettingsRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiUpdateCodebaseTriageSettingsRequest) Execute() (*CodebaseTriageSettingsResponse, *http.Response, error) {
+	return r.ApiService.UpdateCodebaseTriageSettingsExecute(r)
+}
+
+/*
+UpdateCodebaseTriageSettings Update triage settings
+
+Replace per-codebase auto-triage settings.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param codebaseId
+ @return ApiUpdateCodebaseTriageSettingsRequest
+*/
+func (a *CodebasesAPIService) UpdateCodebaseTriageSettings(ctx context.Context, bankId string, codebaseId string) ApiUpdateCodebaseTriageSettingsRequest {
+	return ApiUpdateCodebaseTriageSettingsRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		codebaseId: codebaseId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseTriageSettingsResponse
+func (a *CodebasesAPIService) UpdateCodebaseTriageSettingsExecute(r ApiUpdateCodebaseTriageSettingsRequest) (*CodebaseTriageSettingsResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPut
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseTriageSettingsResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.UpdateCodebaseTriageSettings")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/{codebase_id}/triage-settings"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"codebase_id"+"}", url.PathEscape(parameterValueToString(r.codebaseId, "codebaseId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.codebaseTriageSettings == nil {
+		return localVarReturnValue, nil, reportError("codebaseTriageSettings is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	// body params
+	localVarPostBody = r.codebaseTriageSettings
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

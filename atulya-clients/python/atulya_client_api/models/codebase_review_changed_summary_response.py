@@ -21,20 +21,18 @@ from pydantic import BaseModel, ConfigDict, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseReviewChangedSummaryResponse(BaseModel):
     """
     Changed-file summary for the current review snapshot.
     """ # noqa: E501
-    added_files: Optional[StrictInt] = None
-    changed_files: Optional[StrictInt] = None
-    deleted_files: Optional[StrictInt] = None
+    added_files: Optional[StrictInt] = 0
+    changed_files: Optional[StrictInt] = 0
+    deleted_files: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["added_files", "changed_files", "deleted_files"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -46,7 +44,8 @@ class CodebaseReviewChangedSummaryResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -83,9 +82,9 @@ class CodebaseReviewChangedSummaryResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "added_files": obj.get("added_files"),
-            "changed_files": obj.get("changed_files"),
-            "deleted_files": obj.get("deleted_files")
+            "added_files": obj.get("added_files") if obj.get("added_files") is not None else 0,
+            "changed_files": obj.get("changed_files") if obj.get("changed_files") is not None else 0,
+            "deleted_files": obj.get("deleted_files") if obj.get("deleted_files") is not None else 0
         })
         return _obj
 
