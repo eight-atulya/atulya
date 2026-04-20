@@ -23,9 +23,13 @@ dependencies = [
 telegram = ["python-telegram-bot>=21.0"]
 voice = ["pyttsx3>=2.90"]
 lmstudio = []
+optimize = ["dspy-ai>=2.4.0"]
+textgrad = ["textgrad>=0.1.4"]
 all = [
     "python-telegram-bot>=21.0",
     "pyttsx3>=2.90",
+    "dspy-ai>=2.4.0",
+    "textgrad>=0.1.4",
 ]
 
 [project.scripts]
@@ -48,6 +52,7 @@ packages = [
     "quantum",
     "brainstem",
     "dream",
+    "plasticity",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]

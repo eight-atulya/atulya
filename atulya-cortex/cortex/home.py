@@ -198,6 +198,17 @@ class CortexHome:
         return self.profile_root / "facts"
 
     @property
+    def plasticity_dir(self) -> Path:
+        """Compiled programs and optimization artifacts from `plasticity/`.
+
+        Profile-scoped because prompt-tuned programs are personality-
+        sensitive — the "work" profile should not reuse demos bootstrapped
+        against "play" examples.
+        """
+
+        return self.profile_root / "plasticity"
+
+    @property
     def consolidation_state_file(self) -> Path:
         """Cursor file: which episodes have already been distilled.
 
@@ -268,6 +279,7 @@ class CortexHome:
             self.conversations_dir,
             self.episodes_dir,
             self.facts_dir,
+            self.plasticity_dir,
             self.cache_root,
             self.llm_cache_dir,
             self.embedding_cache_dir,
