@@ -1,11 +1,11 @@
 """chat — interactive TUI session (default subcommand).
 
-Starts the rich `prompt_toolkit` + Rich TUI defined in `cortex/tui_app.py`
-on top of the standard cortex pipeline:
+Starts the Textual-based TUI defined in `cortex/tui_app.py` on top of the
+standard cortex pipeline:
 
     keyboard -> Stimulus -> Router (reflexes) -> Cortex.reflect -> reply
 
-The reply lands back in the TUI as a markdown-rendered "atulya >" line.
+The reply lands back in the TUI as a rendered assistant turn.
 
 The legacy `--lm-studio` flag is preserved as a one-shot override; for
 day-to-day use the model section of `config.toml` controls everything.
@@ -134,6 +134,7 @@ async def _chat_rich(*, home, cfg, peer: str, use_lm_studio: bool) -> None:
         # Sleep engine lazily here (one per session) so its consolidation
         # cursor and stats persist for the whole TUI lifetime.
         sleep_now=_make_sleep_callable(home, cfg, language=language, channel="tui", peer=peer),
+        system_prompt_provider=_make_system_prompt_provider(cortex, home, peer=peer),
     )
 
     async def cortex_call(stim):
@@ -174,6 +175,38 @@ def _make_sleep_callable(home, cfg, *, language, channel: str, peer: str):
         return await sleep.consolidate(channel=channel, peer=peer, force=force)
 
     return _sleep_now
+
+
+def _make_system_prompt_provider(cortex, home, *, peer: str):
+    """Build a callable that snapshots the current system prompt for the TUI."""
+
+    from cortex.bus import Stimulus
+    from cortex.conversation import ConversationStore
+
+    async def _system_prompt() -> str:
+        stimulus = Stimulus(channel=f"tui:{peer}", sender=peer, text="")
+        history: list[dict] = []
+        if home.conversations_dir.exists() and getattr(cortex, "_history_turns", 0) > 0:
+            store = ConversationStore(home.conversations_dir)
+            conv = store.open("tui", peer)
+            history = conv.recent(
+                turns=getattr(cortex, "_history_turns", 12),
+                char_budget=getattr(cortex, "_history_char_budget", 4000),
+            )
+        thought = await cortex.hold(stimulus)
+        include_tools = bool(getattr(cortex, "_can_deliberate")(f"tui:{peer}", False))
+        messages = getattr(cortex, "_build_messages")(
+            thought,
+            sandboxed=False,
+            history=history,
+            peer_key=peer,
+            include_tools=include_tools,
+        )
+        if not messages:
+            return ""
+        return str(messages[0].get("content", ""))
+
+    return _system_prompt
 
 
 async def _tui_noop_egress(channel: str, target: str, text: str) -> None:
