@@ -17,6 +17,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "tomli-w>=1.0.0",
     "prompt-toolkit>=3.0.43",
+    "textual>=0.86.0",
 ]
 
 [project.optional-dependencies]
@@ -53,6 +54,9 @@ packages = [
     "brainstem",
     "dream",
     "plasticity",
+]
+exclude = [
+    "scripts/whatsapp-bridge/node_modules/**",
 ]
 
 [tool.hatch.build.targets.wheel.force-include]
