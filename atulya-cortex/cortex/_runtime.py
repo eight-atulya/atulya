@@ -24,6 +24,8 @@ from cortex.episodes import EpisodeStore
 from cortex.language import Language, Provider
 from cortex.peer_memory import PeerMemoryBridge, build_peer_memory_bridge
 from cortex.personality import Personality
+from cortex.plasticity_prompt_memory import PlasticityPromptMemory, PlasticityPromptSettings
+from cortex.self_healing import SelfHealingEngine, SelfHealingSettings
 from cortex.semantic_facts import FactStore
 from cortex.skills import Skills
 from cortex.tool_protocol import ToolSpec
@@ -137,7 +139,10 @@ def build_cortex_from_config(
         auto_consolidate = _auto_consolidate
 
     peer_bridge: PeerMemoryBridge | None = build_peer_memory_bridge(
-        config, cortex_profile=home.profile_name
+        config,
+        cortex_profile=home.profile_name,
+        whatsapp_mental_models_dir=home.whatsapp_mental_models_dir,
+        whatsapp_memory_raw_dir=home.whatsapp_memory_raw_dir,
     )
     recall_fn = None
     if peer_bridge is not None:
@@ -146,6 +151,34 @@ def build_cortex_from_config(
             return await peer_bridge.cortex_recall(query, kind, bank)
 
         recall_fn = _recall_fn
+
+    self_healing = SelfHealingEngine(
+        SelfHealingSettings(
+            enabled=config.self_healing.enabled,
+            max_retries=config.self_healing.max_retries,
+            min_reply_chars=config.self_healing.min_reply_chars,
+            judge_enabled=config.self_healing.judge_enabled,
+            judge_provider=config.self_healing.judge_provider,
+            judge_model=config.self_healing.judge_model,
+            fallback_text=config.self_healing.fallback_text,
+            telemetry_enabled=config.self_healing.telemetry_enabled,
+        ),
+        telemetry_file=home.logs_dir / "self-healing.jsonl",
+    )
+    plasticity = PlasticityPromptMemory(
+        home.plasticity_dir / "prompt-memory.json",
+        PlasticityPromptSettings(
+            enabled=config.plasticity.enabled,
+            per_user_enabled=config.plasticity.per_user_enabled,
+            system_enabled=config.plasticity.system_enabled,
+            max_directives=config.plasticity.max_directives,
+            time_context_enabled=config.plasticity.time_context_enabled,
+            distill_enabled=config.plasticity.distill_enabled,
+            distill_min_updates=config.plasticity.distill_min_updates,
+            distill_cooldown_s=config.plasticity.distill_cooldown_s,
+            distill_max_versions=config.plasticity.distill_max_versions,
+        ),
+    )
 
     return Cortex(
         name=config.general.name,
@@ -175,6 +208,8 @@ def build_cortex_from_config(
         peer_memory=peer_bridge,
         cortex_profile=home.profile_name,
         peer_bank_channels=frozenset(config.memory.peer_banks_channels),
+        self_healing=self_healing,
+        plasticity=plasticity,
     )
 
 

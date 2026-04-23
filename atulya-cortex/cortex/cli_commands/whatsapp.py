@@ -29,9 +29,11 @@ import argparse
 import asyncio
 import logging
 import os
+import random
 import shutil
 import signal
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -47,6 +49,11 @@ DEFAULT_BRIDGE_PORT = 7732
 DEFAULT_BRIDGE_DIR = "scripts/whatsapp-bridge"
 
 logger = logging.getLogger(__name__)
+EMPTY_REPLY_SELF_HEAL_RETRIES = 1
+
+
+def _ts_utc() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 
 # ---------------------------------------------------------------------------
@@ -351,6 +358,19 @@ async def _full_loop(
 
     language = None if args.echo else build_language_from_config(config)
     cortex = build_cortex_from_config(home, config, language=language)
+    peer_memory = getattr(cortex, "_peer_memory", None)
+
+    if peer_memory is not None:
+        probe_bank = f"{config.memory.bank_id}__peer_memory_probe"
+        ok, detail = await peer_memory.startup_healthcheck(probe_bank_id=probe_bank)
+        if ok:
+            print(f"[peer-memory] {detail}")
+        else:
+            print(f"[peer-memory] WARNING: {detail}", file=sys.stderr)
+            print(
+                "             recall/retain may degrade to best-effort; check memory.api_url/backend/auth settings.",
+                file=sys.stderr,
+            )
 
     # Pre-flight: confirm the LLM endpoint is actually reachable BEFORE we
     # wait silently on inbound messages. A misconfigured base_url here used
@@ -370,9 +390,21 @@ async def _full_loop(
         # Visibility on outbound: same shape as `[recv]` on inbound, so the
         # operator can read the conversation top-to-bottom in the loop log.
         preview = text if len(text) < 80 else text[:77] + "..."
-        sys.stderr.write(f"[send] {channel}: {preview}\n")
-        sys.stderr.flush()
-        await ear.send(target, text)
+        max_attempts = 3
+        last_err: Exception | None = None
+        for attempt in range(1, max_attempts + 1):
+            try:
+                sys.stderr.write(f"[{_ts_utc()}] [send] {channel}: {preview}\n")
+                sys.stderr.flush()
+                await ear.send(target, text)
+                return
+            except Exception as exc:
+                last_err = exc
+                if attempt >= max_attempts:
+                    break
+                # Small jittered backoff to survive short bridge hiccups.
+                await asyncio.sleep(0.15 * attempt + random.random() * 0.1)
+        raise RuntimeError(f"egress failed after {max_attempts} attempts: {last_err}")
 
     reply = Reply({"whatsapp": egress})
 
@@ -395,20 +427,50 @@ async def _full_loop(
         # prompt before calling the LLM, then appends both halves of the
         # new exchange after the call. This is what stops the bot from
         # answering "what's my name?" with a hallucinated guess.
-        try:
-            return await cortex.reflect(stim, reflex=reflex, peer_key=stim.sender)
-        except Exception as exc:
-            logger.exception("cortex.reflect crashed on %s", stim.channel)
-            from cortex.bus import Action, Intent
+        from cortex.bus import Action, Intent
 
-            return Intent(
-                action=Action(
-                    kind="reply",
-                    payload={"text": f"sorry — my brain hit an error ({type(exc).__name__}). I'll be back soon."},
-                ),
-                channel=stim.channel,
-                sender=stim.sender,
-            )
+        retry_stim = stim
+        attempts = 1 + max(0, int(EMPTY_REPLY_SELF_HEAL_RETRIES))
+        for attempt in range(attempts):
+            try:
+                intent = await cortex.reflect(retry_stim, reflex=reflex, peer_key=retry_stim.sender)
+            except Exception as exc:
+                logger.exception("cortex.reflect crashed on %s", stim.channel)
+                return Intent(
+                    action=Action(
+                        kind="reply",
+                        payload={"text": f"sorry — my brain hit an error ({type(exc).__name__}). I'll be back soon."},
+                    ),
+                    channel=stim.channel,
+                    sender=stim.sender,
+                )
+
+            if getattr(intent.action, "kind", "") != "reply":
+                return intent
+            reply_text = str(intent.action.payload.get("text", "")).strip()
+            if reply_text:
+                return intent
+            if attempt + 1 >= attempts:
+                break
+
+            logger.warning("empty reply generated for %s; retrying once with self-heal prompt", stim.channel)
+            original_text = (stim.text or "").strip()
+            retry_text = (
+                f"{original_text}\n\n"
+                "[self-heal: previous draft was empty. Produce one clear and useful reply now.]"
+            ).strip()
+            retry_raw = dict(getattr(stim, "raw", {}) or {})
+            retry_raw["_self_heal_retry"] = attempt + 1
+            retry_stim = stim.model_copy(update={"text": retry_text, "raw": retry_raw})
+
+        return Intent(
+            action=Action(
+                kind="reply",
+                payload={"text": "I had a blank-thought glitch. Please send that once more and I will answer properly."},
+            ),
+            channel=stim.channel,
+            sender=stim.sender,
+        )
 
     async def reply_motor(intent):
         return await reply.act(intent)
@@ -447,6 +509,11 @@ async def _full_loop(
         pump_task.cancel()
         stop_task.cancel()
         await ear.tune_out()
+        if peer_memory is not None:
+            try:
+                await peer_memory.aclose()
+            except Exception:
+                logger.warning("peer memory close failed", exc_info=True)
         if language is not None:
             await language.aclose()
     print("WhatsApp loop stopped.")
@@ -489,10 +556,21 @@ async def _pump_stimuli(ear, router) -> None:
         # the cortex is dead, the bridge is wedged, or the contact is just
         # blocked by DMPairing.
         preview = stim.text if len(stim.text) < 80 else stim.text[:77] + "..."
-        sys.stderr.write(f"[recv] {stim.channel}: {preview}\n")
+        sys.stderr.write(f"[{_ts_utc()}] [recv] {stim.channel}: {preview}\n")
         sys.stderr.flush()
         try:
-            await router.route(stim)
+            outcome = await router.route(stim)
+            motor_result = getattr(outcome, "motor_result", None)
+            if motor_result is not None and hasattr(motor_result, "ok") and not bool(getattr(motor_result, "ok", True)):
+                detail = getattr(motor_result, "detail", "") or "unknown motor failure"
+                sys.stderr.write(f"[{_ts_utc()}] [send-error] {stim.channel}: {detail}\n")
+                sys.stderr.flush()
+            intent = getattr(outcome, "intent", None)
+            if intent is not None and getattr(intent.action, "kind", "") == "reply":
+                reply_text = str(intent.action.payload.get("text", "")).strip()
+                if not reply_text:
+                    sys.stderr.write(f"[{_ts_utc()}] [reply-empty] {stim.channel}: cortex returned empty reply text\n")
+                    sys.stderr.flush()
         except Exception:
             logger.exception("router crashed on stimulus from %s; continuing", stim.channel)
 

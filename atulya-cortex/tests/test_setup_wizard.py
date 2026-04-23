@@ -164,7 +164,8 @@ class TestRunPersona:
 class TestRunBank:
     def test_no_token_path(self, home):
         prompter = ScriptedPrompter(
-            answers=["my-bank", "http://localhost:8000"],
+            answers=["my-bank", "http://localhost:8888"],
+            choices=["api"],
             yes_nos=[False],
         )
         wizard = SetupWizard(home, prompter, probe_fn=_mock_probe())
@@ -172,11 +173,13 @@ class TestRunBank:
         assert result.ok
         cfg = config_module.load(home)
         assert cfg.memory.bank_id == "my-bank"
+        assert cfg.memory.peer_banks_backend == "api"
         assert result.secrets_recorded == []
 
     def test_with_token_path(self, home):
         prompter = ScriptedPrompter(
             answers=["my-bank", "http://api.local:8000", "ATULYA_API_KEY"],
+            choices=["embedded"],
             yes_nos=[True],
             secrets=["secret-token"],
         )
@@ -301,12 +304,12 @@ class TestRunAll:
         # home  -> 0 prompts
         # model -> 1 choice, 2 answers (lm_studio base_url, model)
         # persona -> 4 answers (operator, brain, voice, traits) — no overwrite prompt because persona file does not exist yet
-        # bank -> 2 answers (bank_id, api_url), 1 yes_no (no token)
+        # bank -> 2 answers (bank_id, api_url), 1 choice (backend), 1 yes_no (no token)
         # skills -> 0 prompts
         # telegram -> 1 yes_no (disable)
         # whatsapp -> 1 yes_no (disable)
         prompter = ScriptedPrompter(
-            choices=["lm_studio"],
+            choices=["lm_studio", "embedded"],
             answers=[
                 "http://localhost:1234/v1",
                 "google/gemma-3-4b",
@@ -315,7 +318,7 @@ class TestRunAll:
                 "warm but terse",
                 "curious, practical, honest",
                 "atulya-cortex",
-                "http://localhost:8000",
+                "http://localhost:8888",
             ],
             yes_nos=[False, False, False],
         )

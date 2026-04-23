@@ -94,6 +94,8 @@ class TestCortexHome:
         # caches & whatsapp session stay shared regardless of profile
         assert home.llm_cache_dir == tmp_path / "cache" / "llm"
         assert home.whatsapp_session_dir == tmp_path / "whatsapp" / "session"
+        assert home.whatsapp_mental_models_dir == tmp_path / "whatsapp" / "mental-models"
+        assert home.whatsapp_memory_raw_dir == tmp_path / "whatsapp" / "memory-raw"
         assert home.dashboard_lock == tmp_path / "dashboard.lock"
 
     def test_bootstrap_creates_all_dirs_idempotently(self, tmp_path):
@@ -109,6 +111,8 @@ class TestCortexHome:
             tmp_path / "cache" / "llm",
             tmp_path / "cache" / "embedding",
             tmp_path / "whatsapp" / "session",
+            tmp_path / "whatsapp" / "mental-models",
+            tmp_path / "whatsapp" / "memory-raw",
             tmp_path / "logs",
             tmp_path / "profiles",
         ):

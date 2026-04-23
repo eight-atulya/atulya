@@ -362,3 +362,81 @@ class TestWhatsAppStart:
         assert env is not None
         assert env.get("CORTEX_WA_AUTH_DIR", "").endswith("whatsapp/session")
         assert constructor_calls[0]["stderr_sink"] is not None
+
+    def test_start_retries_when_cortex_returns_empty_reply(self, home, monkeypatch):
+        delivered: list[tuple[str, str]] = []
+
+        class FakeBackend:
+            def __init__(self, *, bridge_command, bridge_url, cwd=None, env=None, stderr_sink=None):
+                self._sink = None
+                self._fed = False
+
+            async def start(self, sink):
+                self._sink = sink
+
+                async def _push():
+                    await asyncio.sleep(0)
+                    if not self._fed and self._sink:
+                        self._fed = True
+                        from sensors.whatsapp import WhatsAppEar
+
+                        await self._sink(
+                            Stimulus(
+                                channel=WhatsAppEar.channel_for_jid("111@s.whatsapp.net"),
+                                sender="111@s.whatsapp.net",
+                                text="test self-heal",
+                                raw={"from": "111@s.whatsapp.net", "body": "test self-heal"},
+                            )
+                        )
+
+                asyncio.create_task(_push())
+
+            async def stop(self):
+                self._sink = None
+
+            async def send(self, jid, text):
+                delivered.append((jid, text))
+
+        class FakeCortex:
+            def __init__(self):
+                self.calls = 0
+
+            async def reflect(self, stim, *, reflex, peer_key=None):
+                self.calls += 1
+                if self.calls == 1:
+                    from cortex.bus import Intent
+
+                    return Intent(action=Action(kind="reply", payload={"text": ""}), channel=stim.channel, sender=stim.sender)
+                from cortex.bus import Intent
+
+                return Intent(action=Action(kind="reply", payload={"text": "recovered reply"}), channel=stim.channel, sender=stim.sender)
+
+        fake_cortex = FakeCortex()
+        monkeypatch.setattr(wa_module, "_node_available", lambda: True)
+
+        async def short_pump(ear, router):
+            async for stim in ear.perceive():
+                await router.route(stim)
+                return
+
+        monkeypatch.setattr(wa_module, "_pump_stimuli", short_pump)
+
+        with (
+            patch("sensors.whatsapp.BaileysBackend", FakeBackend),
+            patch("cortex._runtime.build_cortex_from_config", lambda *args, **kwargs: fake_cortex),
+        ):
+            rc = cli_main(
+                [
+                    "whatsapp",
+                    "--home",
+                    str(home.root),
+                    "start",
+                    "--default-allow",
+                    "--echo",
+                    "--bridge-cmd",
+                    "node /tmp/fake.js",
+                ]
+            )
+        assert rc == 0
+        assert delivered == [("111@s.whatsapp.net", "recovered reply")]
+        assert fake_cortex.calls == 2

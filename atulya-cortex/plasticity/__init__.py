@@ -32,6 +32,17 @@ that produces it is a `Compiler` or a `TextGradient`.
 from __future__ import annotations
 
 from plasticity.compiler import BootstrapReport, Compiler
+from plasticity.attention_network import (
+    AttentionDecision,
+    AttentionEntity,
+    AttentionWeights,
+    hash_binary_with_brain_metadata,
+    persist_ip_as_binary,
+    ping_local_model,
+    request_structured_response,
+    route_entities,
+    score_entity,
+)
 from plasticity.engine import (
     LanguageEngine,
     build_dspy_lm,
@@ -54,6 +65,9 @@ from plasticity.store import load_compiled, save_compiled
 __all__ = [
     "BootstrapReport",
     "Compiler",
+    "AttentionDecision",
+    "AttentionEntity",
+    "AttentionWeights",
     "Demo",
     "EvalReport",
     "Example",
@@ -65,11 +79,17 @@ __all__ = [
     "TextGradient",
     "build_dspy_lm",
     "build_textgrad_engine",
+    "hash_binary_with_brain_metadata",
     "contains",
     "evaluate",
     "exact_match",
     "llm_judge",
     "load_compiled",
+    "persist_ip_as_binary",
+    "ping_local_model",
     "regex_match",
+    "request_structured_response",
+    "route_entities",
     "save_compiled",
+    "score_entity",
 ]

@@ -20,6 +20,7 @@ Naming voice: `Cortex.reflect` is the load-bearing verb.
 from __future__ import annotations
 
 import re
+from datetime import datetime, timezone
 from typing import Any, Awaitable, Callable, Sequence
 
 from cortex.affect import Affect, score_text
@@ -38,7 +39,9 @@ from cortex.episodes import EpisodeStore, render_episode_block
 from cortex.peer_banks import peer_bank_id
 from cortex.peer_memory import PeerMemoryBridge
 from cortex.personality import Personality
+from cortex.plasticity_prompt_memory import PlasticityPromptMemory
 from cortex.semantic_facts import FactStore
+from cortex.self_healing import SelfHealingEngine
 from cortex.skills import Skills, render_skills_block
 from cortex.tool_protocol import (
     ToolCall,
@@ -122,6 +125,8 @@ class Cortex:
         peer_memory: PeerMemoryBridge | None = None,
         cortex_profile: str = "default",
         peer_bank_channels: frozenset[str] | None = None,
+        self_healing: SelfHealingEngine | None = None,
+        plasticity: PlasticityPromptMemory | None = None,
     ) -> None:
         self.name = name
         self._language = language
@@ -184,6 +189,8 @@ class Cortex:
         self._peer_memory = peer_memory
         self._cortex_profile = (cortex_profile or "default").strip() or "default"
         self._peer_bank_channels = peer_bank_channels or frozenset()
+        self._self_healing = self_healing
+        self._plasticity = plasticity
 
     @property
     def has_language(self) -> bool:
@@ -219,6 +226,7 @@ class Cortex:
 
         # Per-peer atulya-embed bank (optional): stable id from cortex profile + peer.
         memory_bank_id: str | None = None
+        bank_mental_model_prompt = ""
         if (
             peer_key
             and self._peer_memory is not None
@@ -227,6 +235,11 @@ class Cortex:
         ):
             memory_bank_id = peer_bank_id(self._cortex_profile, peer_key)
             await self._peer_memory.ensure_bank(memory_bank_id)
+            bank_mental_model_prompt = await self._peer_memory.bank_mental_model_prompt(
+                memory_bank_id,
+                peer_key=peer_key,
+                channel_root=_channel_root(stimulus.channel),
+            )
 
         # Working memory: per (channel, peer) JSONL transcript.
         conv = None
@@ -248,6 +261,7 @@ class Cortex:
                 thought,
                 history=history,
                 peer_key=peer_key,
+                bank_mental_model_prompt=bank_mental_model_prompt,
             )
         else:
             reply_text = await self._think(
@@ -255,8 +269,23 @@ class Cortex:
                 sandboxed=sandboxed,
                 history=history,
                 peer_key=peer_key,
+                bank_mental_model_prompt=bank_mental_model_prompt,
             )
             deliberation_log = []
+
+        if self._self_healing is not None:
+            healed = await self._self_healing.heal_reply(
+                language=self._language,
+                stimulus_text=stimulus.text or "",
+                draft_reply=reply_text,
+                provider=self._provider,
+                model=self._model,
+                temperature=self._temperature,
+                max_tokens=self._max_tokens,
+                channel=stimulus.channel,
+                peer_key=peer_key,
+            )
+            reply_text = healed.text
 
         # Persist *after* the LLM call so a partial failure (timeout,
         # disconnect) doesn't leave us with a one-sided history that
@@ -321,6 +350,29 @@ class Cortex:
                 # call reflect() via asyncio.run). Skip silently.
                 pass
 
+        if self._plasticity is not None and (user_text or reply_text):
+            try:
+                self._plasticity.record_turn(peer_key=peer_key, user_text=user_text, assistant_text=reply_text)
+            except Exception:
+                pass
+            if self._plasticity.distill_enabled and self._language is not None:
+                try:
+                    import asyncio as _asyncio
+
+                    _asyncio.create_task(
+                        self._plasticity.distill_if_due(
+                            language=self._language,
+                            provider=self._provider,
+                            model=self._model,
+                            temperature=self._temperature,
+                            max_tokens=self._max_tokens,
+                            peer_key=peer_key,
+                        ),
+                        name=f"cortex-plasticity-distill-{_channel_root(stimulus.channel)}",
+                    )
+                except RuntimeError:
+                    pass
+
         # Vector substrate: retain this turn into the peer's bank (async).
         if self._peer_memory is not None and memory_bank_id and (user_text or reply_text):
             try:
@@ -382,12 +434,14 @@ class Cortex:
         sandboxed: bool,
         history: list[Any] | None = None,
         peer_key: str | None = None,
+        bank_mental_model_prompt: str = "",
     ) -> str:
         messages = self._build_messages(
             thought,
             sandboxed=sandboxed,
             history=history or [],
             peer_key=peer_key,
+            bank_mental_model_prompt=bank_mental_model_prompt,
         )
         utt: Utterance = await self._language.think(  # type: ignore[union-attr]
             messages,
@@ -404,6 +458,7 @@ class Cortex:
         *,
         history: list[Any] | None,
         peer_key: str | None,
+        bank_mental_model_prompt: str = "",
     ) -> tuple[str, list[dict[str, Any]]]:
         """Closed-loop deliberation arc — think, act, observe, repeat.
 
@@ -424,6 +479,7 @@ class Cortex:
             sandboxed=False,
             history=history or [],
             peer_key=peer_key,
+            bank_mental_model_prompt=bank_mental_model_prompt,
             include_tools=True,
         )
         log: list[dict[str, Any]] = []
@@ -532,10 +588,21 @@ class Cortex:
         sandboxed: bool,
         history: list[Any] | None = None,
         peer_key: str | None = None,
+        bank_mental_model_prompt: str = "",
         include_tools: bool = False,
     ) -> list[dict[str, Any]]:
         system_parts: list[str] = []
+        if bank_mental_model_prompt:
+            system_parts.append(bank_mental_model_prompt)
         system_parts.append(thought.persona or self._personality.system_prompt_block())
+        if self._plasticity is None or self._plasticity.time_context_enabled:
+            time_note = self._time_context_note(thought.stimulus)
+            if time_note:
+                system_parts.append(time_note)
+        if self._plasticity is not None:
+            adaptive = self._plasticity.prompt_block(peer_key=peer_key)
+            if adaptive:
+                system_parts.append(adaptive)
 
         # Per-peer identity hint: persona files almost always anchor on
         # "the operator" (the human running the brain locally). When the
@@ -617,6 +684,20 @@ class Cortex:
             f"({peer_key}). They are NOT {self._operator_label}. Do not assume their "
             "name, location, or relationship to you unless they tell you in this "
             "conversation."
+        )
+
+    def _time_context_note(self, stimulus: Stimulus) -> str:
+        now = datetime.now(timezone.utc)
+        received = stimulus.received_at
+        if received.tzinfo is None:
+            received = received.replace(tzinfo=timezone.utc)
+        delta_s = max(0.0, (now - received).total_seconds())
+        return (
+            "Time context:\n"
+            f"- now_utc: {now.isoformat()}\n"
+            f"- weekday_utc: {now.strftime('%A')}\n"
+            f"- message_received_utc: {received.isoformat()}\n"
+            f"- receive_to_reflect_seconds: {delta_s:.3f}"
         )
 
     def _echo_intent(self, stimulus: Stimulus) -> Intent:

@@ -55,6 +55,7 @@ target/
 
 # Temp files
 .tmp/
+.tmp_attention_network
 
 
 
