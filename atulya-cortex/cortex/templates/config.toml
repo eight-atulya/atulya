@@ -47,6 +47,10 @@ peer_banks_enabled = true
 peer_banks_channels = ["whatsapp", "telegram"]
 # Optional: atulya-embed daemon profile name. Empty = same as cortex profile.
 embed_profile = ""
+# Peer-bank backend:
+# - "embedded": use AtulyaEmbedded daemon/profile (often :8984)
+# - "api": use memory.api_url directly (often :8888; visible in default UI)
+peer_banks_backend = "embedded"
 # atulya-api endpoint (atulya-embed daemon). Leave default for the local stack.
 api_url = "http://localhost:8888"
 # Env var that holds the atulya-api auth token, if your deployment requires one.
@@ -152,3 +156,42 @@ web_fetch_enabled = true
 web_fetch_timeout_s = 30.0
 web_fetch_max_bytes = 2000000
 fs_write_enabled = true
+
+[self_healing]
+# Global reply self-healing for all channels (TUI, WhatsApp, Telegram).
+# Fast path is deterministic checks; optional LLM judge runs only on faults.
+enabled = true
+# Number of repair attempts after a bad draft is detected.
+max_retries = 1
+# Replies below this length (for non-trivial user messages) are flagged.
+min_reply_chars = 8
+# Use LLM judge+repair on faults; if false, fallback_text is sent directly.
+judge_enabled = true
+# Optional override for judge provider/model. Empty = use primary model config.
+judge_provider = ""
+judge_model = ""
+# Last-resort message when repair fails or judge is disabled.
+fallback_text = "I hit a response glitch. Please retry that once."
+# Write JSONL telemetry in logs/self-healing.jsonl + structured logger events.
+telemetry_enabled = true
+
+[plasticity]
+# Adaptive prompt memory for brain growth:
+# learns high-signal guidance from turns and re-injects it into prompts.
+enabled = true
+# Learn and inject guidance specific to each peer/channel identity.
+per_user_enabled = true
+# Learn and inject guidance that applies across peers (system-wide).
+system_enabled = true
+# Max learned directives injected per scope.
+max_directives = 6
+# Inject explicit temporal context in prompts on every reflection.
+time_context_enabled = true
+# Distill learned directives into compact "prompt genomes" with LLM judge.
+distill_enabled = true
+# Minimum new directive updates before a distillation run is considered.
+distill_min_updates = 5
+# Minimum seconds between distillation runs for the same scope.
+distill_cooldown_s = 300.0
+# Keep this many genome versions per scope for rollback.
+distill_max_versions = 16

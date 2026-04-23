@@ -455,7 +455,12 @@ class SetupWizard:
         )
         cfg.memory.api_url = self.prompter.ask(
             "atulya-api endpoint",
-            default=cfg.memory.api_url or "http://localhost:8000",
+            default=cfg.memory.api_url or "http://localhost:8888",
+        )
+        cfg.memory.peer_banks_backend = self.prompter.ask_choice(
+            "Peer-bank backend",
+            ["embedded", "api"],
+            default_index=0 if (cfg.memory.peer_banks_backend or "embedded") == "embedded" else 1,
         )
         if self.prompter.ask_yes_no("Does your atulya-api require an auth token?", default=False):
             key_env = self.prompter.ask(

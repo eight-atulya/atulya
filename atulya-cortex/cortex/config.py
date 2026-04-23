@@ -79,7 +79,7 @@ class ModelConfig(_Section):
 
 class MemoryConfig(_Section):
     bank_id: str = "atulya-cortex"
-    api_url: str = "http://localhost:8000"
+    api_url: str = "http://localhost:8888"
     api_key_env: str = "ATULYA_API_KEY"
     # When true, each remote peer gets a dedicated atulya-embed bank id
     # ``cortex_<profile>_<peer>`` (see ``cortex.peer_banks.peer_bank_id``).
@@ -90,6 +90,10 @@ class MemoryConfig(_Section):
     peer_banks_channels: list[str] = Field(default_factory=lambda: ["whatsapp", "telegram"])
     # atulya-embed daemon profile name. Empty uses the active cortex profile name.
     embed_profile: str = ""
+    # Backend for per-peer banks:
+    # - embedded: use AtulyaEmbedded daemon/profile (often :8984)
+    # - api: use configured atulya-api URL (often :8888, aligned with UI)
+    peer_banks_backend: str = "embedded"
     recall_top_k: int = Field(default=4, ge=1, le=64)
     recall_kinds: list[str] = Field(default_factory=lambda: ["episodic", "semantic"])
     # Working memory bounds. These guard small local models from blowing
@@ -130,6 +134,14 @@ class MemoryConfig(_Section):
             if s and s not in out:
                 out.append(s)
         return out
+
+    @field_validator("peer_banks_backend")
+    @classmethod
+    def _normalize_peer_banks_backend(cls, value: str) -> str:
+        backend = (value or "").strip().lower()
+        if backend not in {"embedded", "api"}:
+            raise ValueError(f"peer_banks_backend must be embedded|api, got {value!r}")
+        return backend
 
 
 class TelegramConfig(_Section):
@@ -220,6 +232,29 @@ class ToolsConfig(_Section):
     fs_write_enabled: bool = True
 
 
+class SelfHealingConfig(_Section):
+    enabled: bool = True
+    max_retries: int = Field(default=1, ge=0, le=5)
+    min_reply_chars: int = Field(default=8, ge=0, le=256)
+    judge_enabled: bool = True
+    judge_provider: str = ""
+    judge_model: str = ""
+    fallback_text: str = "I hit a response glitch. Please retry that once."
+    telemetry_enabled: bool = True
+
+
+class PlasticityConfig(_Section):
+    enabled: bool = True
+    per_user_enabled: bool = True
+    system_enabled: bool = True
+    max_directives: int = Field(default=6, ge=1, le=64)
+    time_context_enabled: bool = True
+    distill_enabled: bool = True
+    distill_min_updates: int = Field(default=5, ge=1, le=500)
+    distill_cooldown_s: float = Field(default=300.0, ge=1.0, le=86400.0)
+    distill_max_versions: int = Field(default=16, ge=1, le=256)
+
+
 class CortexConfig(BaseModel):
     """Top-level config. Every section is required to be present after merge
     with template defaults; that guarantees `cfg.model.provider` is always
@@ -238,6 +273,8 @@ class CortexConfig(BaseModel):
     dream: DreamConfig = Field(default_factory=DreamConfig)
     logging: LoggingConfig = Field(default_factory=LoggingConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
+    self_healing: SelfHealingConfig = Field(default_factory=SelfHealingConfig)
+    plasticity: PlasticityConfig = Field(default_factory=PlasticityConfig)
 
 
 # ---------------------------------------------------------------------------
@@ -418,6 +455,8 @@ __all__ = [
     "GeneralConfig",
     "LoggingConfig",
     "MemoryConfig",
+    "PlasticityConfig",
+    "SelfHealingConfig",
     "ModelConfig",
     "SkillsConfig",
     "TelegramConfig",

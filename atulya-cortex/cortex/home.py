@@ -241,6 +241,14 @@ class CortexHome:
         return self.whatsapp_dir / "session"
 
     @property
+    def whatsapp_mental_models_dir(self) -> Path:
+        return self.whatsapp_dir / "mental-models"
+
+    @property
+    def whatsapp_memory_raw_dir(self) -> Path:
+        return self.whatsapp_dir / "memory-raw"
+
+    @property
     def logs_dir(self) -> Path:
         return self.root / "logs"
 
@@ -285,6 +293,8 @@ class CortexHome:
             self.embedding_cache_dir,
             self.whatsapp_dir,
             self.whatsapp_session_dir,
+            self.whatsapp_mental_models_dir,
+            self.whatsapp_memory_raw_dir,
             self.logs_dir,
             self.profiles_root,
         )

@@ -28,6 +28,9 @@ from cortex import (
     Stimulus,
     Utterance,
 )
+from cortex.peer_banks import peer_bank_id
+from cortex.plasticity_prompt_memory import PlasticityPromptMemory, PlasticityPromptSettings
+from cortex.self_healing import SelfHealingEngine, SelfHealingSettings
 
 # ---------------------------------------------------------------------------
 # Personality
@@ -273,6 +276,38 @@ class _StubLanguage:
         )
 
 
+class _SequenceLanguage:
+    """Returns a sequence of canned outputs across think() calls."""
+
+    def __init__(self, outputs: list[str]) -> None:
+        self._outputs = list(outputs)
+        self.calls = 0
+
+    async def think(self, messages: list[dict[str, Any]], **kwargs: Any) -> Utterance:
+        self.calls += 1
+        text = self._outputs.pop(0) if self._outputs else ""
+        return Utterance(
+            text=text,
+            provider="stub",
+            model="stub-model",
+            elapsed_ms=1.0,
+            usage={"total_tokens": 0},
+            raw={},
+        )
+
+
+class _StubGenomeLanguage:
+    async def think(self, messages: list[dict[str, Any]], **kwargs: Any) -> Utterance:
+        return Utterance(
+            text='{"genome":"- Prioritize concise, grounded replies\\n- State execution limits clearly\\n- Ask clarifying questions only when needed"}',
+            provider="stub",
+            model="stub-model",
+            elapsed_ms=1.0,
+            usage={"total_tokens": 0},
+            raw={},
+        )
+
+
 class TestCortexRealLoop:
     @pytest.mark.asyncio
     async def test_echo_mode_when_no_language(self) -> None:
@@ -356,6 +391,177 @@ class TestCortexRealLoop:
         cortex = Cortex(language=lang)
         text = await cortex.reflect_text(Stimulus(channel="tui:a", sender="a", text="x"))
         assert text == "just text"
+
+    @pytest.mark.asyncio
+    async def test_peer_bank_mental_model_is_injected_for_remote_peer(self) -> None:
+        class _StubPeerMemory:
+            def __init__(self) -> None:
+                self.ensure_calls: list[str] = []
+                self.prompt_calls: list[str] = []
+
+            async def ensure_bank(self, bank_id: str) -> None:
+                self.ensure_calls.append(bank_id)
+
+            async def bank_mental_model_prompt(self, bank_id: str, **_kwargs: Any) -> str:
+                self.prompt_calls.append(bank_id)
+                return "Peer bank mental model (primary guidance for this peer):\n- style: concise and practical"
+
+            async def retain_turn(self, *_args: Any, **_kwargs: Any) -> None:
+                return None
+
+        lang = _StubLanguage(reply="model-reply")
+        peer_memory = _StubPeerMemory()
+        cortex = Cortex(
+            language=lang,
+            peer_memory=peer_memory,  # type: ignore[arg-type]
+            cortex_profile="default",
+            peer_bank_channels=frozenset({"whatsapp"}),
+        )
+        peer = "25550001111@s.whatsapp.net"
+        await cortex.reflect(
+            Stimulus(channel="whatsapp:25550001111@s.whatsapp.net", sender=peer, text="hi"),
+            peer_key=peer,
+        )
+
+        expected_bank = peer_bank_id("default", peer)
+        assert peer_memory.ensure_calls == [expected_bank]
+        assert peer_memory.prompt_calls == [expected_bank]
+        assert lang.last_messages is not None
+        sys_msg = lang.last_messages[0]["content"]
+        assert "Peer bank mental model (primary guidance for this peer):" in sys_msg
+        assert "concise and practical" in sys_msg
+
+    @pytest.mark.asyncio
+    async def test_global_self_healing_repairs_empty_reply_with_judge(self, tmp_path: Path) -> None:
+        lang = _SequenceLanguage(
+            [
+                "",
+                '{"verdict":"repair","repaired_reply":"Recovered reply from self-heal","confidence":0.93,"notes":"ok"}',
+            ]
+        )
+        heal = SelfHealingEngine(
+            SelfHealingSettings(enabled=True, max_retries=1, judge_enabled=True),
+            telemetry_file=tmp_path / "self-healing.jsonl",
+        )
+        cortex = Cortex(language=lang, self_healing=heal)
+        intent = await cortex.reflect(Stimulus(channel="whatsapp:a", sender="a", text="hello?"))
+        assert intent.action.payload["text"] == "Recovered reply from self-heal"
+        assert lang.calls == 2
+        lines = (tmp_path / "self-healing.jsonl").read_text(encoding="utf-8").strip().splitlines()
+        assert lines
+        assert "healed" in lines[-1]
+
+    @pytest.mark.asyncio
+    async def test_global_self_healing_fallback_when_judge_disabled(self) -> None:
+        lang = _SequenceLanguage([""])
+        heal = SelfHealingEngine(
+            SelfHealingSettings(
+                enabled=True,
+                max_retries=1,
+                judge_enabled=False,
+                fallback_text="fallback-from-healer",
+            )
+        )
+        cortex = Cortex(language=lang, self_healing=heal)
+        intent = await cortex.reflect(Stimulus(channel="whatsapp:a", sender="a", text="hello?"))
+        assert intent.action.payload["text"] == "fallback-from-healer"
+        assert lang.calls == 1
+
+    @pytest.mark.asyncio
+    async def test_global_self_healing_repairs_tool_payload_leak_by_intent(self) -> None:
+        lang = _SequenceLanguage(['{"command":"nvidia-smi"}'])
+        heal = SelfHealingEngine(SelfHealingSettings(enabled=True, judge_enabled=False))
+        cortex = Cortex(language=lang, self_healing=heal)
+        intent = await cortex.reflect(
+            Stimulus(
+                channel="whatsapp:25550001111@s.whatsapp.net",
+                sender="25550001111@s.whatsapp.net",
+                text="can you run nvidia-smi and check gpu temp?",
+            )
+        )
+        text = str(intent.action.payload["text"]).lower()
+        assert "execute" in text
+        assert "cannot run tools directly on whatsapp" in text
+        assert lang.calls == 1
+
+    @pytest.mark.asyncio
+    async def test_plasticity_learns_guidance_and_injects_time_context(self, tmp_path: Path) -> None:
+        mem = PlasticityPromptMemory(
+            tmp_path / "prompt-memory.json",
+            PlasticityPromptSettings(enabled=True, per_user_enabled=True, system_enabled=True, time_context_enabled=True),
+        )
+        lang = _StubLanguage(reply="ok")
+        cortex = Cortex(language=lang, plasticity=mem)
+        peer = "25550001111@s.whatsapp.net"
+        await cortex.reflect(
+            Stimulus(channel=f"whatsapp:{peer}", sender=peer, text="please be concise and no emoji"),
+            peer_key=peer,
+        )
+        await cortex.reflect(
+            Stimulus(channel=f"whatsapp:{peer}", sender=peer, text="hi again"),
+            peer_key=peer,
+        )
+        assert lang.last_messages is not None
+        sys_msg = str(lang.last_messages[0]["content"])
+        assert "Adaptive peer guidance:" in sys_msg
+        assert "Keep replies concise." in sys_msg
+        assert "Avoid emojis unless asked." in sys_msg
+        assert "Time context:" in sys_msg
+        assert "now_utc:" in sys_msg
+
+    @pytest.mark.asyncio
+    async def test_plasticity_distills_prompt_genome_and_supports_rollback(self, tmp_path: Path) -> None:
+        mem = PlasticityPromptMemory(
+            tmp_path / "prompt-memory.json",
+            PlasticityPromptSettings(
+                enabled=True,
+                per_user_enabled=True,
+                system_enabled=True,
+                distill_enabled=True,
+                distill_min_updates=1,
+                distill_cooldown_s=0.0,
+                distill_max_versions=4,
+            ),
+        )
+        peer = "25550001111@s.whatsapp.net"
+        mem.record_turn(peer_key=peer, user_text="be concise and no emoji", assistant_text="ok")
+        await mem.distill_if_due(
+            language=_StubGenomeLanguage(),
+            provider=None,
+            model=None,
+            temperature=0.1,
+            max_tokens=128,
+            peer_key=peer,
+        )
+        block = mem.prompt_block(peer_key=peer)
+        assert "System prompt genome:" in block
+        assert "Peer prompt genome:" in block
+        assert "Prioritize concise, grounded replies" in block
+
+        # Distill a second time with a modified language output to create version 2.
+        class _StubGenomeLanguageV2:
+            async def think(self, messages: list[dict[str, Any]], **kwargs: Any) -> Utterance:
+                return Utterance(
+                    text='{"genome":"- Keep answers concise\\n- Prefer direct next actions"}',
+                    provider="stub",
+                    model="stub-model",
+                    elapsed_ms=1.0,
+                    usage={"total_tokens": 0},
+                    raw={},
+                )
+
+        mem.record_turn(peer_key=peer, user_text="be concise", assistant_text="ok")
+        await mem.distill_if_due(
+            language=_StubGenomeLanguageV2(),
+            provider=None,
+            model=None,
+            temperature=0.1,
+            max_tokens=128,
+            peer_key=peer,
+        )
+        assert "Prefer direct next actions" in mem.prompt_block(peer_key=peer)
+        assert mem.rollback(peer_key=peer) is True
+        assert "Prioritize concise, grounded replies" in mem.prompt_block(peer_key=peer)
 
 
 # ---------------------------------------------------------------------------
