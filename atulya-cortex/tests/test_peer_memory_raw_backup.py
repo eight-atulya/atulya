@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from cortex.bus import Recollection, Stimulus
-from cortex.peer_memory import PeerMemoryBridge
+from cortex.peer_memory import PeerMemoryBridge, _build_structured_memory_chunk
 
 
 class _Embedded:
@@ -51,4 +51,24 @@ async def test_recall_and_retain_write_raw_backup(tmp_path: Path) -> None:
     events = [json.loads(line)["event"] for line in body]
     assert "recall" in events
     assert "retain" in events
+
+    retain_records = [json.loads(line) for line in body if json.loads(line).get("event") == "retain"]
+    assert retain_records
+    payload = retain_records[-1]["payload"]
+    assert payload.get("schema_version") == 2
+    assert "structured_chunk" in payload
+    assert "[intent]" in payload["structured_chunk"]["memory_chunk"]
+
+
+def test_structured_chunk_extracts_preference_signals() -> None:
+    stim = Stimulus(channel="whatsapp:test", sender="test", text="x")
+    out = _build_structured_memory_chunk(
+        stimulus=stim,
+        user="My preferred drink is black coffee with no sugar.",
+        assistant="Got it, I will remember your coffee preference.",
+    )
+    assert out["intent"] in {"fact_share", "statement"}
+    assert "drink:coffee" in out["signals"]
+    assert "preference" in out["signals"]
+    assert "[signals]" in out["memory_chunk"]
 

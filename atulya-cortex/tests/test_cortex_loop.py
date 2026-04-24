@@ -468,6 +468,33 @@ class TestCortexRealLoop:
         assert lang.calls == 1
 
     @pytest.mark.asyncio
+    async def test_self_heal_fallback_answers_preference_from_recollection(self) -> None:
+        async def recall(query: str, kind: str, bank: str | None = None):
+            return [
+                Recollection(
+                    kind=kind,
+                    text="Anurag prefers black coffee with no sugar every morning.",
+                    score=0.9,
+                    source="bank:test",
+                )
+            ]
+
+        lang = _SequenceLanguage([""])
+        heal = SelfHealingEngine(
+            SelfHealingSettings(
+                enabled=True,
+                max_retries=1,
+                judge_enabled=False,
+                fallback_text="fallback-from-healer",
+            )
+        )
+        cortex = Cortex(language=lang, self_healing=heal, recall=recall, recall_kinds=("episodic",))
+        intent = await cortex.reflect(Stimulus(channel="whatsapp:a", sender="a", text="What's my preferred drink?"))
+        text = str(intent.action.payload["text"]).lower()
+        assert "preferred drink is coffee" in text
+        assert "glitch" in text
+
+    @pytest.mark.asyncio
     async def test_global_self_healing_repairs_tool_payload_leak_by_intent(self) -> None:
         lang = _SequenceLanguage(['{"command":"nvidia-smi"}'])
         heal = SelfHealingEngine(SelfHealingSettings(enabled=True, judge_enabled=False))

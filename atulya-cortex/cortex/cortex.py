@@ -278,6 +278,7 @@ class Cortex:
                 language=self._language,
                 stimulus_text=stimulus.text or "",
                 draft_reply=reply_text,
+                recollections=[r.text for r in thought.recollections],
                 provider=self._provider,
                 model=self._model,
                 temperature=self._temperature,
