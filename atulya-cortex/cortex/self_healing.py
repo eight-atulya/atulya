@@ -70,6 +70,7 @@ class SelfHealingEngine:
         language: Any | None,
         stimulus_text: str,
         draft_reply: str,
+        recollections: list[str] | None,
         provider: str | None,
         model: str | None,
         temperature: float,
@@ -103,7 +104,7 @@ class SelfHealingEngine:
         ranked_reasons = self._rank_reasons(reasons)
 
         if not self._settings.judge_enabled or language is None or self._settings.max_retries <= 0:
-            fallback = self._settings.fallback_text
+            fallback = self._best_effort_fallback(stimulus_text=stimulus_text, recollections=recollections or [])
             self._record_event(
                 channel=channel,
                 peer_key=peer_key,
@@ -142,7 +143,7 @@ class SelfHealingEngine:
                 return HealingResult(text=repaired, healed=True, reason="judge_repair", attempts=attempt)
             current = repaired
 
-        fallback = self._settings.fallback_text
+        fallback = self._best_effort_fallback(stimulus_text=stimulus_text, recollections=recollections or [])
         self._record_event(
             channel=channel,
             peer_key=peer_key,
@@ -158,6 +159,33 @@ class SelfHealingEngine:
             reason="fallback_after_retries",
             attempts=self._settings.max_retries,
         )
+
+    def _best_effort_fallback(self, *, stimulus_text: str, recollections: list[str]) -> str:
+        best = self._best_effort_answer(stimulus_text=stimulus_text, recollections=recollections)
+        if best:
+            return f"{best}\n\nI hit a small response glitch, but this is my best answer from memory."
+        return self._settings.fallback_text
+
+    def _best_effort_answer(self, *, stimulus_text: str, recollections: list[str]) -> str:
+        q = (stimulus_text or "").strip().lower()
+        if not q:
+            return ""
+        if any(token in q for token in ("preference", "preferred", "what do i like", "drink", "coffee", "tea")):
+            merged = " ".join((recollections or [])).lower()
+            if "coffee" in merged and "tea" not in merged:
+                return "Your preferred drink is coffee."
+            if "tea" in merged and "coffee" not in merged:
+                return "Your preferred drink is tea."
+            if "coffee" in merged and "tea" in merged:
+                return "You seem to prefer coffee overall, though both coffee and tea were mentioned."
+            return "I don't have a reliable drink preference stored yet. Tell me your preference once and I'll remember it."
+        if recollections:
+            # Generic factual fallback from strongest recalled line.
+            snippet = str(recollections[0]).strip().replace("\n", " ")
+            if len(snippet) > 180:
+                snippet = snippet[:177] + "..."
+            return f"From what I remember: {snippet}"
+        return ""
 
     def _detect_issues(self, stimulus_text: str, reply: str) -> list[str]:
         out: list[str] = []

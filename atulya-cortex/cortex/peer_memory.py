@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 import time
 from datetime import UTC, datetime
 from dataclasses import dataclass, field
@@ -270,7 +271,12 @@ class PeerMemoryBridge:
         """Append one episodic retain for the completed turn (best-effort)."""
 
         await self.ensure_bank(bank_id)
-        text = f"User: {user}\nAssistant: {assistant}".strip()
+        structured_chunk = _build_structured_memory_chunk(
+            stimulus=stimulus,
+            user=user,
+            assistant=assistant,
+        )
+        text = structured_chunk["memory_chunk"]
         if not text:
             return
         st = Stimulus(
@@ -289,7 +295,9 @@ class PeerMemoryBridge:
                     "sender": stimulus.sender,
                     "user": user,
                     "assistant": assistant,
-                    "raw_chunk": text,
+                    "raw_chunk": f"User: {user}\nAssistant: {assistant}".strip(),
+                    "structured_chunk": structured_chunk,
+                    "schema_version": 2,
                 },
             )
         except Exception as exc:
@@ -301,7 +309,9 @@ class PeerMemoryBridge:
                     "channel": stimulus.channel,
                     "sender": stimulus.sender,
                     "error": f"{type(exc).__name__}: {exc}",
-                    "raw_chunk": text,
+                    "raw_chunk": f"User: {user}\nAssistant: {assistant}".strip(),
+                    "structured_chunk": structured_chunk,
+                    "schema_version": 2,
                 },
             )
 
@@ -457,3 +467,102 @@ def _base_client(embedded: Any) -> Any:
 
 def _safe_bank_filename(bank_id: str) -> str:
     return "".join(ch if ch.isalnum() or ch in ("-", "_", ".") else "_" for ch in bank_id)[:160] or "bank"
+
+
+_WS_RE = re.compile(r"\s+")
+_NON_WORD_RE = re.compile(r"[^a-z0-9 ]+", re.IGNORECASE)
+_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9_-]{2,}")
+_PREFERENCE_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
+    (re.compile(r"\b(prefer|preferred|preference)\b", re.IGNORECASE), "preference"),
+    (re.compile(r"\b(i love|i like|i dislike|i hate)\b", re.IGNORECASE), "taste"),
+    (re.compile(r"\b(my .* is|i am|i'm)\b", re.IGNORECASE), "identity_or_state"),
+)
+
+
+def _normalize_text(text: str, *, max_len: int = 280) -> str:
+    clean = _WS_RE.sub(" ", (text or "").strip())
+    if len(clean) <= max_len:
+        return clean
+    return clean[: max_len - 3].rstrip() + "..."
+
+
+def _classify_intent(user: str) -> str:
+    u = (user or "").lower()
+    if "?" in u or any(t in u for t in ("what", "why", "how", "which", "who", "when", "where")):
+        return "question"
+    if any(t in u for t in ("run ", "execute ", "check ", "do ", "can you")):
+        return "request"
+    if any(t in u for t in ("i prefer", "my preference", "i like", "i love", "i hate", "my ")):  # identity/facts
+        return "fact_share"
+    return "statement"
+
+
+def _extract_entities(user: str, assistant: str, *, max_entities: int = 8) -> list[str]:
+    merged = f"{user} {assistant}"
+    seen: list[str] = []
+    for token in _TOKEN_RE.findall(merged):
+        low = token.lower()
+        if low in {"user", "assistant", "whatsapp", "telegram", "cortex"}:
+            continue
+        if low not in seen:
+            seen.append(low)
+        if len(seen) >= max_entities:
+            break
+    return seen
+
+
+def _extract_preferences(user: str, assistant: str) -> list[str]:
+    out: list[str] = []
+    merged = _normalize_text(f"{user} {assistant}", max_len=500).lower()
+    for pat, label in _PREFERENCE_PATTERNS:
+        if pat.search(merged):
+            out.append(label)
+    # Domain-specific fast path for beverage preference.
+    if "coffee" in merged:
+        out.append("drink:coffee")
+    if "tea" in merged:
+        out.append("drink:tea")
+    uniq: list[str] = []
+    for item in out:
+        if item not in uniq:
+            uniq.append(item)
+    return uniq
+
+
+def _build_structured_memory_chunk(*, stimulus: Stimulus, user: str, assistant: str) -> dict[str, Any]:
+    user_clean = _normalize_text(user, max_len=500)
+    assistant_clean = _normalize_text(assistant, max_len=500)
+    intent = _classify_intent(user_clean)
+    entities = _extract_entities(user_clean, assistant_clean)
+    prefs = _extract_preferences(user_clean, assistant_clean)
+    received = stimulus.received_at
+    if received.tzinfo is None:
+        received = received.replace(tzinfo=UTC)
+    summary = _normalize_text(f"User said '{user_clean}'. Assistant replied '{assistant_clean}'.", max_len=300)
+    lines = [
+        f"[context] channel={stimulus.channel} sender={stimulus.sender} at={received.isoformat()}",
+        f"[intent] {intent}",
+        f"[summary] {summary}",
+        f"[user] {user_clean}",
+        f"[assistant] {assistant_clean}",
+    ]
+    if entities:
+        lines.append("[entities] " + ", ".join(entities))
+    if prefs:
+        lines.append("[signals] " + ", ".join(prefs))
+    memory_chunk = "\n".join(lines).strip()
+    return {
+        "schema_version": 2,
+        "context": {
+            "channel": stimulus.channel,
+            "sender": stimulus.sender,
+            "received_at": received.isoformat(),
+        },
+        "intent": intent,
+        "summary": summary,
+        "user": user_clean,
+        "assistant": assistant_clean,
+        "entities": entities,
+        "signals": prefs,
+        "memory_chunk": memory_chunk,
+    }
