@@ -1930,6 +1930,124 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/entity-intelligence": {
+      "get": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Get entity intelligence",
+        "description": "Return the latest bank-level entity intelligence snapshot, if computed.",
+        "operationId": "get_entity_intelligence",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityIntelligenceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/entity-intelligence/recompute": {
+      "post": {
+        "tags": [
+          "Entities"
+        ],
+        "summary": "Queue entity intelligence recompute",
+        "description": "Enqueue a background job to recompute bank-level entity intelligence.",
+        "operationId": "post_entity_intelligence_recompute",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EntityIntelligenceRecomputeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/entities/{entity_id}/regenerate": {
       "post": {
         "tags": [
@@ -12980,6 +13098,98 @@
         ],
         "title": "EntityInput",
         "description": "Entity to associate with retained content."
+      },
+      "EntityIntelligenceRecomputeResponse": {
+        "properties": {
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "default": "pending"
+          }
+        },
+        "type": "object",
+        "required": [
+          "operation_id"
+        ],
+        "title": "EntityIntelligenceRecomputeResponse",
+        "description": "Queued background entity intelligence recompute."
+      },
+      "EntityIntelligenceResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "computed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Computed At"
+          },
+          "entity_count": {
+            "type": "integer",
+            "title": "Entity Count"
+          },
+          "source_entity_count": {
+            "type": "integer",
+            "title": "Source Entity Count"
+          },
+          "entity_snapshot_hash": {
+            "type": "string",
+            "title": "Entity Snapshot Hash",
+            "default": ""
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "structured_content": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Structured Content",
+            "default": {}
+          },
+          "entity_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Entity Context",
+            "default": {}
+          },
+          "delta_metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Delta Metadata",
+            "default": {}
+          },
+          "llm_model": {
+            "type": "string",
+            "title": "Llm Model",
+            "default": ""
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "entity_count",
+          "source_entity_count",
+          "content"
+        ],
+        "title": "EntityIntelligenceResponse",
+        "description": "Latest bank-level entity intelligence snapshot."
       },
       "EntityListItem": {
         "properties": {

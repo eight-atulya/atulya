@@ -163,6 +163,7 @@ _PROTECTED_TABLES = frozenset(
         "anomaly_corrections",
         "pattern_library",
         "entity_trajectories",
+        "entity_intelligence",
     ]
 )
 
@@ -585,6 +586,10 @@ class MemoryEngine(MemoryEngineInterface):
         consolidation_llm_api_key: str | None = None,
         consolidation_llm_model: str | None = None,
         consolidation_llm_base_url: str | None = None,
+        entity_intelligence_llm_provider: str | None = None,
+        entity_intelligence_llm_api_key: str | None = None,
+        entity_intelligence_llm_model: str | None = None,
+        entity_intelligence_llm_base_url: str | None = None,
         embeddings: Embeddings | None = None,
         cross_encoder: CrossEncoderModel | None = None,
         query_analyzer: QueryAnalyzer | None = None,
@@ -624,6 +629,10 @@ class MemoryEngine(MemoryEngineInterface):
             consolidation_llm_api_key: API key for consolidation LLM. Falls back to memory_llm_api_key.
             consolidation_llm_model: Model for consolidation operations. Falls back to memory_llm_model.
             consolidation_llm_base_url: Base URL for consolidation LLM. Falls back to memory_llm_base_url.
+            entity_intelligence_llm_provider: LLM provider for bank-level entity intelligence. Falls back to retain/default LLM.
+            entity_intelligence_llm_api_key: API key for entity intelligence LLM. Falls back to retain/default API key.
+            entity_intelligence_llm_model: Model for entity intelligence. Falls back to retain/default model.
+            entity_intelligence_llm_base_url: Base URL for entity intelligence LLM. Falls back to retain/default base URL.
             embeddings: Embeddings implementation. If not provided, created from env vars.
             cross_encoder: Cross-encoder model. If not provided, created from env vars.
             query_analyzer: Query analyzer implementation. If not provided, uses DateparserQueryAnalyzer.
@@ -800,6 +809,47 @@ class MemoryEngine(MemoryEngineInterface):
             api_key=consolidation_api_key,
             base_url=consolidation_base_url,
             model=consolidation_model,
+            timeout=config.consolidation_llm_timeout,
+        )
+
+        # Entity intelligence LLM config - bank-wide synthesis can use a larger/slower local model.
+        intelligence_provider = (
+            entity_intelligence_llm_provider
+            or config.entity_intelligence_llm_provider
+            or retain_provider
+            or memory_llm_provider
+        )
+        intelligence_api_key = (
+            entity_intelligence_llm_api_key
+            or config.entity_intelligence_llm_api_key
+            or retain_api_key
+            or memory_llm_api_key
+        )
+        intelligence_model = (
+            entity_intelligence_llm_model or config.entity_intelligence_llm_model or retain_model or memory_llm_model
+        )
+        intelligence_base_url = (
+            entity_intelligence_llm_base_url
+            or config.entity_intelligence_llm_base_url
+            or retain_base_url
+            or memory_llm_base_url
+        )
+        if intelligence_base_url is None:
+            if intelligence_provider.lower() == "groq":
+                intelligence_base_url = "https://api.groq.com/openai/v1"
+            elif intelligence_provider.lower() == "ollama":
+                intelligence_base_url = "http://localhost:11434/v1"
+            elif intelligence_provider.lower() == "lmstudio":
+                intelligence_base_url = "http://localhost:1234/v1"
+            else:
+                intelligence_base_url = ""
+
+        self._entity_intelligence_llm_config = LLMConfig(
+            provider=intelligence_provider,
+            api_key=intelligence_api_key,
+            base_url=intelligence_base_url,
+            model=intelligence_model,
+            timeout=config.entity_intelligence_llm_timeout or config.retain_llm_timeout or config.llm_timeout,
         )
 
         # Initialize cross-encoder reranker (cached for performance)
@@ -4096,6 +4146,31 @@ class MemoryEngine(MemoryEngineInterface):
                     resolved_config=resolved,
                 )
 
+    async def _handle_entity_intelligence_recompute(self, task_dict: dict[str, Any]) -> None:
+        """Background recompute of the bank-level entity intelligence artifact."""
+        from atulya_api.engine.entity_trajectory.bank_intelligence import EntityIntelligenceService
+        from atulya_api.models import RequestContext
+
+        bank_id = task_dict.get("bank_id")
+        if not bank_id:
+            return
+
+        rc = RequestContext(internal=True)
+        resolved = await self._config_resolver.resolve_full_config(bank_id, rc)
+        if not getattr(resolved, "enable_entity_intelligence", False):
+            logger.debug("[ENTITY_INTELLIGENCE] skipped: feature disabled for bank=%s", bank_id)
+            return
+
+        llm = self._entity_intelligence_llm_config.with_config(resolved)
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await EntityIntelligenceService.compute_and_persist(
+                conn,
+                bank_id=bank_id,
+                llm_config=llm,
+                resolved_config=resolved,
+            )
+
     async def execute_task(self, task_dict: dict[str, Any]):
         """
         Execute a task by routing it to the appropriate handler.
@@ -4165,6 +4240,8 @@ class MemoryEngine(MemoryEngineInterface):
                 await self._handle_dream_generation(task_dict)
             elif task_type == "entity_trajectory_recompute":
                 await self._handle_entity_trajectory_recompute(task_dict)
+            elif task_type == "entity_intelligence_recompute":
+                await self._handle_entity_intelligence_recompute(task_dict)
             elif task_type == "webhook_delivery":
                 await self._handle_webhook_delivery(task_dict)
             else:
@@ -4340,6 +4417,100 @@ class MemoryEngine(MemoryEngineInterface):
             now,
         )
 
+    async def _enqueue_entity_intelligence_task(
+        self,
+        conn: asyncpg.Connection,
+        *,
+        bank_id: str,
+        unit_ids: list[str],
+        schema: str | None = None,
+    ) -> None:
+        """Queue bank-level entity intelligence when entity coverage changes enough."""
+        _ = schema
+        if not unit_ids:
+            return
+        from atulya_api.models import RequestContext
+
+        rc = RequestContext(internal=True)
+        resolved = await self._config_resolver.resolve_full_config(bank_id, rc)
+        if not getattr(resolved, "enable_entity_intelligence", False):
+            return
+
+        touched_count = int(
+            await conn.fetchval(
+                f"""
+                SELECT count(DISTINCT ue.entity_id)
+                FROM {fq_table("unit_entities")} ue
+                INNER JOIN {fq_table("memory_units")} mu ON mu.id = ue.unit_id
+                WHERE ue.unit_id = ANY($1::uuid[])
+                  AND mu.bank_id = $2
+                """,
+                unit_ids,
+                bank_id,
+            )
+            or 0
+        )
+        if touched_count <= 0:
+            return
+
+        source_count = int(
+            await conn.fetchval(f"SELECT count(*) FROM {fq_table('entities')} WHERE bank_id = $1", bank_id) or 0
+        )
+        min_entities = int(getattr(resolved, "entity_intelligence_min_entities", 8))
+        if source_count < min_entities:
+            return
+
+        previous_source_count = await conn.fetchval(
+            f"SELECT source_entity_count FROM {fq_table('entity_intelligence')} WHERE bank_id = $1",
+            bank_id,
+        )
+        threshold = int(getattr(resolved, "entity_intelligence_trigger_entity_delta", 8))
+        should_enqueue = previous_source_count is None or (source_count - int(previous_source_count or 0)) >= threshold
+        should_enqueue = should_enqueue or touched_count >= threshold
+        if not should_enqueue:
+            return
+
+        existing = await conn.fetchval(
+            f"""
+            SELECT 1
+            FROM {fq_table("async_operations")}
+            WHERE bank_id = $1
+              AND operation_type = 'entity_intelligence_recompute'
+              AND status IN ('pending', 'running')
+            LIMIT 1
+            """,
+            bank_id,
+        )
+        if existing:
+            return
+
+        op_id = uuid.uuid4()
+        payload = json.dumps(
+            {
+                "type": "entity_intelligence_recompute",
+                "operation_id": str(op_id),
+                "bank_id": bank_id,
+                "trigger": {
+                    "source_entity_count": source_count,
+                    "previous_source_entity_count": previous_source_count,
+                    "touched_entity_count": touched_count,
+                    "threshold": threshold,
+                },
+            }
+        )
+        now = datetime.now(UTC)
+        await conn.execute(
+            f"""
+            INSERT INTO {fq_table("async_operations")}
+              (operation_id, bank_id, operation_type, status, task_payload, result_metadata, created_at, updated_at)
+            VALUES ($1, $2, 'entity_intelligence_recompute', 'pending', $3::jsonb, '{{}}'::jsonb, $4, $4)
+            """,
+            op_id,
+            bank_id,
+            payload,
+            now,
+        )
+
     def _build_retain_outbox_callback(
         self,
         bank_id: str,
@@ -4380,6 +4551,7 @@ class MemoryEngine(MemoryEngineInterface):
                 for event in events:
                     await webhook_manager.fire_event_with_conn(event, conn, schema=schema)
             await self._enqueue_entity_trajectory_tasks(conn, bank_id=bank_id, unit_ids=unit_ids, schema=schema)
+            await self._enqueue_entity_intelligence_task(conn, bank_id=bank_id, unit_ids=unit_ids, schema=schema)
 
         return _callback
 
@@ -10169,6 +10341,78 @@ class MemoryEngine(MemoryEngineInterface):
                 INSERT INTO {fq_table("async_operations")}
                   (operation_id, bank_id, operation_type, status, task_payload, result_metadata, created_at, updated_at)
                 VALUES ($1, $2, 'entity_trajectory_recompute', 'pending', $3::jsonb, '{{}}'::jsonb, $4, $4)
+                """,
+                op_id,
+                bank_id,
+                payload,
+                now,
+            )
+        return str(op_id)
+
+    async def get_entity_intelligence(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any] | None:
+        """Return latest persisted bank-level entity intelligence row, or None."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="get_entity_intelligence", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT bank_id, computed_at, entity_count, source_entity_count, entity_snapshot_hash,
+                       content, structured_content, entity_context, delta_metadata, llm_model, prompt_version
+                FROM {fq_table("entity_intelligence")}
+                WHERE bank_id = $1
+                """,
+                bank_id,
+            )
+        if not row:
+            return None
+        from atulya_api.engine.entity_trajectory.intelligence_persisted_row import (
+            entity_intelligence_payload_from_record,
+        )
+
+        return entity_intelligence_payload_from_record(row)
+
+    async def submit_entity_intelligence_recompute(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> str:
+        """Insert a pending async_operations row to recompute bank-level entity intelligence."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=bank_id, operation="submit_entity_intelligence_recompute", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        pool = await self._get_pool()
+        op_id = uuid.uuid4()
+        payload = json.dumps(
+            {
+                "type": "entity_intelligence_recompute",
+                "operation_id": str(op_id),
+                "bank_id": bank_id,
+                "trigger": {"manual": True},
+            }
+        )
+        now = datetime.now(UTC)
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                INSERT INTO {fq_table("async_operations")}
+                  (operation_id, bank_id, operation_type, status, task_payload, result_metadata, created_at, updated_at)
+                VALUES ($1, $2, 'entity_intelligence_recompute', 'pending', $3::jsonb, '{{}}'::jsonb, $4, $4)
                 """,
                 op_id,
                 bank_id,

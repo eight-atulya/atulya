@@ -1,9 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { client, type EntityTrajectoryPayload } from "@/lib/api";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { client, type EntityIntelligencePayload, type EntityTrajectoryPayload } from "@/lib/api";
 import { useBank } from "@/lib/bank-context";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import {
   Select,
   SelectContent,
@@ -35,6 +38,117 @@ interface EntityRow {
   id: string;
   canonical_name: string;
   mention_count: number;
+}
+
+type LineDiff = { type: "same" | "removed" | "added"; text: string };
+
+function diffLines(a: string, b: string): { left: LineDiff[]; right: LineDiff[] } {
+  const aLines = a.split("\n");
+  const bLines = b.split("\n");
+  const m = aLines.length;
+  const n = bLines.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 1; i <= m; i += 1) {
+    for (let j = 1; j <= n; j += 1) {
+      dp[i][j] =
+        aLines[i - 1] === bLines[j - 1]
+          ? dp[i - 1][j - 1] + 1
+          : Math.max(dp[i - 1][j], dp[i][j - 1]);
+    }
+  }
+
+  const ops: LineDiff[] = [];
+  let i = m;
+  let j = n;
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && aLines[i - 1] === bLines[j - 1]) {
+      ops.push({ type: "same", text: aLines[i - 1] });
+      i -= 1;
+      j -= 1;
+    } else if (j > 0 && (i === 0 || dp[i][j - 1] >= dp[i - 1][j])) {
+      ops.push({ type: "added", text: bLines[j - 1] });
+      j -= 1;
+    } else {
+      ops.push({ type: "removed", text: aLines[i - 1] });
+      i -= 1;
+    }
+  }
+  ops.reverse();
+
+  const left: LineDiff[] = [];
+  const right: LineDiff[] = [];
+  let k = 0;
+  while (k < ops.length) {
+    const op = ops[k];
+    if (op.type === "same") {
+      left.push(op);
+      right.push(op);
+      k += 1;
+    } else {
+      const removed: string[] = [];
+      const added: string[] = [];
+      while (k < ops.length && ops[k].type !== "same") {
+        if (ops[k].type === "removed") removed.push(ops[k].text);
+        else added.push(ops[k].text);
+        k += 1;
+      }
+      const maxLen = Math.max(removed.length, added.length);
+      for (let r = 0; r < maxLen; r += 1) {
+        left.push(
+          r < removed.length ? { type: "removed", text: removed[r] } : { type: "same", text: "" }
+        );
+        right.push(
+          r < added.length ? { type: "added", text: added[r] } : { type: "same", text: "" }
+        );
+      }
+    }
+  }
+  return { left, right };
+}
+
+function SideBySideDiff({ before, after }: { before: string; after: string }) {
+  const { left, right } = diffLines(before, after);
+  const hasChanges = left.some((l) => l.type !== "same") || right.some((r) => r.type !== "same");
+  if (!hasChanges) return <p className="text-sm text-muted-foreground italic">No text changes.</p>;
+
+  return (
+    <div className="grid grid-cols-2 divide-x divide-border overflow-hidden rounded-md border border-border text-xs font-mono">
+      <div>
+        <div className="border-b border-border bg-muted px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Before
+        </div>
+        {left.map((line, idx) => (
+          <div
+            key={idx}
+            className={`min-h-[1.25rem] whitespace-pre-wrap break-words px-3 py-0.5 leading-5 [overflow-wrap:anywhere] ${
+              line.type === "removed"
+                ? "bg-red-500/10 text-red-700 dark:text-red-400"
+                : "text-foreground"
+            }`}
+          >
+            {line.text}
+          </div>
+        ))}
+      </div>
+      <div>
+        <div className="border-b border-border bg-muted px-3 py-1.5 font-sans text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          After
+        </div>
+        {right.map((line, idx) => (
+          <div
+            key={idx}
+            className={`min-h-[1.25rem] whitespace-pre-wrap break-words px-3 py-0.5 leading-5 [overflow-wrap:anywhere] ${
+              line.type === "added"
+                ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                : "text-foreground"
+            }`}
+          >
+            {line.text}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function TrajectoryTooltip({
@@ -106,6 +220,11 @@ export function EntityTrajectoriesView() {
   const [recomputing, setRecomputing] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
   const [trajError, setTrajError] = useState<string | null>(null);
+  const [intelligence, setIntelligence] = useState<EntityIntelligencePayload | null>(null);
+  const [loadingIntel, setLoadingIntel] = useState(false);
+  const [intelNotFound, setIntelNotFound] = useState(false);
+  const [intelError, setIntelError] = useState<string | null>(null);
+  const [recomputingIntel, setRecomputingIntel] = useState(false);
 
   const loadEntities = useCallback(async () => {
     if (!currentBank) return;
@@ -122,15 +241,38 @@ export function EntityTrajectoriesView() {
     }
   }, [currentBank]);
 
+  const loadIntelligence = useCallback(async () => {
+    if (!currentBank) return;
+    setLoadingIntel(true);
+    setIntelNotFound(false);
+    setIntelError(null);
+    try {
+      const data = await client.getEntityIntelligence(currentBank);
+      setIntelligence(data);
+    } catch (e: unknown) {
+      const status = (e as { status?: number })?.status;
+      if (status === 404) {
+        setIntelligence(null);
+        setIntelNotFound(true);
+      } else {
+        setIntelligence(null);
+        setIntelError(e instanceof Error ? e.message : "Failed to load entity intelligence");
+      }
+    } finally {
+      setLoadingIntel(false);
+    }
+  }, [currentBank]);
+
   useEffect(() => {
     if (currentBank) {
       loadEntities();
+      loadIntelligence();
       setEntityId("");
       setTrajectory(null);
       setNotFound(false);
       setTrajError(null);
     }
-  }, [currentBank, loadEntities]);
+  }, [currentBank, loadEntities, loadIntelligence]);
 
   const loadTrajectory = async (id: string) => {
     if (!currentBank || !id) return;
@@ -163,6 +305,18 @@ export function EntityTrajectoriesView() {
       await loadTrajectory(entityId);
     } finally {
       setRecomputing(false);
+    }
+  };
+
+  const handleIntelligenceRecompute = async () => {
+    if (!currentBank) return;
+    setRecomputingIntel(true);
+    try {
+      await client.postEntityIntelligenceRecompute(currentBank);
+      await new Promise((r) => setTimeout(r, 1500));
+      await loadIntelligence();
+    } finally {
+      setRecomputingIntel(false);
     }
   };
 
@@ -203,8 +357,148 @@ export function EntityTrajectoriesView() {
     return Math.min(280, Math.max(152, 12 + longest * 6.5));
   }, [forecastData]);
 
+  const previousIntelligenceContent =
+    typeof intelligence?.delta_metadata?.previous_content === "string"
+      ? intelligence.delta_metadata.previous_content
+      : "";
+  const intelligenceAppliedOps = Array.isArray(intelligence?.delta_metadata?.applied)
+    ? intelligence.delta_metadata.applied
+    : [];
+
   return (
     <div className="space-y-8">
+      <section className="rounded-xl border border-border/80 bg-card p-4 shadow-sm sm:p-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <h2 className="font-heading text-lg font-semibold tracking-tight text-foreground">
+              Bank entity intelligence
+            </h2>
+            <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              A bank-level synthesis across entities: hidden themes, risks, opportunities, and
+              plausible next developments. It evolves with structured deltas so stable sections do
+              not drift on every run.
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
+            {intelligence?.content && (
+              <CopyButton
+                text={intelligence.content}
+                label="Copy content"
+                toastLabel="Entity intelligence copied"
+                className="h-10 shrink-0 px-4 sm:w-auto w-full"
+              />
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!currentBank || recomputingIntel}
+              onClick={() => void handleIntelligenceRecompute()}
+              className="h-10 shrink-0 px-4 sm:w-auto w-full"
+            >
+              {recomputingIntel ? (
+                <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 shrink-0" />
+              )}
+              <span className="ml-2">Recompute intelligence</span>
+            </Button>
+          </div>
+        </div>
+
+        {loadingIntel && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 shrink-0 animate-spin" />
+            Loading entity intelligence…
+          </div>
+        )}
+
+        {intelError && (
+          <p className="mt-4 text-sm text-destructive" role="alert">
+            {intelError}
+          </p>
+        )}
+
+        {intelNotFound && !loadingIntel && (
+          <div className="mt-4 rounded-lg border border-border/70 bg-muted/20 p-3 text-sm leading-relaxed text-muted-foreground">
+            No bank-level entity intelligence has been computed yet. Enable{" "}
+            <code className="rounded-md bg-muted px-1.5 py-0.5 font-mono text-xs">
+              enable_entity_intelligence
+            </code>
+            , ensure the bank has enough entities, then recompute. The default auto-trigger runs
+            when entity coverage changes by the configured threshold.
+          </div>
+        )}
+
+        {intelligence && !loadingIntel && (
+          <div className="mt-5 space-y-4">
+            <dl className="grid gap-4 text-xs sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <dt className="text-muted-foreground">Computed</dt>
+                <dd className="mt-1 text-foreground">
+                  {intelligence.computed_at
+                    ? new Date(intelligence.computed_at).toLocaleString(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "—"}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Entities analyzed</dt>
+                <dd className="mt-1 tabular-nums text-foreground">
+                  {intelligence.entity_count} / {intelligence.source_entity_count}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Update mode</dt>
+                <dd className="mt-1 text-foreground">
+                  {String(intelligence.delta_metadata?.mode ?? "full")}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-muted-foreground">Model</dt>
+                <dd className="mt-1 break-all font-mono text-[11px] text-foreground">
+                  {intelligence.llm_model || "—"}
+                </dd>
+              </div>
+            </dl>
+            {intelligence.entity_context?.compaction && (
+              <p className="text-xs text-muted-foreground">
+                Context compaction: {intelligence.entity_context.compaction}
+              </p>
+            )}
+            <div className="max-h-[42rem] overflow-auto rounded-lg border border-border/70 bg-muted/10 p-5">
+              <div className="prose prose-sm max-w-none break-words leading-relaxed dark:prose-invert prose-headings:font-heading prose-headings:tracking-tight prose-li:my-1 [overflow-wrap:anywhere]">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{intelligence.content}</ReactMarkdown>
+              </div>
+            </div>
+            {previousIntelligenceContent && (
+              <details className="rounded-lg border border-border/70 bg-muted/10">
+                <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-foreground">
+                  Latest intelligence diff
+                </summary>
+                <div className="space-y-3 border-t border-border/60 p-4">
+                  <SideBySideDiff
+                    before={previousIntelligenceContent}
+                    after={intelligence.content}
+                  />
+                  {intelligenceAppliedOps.length > 0 && (
+                    <div className="rounded-md border border-border/60 bg-background p-3">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        Delta operations
+                      </p>
+                      <pre className="max-h-60 overflow-auto text-xs leading-relaxed text-muted-foreground">
+                        {JSON.stringify(intelligenceAppliedOps, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              </details>
+            )}
+          </div>
+        )}
+      </section>
+
       {listError && (
         <p className="text-sm text-destructive" role="alert">
           {listError}

@@ -98,6 +98,11 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'developer/entity-intelligence',
+          label: 'Entity Intelligence',
+        },
+        {
+          type: 'doc',
           id: 'developer/brain-and-dream',
           label: 'Brain and Dream',
         },

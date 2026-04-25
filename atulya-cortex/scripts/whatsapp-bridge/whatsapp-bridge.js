@@ -88,6 +88,10 @@ const logger = pino({ level: "silent" });
 
 let socketRef = null;
 let connectionState = "init"; // init | qr | connecting | open | close
+let pendingCredsSave = Promise.resolve();
+const pendingSends = [];
+const MAX_PENDING_SENDS = 100;
+const MAX_PENDING_SEND_AGE_MS = 30_000;
 
 function emitInbound(obj) {
   try {
@@ -100,6 +104,64 @@ function emitInbound(obj) {
 function emitStatus(event, extra = {}) {
   // Plain JSON; the Python pump adds its own `[bridge] ` prefix.
   process.stderr.write(JSON.stringify({ event, ...extra }) + "\n");
+}
+
+async function persistCreds(saveCreds) {
+  pendingCredsSave = pendingCredsSave
+    .then(async () => {
+      await saveCreds();
+    })
+    .catch((err) => {
+      emitStatus("save_creds_error", { error: String(err) });
+    });
+  await pendingCredsSave;
+}
+
+function pruneExpiredPendingSends() {
+  const now = Date.now();
+  while (pendingSends.length > 0) {
+    const first = pendingSends[0];
+    if (!first || now - first.enqueuedAt <= MAX_PENDING_SEND_AGE_MS) break;
+    const stale = pendingSends.shift();
+    if (stale) {
+      stale.reject(new Error("send queue timeout while WhatsApp reconnecting"));
+    }
+  }
+}
+
+async function flushPendingSends() {
+  pruneExpiredPendingSends();
+  if (!socketRef || connectionState !== "open") return;
+  while (pendingSends.length > 0 && socketRef && connectionState === "open") {
+    const item = pendingSends.shift();
+    if (!item) continue;
+    try {
+      await socketRef.sendMessage(normalizeJid(item.to), { text: item.text });
+      item.resolve();
+    } catch (err) {
+      item.reject(err);
+    }
+  }
+}
+
+function queueOrSend(to, text) {
+  if (socketRef && connectionState === "open") {
+    return socketRef.sendMessage(normalizeJid(to), { text });
+  }
+
+  const reconnecting = connectionState === "connecting" || connectionState === "qr" || connectionState === "close";
+  if (!reconnecting) {
+    return Promise.reject(new Error(`bridge not ready (state=${connectionState})`));
+  }
+
+  pruneExpiredPendingSends();
+  if (pendingSends.length >= MAX_PENDING_SENDS) {
+    return Promise.reject(new Error("send queue full while WhatsApp reconnecting"));
+  }
+
+  return new Promise((resolve, reject) => {
+    pendingSends.push({ to, text, resolve, reject, enqueuedAt: Date.now() });
+  });
 }
 
 function extractText(message) {
@@ -168,13 +230,8 @@ function startHttpServer() {
         res.end("missing 'to' or 'text'");
         return;
       }
-      if (!socketRef || connectionState !== "open") {
-        res.statusCode = 503;
-        res.end(`bridge not ready (state=${connectionState})`);
-        return;
-      }
       try {
-        await socketRef.sendMessage(normalizeJid(to), { text });
+        await queueOrSend(to, text);
         res.statusCode = 200;
         res.end("ok");
       } catch (err) {
@@ -220,13 +277,18 @@ async function connect() {
       creds: state.creds,
       keys: makeCacheableSignalKeyStore(state.keys, logger),
     },
+    // Needed on Baileys 7+: without getMessage, message retry/decrypt paths
+    // can break and clients may show "Waiting for this message".
+    getMessage: async () => ({ conversation: "" }),
   });
 
   socketRef = sock;
 
-  sock.ev.on("creds.update", saveCreds);
+  sock.ev.on("creds.update", async () => {
+    await persistCreds(saveCreds);
+  });
 
-  sock.ev.on("connection.update", (update) => {
+  sock.ev.on("connection.update", async (update) => {
     const { connection, lastDisconnect, qr } = update;
     if (qr) {
       connectionState = "qr";
@@ -249,6 +311,7 @@ async function connect() {
     if (connection === "open") {
       connectionState = "open";
       emitStatus("connected");
+      await flushPendingSends();
       if (PAIR_ONLY) {
         emitStatus("pair_complete");
         // Allow a tick so the status line flushes.
@@ -277,6 +340,7 @@ async function connect() {
         code === (DisconnectReason.restartRequired ?? 515) || code === 515;
 
       if (restartRequired || !PAIR_ONLY) {
+        await pendingCredsSave;
         if (reconnectTimer === null) {
           // 250ms is enough for `creds.update -> saveCreds` to flush; we
           // don't want to race the rename before reconnecting.

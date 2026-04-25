@@ -354,6 +354,29 @@ class EntityTrajectoryRecomputeResponse(BaseModel):
     status: str = "pending"
 
 
+class EntityIntelligenceResponse(BaseModel):
+    """Latest bank-level entity intelligence snapshot."""
+
+    bank_id: str
+    computed_at: str | None = None
+    entity_count: int
+    source_entity_count: int
+    entity_snapshot_hash: str = ""
+    content: str
+    structured_content: dict[str, Any] = FieldWithDefault(dict)
+    entity_context: dict[str, Any] = FieldWithDefault(dict)
+    delta_metadata: dict[str, Any] = FieldWithDefault(dict)
+    llm_model: str = ""
+    prompt_version: str = ""
+
+
+class EntityIntelligenceRecomputeResponse(BaseModel):
+    """Queued background entity intelligence recompute."""
+
+    operation_id: str
+    status: str = "pending"
+
+
 class ChunkData(BaseModel):
     """Chunk data for a single chunk."""
 
@@ -4086,6 +4109,70 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in POST entity trajectory recompute: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/entity-intelligence",
+        response_model=EntityIntelligenceResponse,
+        summary="Get entity intelligence",
+        description="Return the latest bank-level entity intelligence snapshot, if computed.",
+        operation_id="get_entity_intelligence",
+        tags=["Entities"],
+    )
+    async def api_get_entity_intelligence(bank_id: str, request_context: RequestContext = Depends(get_request_context)):
+        try:
+            row = await app.state.memory.get_entity_intelligence(bank_id, request_context=request_context)
+            if row is None:
+                raise HTTPException(status_code=404, detail="Entity intelligence not computed for this bank yet")
+            return EntityIntelligenceResponse(
+                bank_id=row["bank_id"],
+                computed_at=row.get("computed_at"),
+                entity_count=int(row.get("entity_count") or 0),
+                source_entity_count=int(row.get("source_entity_count") or 0),
+                entity_snapshot_hash=str(row.get("entity_snapshot_hash") or ""),
+                content=str(row.get("content") or ""),
+                structured_content=row.get("structured_content") or {},
+                entity_context=row.get("entity_context") or {},
+                delta_metadata=row.get("delta_metadata") or {},
+                llm_model=str(row.get("llm_model") or ""),
+                prompt_version=str(row.get("prompt_version") or ""),
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET entity intelligence: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/entity-intelligence/recompute",
+        response_model=EntityIntelligenceRecomputeResponse,
+        summary="Queue entity intelligence recompute",
+        description="Enqueue a background job to recompute bank-level entity intelligence.",
+        operation_id="post_entity_intelligence_recompute",
+        tags=["Entities"],
+    )
+    async def api_post_entity_intelligence_recompute(
+        bank_id: str, request_context: RequestContext = Depends(get_request_context)
+    ):
+        try:
+            op_id = await app.state.memory.submit_entity_intelligence_recompute(
+                bank_id, request_context=request_context
+            )
+            return EntityIntelligenceRecomputeResponse(operation_id=op_id)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST entity intelligence recompute: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post(

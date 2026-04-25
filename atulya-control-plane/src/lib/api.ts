@@ -63,6 +63,26 @@ export interface EntityTrajectoryPayload {
   prompt_version: string;
 }
 
+export interface EntityIntelligencePayload {
+  bank_id: string;
+  computed_at: string | null;
+  entity_count: number;
+  source_entity_count: number;
+  entity_snapshot_hash: string;
+  content: string;
+  structured_content: Record<string, unknown>;
+  entity_context: {
+    source_entity_count?: number;
+    included_entity_count?: number;
+    omitted_entity_count?: number;
+    compaction?: string;
+    entities?: Array<Record<string, unknown>>;
+  };
+  delta_metadata: Record<string, unknown>;
+  llm_model: string;
+  prompt_version: string;
+}
+
 export interface MentalModel {
   id: string;
   bank_id: string;
@@ -1477,6 +1497,27 @@ export class ControlPlaneClient {
   async postEntityTrajectoryRecompute(entityId: string, bankId: string) {
     return this.fetchApi<{ operation_id: string; status?: string }>(
       `/api/entities/${encodeURIComponent(entityId)}/trajectory/recompute?bank_id=${encodeURIComponent(bankId)}`,
+      { method: "POST" }
+    );
+  }
+
+  /**
+   * Latest bank-level entity intelligence summary.
+   */
+  async getEntityIntelligence(bankId: string) {
+    return this.fetchApi<EntityIntelligencePayload>(
+      `/api/banks/${encodeURIComponent(bankId)}/entity-intelligence`,
+      undefined,
+      { suppressToastIfStatus: [404] }
+    );
+  }
+
+  /**
+   * Queue background bank-level entity intelligence recompute.
+   */
+  async postEntityIntelligenceRecompute(bankId: string) {
+    return this.fetchApi<{ operation_id: string; status?: string }>(
+      `/api/banks/${encodeURIComponent(bankId)}/entity-intelligence/recompute`,
       { method: "POST" }
     );
   }

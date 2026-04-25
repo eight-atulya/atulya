@@ -24,6 +24,9 @@ def setup_test_env():
         "ATULYA_API_RETAIN_LLM_MODEL": "retain-model",
         "ATULYA_API_REFLECT_LLM_PROVIDER": "mock",
         "ATULYA_API_REFLECT_LLM_MODEL": "reflect-model",
+        "ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER": "mock",
+        "ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL": "entity-intelligence-model",
+        "ATULYA_API_ENTITY_INTELLIGENCE_LLM_TIMEOUT": "900",
     }
 
     # Save original values
@@ -70,6 +73,11 @@ class TestPerOperationLLMConfig:
         assert config.reflect_llm_provider == "mock"
         assert config.reflect_llm_model == "reflect-model"
 
+        # Entity intelligence config
+        assert config.entity_intelligence_llm_provider == "mock"
+        assert config.entity_intelligence_llm_model == "entity-intelligence-model"
+        assert config.entity_intelligence_llm_timeout == 900.0
+
     def test_memory_engine_creates_separate_llm_configs(self):
         """Test that MemoryEngine creates separate LLM configs for each operation."""
         from atulya_api import MemoryEngine
@@ -91,6 +99,11 @@ class TestPerOperationLLMConfig:
         assert engine._reflect_llm_config.provider == "mock"
         assert engine._reflect_llm_config.model == "reflect-model"
 
+        # Verify bank-level entity intelligence config
+        assert engine._entity_intelligence_llm_config.provider == "mock"
+        assert engine._entity_intelligence_llm_config.model == "entity-intelligence-model"
+        assert engine._entity_intelligence_llm_config.timeout == 900.0
+
     def test_memory_engine_with_explicit_params(self):
         """Test that explicit params override env config."""
         from atulya_api import MemoryEngine
@@ -102,6 +115,8 @@ class TestPerOperationLLMConfig:
             retain_llm_model="explicit-retain",
             reflect_llm_provider="mock",
             reflect_llm_model="explicit-reflect",
+            entity_intelligence_llm_provider="mock",
+            entity_intelligence_llm_model="explicit-entity-intelligence",
             skip_llm_verification=True,
             lazy_reranker=True,
         )
@@ -109,6 +124,7 @@ class TestPerOperationLLMConfig:
         assert engine._llm_config.model == "explicit-default"
         assert engine._retain_llm_config.model == "explicit-retain"
         assert engine._reflect_llm_config.model == "explicit-reflect"
+        assert engine._entity_intelligence_llm_config.model == "explicit-entity-intelligence"
 
     def test_memory_engine_fallback_when_no_per_operation_config(self):
         """Test that per-operation configs fall back to default when not set."""
@@ -119,6 +135,8 @@ class TestPerOperationLLMConfig:
         retain_model = os.environ.pop("ATULYA_API_RETAIN_LLM_MODEL", None)
         reflect_provider = os.environ.pop("ATULYA_API_REFLECT_LLM_PROVIDER", None)
         reflect_model = os.environ.pop("ATULYA_API_REFLECT_LLM_MODEL", None)
+        intelligence_provider = os.environ.pop("ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER", None)
+        intelligence_model = os.environ.pop("ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL", None)
 
         try:
             clear_cache()
@@ -133,6 +151,7 @@ class TestPerOperationLLMConfig:
             assert engine._llm_config.model == "default-model"
             assert engine._retain_llm_config.model == "default-model"
             assert engine._reflect_llm_config.model == "default-model"
+            assert engine._entity_intelligence_llm_config.model == "default-model"
         finally:
             # Restore env vars
             if retain_provider:
@@ -143,6 +162,10 @@ class TestPerOperationLLMConfig:
                 os.environ["ATULYA_API_REFLECT_LLM_PROVIDER"] = reflect_provider
             if reflect_model:
                 os.environ["ATULYA_API_REFLECT_LLM_MODEL"] = reflect_model
+            if intelligence_provider:
+                os.environ["ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER"] = intelligence_provider
+            if intelligence_model:
+                os.environ["ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL"] = intelligence_model
             clear_cache()
 
 

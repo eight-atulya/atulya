@@ -183,9 +183,27 @@ async def extract_entities_batch_optimized(
                 # Handle both Entity objects and dicts
                 if hasattr(ent, "text"):
                     # Entity objects only have 'text', default type to 'CONCEPT'
-                    formatted_entities.append({"text": ent.text, "type": "CONCEPT"})
+                    formatted_entities.append(
+                        {
+                            "text": ent.text,
+                            "type": getattr(ent, "type", "CONCEPT"),
+                            "entity_type": getattr(ent, "entity_type", None),
+                            "confidence": getattr(ent, "confidence", None),
+                            "evidence": getattr(ent, "evidence", None),
+                            "role_hint": getattr(ent, "role_hint", None),
+                        }
+                    )
                 elif isinstance(ent, dict):
-                    formatted_entities.append({"text": ent.get("text", ""), "type": ent.get("type", "CONCEPT")})
+                    formatted_entities.append(
+                        {
+                            "text": ent.get("text", ""),
+                            "type": ent.get("type", "CONCEPT"),
+                            "entity_type": ent.get("entity_type"),
+                            "confidence": ent.get("confidence"),
+                            "evidence": ent.get("evidence"),
+                            "role_hint": ent.get("role_hint"),
+                        }
+                    )
             all_entities.append(formatted_entities)
 
         total_entities = sum(len(ents) for ents in all_entities)
@@ -213,6 +231,10 @@ async def extract_entities_batch_optimized(
                     {
                         "text": entity["text"],
                         "type": entity["type"],
+                        "entity_type": entity.get("entity_type"),
+                        "confidence": entity.get("confidence"),
+                        "evidence": entity.get("evidence"),
+                        "role_hint": entity.get("role_hint"),
                         "nearby_entities": entities,
                     }
                 )
