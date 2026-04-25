@@ -2482,6 +2482,30 @@ class CancelOperationResponse(BaseModel):
     operation_id: str
 
 
+class RetryOperationResponse(BaseModel):
+    """Response model for retry operation endpoint."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "success": True,
+                "message": "Retried operation 550e8400-e29b-41d4-a716-446655440000 as 0196e188-6db5-7f2a-a5f8-f654d2fcb3ad",
+                "operation_id": "0196e188-6db5-7f2a-a5f8-f654d2fcb3ad",
+                "retried_from_operation_id": "550e8400-e29b-41d4-a716-446655440000",
+                "bank_id": "user123",
+                "operation_type": "consolidation",
+            }
+        }
+    )
+
+    success: bool
+    message: str
+    operation_id: str
+    retried_from_operation_id: str
+    bank_id: str
+    operation_type: str | None = None
+
+
 class ChildOperationStatus(BaseModel):
     """Status of a child operation (for batch operations)."""
 
@@ -5019,6 +5043,43 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/operations/{operation_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/operations/{operation_id}/retry",
+        response_model=RetryOperationResponse,
+        summary="Retry a failed async operation",
+        description="Create a new pending operation by re-queueing a failed async operation using its original task payload.",
+        operation_id="retry_operation",
+        tags=["Operations"],
+    )
+    async def api_retry_operation(
+        bank_id: str, operation_id: str, request_context: RequestContext = Depends(get_request_context)
+    ):
+        """Retry a failed async operation."""
+        try:
+            try:
+                uuid.UUID(operation_id)
+            except ValueError:
+                raise HTTPException(status_code=400, detail=f"Invalid operation_id format: {operation_id}")
+
+            result = await app.state.memory.retry_failed_operation(
+                bank_id, operation_id, request_context=request_context
+            )
+            return RetryOperationResponse(**result)
+        except ValueError as e:
+            detail = str(e)
+            status = 404 if "not found" in detail.lower() else 400
+            raise HTTPException(status_code=status, detail=detail)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/operations/{operation_id}/retry: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(
