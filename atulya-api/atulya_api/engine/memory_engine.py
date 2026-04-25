@@ -6230,7 +6230,10 @@ class MemoryEngine(MemoryEngineInterface):
         recall_start = time.time()
 
         # Buffer logs for clean output in concurrent scenarios
-        recall_id = f"{bank_id[:8]}-{int(time.time() * 1000) % 100000}"
+        # Use a high-entropy identifier to avoid collisions across concurrent recalls.
+        # The previous modulo-timestamp format could repeat and break budgeted_operation
+        # registration with "Operation ... already exists".
+        recall_id = f"{bank_id[:8]}-{time.time_ns()}-{uuid.uuid4().hex[:6]}"
         log_buffer = []
         tags_info = f", tags={tags}, tags_match={tags_match}" if tags else ""
         log_buffer.append(
@@ -12106,6 +12109,99 @@ class MemoryEngine(MemoryEngineInterface):
                 "message": f"Operation {operation_id} cancelled",
                 "operation_id": operation_id,
                 "bank_id": bank_id,
+            }
+
+    async def retry_failed_operation(
+        self,
+        bank_id: str,
+        operation_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Re-queue a failed async operation as a new pending operation."""
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(bank_id=bank_id, operation="retry_failed_operation", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        pool = await self._get_pool()
+
+        old_op_uuid = uuid.UUID(operation_id)
+        new_op_uuid = uuid.uuid4()
+
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"""
+                SELECT operation_id, bank_id, status, operation_type, task_payload, result_metadata
+                FROM {fq_table("async_operations")}
+                WHERE operation_id = $1 AND bank_id = $2
+                """,
+                old_op_uuid,
+                bank_id,
+            )
+            if not row:
+                raise ValueError(f"Operation {operation_id} not found for bank {bank_id}")
+            if row["status"] != "failed":
+                raise ValueError(f"Operation {operation_id} is {row['status']} and can only be retried when failed")
+
+            task_payload = decode_jsonb(row["task_payload"], None)
+            if not isinstance(task_payload, dict):
+                raise ValueError(f"Operation {operation_id} cannot be retried (missing original task payload)")
+
+            task_type = task_payload.get("type")
+            if not isinstance(task_type, str) or not task_type.strip():
+                raise ValueError(f"Operation {operation_id} cannot be retried (invalid task payload type)")
+
+            # Rebuild payload with a new operation ID and reset retry counters.
+            new_task_payload = dict(task_payload)
+            new_task_payload["operation_id"] = str(new_op_uuid)
+            new_task_payload["bank_id"] = bank_id
+            new_task_payload["operation_type"] = row["operation_type"]
+            new_task_payload.pop("_retry_count", None)
+            new_task_payload.pop("_retry_at", None)
+            new_task_payload.pop("_claimed_at", None)
+            new_task_payload.pop("_worker_id", None)
+
+            metadata_payload = decode_jsonb(row["result_metadata"], {})
+            if not isinstance(metadata_payload, dict):
+                metadata_payload = {}
+            metadata_payload["operation_stage"] = "queued"
+            metadata_payload["retried_from_operation_id"] = operation_id
+            metadata_payload["retry_requested_at"] = datetime.now(UTC).isoformat()
+
+            async with conn.transaction():
+                await conn.execute(
+                    f"""
+                    INSERT INTO {fq_table("async_operations")}
+                      (operation_id, bank_id, operation_type, status, task_payload, result_metadata, created_at, updated_at)
+                    VALUES
+                      ($1, $2, $3, 'pending', $4::jsonb, $5::jsonb, NOW(), NOW())
+                    """,
+                    new_op_uuid,
+                    bank_id,
+                    row["operation_type"],
+                    json.dumps(new_task_payload),
+                    json.dumps(metadata_payload),
+                )
+
+            await self._task_backend.submit_task(new_task_payload)
+
+            logger.info(
+                "Retried failed operation bank_id=%s old_operation_id=%s new_operation_id=%s type=%s",
+                bank_id,
+                operation_id,
+                str(new_op_uuid),
+                row["operation_type"],
+            )
+
+            return {
+                "success": True,
+                "message": f"Retried operation {operation_id} as {new_op_uuid}",
+                "operation_id": str(new_op_uuid),
+                "retried_from_operation_id": operation_id,
+                "bank_id": bank_id,
+                "operation_type": row["operation_type"],
             }
 
     async def _cleanup_cancelled_operation_state(

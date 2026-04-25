@@ -1868,6 +1868,22 @@ export class ControlPlaneClient {
   }
 
   /**
+   * Retry a failed async operation.
+   */
+  async retryOperation(bankId: string, operationId: string) {
+    return this.fetchApi<{
+      success: boolean;
+      message: string;
+      operation_id: string;
+      retried_from_operation_id: string;
+      bank_id: string;
+      operation_type: string | null;
+    }>(`/api/banks/${bankId}/operations/${operationId}`, {
+      method: "POST",
+    });
+  }
+
+  /**
    * Get the final result for an async operation
    */
   async getOperationResult(bankId: string, operationId: string) {
