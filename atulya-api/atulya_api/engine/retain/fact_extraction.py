@@ -12,7 +12,7 @@ import re
 from datetime import datetime, timedelta
 from typing import Literal, cast
 
-from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator
+from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator, model_validator
 
 from ...config import get_config
 from ..llm_wrapper import LLMConfig, OutputTooLongError, sanitize_llm_output
@@ -71,12 +71,63 @@ def _sanitize_text(text: str | None) -> str | None:
     return sanitize_llm_output(text)
 
 
+def _entity_classification_payload(entity: "Entity") -> dict[str, object]:
+    payload: dict[str, object] = {}
+    if entity.entity_type:
+        payload["entity_type"] = entity.entity_type
+    if entity.confidence is not None:
+        payload["confidence"] = max(0.0, min(1.0, float(entity.confidence)))
+    if entity.evidence:
+        payload["evidence"] = entity.evidence[:240]
+    if entity.role_hint:
+        payload["role_hint"] = entity.role_hint[:120]
+    return payload
+
+
+def _entity_classification_map(entities: list["Entity"] | None) -> dict[str, dict]:
+    out: dict[str, dict] = {}
+    for entity in entities or []:
+        payload = _entity_classification_payload(entity)
+        if payload:
+            out[entity.text.lower()] = payload
+    return out
+
+
 class Entity(BaseModel):
     """An entity extracted from text."""
 
     text: str = Field(
         description="The specific, named entity as it appears in the fact. Must be a proper noun or specific identifier."
     )
+    entity_type: (
+        Literal[
+            "person",
+            "organization",
+            "tool",
+            "project",
+            "place",
+            "concept",
+            "event",
+            "artifact",
+            "unknown",
+        ]
+        | None
+    ) = Field(
+        default=None,
+        description="Best-effort semantic type. Use unknown when evidence is weak.",
+    )
+    confidence: float | None = Field(default=None, ge=0.0, le=1.0)
+    evidence: str | None = Field(default=None, description="Short text span or reason supporting this type.")
+    role_hint: str | None = Field(
+        default=None, description="Optional role such as partner, coworker, company, model, API."
+    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def accept_string_entity(cls, value):
+        if isinstance(value, str):
+            return {"text": value}
+        return value
 
 
 class Fact(BaseModel):
@@ -489,7 +540,12 @@ ENTITIES
 ══════════════════════════════════════════════════════════════════════════
 
 Include: people names, organizations, places, key objects, abstract concepts (career, friendship, etc.)
-Always include "user" when fact is about the user.{examples}"""
+Always include "user" when fact is about the user.
+
+Entity output may be either a string or an object. Prefer object form only when easy:
+{{{{"text":"Antara Das","entity_type":"person","confidence":0.9,"evidence":"named person","role_hint":"partner"}}}}
+entity_type: person, organization, tool, project, place, concept, event, artifact, unknown.
+Use person for humans even without Mr/Ms/Dr. If unsure, use unknown or a plain string.{examples}"""
 
 # Concise mode guidelines
 _CONCISE_GUIDELINES = """══════════════════════════════════════════════════════════════════════════
@@ -670,7 +726,15 @@ Extract ALL of the following from the fact:
 - Abstract concepts/themes (friendship, career growth, loss, celebration)
 
 ALWAYS include "user" when fact is about the user.
-Extract anything that could help link related facts together."""
+Extract anything that could help link related facts together.
+
+For each entity, prefer object form with root classification:
+{{"text":"Anurag","entity_type":"person","confidence":0.9,"evidence":"named person; he leads infrastructure team","role_hint":"infrastructure lead"}}
+
+entity_type must be one of: person, organization, tool, project, place, concept, event, artifact, unknown.
+Use "person" for human beings even without titles like Mr/Ms/Dr. Use "tool" for software, APIs,
+models, hardware, and technical utilities. Use "project" for products/codebases/features. If unsure,
+set entity_type="unknown" and lower confidence."""
 
 
 # Causal relationships section - appended when causal extraction is enabled
@@ -1913,6 +1977,7 @@ async def extract_facts_from_contents_batch_api(
                 fact_text=fact_from_llm.fact,
                 fact_type=fact_from_llm.fact_type,
                 entities=[e.text for e in (fact_from_llm.entities or [])],
+                entity_classifications=_entity_classification_map(fact_from_llm.entities),
                 occurred_start=_parse_datetime(fact_from_llm.occurred_start) if fact_from_llm.occurred_start else None,
                 occurred_end=_parse_datetime(fact_from_llm.occurred_end) if fact_from_llm.occurred_end else None,
                 causal_relations=_convert_causal_relations(fact_from_llm.causal_relations or [], global_fact_idx),
@@ -2045,6 +2110,7 @@ async def extract_facts_from_contents(
                         fact_text=fact_from_llm.fact,
                         fact_type=fact_from_llm.fact_type,
                         entities=[e.text for e in (fact_from_llm.entities or [])],
+                        entity_classifications=_entity_classification_map(fact_from_llm.entities),
                         # occurred_start/end: from LLM only, leave None if not provided
                         occurred_start=_parse_datetime(fact_from_llm.occurred_start)
                         if fact_from_llm.occurred_start

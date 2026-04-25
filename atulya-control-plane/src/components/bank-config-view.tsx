@@ -61,6 +61,15 @@ type EntityLabelsEdits = {
   entities_allow_free_form: boolean;
 };
 
+type EntityIntelligenceEdits = {
+  enable_entity_intelligence: boolean | null;
+  entity_intelligence_trigger_entity_delta: number | null;
+  entity_intelligence_min_entities: number | null;
+  entity_intelligence_max_entities: number | null;
+  entity_intelligence_max_context_tokens: number | null;
+  entity_intelligence_max_completion_tokens: number | null;
+};
+
 type MCPEdits = {
   mcp_enabled_tools: string[] | null;
 };
@@ -170,6 +179,19 @@ function entityLabelsSlice(config: Record<string, any>): EntityLabelsEdits {
   };
 }
 
+function entityIntelligenceSlice(config: Record<string, any>): EntityIntelligenceEdits {
+  return {
+    enable_entity_intelligence: config.enable_entity_intelligence ?? false,
+    entity_intelligence_trigger_entity_delta:
+      config.entity_intelligence_trigger_entity_delta ?? null,
+    entity_intelligence_min_entities: config.entity_intelligence_min_entities ?? null,
+    entity_intelligence_max_entities: config.entity_intelligence_max_entities ?? null,
+    entity_intelligence_max_context_tokens: config.entity_intelligence_max_context_tokens ?? null,
+    entity_intelligence_max_completion_tokens:
+      config.entity_intelligence_max_completion_tokens ?? null,
+  };
+}
+
 function mcpSlice(config: Record<string, any>): MCPEdits {
   return {
     mcp_enabled_tools: config.mcp_enabled_tools ?? null,
@@ -209,6 +231,9 @@ export function BankConfigView() {
   const [entityLabelsEdits, setEntityLabelsEdits] = useState<EntityLabelsEdits>(
     entityLabelsSlice({})
   );
+  const [entityIntelligenceEdits, setEntityIntelligenceEdits] = useState<EntityIntelligenceEdits>(
+    entityIntelligenceSlice({})
+  );
   const [reflectEdits, setReflectEdits] = useState<ProfileData>(DEFAULT_PROFILE);
   const [mcpEdits, setMcpEdits] = useState<MCPEdits>(mcpSlice({}));
   const [geminiEdits, setGeminiEdits] = useState<GeminiEdits>(geminiSlice({}));
@@ -217,12 +242,14 @@ export function BankConfigView() {
   const [retainSaving, setRetainSaving] = useState(false);
   const [observationsSaving, setObservationsSaving] = useState(false);
   const [entityLabelsSaving, setEntityLabelsSaving] = useState(false);
+  const [entityIntelligenceSaving, setEntityIntelligenceSaving] = useState(false);
   const [reflectSaving, setReflectSaving] = useState(false);
   const [mcpSaving, setMcpSaving] = useState(false);
   const [geminiSaving, setGeminiSaving] = useState(false);
   const [retainError, setRetainError] = useState<string | null>(null);
   const [observationsError, setObservationsError] = useState<string | null>(null);
   const [entityLabelsError, setEntityLabelsError] = useState<string | null>(null);
+  const [entityIntelligenceError, setEntityIntelligenceError] = useState<string | null>(null);
   const [reflectError, setReflectError] = useState<string | null>(null);
   const [mcpError, setMcpError] = useState<string | null>(null);
   const [geminiError, setGeminiError] = useState<string | null>(null);
@@ -241,6 +268,12 @@ export function BankConfigView() {
   const entityLabelsDirty = useMemo(
     () => JSON.stringify(entityLabelsEdits) !== JSON.stringify(entityLabelsSlice(baseConfig)),
     [entityLabelsEdits, baseConfig]
+  );
+  const entityIntelligenceDirty = useMemo(
+    () =>
+      JSON.stringify(entityIntelligenceEdits) !==
+      JSON.stringify(entityIntelligenceSlice(baseConfig)),
+    [entityIntelligenceEdits, baseConfig]
   );
   const reflectDirty = useMemo(
     () => JSON.stringify(reflectEdits) !== JSON.stringify(baseProfile),
@@ -281,6 +314,7 @@ export function BankConfigView() {
       setRetainEdits(retainSlice(cfg));
       setObservationsEdits(observationsSlice(cfg));
       setEntityLabelsEdits(entityLabelsSlice(cfg));
+      setEntityIntelligenceEdits(entityIntelligenceSlice(cfg));
       setReflectEdits(prof);
       setMcpEdits(mcpSlice(cfg));
       setGeminiEdits(geminiSlice(cfg));
@@ -334,6 +368,20 @@ export function BankConfigView() {
       setEntityLabelsError(err.message || "Failed to save entity labels settings");
     } finally {
       setEntityLabelsSaving(false);
+    }
+  };
+
+  const saveEntityIntelligence = async () => {
+    if (!bankId) return;
+    setEntityIntelligenceSaving(true);
+    setEntityIntelligenceError(null);
+    try {
+      await client.updateBankConfig(bankId, entityIntelligenceEdits);
+      setBaseConfig((prev) => ({ ...prev, ...entityIntelligenceEdits }));
+    } catch (err: any) {
+      setEntityIntelligenceError(err.message || "Failed to save entity intelligence settings");
+    } finally {
+      setEntityIntelligenceSaving(false);
     }
   };
 
@@ -525,6 +573,147 @@ export function BankConfigView() {
               }))
             }
           />
+        </ConfigSection>
+
+        {/* Entity Intelligence Section */}
+        <ConfigSection
+          title="Entity Intelligence"
+          description="Bank-level synthesis across entities, with token budgets for large local-model runs"
+          error={entityIntelligenceError}
+          dirty={entityIntelligenceDirty}
+          saving={entityIntelligenceSaving}
+          onSave={saveEntityIntelligence}
+        >
+          <FieldRow
+            label="Enable Entity Intelligence"
+            description="When enabled, the worker can synthesize a bank-wide intelligence artifact from entity inventory and trajectories."
+          >
+            <div className="flex justify-end items-center gap-2">
+              <Label className="text-sm text-muted-foreground">
+                {entityIntelligenceEdits.enable_entity_intelligence ? "Enabled" : "Disabled"}
+              </Label>
+              <Switch
+                checked={entityIntelligenceEdits.enable_entity_intelligence ?? false}
+                onCheckedChange={(v) =>
+                  setEntityIntelligenceEdits((prev) => ({
+                    ...prev,
+                    enable_entity_intelligence: v,
+                  }))
+                }
+              />
+            </div>
+          </FieldRow>
+          <FieldRow
+            label="Trigger Entity Delta"
+            description="Auto-recompute when this many distinct/new entities are touched since the last run. Default is 8."
+          >
+            <Input
+              type="number"
+              min={1}
+              value={entityIntelligenceEdits.entity_intelligence_trigger_entity_delta ?? ""}
+              onChange={(e) =>
+                setEntityIntelligenceEdits((prev) => ({
+                  ...prev,
+                  entity_intelligence_trigger_entity_delta: e.target.value
+                    ? parseInt(e.target.value, 10)
+                    : null,
+                }))
+              }
+              placeholder="8"
+            />
+          </FieldRow>
+          <FieldRow
+            label="Min Entities"
+            description="Do not run until the bank has at least this many entities."
+          >
+            <Input
+              type="number"
+              min={1}
+              value={entityIntelligenceEdits.entity_intelligence_min_entities ?? ""}
+              onChange={(e) =>
+                setEntityIntelligenceEdits((prev) => ({
+                  ...prev,
+                  entity_intelligence_min_entities: e.target.value
+                    ? parseInt(e.target.value, 10)
+                    : null,
+                }))
+              }
+              placeholder="8"
+            />
+          </FieldRow>
+          <FieldRow
+            label="Max Entities"
+            description="Maximum entities packed into the LLM inventory. Lower-signal entities are truncated first."
+          >
+            <Input
+              type="number"
+              min={1}
+              max={5000}
+              value={entityIntelligenceEdits.entity_intelligence_max_entities ?? ""}
+              onChange={(e) =>
+                setEntityIntelligenceEdits((prev) => ({
+                  ...prev,
+                  entity_intelligence_max_entities: e.target.value
+                    ? parseInt(e.target.value, 10)
+                    : null,
+                }))
+              }
+              placeholder="2000"
+            />
+          </FieldRow>
+          <FieldRow
+            label="Context Tokens"
+            description="Input token budget for the structured entity inventory. Use a lower value for smaller local models."
+          >
+            <Input
+              type="number"
+              min={1000}
+              value={entityIntelligenceEdits.entity_intelligence_max_context_tokens ?? ""}
+              onChange={(e) =>
+                setEntityIntelligenceEdits((prev) => ({
+                  ...prev,
+                  entity_intelligence_max_context_tokens: e.target.value
+                    ? parseInt(e.target.value, 10)
+                    : null,
+                }))
+              }
+              placeholder="10000"
+            />
+          </FieldRow>
+          <FieldRow
+            label="Completion Tokens"
+            description="Output token cap for the generated intelligence document or delta operations."
+          >
+            <Input
+              type="number"
+              min={512}
+              value={entityIntelligenceEdits.entity_intelligence_max_completion_tokens ?? ""}
+              onChange={(e) =>
+                setEntityIntelligenceEdits((prev) => ({
+                  ...prev,
+                  entity_intelligence_max_completion_tokens: e.target.value
+                    ? parseInt(e.target.value, 10)
+                    : null,
+                }))
+              }
+              placeholder="4096"
+            />
+          </FieldRow>
+          <div className="px-6 py-3 text-xs leading-relaxed text-muted-foreground">
+            To use a dedicated model, set server env vars such as{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono">
+              ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL
+            </code>
+            ,{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono">
+              ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER
+            </code>
+            , and{" "}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono">
+              ATULYA_API_ENTITY_INTELLIGENCE_LLM_TIMEOUT
+            </code>
+            . Local models often need a higher timeout.
+          </div>
         </ConfigSection>
 
         {/* Observations Section */}

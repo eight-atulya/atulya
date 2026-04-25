@@ -9,7 +9,11 @@
 
 >One time setup ~> [scripts/dev/SETUP.md](./scripts/dev/SETUP.md).
 
+**There may never be a perfect way to manage the balance between AI and human intelligence—but this is my attempt to nurture and evolve my own.** ~ Anurag 
+
 **A living algorithm for machine intelligence (MI).**
+
+>Let’s bring mathematics back into everyday life.
 
 Atulya is built on one simple idea:  
 >machines should not only store information, they should learn and grow over time. What if life itself reads like a well-written class ~ clear state, honest functions, traceable links. That same instinct of mapping meaning is what code-intel brings to every repo.
@@ -69,6 +73,20 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
 - Improves responses using past context
 - Learns from new inputs instead of starting from zero
 - Supports sharing distilled memory between systems through `.brain` files
+- Builds entity intelligence: a bank-level, plain-language map of people, tools,
+  companies, projects, concepts, and how they connect
+
+## Entity Intelligence
+
+Entity intelligence turns a bank's entity graph into a readable "digital person" map.
+During retain, entities can carry root classification metadata such as person, tool,
+organization, project, event, concept, confidence, evidence, and role hints. The bank-level
+worker then combines those typed entities, co-occurrence links, trajectory states, and
+forecasts into a markdown intelligence document with stable delta updates.
+
+Use it when you want to understand what a bank knows at scale: the important people,
+the tools and companies around them, the projects and themes that repeat, and the
+relationships or unknowns worth investigating next.
 
 ## Graph Review
 

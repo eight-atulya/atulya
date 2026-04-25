@@ -103,6 +103,8 @@ atulya_client_api/models/dream_submit_request.py
 atulya_client_api/models/entity_detail_response.py
 atulya_client_api/models/entity_include_options.py
 atulya_client_api/models/entity_input.py
+atulya_client_api/models/entity_intelligence_recompute_response.py
+atulya_client_api/models/entity_intelligence_response.py
 atulya_client_api/models/entity_list_item.py
 atulya_client_api/models/entity_list_response.py
 atulya_client_api/models/entity_observation_response.py

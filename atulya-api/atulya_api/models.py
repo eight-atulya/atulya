@@ -337,6 +337,32 @@ class EntityTrajectory(Base):
     )
 
 
+class EntityIntelligence(Base):
+    """Latest bank-level intelligence synthesized from entities and trajectories."""
+
+    __tablename__ = "entity_intelligence"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=sql_text("gen_random_uuid()")
+    )
+    bank_id: Mapped[str] = mapped_column(Text, nullable=False)
+    computed_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    entity_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    source_entity_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    entity_snapshot_hash: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    content: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    structured_content: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    entity_context: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=sql_text("'{}'::jsonb"))
+    delta_metadata: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=sql_text("'{}'::jsonb"))
+    llm_model: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    prompt_version: Mapped[str] = mapped_column(Text, nullable=False, server_default="v1")
+
+    __table_args__ = (
+        UniqueConstraint("bank_id", name="uq_entity_intelligence_bank"),
+        Index("idx_entity_intelligence_computed", "computed_at"),
+    )
+
+
 class Bank(Base):
     """Memory bank profiles with disposition traits and background."""
 

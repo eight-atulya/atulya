@@ -136,6 +136,7 @@ def create_llm_provider(
     base_url: str,
     model: str,
     reasoning_effort: str,
+    timeout: float | None = None,
     groq_service_tier: str | None = None,
     openai_service_tier: str | None = None,
     vertexai_project_id: str | None = None,
@@ -152,6 +153,7 @@ def create_llm_provider(
         base_url: Base URL for the API.
         model: Model name.
         reasoning_effort: Reasoning effort level for supported providers.
+        timeout: Request timeout in seconds for providers that support it.
         groq_service_tier: Groq service tier (for Groq provider) - "on_demand", "flex", or "auto".
         openai_service_tier: OpenAI service tier (for OpenAI provider) - None (default) or "flex" (50% cheaper).
         vertexai_project_id: Vertex AI project ID (for VertexAI provider).
@@ -180,6 +182,7 @@ def create_llm_provider(
             base_url=base_url,
             model=model,
             reasoning_effort=reasoning_effort,
+            timeout=timeout,
         )
 
     elif provider_lower == "claude-code":
@@ -189,6 +192,7 @@ def create_llm_provider(
             base_url=base_url,
             model=model,
             reasoning_effort=reasoning_effort,
+            timeout=timeout or 300.0,
         )
 
     elif provider_lower == "mock":
@@ -220,6 +224,7 @@ def create_llm_provider(
             base_url=base_url,
             model=model,
             reasoning_effort=reasoning_effort,
+            timeout=timeout or 300.0,
         )
 
     elif provider_lower in ("openai", "groq", "ollama", "lmstudio"):
@@ -231,6 +236,7 @@ def create_llm_provider(
             reasoning_effort=reasoning_effort,
             groq_service_tier=groq_service_tier,
             openai_service_tier=openai_service_tier,
+            timeout=timeout,
         )
 
     else:
@@ -251,6 +257,7 @@ class LLMProvider:
         base_url: str,
         model: str,
         reasoning_effort: str = "low",
+        timeout: float | None = None,
         groq_service_tier: str | None = None,
         openai_service_tier: str | None = None,
         gemini_safety_settings: list | None = None,
@@ -273,6 +280,7 @@ class LLMProvider:
         self.base_url = base_url
         self.model = model
         self.reasoning_effort = reasoning_effort
+        self.timeout = timeout
         # Service tiers from hierarchical config (not env vars)
         self.groq_service_tier = groq_service_tier
         self.openai_service_tier = openai_service_tier
@@ -366,6 +374,7 @@ class LLMProvider:
             base_url=self.base_url,
             model=self.model,
             reasoning_effort=self.reasoning_effort,
+            timeout=self.timeout,
             groq_service_tier=self.groq_service_tier,
             openai_service_tier=self.openai_service_tier,
             vertexai_project_id=vertexai_project_id,

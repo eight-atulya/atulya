@@ -3015,6 +3015,80 @@ export type EntityInput = {
 };
 
 /**
+ * EntityIntelligenceRecomputeResponse
+ *
+ * Queued background entity intelligence recompute.
+ */
+export type EntityIntelligenceRecomputeResponse = {
+    /**
+     * EntityIntelligenceRecomputeResponseOperationId
+     */
+    operation_id: string;
+    /**
+     * EntityIntelligenceRecomputeResponseStatus
+     */
+    status?: string;
+};
+
+/**
+ * EntityIntelligenceResponse
+ *
+ * Latest bank-level entity intelligence snapshot.
+ */
+export type EntityIntelligenceResponse = {
+    /**
+     * EntityIntelligenceResponseBankId
+     */
+    bank_id: string;
+    /**
+     * EntityIntelligenceResponseComputedAt
+     */
+    computed_at?: string | null;
+    /**
+     * EntityIntelligenceResponseEntityCount
+     */
+    entity_count: number;
+    /**
+     * EntityIntelligenceResponseSourceEntityCount
+     */
+    source_entity_count: number;
+    /**
+     * EntityIntelligenceResponseEntitySnapshotHash
+     */
+    entity_snapshot_hash?: string;
+    /**
+     * EntityIntelligenceResponseContent
+     */
+    content: string;
+    /**
+     * EntityIntelligenceResponseStructuredContent
+     */
+    structured_content?: {
+        [key: string]: unknown;
+    };
+    /**
+     * EntityIntelligenceResponseEntityContext
+     */
+    entity_context?: {
+        [key: string]: unknown;
+    };
+    /**
+     * EntityIntelligenceResponseDeltaMetadata
+     */
+    delta_metadata?: {
+        [key: string]: unknown;
+    };
+    /**
+     * EntityIntelligenceResponseLlmModel
+     */
+    llm_model?: string;
+    /**
+     * EntityIntelligenceResponsePromptVersion
+     */
+    prompt_version?: string;
+};
+
+/**
  * EntityListItem
  *
  * Entity list item with summary.
@@ -6554,6 +6628,78 @@ export type PostEntityTrajectoryRecomputeResponses = {
 };
 
 export type PostEntityTrajectoryRecomputeResponse = PostEntityTrajectoryRecomputeResponses[keyof PostEntityTrajectoryRecomputeResponses];
+
+export type GetEntityIntelligenceData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/entity-intelligence';
+};
+
+export type GetEntityIntelligenceErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetEntityIntelligenceError = GetEntityIntelligenceErrors[keyof GetEntityIntelligenceErrors];
+
+export type GetEntityIntelligenceResponses = {
+    /**
+     * Successful Response
+     */
+    200: EntityIntelligenceResponse;
+};
+
+export type GetEntityIntelligenceResponse = GetEntityIntelligenceResponses[keyof GetEntityIntelligenceResponses];
+
+export type PostEntityIntelligenceRecomputeData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/entity-intelligence/recompute';
+};
+
+export type PostEntityIntelligenceRecomputeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type PostEntityIntelligenceRecomputeError = PostEntityIntelligenceRecomputeErrors[keyof PostEntityIntelligenceRecomputeErrors];
+
+export type PostEntityIntelligenceRecomputeResponses = {
+    /**
+     * Successful Response
+     */
+    200: EntityIntelligenceRecomputeResponse;
+};
+
+export type PostEntityIntelligenceRecomputeResponse = PostEntityIntelligenceRecomputeResponses[keyof PostEntityIntelligenceRecomputeResponses];
 
 export type RegenerateEntityObservationsData = {
     body?: never;

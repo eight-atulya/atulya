@@ -6,6 +6,7 @@ to disambiguate entities across memory units.
 """
 
 import asyncio
+import json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass, field
@@ -54,6 +55,14 @@ class _CooccurrencePair:
     entity_id_2: str
 
 
+@dataclass
+class _EntityMetadataSignal:
+    """Classification signal observed for an entity mention."""
+
+    entity_id: str
+    payload: dict
+
+
 # Load spaCy model (singleton)
 _nlp = None
 
@@ -79,6 +88,7 @@ class EntityResolver:
         # pending updates.  flush_pending_stats() pops only the calling task's items.
         self._pending_stats: dict[int, list[_EntityStat]] = {}
         self._pending_cooccurrences: dict[int, list[_CooccurrencePair]] = {}
+        self._pending_metadata: dict[int, list[_EntityMetadataSignal]] = {}
 
     def _task_key(self) -> int:
         """Return a unique key for the current asyncio task (or 0 for non-task context)."""
@@ -99,8 +109,9 @@ class EntityResolver:
         key = self._task_key()
         stats = self._pending_stats.pop(key, [])
         cooccurrences = self._pending_cooccurrences.pop(key, [])
+        metadata_signals = self._pending_metadata.pop(key, [])
 
-        if not stats and not cooccurrences:
+        if not stats and not cooccurrences and not metadata_signals:
             return
 
         async with acquire_with_retry(self.pool) as conn:
@@ -147,6 +158,64 @@ class EntityResolver:
                     """,
                     sorted((e1, e2, count, now) for (e1, e2), count in coo_agg.items()),
                 )
+
+            if metadata_signals:
+                best_by_entity: dict[str, dict] = {}
+                for signal in metadata_signals:
+                    payload = signal.payload
+                    if not payload.get("entity_type"):
+                        continue
+                    existing = best_by_entity.get(signal.entity_id)
+                    if existing is None or float(payload.get("confidence", 0.0) or 0.0) > float(
+                        existing.get("confidence", 0.0) or 0.0
+                    ):
+                        best_by_entity[signal.entity_id] = payload
+
+                if best_by_entity:
+                    await conn.executemany(
+                        f"""
+                        UPDATE {fq_table("entities")} SET
+                            metadata = COALESCE(metadata, '{{}}'::jsonb) || $2::jsonb
+                        WHERE id = $1::uuid
+                        """,
+                        [
+                            (
+                                entity_id,
+                                json.dumps(
+                                    {
+                                        "entity_type": payload.get("entity_type"),
+                                        "entity_type_confidence": payload.get("confidence"),
+                                        "entity_type_evidence": payload.get("evidence"),
+                                        "role_hint": payload.get("role_hint"),
+                                        "classification_source": payload.get("source", "retain_llm"),
+                                    }
+                                ),
+                            )
+                            for entity_id, payload in sorted(best_by_entity.items())
+                        ],
+                    )
+
+    @staticmethod
+    def _classification_payload(entity_data: dict) -> dict:
+        entity_type = entity_data.get("entity_type")
+        if not entity_type:
+            return {}
+        try:
+            confidence = float(entity_data.get("confidence")) if entity_data.get("confidence") is not None else None
+        except (TypeError, ValueError):
+            confidence = None
+        if confidence is not None:
+            confidence = max(0.0, min(1.0, confidence))
+        payload = {
+            "entity_type": str(entity_type).lower(),
+            "confidence": confidence if confidence is not None else 0.5,
+            "source": "retain_llm",
+        }
+        if entity_data.get("evidence"):
+            payload["evidence"] = str(entity_data["evidence"])[:240]
+        if entity_data.get("role_hint"):
+            payload["role_hint"] = str(entity_data["role_hint"])[:120]
+        return payload
 
     @staticmethod
     def _build_labels_lookup(entity_labels: list | None) -> set[str]:
@@ -505,6 +574,15 @@ class EntityResolver:
         # these with await entity_resolver.flush_pending_stats() after the txn.
         key = self._task_key()
         self._pending_stats.setdefault(key, []).extend(pending)
+        metadata_signals: list[_EntityMetadataSignal] = []
+        for idx, entity_id in enumerate(entity_ids):
+            if not entity_id:
+                continue
+            payload = self._classification_payload(entities_data[idx])
+            if payload:
+                metadata_signals.append(_EntityMetadataSignal(entity_id=str(entity_id), payload=payload))
+        if metadata_signals:
+            self._pending_metadata.setdefault(key, []).extend(metadata_signals)
 
         return entity_ids
 

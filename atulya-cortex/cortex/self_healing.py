@@ -25,6 +25,10 @@ _EXEC_INTENT_RE = re.compile(
     r"\b(run|execute|check|inspect|show|measure|test|use)\b",
     flags=re.IGNORECASE,
 )
+_LEGACY_CALL_TAG_RE = re.compile(
+    r"<call:([A-Za-z0-9_.-]+)\((.*?)\)>",
+    flags=re.IGNORECASE | re.DOTALL,
+)
 
 try:
     from plasticity.attention_network import AttentionEntity, route_entities
@@ -204,21 +208,35 @@ class SelfHealingEngine:
         if not reply:
             return False
         payload = self._parse_json_dict(reply)
-        if not payload:
-            return False
-        keys = {str(k).strip().lower() for k in payload.keys()}
-        toolish = bool({"command", "name", "arguments"} & keys)
-        if not toolish:
-            return False
-        # Trigger only when the user likely asked for an action, to avoid
-        # false positives for genuine JSON discussions.
-        return bool(_EXEC_INTENT_RE.search(stimulus_text or ""))
+        if payload:
+            keys = {str(k).strip().lower() for k in payload.keys()}
+            toolish = bool({"command", "name", "arguments"} & keys)
+            if toolish:
+                # Trigger only when the user likely asked for an action, to avoid
+                # false positives for genuine JSON discussions.
+                return bool(_EXEC_INTENT_RE.search(stimulus_text or ""))
+
+        # Legacy tool payload style some models emit:
+        #   <call:bash(command="nvidia-smi")>
+        # Treat it as a leak too so we can rewrite into a user-safe explanation.
+        return bool(_LEGACY_CALL_TAG_RE.search(reply))
 
     def _intent_repair_for_tool_payload(self, *, stimulus_text: str, draft_reply: str, channel: str) -> str:
         payload = self._parse_json_dict(draft_reply)
-        command = str(payload.get("command", "")).strip()
-        tool_name = str(payload.get("name", "")).strip()
-        requested = command or tool_name or "that action"
+        command = str(payload.get("command", "")).strip() if payload else ""
+        tool_name = str(payload.get("name", "")).strip() if payload else ""
+
+        if not command and not tool_name:
+            m = _LEGACY_CALL_TAG_RE.search(draft_reply or "")
+            if m:
+                tool_name = (m.group(1) or "").strip()
+                raw_args = (m.group(2) or "").strip()
+                requested = f"{tool_name}({raw_args})" if raw_args else tool_name
+            else:
+                requested = "that action"
+        else:
+            requested = command or tool_name or "that action"
+
         channel_root = channel.split(":", 1)[0] if channel else "this"
         return (
             f"I understood you want me to execute `{requested}`. "

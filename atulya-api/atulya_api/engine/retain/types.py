@@ -89,6 +89,10 @@ class EntityRef:
     name: str
     canonical_name: str | None = None  # Resolved canonical name
     entity_id: UUID | None = None  # Resolved entity ID
+    entity_type: str | None = None  # Root semantic type from extraction, if available
+    confidence: float | None = None
+    evidence: str | None = None
+    role_hint: str | None = None
 
 
 @dataclass
@@ -115,6 +119,7 @@ class ExtractedFact:
     fact_text: str
     fact_type: str  # "world", "experience", "opinion", "observation"
     entities: list[str] = field(default_factory=list)
+    entity_classifications: dict[str, dict] = field(default_factory=dict)
     occurred_start: datetime | None = None
     occurred_end: datetime | None = None
     where: str | None = None  # WHERE the fact occurred or is about
@@ -216,8 +221,19 @@ class ProcessedFact:
         occurred_end = extracted_fact.occurred_end
         mentioned_at = extracted_fact.mentioned_at  # May be None when caller opted into no timestamp
 
-        # Convert entity strings to EntityRef objects
-        entities = [EntityRef(name=name) for name in extracted_fact.entities]
+        # Convert entity strings to EntityRef objects, carrying optional root classifications.
+        entities = []
+        for name in extracted_fact.entities:
+            classification = extracted_fact.entity_classifications.get(name.lower(), {})
+            entities.append(
+                EntityRef(
+                    name=name,
+                    entity_type=classification.get("entity_type"),
+                    confidence=classification.get("confidence"),
+                    evidence=classification.get("evidence"),
+                    role_hint=classification.get("role_hint"),
+                )
+            )
 
         return ProcessedFact(
             fact_text=extracted_fact.fact_text,

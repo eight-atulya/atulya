@@ -167,6 +167,15 @@ ENV_CONSOLIDATION_LLM_MAX_BACKOFF = "ATULYA_API_CONSOLIDATION_LLM_MAX_BACKOFF"
 ENV_CONSOLIDATION_LLM_TIMEOUT = "ATULYA_API_CONSOLIDATION_LLM_TIMEOUT"
 ENV_CONSOLIDATION_MAX_ATTEMPTS = "ATULYA_API_CONSOLIDATION_MAX_ATTEMPTS"
 
+ENV_ENTITY_INTELLIGENCE_LLM_PROVIDER = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER"
+ENV_ENTITY_INTELLIGENCE_LLM_API_KEY = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_API_KEY"
+ENV_ENTITY_INTELLIGENCE_LLM_MODEL = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL"
+ENV_ENTITY_INTELLIGENCE_LLM_BASE_URL = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_BASE_URL"
+ENV_ENTITY_INTELLIGENCE_LLM_MAX_RETRIES = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_MAX_RETRIES"
+ENV_ENTITY_INTELLIGENCE_LLM_INITIAL_BACKOFF = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_INITIAL_BACKOFF"
+ENV_ENTITY_INTELLIGENCE_LLM_MAX_BACKOFF = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_MAX_BACKOFF"
+ENV_ENTITY_INTELLIGENCE_LLM_TIMEOUT = "ATULYA_API_ENTITY_INTELLIGENCE_LLM_TIMEOUT"
+
 ENV_EMBEDDINGS_PROVIDER = "ATULYA_API_EMBEDDINGS_PROVIDER"
 ENV_EMBEDDINGS_LOCAL_MODEL = "ATULYA_API_EMBEDDINGS_LOCAL_MODEL"
 ENV_EMBEDDINGS_LOCAL_FORCE_CPU = "ATULYA_API_EMBEDDINGS_LOCAL_FORCE_CPU"
@@ -281,6 +290,13 @@ ENV_ENTITY_TRAJECTORY_LAPLACE_ALPHA = "ATULYA_API_ENTITY_TRAJECTORY_LAPLACE_ALPH
 ENV_ENTITY_TRAJECTORY_MIN_FACTS = "ATULYA_API_ENTITY_TRAJECTORY_MIN_FACTS"
 ENV_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES = "ATULYA_API_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES"
 ENV_ENTITY_TRAJECTORY_PROMPT_VERSION = "ATULYA_API_ENTITY_TRAJECTORY_PROMPT_VERSION"
+ENV_ENABLE_ENTITY_INTELLIGENCE = "ATULYA_API_ENABLE_ENTITY_INTELLIGENCE"
+ENV_ENTITY_INTELLIGENCE_TRIGGER_ENTITY_DELTA = "ATULYA_API_ENTITY_INTELLIGENCE_TRIGGER_ENTITY_DELTA"
+ENV_ENTITY_INTELLIGENCE_MIN_ENTITIES = "ATULYA_API_ENTITY_INTELLIGENCE_MIN_ENTITIES"
+ENV_ENTITY_INTELLIGENCE_MAX_ENTITIES = "ATULYA_API_ENTITY_INTELLIGENCE_MAX_ENTITIES"
+ENV_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS = "ATULYA_API_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS"
+ENV_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS = "ATULYA_API_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS"
+ENV_ENTITY_INTELLIGENCE_PROMPT_VERSION = "ATULYA_API_ENTITY_INTELLIGENCE_PROMPT_VERSION"
 
 # File storage configuration
 ENV_FILE_STORAGE_TYPE = "ATULYA_API_FILE_STORAGE_TYPE"
@@ -498,6 +514,13 @@ DEFAULT_ENTITY_TRAJECTORY_LAPLACE_ALPHA = 0.1
 DEFAULT_ENTITY_TRAJECTORY_MIN_FACTS = 3
 DEFAULT_ENTITY_TRAJECTORY_ENQUEUE_MAX_ENTITIES = 50
 DEFAULT_ENTITY_TRAJECTORY_PROMPT_VERSION = "v1"
+DEFAULT_ENABLE_ENTITY_INTELLIGENCE = False
+DEFAULT_ENTITY_INTELLIGENCE_TRIGGER_ENTITY_DELTA = 8
+DEFAULT_ENTITY_INTELLIGENCE_MIN_ENTITIES = 8
+DEFAULT_ENTITY_INTELLIGENCE_MAX_ENTITIES = 2000
+DEFAULT_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS = 10_000
+DEFAULT_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS = 4096
+DEFAULT_ENTITY_INTELLIGENCE_PROMPT_VERSION = "v2-digital-person-map"
 
 # File storage defaults
 DEFAULT_FILE_STORAGE_TYPE = "native"  # PostgreSQL BYTEA storage
@@ -756,6 +779,15 @@ class AtulyaConfig:
     # transport layer, so worst-case API calls = max_attempts * (max_retries+1).
     consolidation_max_attempts: int
 
+    entity_intelligence_llm_provider: str | None
+    entity_intelligence_llm_api_key: str | None
+    entity_intelligence_llm_model: str | None
+    entity_intelligence_llm_base_url: str | None
+    entity_intelligence_llm_max_retries: int | None
+    entity_intelligence_llm_initial_backoff: float | None
+    entity_intelligence_llm_max_backoff: float | None
+    entity_intelligence_llm_timeout: float | None
+
     # Embeddings
     embeddings_provider: str
     embeddings_local_model: str
@@ -840,6 +872,13 @@ class AtulyaConfig:
     entity_trajectory_min_facts: int
     entity_trajectory_enqueue_max_entities: int
     entity_trajectory_prompt_version: str
+    enable_entity_intelligence: bool
+    entity_intelligence_trigger_entity_delta: int
+    entity_intelligence_min_entities: int
+    entity_intelligence_max_entities: int
+    entity_intelligence_max_context_tokens: int
+    entity_intelligence_max_completion_tokens: int
+    entity_intelligence_prompt_version: str
 
     # File storage (static - server-level only)
     file_storage_type: str  # "native" (PostgreSQL) or "s3" (S3-compatible)
@@ -960,11 +999,13 @@ class AtulyaConfig:
         "retain_llm_api_key",
         "reflect_llm_api_key",
         "consolidation_llm_api_key",
+        "entity_intelligence_llm_api_key",
         # Base URLs (could expose infrastructure)
         "llm_base_url",
         "retain_llm_base_url",
         "reflect_llm_base_url",
         "consolidation_llm_base_url",
+        "entity_intelligence_llm_base_url",
         "embeddings_tei_base_url",
         "reranker_tei_base_url",
         "reranker_cohere_base_url",
@@ -1001,6 +1042,13 @@ class AtulyaConfig:
         "entity_trajectory_min_facts",
         "entity_trajectory_enqueue_max_entities",
         "entity_trajectory_prompt_version",
+        "enable_entity_intelligence",
+        "entity_intelligence_trigger_entity_delta",
+        "entity_intelligence_min_entities",
+        "entity_intelligence_max_entities",
+        "entity_intelligence_max_context_tokens",
+        "entity_intelligence_max_completion_tokens",
+        "entity_intelligence_prompt_version",
         # Consolidation settings
         "enable_observations",
         "consolidation_llm_batch_size",
@@ -1146,6 +1194,16 @@ class AtulyaConfig:
             raise ValueError("entity_trajectory_min_facts must be >= 1")
         if self.entity_trajectory_enqueue_max_entities < 1:
             raise ValueError("entity_trajectory_enqueue_max_entities must be >= 1")
+        if self.entity_intelligence_trigger_entity_delta < 1:
+            raise ValueError("entity_intelligence_trigger_entity_delta must be >= 1")
+        if self.entity_intelligence_min_entities < 1:
+            raise ValueError("entity_intelligence_min_entities must be >= 1")
+        if self.entity_intelligence_max_entities < self.entity_intelligence_min_entities:
+            raise ValueError("entity_intelligence_max_entities must be >= entity_intelligence_min_entities")
+        if self.entity_intelligence_max_context_tokens < 1000:
+            raise ValueError("entity_intelligence_max_context_tokens must be >= 1000")
+        if self.entity_intelligence_max_completion_tokens < 512:
+            raise ValueError("entity_intelligence_max_completion_tokens must be >= 512")
 
     @classmethod
     def from_env(cls) -> "AtulyaConfig":
@@ -1253,6 +1311,27 @@ class AtulyaConfig:
             consolidation_max_attempts=int(
                 os.getenv(ENV_CONSOLIDATION_MAX_ATTEMPTS, str(DEFAULT_CONSOLIDATION_MAX_ATTEMPTS))
             ),
+            entity_intelligence_llm_provider=os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_PROVIDER) or None,
+            entity_intelligence_llm_api_key=os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_API_KEY) or None,
+            entity_intelligence_llm_model=os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_MODEL)
+            or (
+                _get_default_model_for_provider(os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_PROVIDER))
+                if os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_PROVIDER)
+                else None
+            ),
+            entity_intelligence_llm_base_url=os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_BASE_URL) or None,
+            entity_intelligence_llm_max_retries=int(os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_MAX_RETRIES))
+            if os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_MAX_RETRIES)
+            else None,
+            entity_intelligence_llm_initial_backoff=float(os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_INITIAL_BACKOFF))
+            if os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_INITIAL_BACKOFF)
+            else None,
+            entity_intelligence_llm_max_backoff=float(os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_MAX_BACKOFF))
+            if os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_MAX_BACKOFF)
+            else None,
+            entity_intelligence_llm_timeout=float(os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_TIMEOUT))
+            if os.getenv(ENV_ENTITY_INTELLIGENCE_LLM_TIMEOUT)
+            else None,
             # Embeddings
             embeddings_provider=os.getenv(ENV_EMBEDDINGS_PROVIDER, DEFAULT_EMBEDDINGS_PROVIDER),
             embeddings_local_model=os.getenv(ENV_EMBEDDINGS_LOCAL_MODEL, DEFAULT_EMBEDDINGS_LOCAL_MODEL),
@@ -1408,6 +1487,37 @@ class AtulyaConfig:
             ),
             entity_trajectory_prompt_version=os.getenv(
                 ENV_ENTITY_TRAJECTORY_PROMPT_VERSION, DEFAULT_ENTITY_TRAJECTORY_PROMPT_VERSION
+            ),
+            enable_entity_intelligence=os.getenv(
+                ENV_ENABLE_ENTITY_INTELLIGENCE, str(DEFAULT_ENABLE_ENTITY_INTELLIGENCE)
+            ).lower()
+            == "true",
+            entity_intelligence_trigger_entity_delta=int(
+                os.getenv(
+                    ENV_ENTITY_INTELLIGENCE_TRIGGER_ENTITY_DELTA,
+                    str(DEFAULT_ENTITY_INTELLIGENCE_TRIGGER_ENTITY_DELTA),
+                )
+            ),
+            entity_intelligence_min_entities=int(
+                os.getenv(ENV_ENTITY_INTELLIGENCE_MIN_ENTITIES, str(DEFAULT_ENTITY_INTELLIGENCE_MIN_ENTITIES))
+            ),
+            entity_intelligence_max_entities=int(
+                os.getenv(ENV_ENTITY_INTELLIGENCE_MAX_ENTITIES, str(DEFAULT_ENTITY_INTELLIGENCE_MAX_ENTITIES))
+            ),
+            entity_intelligence_max_context_tokens=int(
+                os.getenv(
+                    ENV_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS,
+                    str(DEFAULT_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS),
+                )
+            ),
+            entity_intelligence_max_completion_tokens=int(
+                os.getenv(
+                    ENV_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS,
+                    str(DEFAULT_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS),
+                )
+            ),
+            entity_intelligence_prompt_version=os.getenv(
+                ENV_ENTITY_INTELLIGENCE_PROMPT_VERSION, DEFAULT_ENTITY_INTELLIGENCE_PROMPT_VERSION
             ),
             # File storage
             file_storage_type=os.getenv(ENV_FILE_STORAGE_TYPE, DEFAULT_FILE_STORAGE_TYPE),
@@ -1660,6 +1770,12 @@ class AtulyaConfig:
             consolidation_provider = self.consolidation_llm_provider or self.llm_provider
             consolidation_model = self.consolidation_llm_model or self.llm_model
             logger.info(f"LLM (consolidation): provider={consolidation_provider}, model={consolidation_model}")
+        if self.entity_intelligence_llm_provider or self.entity_intelligence_llm_model:
+            intelligence_provider = (
+                self.entity_intelligence_llm_provider or self.retain_llm_provider or self.llm_provider
+            )
+            intelligence_model = self.entity_intelligence_llm_model or self.retain_llm_model or self.llm_model
+            logger.info(f"LLM (entity intelligence): provider={intelligence_provider}, model={intelligence_model}")
         logger.info(
             "Brain runtime: enabled=%s, cache_dir=%s, startup_warmup=%s, tier=%s, prediction=%s, import_export=%s",
             self.brain_enabled,

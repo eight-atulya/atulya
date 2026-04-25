@@ -1287,6 +1287,81 @@ paths:
       summary: Queue entity trajectory recompute
       tags:
       - Entities
+  /v1/default/banks/{bank_id}/entity-intelligence:
+    get:
+      description: "Return the latest bank-level entity intelligence snapshot, if\
+        \ computed."
+      operationId: get_entity_intelligence
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityIntelligenceResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Get entity intelligence
+      tags:
+      - Entities
+  /v1/default/banks/{bank_id}/entity-intelligence/recompute:
+    post:
+      description: Enqueue a background job to recompute bank-level entity intelligence.
+      operationId: post_entity_intelligence_recompute
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntityIntelligenceRecomputeResponse'
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Queue entity intelligence recompute
+      tags:
+      - Entities
   /v1/default/banks/{bank_id}/entities/{entity_id}/regenerate:
     post:
       deprecated: true
@@ -9293,6 +9368,85 @@ components:
       required:
       - text
       title: EntityInput
+    EntityIntelligenceRecomputeResponse:
+      description: Queued background entity intelligence recompute.
+      example:
+        operation_id: operation_id
+        status: pending
+      properties:
+        operation_id:
+          title: Operation Id
+          type: string
+        status:
+          default: pending
+          title: Status
+          type: string
+      required:
+      - operation_id
+      title: EntityIntelligenceRecomputeResponse
+    EntityIntelligenceResponse:
+      description: Latest bank-level entity intelligence snapshot.
+      example:
+        entity_count: 0
+        llm_model: ""
+        entity_context:
+          key: ""
+        bank_id: bank_id
+        entity_snapshot_hash: ""
+        source_entity_count: 6
+        delta_metadata:
+          key: ""
+        computed_at: computed_at
+        prompt_version: ""
+        content: content
+        structured_content:
+          key: ""
+      properties:
+        bank_id:
+          title: Bank Id
+          type: string
+        computed_at:
+          nullable: true
+          type: string
+        entity_count:
+          title: Entity Count
+          type: integer
+        source_entity_count:
+          title: Source Entity Count
+          type: integer
+        entity_snapshot_hash:
+          default: ""
+          title: Entity Snapshot Hash
+          type: string
+        content:
+          title: Content
+          type: string
+        structured_content:
+          additionalProperties: {}
+          default: {}
+          title: Structured Content
+        entity_context:
+          additionalProperties: {}
+          default: {}
+          title: Entity Context
+        delta_metadata:
+          additionalProperties: {}
+          default: {}
+          title: Delta Metadata
+        llm_model:
+          default: ""
+          title: Llm Model
+          type: string
+        prompt_version:
+          default: ""
+          title: Prompt Version
+          type: string
+      required:
+      - bank_id
+      - content
+      - entity_count
+      - source_entity_count
+      title: EntityIntelligenceResponse
     EntityListItem:
       description: Entity list item with summary.
       example:

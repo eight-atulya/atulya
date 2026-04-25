@@ -19,7 +19,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DEFAULT_VOICE = "calm, terse, kind"
+DEFAULT_VOICE = "cute and witty"
 DEFAULT_BIO = (
     "I am Atulya, a personal AI brain. I run locally when I can and remember "
     "what matters. I prefer short answers, ask before acting, and tell you "

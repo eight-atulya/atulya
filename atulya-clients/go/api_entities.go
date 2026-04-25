@@ -149,6 +149,128 @@ func (a *EntitiesAPIService) GetEntityExecute(r ApiGetEntityRequest) (*EntityDet
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGetEntityIntelligenceRequest struct {
+	ctx context.Context
+	ApiService *EntitiesAPIService
+	bankId string
+	authorization *string
+}
+
+func (r ApiGetEntityIntelligenceRequest) Authorization(authorization string) ApiGetEntityIntelligenceRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiGetEntityIntelligenceRequest) Execute() (*EntityIntelligenceResponse, *http.Response, error) {
+	return r.ApiService.GetEntityIntelligenceExecute(r)
+}
+
+/*
+GetEntityIntelligence Get entity intelligence
+
+Return the latest bank-level entity intelligence snapshot, if computed.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @return ApiGetEntityIntelligenceRequest
+*/
+func (a *EntitiesAPIService) GetEntityIntelligence(ctx context.Context, bankId string) ApiGetEntityIntelligenceRequest {
+	return ApiGetEntityIntelligenceRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+	}
+}
+
+// Execute executes the request
+//  @return EntityIntelligenceResponse
+func (a *EntitiesAPIService) GetEntityIntelligenceExecute(r ApiGetEntityIntelligenceRequest) (*EntityIntelligenceResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *EntityIntelligenceResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.GetEntityIntelligence")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/entity-intelligence"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGetEntityTrajectoryRequest struct {
 	ctx context.Context
 	ApiService *EntitiesAPIService
@@ -356,6 +478,128 @@ func (a *EntitiesAPIService) ListEntitiesExecute(r ApiListEntitiesRequest) (*Ent
 		var defaultValue int32 = 0
 		r.offset = &defaultValue
 	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiPostEntityIntelligenceRecomputeRequest struct {
+	ctx context.Context
+	ApiService *EntitiesAPIService
+	bankId string
+	authorization *string
+}
+
+func (r ApiPostEntityIntelligenceRecomputeRequest) Authorization(authorization string) ApiPostEntityIntelligenceRecomputeRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiPostEntityIntelligenceRecomputeRequest) Execute() (*EntityIntelligenceRecomputeResponse, *http.Response, error) {
+	return r.ApiService.PostEntityIntelligenceRecomputeExecute(r)
+}
+
+/*
+PostEntityIntelligenceRecompute Queue entity intelligence recompute
+
+Enqueue a background job to recompute bank-level entity intelligence.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @return ApiPostEntityIntelligenceRecomputeRequest
+*/
+func (a *EntitiesAPIService) PostEntityIntelligenceRecompute(ctx context.Context, bankId string) ApiPostEntityIntelligenceRecomputeRequest {
+	return ApiPostEntityIntelligenceRecomputeRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+	}
+}
+
+// Execute executes the request
+//  @return EntityIntelligenceRecomputeResponse
+func (a *EntitiesAPIService) PostEntityIntelligenceRecomputeExecute(r ApiPostEntityIntelligenceRecomputeRequest) (*EntityIntelligenceRecomputeResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *EntityIntelligenceRecomputeResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.PostEntityIntelligenceRecompute")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/entity-intelligence/recompute"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 

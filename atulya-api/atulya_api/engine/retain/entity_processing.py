@@ -61,7 +61,17 @@ async def process_entities_batch(
     entities_per_fact = []
     for fact in facts:
         # Start with LLM-extracted entities
-        llm_entities = [{"text": entity.name, "type": "CONCEPT"} for entity in (fact.entities or [])]
+        llm_entities = [
+            {
+                "text": entity.name,
+                "type": "CONCEPT",
+                "entity_type": entity.entity_type,
+                "confidence": entity.confidence,
+                "evidence": entity.evidence,
+                "role_hint": entity.role_hint,
+            }
+            for entity in (fact.entities or [])
+        ]
 
         # Get user entities for this content (use content_index from fact)
         user_entities = user_entities_per_content.get(fact.content_index, [])
