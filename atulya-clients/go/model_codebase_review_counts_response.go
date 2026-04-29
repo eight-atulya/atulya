@@ -31,14 +31,6 @@ type CodebaseReviewCountsResponse struct {
 // will change when the set of required properties is changed
 func NewCodebaseReviewCountsResponse() *CodebaseReviewCountsResponse {
 	this := CodebaseReviewCountsResponse{}
-	var unrouted int32 = 0
-	this.Unrouted = &unrouted
-	var memory int32 = 0
-	this.Memory = &memory
-	var research int32 = 0
-	this.Research = &research
-	var dismissed int32 = 0
-	this.Dismissed = &dismissed
 	return &this
 }
 
@@ -47,14 +39,6 @@ func NewCodebaseReviewCountsResponse() *CodebaseReviewCountsResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseReviewCountsResponseWithDefaults() *CodebaseReviewCountsResponse {
 	this := CodebaseReviewCountsResponse{}
-	var unrouted int32 = 0
-	this.Unrouted = &unrouted
-	var memory int32 = 0
-	this.Memory = &memory
-	var research int32 = 0
-	this.Research = &research
-	var dismissed int32 = 0
-	this.Dismissed = &dismissed
 	return &this
 }
 

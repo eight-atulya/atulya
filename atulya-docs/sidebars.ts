@@ -13,6 +13,12 @@ const sidebars: SidebarsConfig = {
           label: 'Overview',
         },
         {
+          type: 'doc',
+          id: 'developer/brain-api-map',
+          label: 'Brain API Map',
+          customProps: { icon: 'lu-map' },
+        },
+        {
           type: 'category',
           label: 'Codebases',
           link: {
@@ -25,49 +31,37 @@ const sidebars: SidebarsConfig = {
               type: 'doc',
               id: 'developer/codebases-lifecycle',
               label: 'Lifecycle',
-              customProps: {
-                icon: '/img/icons/codebases-lifecycle.svg',
-              },
+              customProps: { icon: 'lu-refresh' },
             },
             {
               type: 'doc',
               id: 'developer/codebases-control-plane',
               label: 'Control Plane',
-              customProps: {
-                icon: '/img/icons/codebases-control-plane.svg',
-              },
+              customProps: { icon: 'lu-layers' },
             },
             {
               type: 'doc',
               id: 'developer/codebases-for-coding-agents',
               label: 'Coding Agents',
-              customProps: {
-                icon: '/img/icons/codebases-api.svg',
-              },
+              customProps: { icon: 'lu-cpu' },
             },
             {
               type: 'doc',
               id: 'developer/codebases-code-intel',
               label: 'Code Intelligence',
-              customProps: {
-                icon: '/img/icons/codebases-overview.svg',
-              },
+              customProps: { icon: 'lu-brain' },
             },
             {
               type: 'doc',
               id: 'developer/bank-presets',
               label: 'Bank presets',
-              customProps: {
-                icon: '/img/icons/codebases-api.svg',
-              },
+              customProps: { icon: 'lu-package' },
             },
             {
               type: 'doc',
               id: 'developer/codebases-api',
               label: 'API',
-              customProps: {
-                icon: '/img/icons/codebases-api.svg',
-              },
+              customProps: { icon: 'lu-file-json', iconAfter: 'lu-arrow-up-right' },
             },
           ],
         },
@@ -75,56 +69,67 @@ const sidebars: SidebarsConfig = {
           type: 'doc',
           id: 'developer/control-plane-graph-intelligence',
           label: 'Graph Intelligence',
+          customProps: { icon: 'lu-network' },
         },
         {
           type: 'doc',
           id: 'developer/retain',
           label: 'Retain',
+          customProps: { icon: 'lu-database' },
         },
         {
           type: 'doc',
           id: 'developer/retrieval',
           label: 'Recall',
+          customProps: { icon: 'lu-search' },
         },
         {
           type: 'doc',
           id: 'developer/reflect',
           label: 'Reflect',
+          customProps: { icon: 'lu-sparkles' },
         },
         {
           type: 'doc',
           id: 'developer/observations',
           label: 'Observations',
+          customProps: { icon: 'lu-activity' },
         },
         {
           type: 'doc',
           id: 'developer/entity-intelligence',
           label: 'Entity Intelligence',
+          customProps: { icon: 'lu-users' },
         },
         {
           type: 'doc',
           id: 'developer/brain-and-dream',
           label: 'Brain and Dream',
+          customProps: { icon: 'lu-brain' },
         },
         {
           type: 'doc',
           id: 'developer/multilingual',
           label: 'Multilingual',
+          customProps: { icon: 'lu-languages' },
         },
         {
           type: 'doc',
           id: 'developer/performance',
           label: 'Performance',
+          customProps: { icon: 'lu-zap' },
         },
         {
           type: 'doc',
           id: 'developer/storage',
           label: 'Storage',
+          customProps: { icon: 'lu-hard-drive' },
         },
         {
           type: 'doc',
           id: 'developer/rag-vs-atulya',
           label: 'RAG vs Memory',
+          customProps: { icon: 'lu-compare' },
         },
       ],
     },
@@ -133,51 +138,15 @@ const sidebars: SidebarsConfig = {
       label: 'API',
       collapsible: false,
       items: [
-        {
-          type: 'doc',
-          id: 'developer/api/quickstart',
-          label: 'Quick Start',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/retain',
-          label: 'Retain',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/recall',
-          label: 'Recall',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/reflect',
-          label: 'Reflect',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/mental-models',
-          label: 'Mental Models',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/memory-banks',
-          label: 'Memory Banks',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/documents',
-          label: 'Documents',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/operations',
-          label: 'Operations',
-        },
-        {
-          type: 'doc',
-          id: 'developer/api/webhooks',
-          label: 'Webhooks',
-        },
+        { type: 'doc', id: 'developer/api/quickstart',    label: 'Quick Start',    customProps: { icon: 'lu-rocket' } },
+        { type: 'doc', id: 'developer/api/retain',        label: 'Retain',         customProps: { icon: 'lu-database' } },
+        { type: 'doc', id: 'developer/api/recall',        label: 'Recall',         customProps: { icon: 'lu-search' } },
+        { type: 'doc', id: 'developer/api/reflect',       label: 'Reflect',        customProps: { icon: 'lu-sparkles' } },
+        { type: 'doc', id: 'developer/api/mental-models', label: 'Mental Models',  customProps: { icon: 'lu-brain-cog' } },
+        { type: 'doc', id: 'developer/api/memory-banks',  label: 'Memory Banks',   customProps: { icon: 'lu-boxes' } },
+        { type: 'doc', id: 'developer/api/documents',     label: 'Documents',      customProps: { icon: 'lu-file-text' } },
+        { type: 'doc', id: 'developer/api/operations',    label: 'Operations',     customProps: { icon: 'lu-activity' } },
+        { type: 'doc', id: 'developer/api/webhooks',      label: 'Webhooks',       customProps: { icon: 'lu-webhook' } },
       ],
     },
     {
@@ -185,46 +154,14 @@ const sidebars: SidebarsConfig = {
       label: 'Hosting',
       collapsible: false,
       items: [
-        {
-          type: 'doc',
-          id: 'developer/installation',
-          label: 'Installation',
-        },
-        {
-          type: 'doc',
-          id: 'developer/services',
-          label: 'Services',
-        },
-        {
-          type: 'doc',
-          id: 'developer/configuration',
-          label: 'Configuration',
-        },
-        {
-          type: 'doc',
-          id: 'developer/admin-cli',
-          label: 'Admin CLI',
-        },
-        {
-          type: 'doc',
-          id: 'developer/extensions',
-          label: 'Extensions',
-        },
-        {
-          type: 'doc',
-          id: 'developer/models',
-          label: 'Models',
-        },
-        {
-          type: 'doc',
-          id: 'developer/monitoring',
-          label: 'Monitoring',
-        },
-        {
-          type: 'doc',
-          id: 'developer/mcp-server',
-          label: 'MCP Server',
-        },
+        { type: 'doc', id: 'developer/installation',  label: 'Installation',  customProps: { icon: 'lu-package' } },
+        { type: 'doc', id: 'developer/services',      label: 'Services',      customProps: { icon: 'lu-server' } },
+        { type: 'doc', id: 'developer/configuration', label: 'Configuration', customProps: { icon: 'lu-settings' } },
+        { type: 'doc', id: 'developer/admin-cli',     label: 'Admin CLI',     customProps: { icon: 'lu-terminal' } },
+        { type: 'doc', id: 'developer/extensions',    label: 'Extensions',    customProps: { icon: 'lu-plug' } },
+        { type: 'doc', id: 'developer/models',        label: 'Models',        customProps: { icon: 'lu-cpu' } },
+        { type: 'doc', id: 'developer/monitoring',    label: 'Monitoring',    customProps: { icon: 'lu-chart-bar' } },
+        { type: 'doc', id: 'developer/mcp-server',    label: 'MCP Server',    customProps: { icon: 'lu-globe', iconAfter: 'lu-arrow-up-right' } },
       ],
     },
   ],
@@ -234,34 +171,11 @@ const sidebars: SidebarsConfig = {
       label: 'Clients',
       collapsible: false,
       items: [
-        {
-          type: 'doc',
-          id: 'sdks/python',
-          label: 'Python',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/nodejs',
-          label: 'Node.js',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/go',
-          label: 'Go',
-          customProps: {
-            icon: "/img/icons/golang.png"
-          }
-        },
-        {
-          type: 'doc',
-          id: 'sdks/cli',
-          label: 'CLI',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/embed',
-          label: 'Embedded Python',
-        },
+        { type: 'doc', id: 'sdks/python',  label: 'Python',           customProps: { icon: 'si-python' } },
+        { type: 'doc', id: 'sdks/nodejs',  label: 'Node.js',          customProps: { icon: 'si-nodedotjs' } },
+        { type: 'doc', id: 'sdks/go',      label: 'Go',               customProps: { icon: 'si-go' } },
+        { type: 'doc', id: 'sdks/cli',     label: 'CLI',              customProps: { icon: 'lu-terminal' } },
+        { type: 'doc', id: 'sdks/embed',   label: 'Embedded Python',  customProps: { icon: 'lu-package' } },
       ],
     },
     {
@@ -269,55 +183,14 @@ const sidebars: SidebarsConfig = {
       label: 'Integrations',
       collapsible: false,
       items: [
-        {
-          type: 'doc',
-          id: 'sdks/integrations/local-mcp',
-          label: 'Local MCP Server',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/litellm',
-          label: 'LiteLLM',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/openclaw',
-          label: 'OpenClaw',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/ai-sdk',
-          label: 'Vercel AI SDK',
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/chat',
-          label: 'Vercel Chat SDK',
-          customProps: {
-            icon: "/img/icons/vercel.png"
-          }
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/crewai',
-          label: 'CrewAI',
-          customProps: {
-            icon: "/img/icons/crewai.png"
-          }
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/pydantic-ai',
-          label: 'Pydantic AI',
-          customProps: {
-            icon: "/img/icons/pydanticai.png"
-          }
-        },
-        {
-          type: 'doc',
-          id: 'sdks/integrations/skills',
-          label: 'Skills',
-        },
+        { type: 'doc', id: 'sdks/integrations/local-mcp',   label: 'Local MCP Server', customProps: { icon: 'lu-globe' } },
+        { type: 'doc', id: 'sdks/integrations/litellm',     label: 'LiteLLM',          customProps: { icon: 'lu-layers' } },
+        { type: 'doc', id: 'sdks/integrations/openclaw',    label: 'OpenClaw',         customProps: { icon: 'lu-plug' } },
+        { type: 'doc', id: 'sdks/integrations/ai-sdk',      label: 'Vercel AI SDK',    customProps: { icon: 'si-vercel' } },
+        { type: 'doc', id: 'sdks/integrations/chat',        label: 'Vercel Chat SDK',  customProps: { icon: 'si-vercel' } },
+        { type: 'doc', id: 'sdks/integrations/crewai',      label: 'CrewAI',           customProps: { icon: 'lu-users' } },
+        { type: 'doc', id: 'sdks/integrations/pydantic-ai', label: 'Pydantic AI',      customProps: { icon: 'si-python' } },
+        { type: 'doc', id: 'sdks/integrations/skills',      label: 'Skills',           customProps: { icon: 'lu-zap' } },
       ],
     },
   ],

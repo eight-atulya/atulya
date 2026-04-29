@@ -46,8 +46,6 @@ func NewGraphSummaryResponse(surface string, modeHint string, totalNodes int32, 
 	this.TotalNodes = totalNodes
 	this.TotalEdges = totalEdges
 	this.GeneratedAt = generatedAt
-	var cached bool = false
-	this.Cached = &cached
 	return &this
 }
 
@@ -56,8 +54,6 @@ func NewGraphSummaryResponse(surface string, modeHint string, totalNodes int32, 
 // but it doesn't guarantee that properties required by API are set
 func NewGraphSummaryResponseWithDefaults() *GraphSummaryResponse {
 	this := GraphSummaryResponse{}
-	var cached bool = false
-	this.Cached = &cached
 	return &this
 }
 

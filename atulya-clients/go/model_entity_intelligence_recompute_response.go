@@ -34,8 +34,6 @@ type _EntityIntelligenceRecomputeResponse EntityIntelligenceRecomputeResponse
 func NewEntityIntelligenceRecomputeResponse(operationId string) *EntityIntelligenceRecomputeResponse {
 	this := EntityIntelligenceRecomputeResponse{}
 	this.OperationId = operationId
-	var status string = "pending"
-	this.Status = &status
 	return &this
 }
 
@@ -44,8 +42,6 @@ func NewEntityIntelligenceRecomputeResponse(operationId string) *EntityIntellige
 // but it doesn't guarantee that properties required by API are set
 func NewEntityIntelligenceRecomputeResponseWithDefaults() *EntityIntelligenceRecomputeResponse {
 	this := EntityIntelligenceRecomputeResponse{}
-	var status string = "pending"
-	this.Status = &status
 	return &this
 }
 

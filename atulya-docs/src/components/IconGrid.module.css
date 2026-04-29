@@ -1,0 +1,60 @@
+/* IconGrid — auto-fill icon card grid */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 0.65rem;
+  margin: 1rem 0 1.5rem;
+}
+
+.anchor {
+  text-decoration: none;
+  color: var(--ifm-color-content);
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.85rem 0.5rem;
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 0.5rem;
+  background: var(--ifm-background-surface-color);
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+[data-theme='dark'] .card {
+  border-color: rgba(255, 255, 255, 0.07);
+  background: #18181b;
+}
+
+.cardLink {
+  cursor: pointer;
+}
+
+.cardLink:hover {
+  border-color: #dc2626;
+  background: rgba(220, 38, 38, 0.06);
+  transform: translateY(-2px);
+}
+
+[data-theme='dark'] .cardLink:hover {
+  border-color: rgba(248, 113, 113, 0.5);
+  background: rgba(248, 113, 113, 0.08);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+}
+
+.label {
+  font-size: 0.74rem;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.2;
+  color: var(--ifm-color-content);
+}

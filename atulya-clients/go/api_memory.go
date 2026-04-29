@@ -503,9 +503,6 @@ func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResp
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 1000
-		r.limit = &defaultValue
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
@@ -523,9 +520,6 @@ func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResp
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
-	} else {
-		var defaultValue string = "all_strict"
-		r.tagsMatch = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -702,9 +696,6 @@ func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligence
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 18
-		r.limit = &defaultValue
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
@@ -722,21 +713,12 @@ func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligence
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
-	} else {
-		var defaultValue string = "all_strict"
-		r.tagsMatch = &defaultValue
 	}
 	if r.confidenceMin != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "confidence_min", r.confidenceMin, "form", "")
-	} else {
-		var defaultValue float32 = 0.55
-		r.confidenceMin = &defaultValue
 	}
 	if r.nodeKind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "node_kind", r.nodeKind, "form", "")
-	} else {
-		var defaultValue string = "all"
-		r.nodeKind = &defaultValue
 	}
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
@@ -937,9 +919,6 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 
 	if r.surface != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "surface", r.surface, "form", "")
-	} else {
-		var defaultValue string = "state"
-		r.surface = &defaultValue
 	}
 	if r.type_ != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
@@ -960,21 +939,12 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
-	} else {
-		var defaultValue string = "all_strict"
-		r.tagsMatch = &defaultValue
 	}
 	if r.confidenceMin != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "confidence_min", r.confidenceMin, "form", "")
-	} else {
-		var defaultValue float32 = 0.55
-		r.confidenceMin = &defaultValue
 	}
 	if r.nodeKind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "node_kind", r.nodeKind, "form", "")
-	} else {
-		var defaultValue string = "all"
-		r.nodeKind = &defaultValue
 	}
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
@@ -992,21 +962,12 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 	}
 	if r.depth != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "depth", r.depth, "form", "")
-	} else {
-		var defaultValue int32 = 1
-		r.depth = &defaultValue
 	}
 	if r.limitNodes != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit_nodes", r.limitNodes, "form", "")
-	} else {
-		var defaultValue int32 = 60
-		r.limitNodes = &defaultValue
 	}
 	if r.limitEdges != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit_edges", r.limitEdges, "form", "")
-	} else {
-		var defaultValue int32 = 140
-		r.limitEdges = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1180,9 +1141,6 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 
 	if r.surface != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "surface", r.surface, "form", "")
-	} else {
-		var defaultValue string = "state"
-		r.surface = &defaultValue
 	}
 	if r.type_ != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
@@ -1203,21 +1161,12 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
-	} else {
-		var defaultValue string = "all_strict"
-		r.tagsMatch = &defaultValue
 	}
 	if r.confidenceMin != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "confidence_min", r.confidenceMin, "form", "")
-	} else {
-		var defaultValue float32 = 0.55
-		r.confidenceMin = &defaultValue
 	}
 	if r.nodeKind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "node_kind", r.nodeKind, "form", "")
-	} else {
-		var defaultValue string = "all"
-		r.nodeKind = &defaultValue
 	}
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
@@ -1631,9 +1580,6 @@ func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*Timelin
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 500
-		r.limit = &defaultValue
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
@@ -1651,9 +1597,6 @@ func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*Timelin
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
-	} else {
-		var defaultValue string = "all_strict"
-		r.tagsMatch = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1942,15 +1885,9 @@ func (a *MemoryAPIService) ListMemoriesExecute(r ApiListMemoriesRequest) (*ListM
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 100
-		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
-	} else {
-		var defaultValue int32 = 0
-		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2100,15 +2037,9 @@ func (a *MemoryAPIService) ListTagsExecute(r ApiListTagsRequest) (*ListTagsRespo
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 100
-		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
-	} else {
-		var defaultValue int32 = 0
-		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

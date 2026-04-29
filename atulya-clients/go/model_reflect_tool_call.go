@@ -43,8 +43,6 @@ func NewReflectToolCall(tool string, input map[string]interface{}, durationMs in
 	this.Tool = tool
 	this.Input = input
 	this.DurationMs = durationMs
-	var iteration int32 = 0
-	this.Iteration = &iteration
 	return &this
 }
 
@@ -53,8 +51,6 @@ func NewReflectToolCall(tool string, input map[string]interface{}, durationMs in
 // but it doesn't guarantee that properties required by API are set
 func NewReflectToolCallWithDefaults() *ReflectToolCall {
 	this := ReflectToolCall{}
-	var iteration int32 = 0
-	this.Iteration = &iteration
 	return &this
 }
 

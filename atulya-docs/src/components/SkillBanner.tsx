@@ -99,7 +99,12 @@ export default function SkillBanner(): React.JSX.Element {
   return (
     <div className={styles.container}>
       <div className={styles.banner}>
-        <div className={styles.icon}>🤖</div>
+        <div className={styles.icon}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="4 17 10 11 4 5" />
+              <line x1="12" y1="19" x2="20" y2="19" />
+            </svg>
+          </div>
         <div className={styles.content}>
           <div className={styles.titleRow}>
             <div className={styles.title}>

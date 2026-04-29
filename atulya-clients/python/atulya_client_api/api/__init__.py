@@ -1,6 +1,7 @@
 # flake8: noqa
 
 # import apis into api package
+from atulya_client_api.api.admin_api import AdminApi
 from atulya_client_api.api.banks_api import BanksApi
 from atulya_client_api.api.codebases_api import CodebasesApi
 from atulya_client_api.api.directives_api import DirectivesApi

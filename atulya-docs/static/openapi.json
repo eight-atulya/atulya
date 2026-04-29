@@ -3801,6 +3801,74 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/operations/{operation_id}/retry": {
+      "post": {
+        "tags": [
+          "Operations"
+        ],
+        "summary": "Retry a failed async operation",
+        "description": "Create a new pending operation by re-queueing a failed async operation using its original task payload.",
+        "operationId": "retry_operation",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "operation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryOperationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/profile": {
       "get": {
         "tags": [
@@ -6155,6 +6223,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CodebaseImportResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/codebases/import/file": {
+      "post": {
+        "tags": [
+          "Codebases"
+        ],
+        "summary": "Import a single source file as a codebase",
+        "description": "Upload one source file and run the full ASD parse \u2192 chunk \u2192 code-intel \u2192 review pipeline on it. Useful for self-contained scripts, single-file applications, or files too granular for a full ZIP import. ``virtual_path`` controls the logical path recorded in the snapshot (defaults to the uploaded filename).",
+        "operationId": "import_codebase_file",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_codebase_file"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodebaseImportFileResponse"
                 }
               }
             }
@@ -8907,6 +9044,27 @@
         ],
         "title": "Body_import_brain_snapshot"
       },
+      "Body_import_codebase_file": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File",
+            "description": "Source file to import"
+          },
+          "request": {
+            "type": "string",
+            "title": "Request",
+            "description": "JSON string with CodebaseImportFileRequest model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "request"
+        ],
+        "title": "Body_import_codebase_file"
+      },
       "Body_import_codebase_zip": {
         "properties": {
           "archive": {
@@ -10755,6 +10913,45 @@
         ],
         "title": "CodebaseImpactSeedResponse",
         "description": "Seed used to start deterministic impact analysis."
+      },
+      "CodebaseImportFileResponse": {
+        "properties": {
+          "codebase_id": {
+            "type": "string",
+            "title": "Codebase Id"
+          },
+          "snapshot_id": {
+            "type": "string",
+            "title": "Snapshot Id"
+          },
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "virtual_path": {
+            "type": "string",
+            "title": "Virtual Path"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codebase_id",
+          "snapshot_id",
+          "operation_id",
+          "status",
+          "filename",
+          "virtual_path"
+        ],
+        "title": "CodebaseImportFileResponse",
+        "description": "Queued single-file codebase import response."
       },
       "CodebaseImportGithubRequest": {
         "properties": {
@@ -14422,6 +14619,28 @@
             },
             "type": "array",
             "title": "Evidence Ids"
+          },
+          "conviction": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Conviction"
+          },
+          "semantic_change_magnitude": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semantic Change Magnitude"
           }
         },
         "type": "object",
@@ -16753,6 +16972,59 @@
             "output_tokens": 100,
             "total_tokens": 600
           }
+        }
+      },
+      "RetryOperationResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "operation_id": {
+            "type": "string",
+            "title": "Operation Id"
+          },
+          "retried_from_operation_id": {
+            "type": "string",
+            "title": "Retried From Operation Id"
+          },
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "operation_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "operation_id",
+          "retried_from_operation_id",
+          "bank_id"
+        ],
+        "title": "RetryOperationResponse",
+        "description": "Response model for retry operation endpoint.",
+        "example": {
+          "bank_id": "user123",
+          "message": "Retried operation 550e8400-e29b-41d4-a716-446655440000 as 0196e188-6db5-7f2a-a5f8-f654d2fcb3ad",
+          "operation_id": "0196e188-6db5-7f2a-a5f8-f654d2fcb3ad",
+          "operation_type": "consolidation",
+          "retried_from_operation_id": "550e8400-e29b-41d4-a716-446655440000",
+          "success": true
         }
       },
       "SourceFactsIncludeOptions": {

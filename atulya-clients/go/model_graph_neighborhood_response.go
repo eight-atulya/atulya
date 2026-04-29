@@ -46,11 +46,7 @@ func NewGraphNeighborhoodResponse(surface string, modeHint string, totalNodes in
 	this.ModeHint = modeHint
 	this.TotalNodes = totalNodes
 	this.TotalEdges = totalEdges
-	var hasMore bool = false
-	this.HasMore = &hasMore
 	this.GeneratedAt = generatedAt
-	var cached bool = false
-	this.Cached = &cached
 	return &this
 }
 
@@ -59,10 +55,6 @@ func NewGraphNeighborhoodResponse(surface string, modeHint string, totalNodes in
 // but it doesn't guarantee that properties required by API are set
 func NewGraphNeighborhoodResponseWithDefaults() *GraphNeighborhoodResponse {
 	this := GraphNeighborhoodResponse{}
-	var hasMore bool = false
-	this.HasMore = &hasMore
-	var cached bool = false
-	this.Cached = &cached
 	return &this
 }
 

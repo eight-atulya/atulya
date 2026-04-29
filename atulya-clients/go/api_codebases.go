@@ -1217,6 +1217,164 @@ func (a *CodebasesAPIService) GetCodebaseTriageSettingsExecute(r ApiGetCodebaseT
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiImportCodebaseFileRequest struct {
+	ctx context.Context
+	ApiService *CodebasesAPIService
+	bankId string
+	file *os.File
+	request *string
+	authorization *string
+}
+
+// Source file to import
+func (r ApiImportCodebaseFileRequest) File(file *os.File) ApiImportCodebaseFileRequest {
+	r.file = file
+	return r
+}
+
+// JSON string with CodebaseImportFileRequest model
+func (r ApiImportCodebaseFileRequest) Request(request string) ApiImportCodebaseFileRequest {
+	r.request = &request
+	return r
+}
+
+func (r ApiImportCodebaseFileRequest) Authorization(authorization string) ApiImportCodebaseFileRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiImportCodebaseFileRequest) Execute() (*CodebaseImportFileResponse, *http.Response, error) {
+	return r.ApiService.ImportCodebaseFileExecute(r)
+}
+
+/*
+ImportCodebaseFile Import a single source file as a codebase
+
+Upload one source file and run the full ASD parse → chunk → code-intel → review pipeline on it. Useful for self-contained scripts, single-file applications, or files too granular for a full ZIP import. ``virtual_path`` controls the logical path recorded in the snapshot (defaults to the uploaded filename).
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @return ApiImportCodebaseFileRequest
+*/
+func (a *CodebasesAPIService) ImportCodebaseFile(ctx context.Context, bankId string) ApiImportCodebaseFileRequest {
+	return ApiImportCodebaseFileRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+	}
+}
+
+// Execute executes the request
+//  @return CodebaseImportFileResponse
+func (a *CodebasesAPIService) ImportCodebaseFileExecute(r ApiImportCodebaseFileRequest) (*CodebaseImportFileResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *CodebaseImportFileResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ImportCodebaseFile")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/codebases/import/file"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.file == nil {
+		return localVarReturnValue, nil, reportError("file is required and must be specified")
+	}
+	if r.request == nil {
+		return localVarReturnValue, nil, reportError("request is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"multipart/form-data"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	var fileLocalVarFormFileName string
+	var fileLocalVarFileName     string
+	var fileLocalVarFileBytes    []byte
+
+	fileLocalVarFormFileName = "file"
+	fileLocalVarFile := r.file
+
+	if fileLocalVarFile != nil {
+		fbs, _ := io.ReadAll(fileLocalVarFile)
+
+		fileLocalVarFileBytes = fbs
+		fileLocalVarFileName = fileLocalVarFile.Name()
+		fileLocalVarFile.Close()
+		formFiles = append(formFiles, formFile{fileBytes: fileLocalVarFileBytes, fileName: fileLocalVarFileName, formFileName: fileLocalVarFormFileName})
+	}
+	parameterAddToHeaderOrQuery(localVarFormParams, "request", r.request, "", "")
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiImportCodebaseGithubRequest struct {
 	ctx context.Context
 	ApiService *CodebasesAPIService
@@ -1684,9 +1842,6 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
-	} else {
-		var defaultValue bool = false
-		r.changedOnly = &defaultValue
 	}
 	if r.kind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "kind", r.kind, "form", "")
@@ -1696,9 +1851,6 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 25
-		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
@@ -1889,9 +2041,6 @@ func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesReq
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
-	} else {
-		var defaultValue bool = false
-		r.changedOnly = &defaultValue
 	}
 	if r.snapshotId != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
@@ -2039,9 +2188,6 @@ func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModule
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 100
-		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2186,9 +2332,6 @@ func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebase
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 25
-		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2339,9 +2482,6 @@ func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 100
-		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
@@ -2921,9 +3061,6 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
-	} else {
-		var defaultValue int32 = 50
-		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

@@ -93,14 +93,22 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           routeBasePath: '/',
-          // Only show "next" version in development or when INCLUDE_CURRENT_VERSION=true
-          // In production, only show released versions from versions.json
+          lastVersion: (() => {
+            const isDev = process.env.NODE_ENV === 'development' || process.env.INCLUDE_CURRENT_VERSION === 'true';
+            if (isDev) return 'current';
+            try {
+              const versions = require('./versions.json') as string[];
+              return versions[0] ?? 'current';
+            } catch {
+              return 'current';
+            }
+          })(),
+          // Only show "next" version in development or when INCLUDE_CURRENT_VERSION=true.
+          // In production, show released versions only and make the latest released train the default.
           onlyIncludeVersions: (() => {
             const isDev = process.env.NODE_ENV === 'development' || process.env.INCLUDE_CURRENT_VERSION === 'true';
             try {
               const versions = require('./versions.json') as string[];
-              // In dev mode, explicitly include 'current' (Next) + all released versions
-              // In production, only show released versions
               return isDev ? ['current', ...versions] : versions;
             } catch {
               return undefined; // No versions yet, show current
@@ -108,8 +116,8 @@ const config: Config = {
           })(),
           // Disable version badges on all versions
           versions: (() => {
-            const config: Record<string, {badge: boolean}> = {
-              current: {badge: false},
+            const config: Record<string, {badge: boolean; path?: string; label?: string}> = {
+              current: {badge: false, path: '/'},
             };
             try {
               const versions = require('./versions.json') as string[];
@@ -345,9 +353,14 @@ const config: Config = {
     mermaid: {
       theme: {
         light: 'base',
-        dark: 'base',
+        dark: 'dark',
       },
       options: {
+        // [root] htmlLabels: false switches node labels from foreignObject+HTML
+        // (height pre-calculated by dagre using default font metrics → clips with
+        // custom fonts like Inter) to SVG <text> elements (measured post-layout →
+        // never clips regardless of font). This is the canonical production fix.
+        htmlLabels: false,
         themeVariables: {
           // Gradient start (#dc2626 red) for nodes
           primaryColor: '#dc2626',
@@ -378,6 +391,10 @@ const config: Config = {
           labelBackground: 'transparent',
           // Font - Inter to match body text
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          // fontSize drives node dimension pre-calculation — must be set here not in CSS
+          fontSize: '14px',
+          // padding gives boxes enough vertical room for multi-line labels
+          padding: '16',
         },
       },
     },

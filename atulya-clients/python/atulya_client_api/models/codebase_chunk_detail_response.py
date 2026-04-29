@@ -24,6 +24,7 @@ from atulya_client_api.models.codebase_impact_edge_response import CodebaseImpac
 from atulya_client_api.models.codebase_symbol_match_response import CodebaseSymbolMatchResponse
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class CodebaseChunkDetailResponse(BaseModel):
     """
@@ -41,22 +42,22 @@ class CodebaseChunkDetailResponse(BaseModel):
     container: Optional[StrictStr] = None
     parent_symbol: Optional[StrictStr] = None
     parent_fq_name: Optional[StrictStr] = None
-    parse_confidence: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    parse_confidence: Optional[Union[StrictFloat, StrictInt]] = None
     cluster_id: Optional[StrictStr] = None
     cluster_label: Optional[StrictStr] = None
     route_target: StrictStr
     route_source: Optional[StrictStr] = None
     change_kind: StrictStr
-    related_count: Optional[StrictInt] = 0
+    related_count: Optional[StrictInt] = None
     document_id: Optional[StrictStr] = None
-    significance_score: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    significance_score: Optional[Union[StrictFloat, StrictInt]] = None
     significance_components: Optional[Dict[str, Any]] = None
     file_role: Optional[StrictStr] = None
     auto_route_reason: Optional[StrictStr] = None
     complexity_score: Optional[Union[StrictFloat, StrictInt]] = None
     safety_tags: Optional[List[StrictStr]] = None
     pagerank_centrality: Optional[Union[StrictFloat, StrictInt]] = None
-    fanin_count: Optional[StrictInt] = 0
+    fanin_count: Optional[StrictInt] = None
     snapshot_id: StrictStr
     content_text: StrictStr
     related_chunks: Optional[List[CodebaseChunkRelatedItemResponse]] = None
@@ -66,7 +67,8 @@ class CodebaseChunkDetailResponse(BaseModel):
     __properties: ClassVar[List[str]] = ["id", "chunk_key", "path", "language", "kind", "label", "preview_text", "start_line", "end_line", "container", "parent_symbol", "parent_fq_name", "parse_confidence", "cluster_id", "cluster_label", "route_target", "route_source", "change_kind", "related_count", "document_id", "significance_score", "significance_components", "file_role", "auto_route_reason", "complexity_score", "safety_tags", "pagerank_centrality", "fanin_count", "snapshot_id", "content_text", "related_chunks", "symbols", "impact_edges", "cluster_members"]
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -78,8 +80,7 @@ class CodebaseChunkDetailResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -221,22 +222,22 @@ class CodebaseChunkDetailResponse(BaseModel):
             "container": obj.get("container"),
             "parent_symbol": obj.get("parent_symbol"),
             "parent_fq_name": obj.get("parent_fq_name"),
-            "parse_confidence": obj.get("parse_confidence") if obj.get("parse_confidence") is not None else 0.0,
+            "parse_confidence": obj.get("parse_confidence"),
             "cluster_id": obj.get("cluster_id"),
             "cluster_label": obj.get("cluster_label"),
             "route_target": obj.get("route_target"),
             "route_source": obj.get("route_source"),
             "change_kind": obj.get("change_kind"),
-            "related_count": obj.get("related_count") if obj.get("related_count") is not None else 0,
+            "related_count": obj.get("related_count"),
             "document_id": obj.get("document_id"),
-            "significance_score": obj.get("significance_score") if obj.get("significance_score") is not None else 0.0,
+            "significance_score": obj.get("significance_score"),
             "significance_components": obj.get("significance_components"),
             "file_role": obj.get("file_role"),
             "auto_route_reason": obj.get("auto_route_reason"),
             "complexity_score": obj.get("complexity_score"),
             "safety_tags": obj.get("safety_tags"),
             "pagerank_centrality": obj.get("pagerank_centrality"),
-            "fanin_count": obj.get("fanin_count") if obj.get("fanin_count") is not None else 0,
+            "fanin_count": obj.get("fanin_count"),
             "snapshot_id": obj.get("snapshot_id"),
             "content_text": obj.get("content_text"),
             "related_chunks": [CodebaseChunkRelatedItemResponse.from_dict(_item) for _item in obj["related_chunks"]] if obj.get("related_chunks") is not None else None,

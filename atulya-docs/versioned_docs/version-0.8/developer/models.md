@@ -30,7 +30,19 @@ See [Configuration](./configuration#llm-provider) for setup examples.
 
 Not sure which model to use? The **[Model Leaderboard](https://benchmarks.atulya.eightengine.com/)** benchmarks models across accuracy, speed, cost, and reliability for retain, reflect, and observation consolidation so you can pick the right trade-off for your use case.
 
-[![Model Leaderboard](/img/leaderboard.png)](https://benchmarks.atulya.eightengine.com/)
+**`retain()` Leaderboard** — ranked by Quality × Speed × Cost × Reliability. [Full live leaderboard →](https://benchmarks.atulya.eightengine.com/)
+
+| Rank | Model | Provider | Score | Quality (LoComo) | Speed | Cost (per 1M tokens) | Reliability |
+|:----:|-------|----------|------:|:----------------:|:-----:|:--------------------:|:-----------:|
+| 🥇 1 | `openai/gpt-oss-20b` | Groq | **81.2** | 83.9 · 84% acc | 7.5s · 2434 tok/s | $0.05/$0.08 | 100% (50/50) |
+| 🥈 2 | `gpt-4.1-nano` | OpenAI | **79.7** | 87.2 · 87% acc | 8.5s · 263 tok/s | $0.07/$0.30 | 100% (50/50) |
+| 🥉 3 | `openai/gpt-oss-120b` | Groq | **79.7** | 84.7 · 85% acc | 8.1s · 1604 tok/s | $0.10/$0.16 | 100% (50/50) |
+| 4 | `gpt-4o-mini` | OpenAI | **74.3** | 81.0 · 81% acc | 9.0s · 183 tok/s | $0.15/$0.60 | 100% (50/50) |
+| 5 | `llama-3.3-70b-versatile` | Groq | **73.7** | 85.5 · 86% acc | 4.8s · 306 tok/s | $0.59/$0.79 | 84% (42/50) |
+| 6 | `gemini-2.5-flash-lite` | Google | **73.3** | 84.7 · 85% acc | 15.8s · 621 tok/s | $0.10/$0.40 | 96% (48/50) |
+| 7 | `gpt-4.1-mini` | OpenAI | **73.2** | 86.4 · 86% acc | 15.4s · 229 tok/s | $0.15/$0.60 | 100% (50/50) |
+
+> Score = composite of Quality + Speed + Cost + Reliability. Data sourced from [benchmarks.atulya.eightengine.com](https://benchmarks.atulya.eightengine.com/).
 
 ### Tested Models
 

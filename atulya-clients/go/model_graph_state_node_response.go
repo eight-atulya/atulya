@@ -35,6 +35,8 @@ type GraphStateNodeResponse struct {
 	EvidenceCount int32 `json:"evidence_count"`
 	Tags []string `json:"tags,omitempty"`
 	EvidenceIds []string `json:"evidence_ids,omitempty"`
+	Conviction NullableFloat32 `json:"conviction,omitempty"`
+	SemanticChangeMagnitude NullableFloat32 `json:"semantic_change_magnitude,omitempty"`
 }
 
 type _GraphStateNodeResponse GraphStateNodeResponse
@@ -471,6 +473,90 @@ func (o *GraphStateNodeResponse) SetEvidenceIds(v []string) {
 	o.EvidenceIds = v
 }
 
+// GetConviction returns the Conviction field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *GraphStateNodeResponse) GetConviction() float32 {
+	if o == nil || IsNil(o.Conviction.Get()) {
+		var ret float32
+		return ret
+	}
+	return *o.Conviction.Get()
+}
+
+// GetConvictionOk returns a tuple with the Conviction field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *GraphStateNodeResponse) GetConvictionOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Conviction.Get(), o.Conviction.IsSet()
+}
+
+// HasConviction returns a boolean if a field has been set.
+func (o *GraphStateNodeResponse) HasConviction() bool {
+	if o != nil && o.Conviction.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetConviction gets a reference to the given NullableFloat32 and assigns it to the Conviction field.
+func (o *GraphStateNodeResponse) SetConviction(v float32) {
+	o.Conviction.Set(&v)
+}
+// SetConvictionNil sets the value for Conviction to be an explicit nil
+func (o *GraphStateNodeResponse) SetConvictionNil() {
+	o.Conviction.Set(nil)
+}
+
+// UnsetConviction ensures that no value is present for Conviction, not even an explicit nil
+func (o *GraphStateNodeResponse) UnsetConviction() {
+	o.Conviction.Unset()
+}
+
+// GetSemanticChangeMagnitude returns the SemanticChangeMagnitude field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *GraphStateNodeResponse) GetSemanticChangeMagnitude() float32 {
+	if o == nil || IsNil(o.SemanticChangeMagnitude.Get()) {
+		var ret float32
+		return ret
+	}
+	return *o.SemanticChangeMagnitude.Get()
+}
+
+// GetSemanticChangeMagnitudeOk returns a tuple with the SemanticChangeMagnitude field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *GraphStateNodeResponse) GetSemanticChangeMagnitudeOk() (*float32, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.SemanticChangeMagnitude.Get(), o.SemanticChangeMagnitude.IsSet()
+}
+
+// HasSemanticChangeMagnitude returns a boolean if a field has been set.
+func (o *GraphStateNodeResponse) HasSemanticChangeMagnitude() bool {
+	if o != nil && o.SemanticChangeMagnitude.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetSemanticChangeMagnitude gets a reference to the given NullableFloat32 and assigns it to the SemanticChangeMagnitude field.
+func (o *GraphStateNodeResponse) SetSemanticChangeMagnitude(v float32) {
+	o.SemanticChangeMagnitude.Set(&v)
+}
+// SetSemanticChangeMagnitudeNil sets the value for SemanticChangeMagnitude to be an explicit nil
+func (o *GraphStateNodeResponse) SetSemanticChangeMagnitudeNil() {
+	o.SemanticChangeMagnitude.Set(nil)
+}
+
+// UnsetSemanticChangeMagnitude ensures that no value is present for SemanticChangeMagnitude, not even an explicit nil
+func (o *GraphStateNodeResponse) UnsetSemanticChangeMagnitude() {
+	o.SemanticChangeMagnitude.Unset()
+}
+
 func (o GraphStateNodeResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -504,6 +590,12 @@ func (o GraphStateNodeResponse) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.EvidenceIds) {
 		toSerialize["evidence_ids"] = o.EvidenceIds
+	}
+	if o.Conviction.IsSet() {
+		toSerialize["conviction"] = o.Conviction.Get()
+	}
+	if o.SemanticChangeMagnitude.IsSet() {
+		toSerialize["semantic_change_magnitude"] = o.SemanticChangeMagnitude.Get()
 	}
 	return toSerialize, nil
 }

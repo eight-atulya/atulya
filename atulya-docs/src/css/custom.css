@@ -209,6 +209,49 @@
   background-color: #27272a;
 }
 
+/* Hide Docusaurus built-in external link SVG — iconAfter handles this via react-icons */
+svg[aria-label="(opens in new tab)"] {
+  display: none;
+}
+
+/* ── TOC (right-hand table of contents) ──────────────────────── */
+.table-of-contents__link--active,
+.table-of-contents__link--active code,
+.table-of-contents__link:hover {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+}
+
+[data-theme='dark'] .table-of-contents__link--active,
+[data-theme='dark'] .table-of-contents__link--active code,
+[data-theme='dark'] .table-of-contents__link:hover {
+  color: #f87171 !important;
+  -webkit-text-fill-color: #f87171 !important;
+}
+
+.table-of-contents__left-border {
+  border-left: 2px solid var(--ifm-toc-border-color);
+}
+
+/* ── Pagination prev/next ────────────────────────────────────── */
+.pagination-nav__link {
+  border-color: var(--ifm-toc-border-color);
+  border-radius: 0.5rem;
+  transition: border-color 0.15s ease;
+}
+
+.pagination-nav__link:hover {
+  border-color: #dc2626;
+}
+
+[data-theme='dark'] .pagination-nav__link:hover {
+  border-color: #f87171;
+}
+
+.pagination-nav__label {
+  font-weight: 600;
+}
+
 /* Desktop navbar - hide hamburger toggle at >= 1400px */
 @media (min-width: 1400px) {
   .navbar__toggle {
@@ -406,11 +449,13 @@
   color: white;
 }
 
-/* Sidebar */
+/* ── Sidebar ──────────────────────────────────────────────────────── */
 .menu__link {
   border-radius: 0.375rem;
   font-weight: 500;
   font-size: 0.8125rem;
+  /* Smooth icon opacity transitions */
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .menu__link--active {
@@ -428,19 +473,14 @@
   background: linear-gradient(135deg, rgba(248, 113, 113, 0.15) 0%, rgba(251, 113, 133, 0.15) 100%);
 }
 
-/* Non-collapsible category styling */
+/* Category headers — Space Grotesk, uppercase, subtle */
 .menu__list-item-collapsible {
-  font-weight: 600;
+  font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-weight: 700;
   font-size: 0.6875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--ifm-color-emphasis-600);
-  margin-top: 1rem;
-  margin-bottom: 0.25rem;
-}
-
-.menu__list-item-collapsible:first-child {
-  margin-top: 0;
+  letter-spacing: 0.06em;
+  color: var(--ifm-color-emphasis-700);
 }
 
 .menu__list-item-collapsible .menu__link {
@@ -455,82 +495,18 @@
   color: var(--ifm-color-emphasis-500);
 }
 
-/* Client sidebar icons */
-a.menu__link[href*="/sdks/python"]::before,
-a.menu__link[href*="/sdks/nodejs"]::before,
-a.menu__link[href*="/sdks/cli"]::before,
-a.menu__link[href*="/sdks/embed"]::before {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-  vertical-align: middle;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  content: '';
+/* Top-level category sections — breathing room between groups */
+li.theme-doc-sidebar-item-category-level-1 {
+  margin-top: 1.75rem;
 }
 
-/* Python logo */
-a.menu__link[href*="/sdks/python"]::before {
-  background-image: url('/img/icons/python.svg');
+li.theme-doc-sidebar-item-category-level-1:first-child {
+  margin-top: 0;
 }
 
-/* Node.js logo */
-a.menu__link[href*="/sdks/nodejs"]::before {
-  background-image: url('/img/icons/nodejs.png');
-}
-
-/* CLI - terminal icon */
-a.menu__link[href*="/sdks/cli"]::before {
-  background-image: url('/img/icons/terminal.svg');
-}
-
-/* Embedded SDK - package icon */
-a.menu__link[href*="/sdks/embed"]::before {
-  background-image: url('/img/icons/package.svg');
-}
-
-/* Integration sidebar icons */
-a.menu__link[href*="/sdks/integrations/local-mcp"]::before,
-a.menu__link[href*="/sdks/integrations/litellm"]::before,
-a.menu__link[href*="/sdks/integrations/openclaw"]::before,
-a.menu__link[href*="/sdks/integrations/ai-sdk"]::before,
-a.menu__link[href*="/sdks/integrations/skills"]::before {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  margin-right: 8px;
-  vertical-align: middle;
-  background-size: contain;
-  background-repeat: no-repeat;
-  background-position: center;
-  content: '';
-}
-
-/* Local MCP Server */
-a.menu__link[href*="/sdks/integrations/local-mcp"]::before {
-  background-image: url('/img/icons/mcp.png');
-}
-
-/* LiteLLM */
-a.menu__link[href*="/sdks/integrations/litellm"]::before {
-  background-image: url('/img/icons/litellm.png');
-}
-
-/* OpenClaw */
-a.menu__link[href*="/sdks/integrations/openclaw"]::before {
-  background-image: url('/img/icons/openclaw.png');
-}
-
-/* Vercel AI SDK */
-a.menu__link[href*="/sdks/integrations/ai-sdk"]::before {
-  background-image: url('/img/icons/vercel.png');
-}
-
-/* Skills */
-a.menu__link[href*="/sdks/integrations/skills"]::before {
-  background-image: url('/img/icons/skills.png');
+/* Reduce sub-item indentation */
+.menu__list .menu__list {
+  padding-left: 0.5rem;
 }
 
 /* Code blocks */
@@ -817,9 +793,43 @@ th {
 /* Mermaid diagram styling - using high specificity selectors */
 .mermaid svg[id^="mermaid"] {
   background: transparent !important;
+  /* [fix] overflow:visible fixes timeline end-arrow clipped outside SVG viewBox.
+     Safe with htmlLabels:false (no foreignObject height pre-calculation). */
+  overflow: visible !important;
 }
 
+/* ── Light mode: red brand theme ── */
 /* Node shapes - gradient start color (#dc2626 red) */
+[data-theme='light'] .mermaid svg[id^="mermaid"] .node rect,
+[data-theme='light'] .mermaid svg[id^="mermaid"] .node circle,
+[data-theme='light'] .mermaid svg[id^="mermaid"] .node ellipse,
+[data-theme='light'] .mermaid svg[id^="mermaid"] .node polygon,
+[data-theme='light'] .mermaid svg[id^="mermaid"] .node path,
+[data-theme='light'] svg[id^="mermaid"] .node rect,
+[data-theme='light'] svg[id^="mermaid"] .node circle,
+[data-theme='light'] svg[id^="mermaid"] .node ellipse,
+[data-theme='light'] svg[id^="mermaid"] .node polygon,
+[data-theme='light'] svg[id^="mermaid"] .node path {
+  fill: #dc2626 !important;
+  stroke: #991b1b !important;
+}
+
+/* Node shapes - dark mode: muted red that reads well on dark backgrounds */
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .node rect,
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .node circle,
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .node ellipse,
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .node polygon,
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .node path,
+[data-theme='dark'] svg[id^="mermaid"] .node rect,
+[data-theme='dark'] svg[id^="mermaid"] .node circle,
+[data-theme='dark'] svg[id^="mermaid"] .node ellipse,
+[data-theme='dark'] svg[id^="mermaid"] .node polygon,
+[data-theme='dark'] svg[id^="mermaid"] .node path {
+  fill: #991b1b !important;
+  stroke: #dc2626 !important;
+}
+
+/* Node shapes fallback (no data-theme attr on first render) */
 .mermaid svg[id^="mermaid"] .node rect,
 .mermaid svg[id^="mermaid"] .node circle,
 .mermaid svg[id^="mermaid"] .node ellipse,
@@ -850,10 +860,26 @@ svg[id^="mermaid"] .node foreignObject p {
   color: #ffffff !important;
   fill: #ffffff !important;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
-  font-size: 0.9375rem !important;
+  /* font-size intentionally NOT set here — Mermaid pre-calculates node dimensions
+     using themeVariables.fontSize. Overriding here causes text to overflow clipped boxes. */
 }
 
-/* Edge/arrow lines - gradient end color (#e11d48 rose) */
+/* Edge/arrow lines - light mode rose, dark mode lighter red */
+[data-theme='light'] .mermaid svg[id^="mermaid"] .edgePath .path,
+[data-theme='light'] .mermaid svg[id^="mermaid"] .flowchart-link,
+[data-theme='light'] svg[id^="mermaid"] .edgePath .path,
+[data-theme='light'] svg[id^="mermaid"] .flowchart-link {
+  stroke: #e11d48 !important;
+}
+
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .edgePath .path,
+[data-theme='dark'] .mermaid svg[id^="mermaid"] .flowchart-link,
+[data-theme='dark'] svg[id^="mermaid"] .edgePath .path,
+[data-theme='dark'] svg[id^="mermaid"] .flowchart-link {
+  stroke: #f87171 !important;
+}
+
+/* Edge/arrow lines fallback */
 .mermaid svg[id^="mermaid"] .edgePath .path,
 .mermaid svg[id^="mermaid"] .flowchart-link,
 svg[id^="mermaid"] .edgePath .path,
@@ -971,52 +997,20 @@ article li {
 }
 
 /* Announcement bar */
-@keyframes shimmer {
-  0% {
-    background-position: -200% center;
-  }
-  100% {
-    background-position: 200% center;
-  }
-}
-
-@keyframes gradientShift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
 
 div[class*="announcementBar"] {
   padding: 0.875rem 0;
   font-size: 0.875rem;
   font-weight: 600;
   font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(90deg, #dc2626 0%, #e11d48 100%) !important;
-  background-size: 100% 100% !important;
+  background: #dc2626 !important;
   border: none !important;
   position: relative;
   overflow: hidden;
 }
 
 div[class*="announcementBar"]::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 4s ease-in-out infinite;
-  pointer-events: none;
+  content: none;
 }
 
 div[class*="announcementBar"] > div {

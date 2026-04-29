@@ -158,7 +158,7 @@ To switch between backends:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ATULYA_API_LLM_PROVIDER` | Provider: `openai`, `openai-codex`, `claude-code`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`, `vertexai` | `openai` |
+| `ATULYA_API_LLM_PROVIDER` | Provider: `openai`, `openai-codex`, `claude-code`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`, `vertexai`, `llamacpp` | `openai` |
 | `ATULYA_API_LLM_API_KEY` | API key for LLM provider | - |
 | `ATULYA_API_LLM_MODEL` | Model name | `gpt-5-mini` |
 | `ATULYA_API_LLM_BASE_URL` | Custom LLM endpoint | Provider default |
@@ -230,10 +230,23 @@ export ATULYA_API_LLM_MODEL=gpt-5.2-codex
 export ATULYA_API_LLM_PROVIDER=claude-code
 export ATULYA_API_LLM_MODEL=claude-sonnet-4-5-20250929
 # No API key needed - uses claude auth login credentials
+
+# llamacpp — built-in GGUF provider (fully offline, no external server required)
+# Install: pip install 'atulya-api[local-llm]'
+# Quickstart (auto-downloads ~3.5 GB default model on first run):
+export ATULYA_API_LLM_PROVIDER=llamacpp
+# Custom model:
+# export ATULYA_API_LLAMACPP_MODEL_PATH=~/.atulya/models/your-model.gguf
+# export ATULYA_API_LLAMACPP_GPU_LAYERS=-1        # -1 = full GPU offload (Metal/CUDA)
+# export ATULYA_API_LLAMACPP_CONTEXT_SIZE=8192
+# export ATULYA_API_LLAMACPP_N_BATCH=512          # 512 safe for <8 GB VRAM; 2048 for 16 GB+
+# export ATULYA_API_LLAMACPP_FLASH_ATTN=false     # true only on CUDA/Metal — crashes on CPU
+# export ATULYA_API_LLAMACPP_LORA_PATH=~/.atulya/models/adapter.gguf   # fine-tuned adapters
+# See docs/developer/local-llm.md for full hardware-tier guide and failure-mode reference.
 ```
 
-:::tip OpenAI Codex, Claude Code & Vertex AI Setup
-For detailed setup instructions for **OpenAI Codex** (ChatGPT Plus/Pro), **Claude Code** (Claude Pro/Max), and **Vertex AI** (Google Cloud), see the [Models documentation](./models#openai-codex-setup-chatgpt-pluspro).
+:::tip OpenAI Codex, Claude Code, Vertex AI & Local GGUF Setup
+For detailed setup instructions for **OpenAI Codex** (ChatGPT Plus/Pro), **Claude Code** (Claude Pro/Max), **Vertex AI** (Google Cloud), and the **built-in GGUF provider** (fully offline), see the [Models documentation](./models#openai-codex-setup-chatgpt-pluspro) and the [Local LLM guide](./local-llm.md).
 :::
 
 ### Per-Operation LLM Configuration
@@ -349,6 +362,7 @@ export ATULYA_API_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS=4096
 | `ATULYA_API_EMBEDDINGS_COHERE_API_KEY` | Cohere API key for embeddings | - |
 | `ATULYA_API_EMBEDDINGS_COHERE_MODEL` | Cohere embedding model | `embed-english-v3.0` |
 | `ATULYA_API_EMBEDDINGS_COHERE_BASE_URL` | Custom base URL for Cohere-compatible API (e.g., Azure-hosted) | - |
+| `ATULYA_API_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS` | Output embedding dimensions for Matryoshka-capable models (e.g. `embed-v4.0`). When set, overrides the model's default dimension and uses the Cohere v2 API. Values: `256`, `512`, `1024`. | - |
 | `ATULYA_API_EMBEDDINGS_LITELLM_API_BASE` | LiteLLM proxy base URL for embeddings | `http://localhost:4000` |
 | `ATULYA_API_EMBEDDINGS_LITELLM_API_KEY` | LiteLLM proxy API key for embeddings (optional, depends on proxy config) | - |
 | `ATULYA_API_EMBEDDINGS_LITELLM_MODEL` | LiteLLM embedding model (use provider prefix, e.g., `cohere/embed-english-v3.0`) | `text-embedding-3-small` |
@@ -385,6 +399,8 @@ export ATULYA_API_EMBEDDINGS_TEI_URL=http://localhost:8080
 export ATULYA_API_EMBEDDINGS_PROVIDER=cohere
 export ATULYA_API_EMBEDDINGS_COHERE_API_KEY=your-api-key
 export ATULYA_API_EMBEDDINGS_COHERE_MODEL=embed-english-v3.0  # 1024 dimensions
+# Optional: Matryoshka truncation for embed-v4.0+ (uses Cohere v2 API)
+# export ATULYA_API_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS=512  # 256 | 512 | 1024
 
 # Azure-hosted Cohere - embeddings via custom endpoint
 export ATULYA_API_EMBEDDINGS_PROVIDER=cohere

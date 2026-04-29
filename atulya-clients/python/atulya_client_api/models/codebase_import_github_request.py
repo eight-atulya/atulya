@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class CodebaseImportGithubRequest(BaseModel):
     """
@@ -33,11 +34,12 @@ class CodebaseImportGithubRequest(BaseModel):
     root_path: Optional[StrictStr] = None
     include_globs: Optional[List[StrictStr]] = None
     exclude_globs: Optional[List[StrictStr]] = None
-    refresh_existing: Optional[StrictBool] = False
+    refresh_existing: Optional[StrictBool] = None
     __properties: ClassVar[List[str]] = ["owner", "repo", "ref", "repo_url", "root_path", "include_globs", "exclude_globs", "refresh_existing"]
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -49,8 +51,7 @@ class CodebaseImportGithubRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -119,7 +120,7 @@ class CodebaseImportGithubRequest(BaseModel):
             "root_path": obj.get("root_path"),
             "include_globs": obj.get("include_globs"),
             "exclude_globs": obj.get("exclude_globs"),
-            "refresh_existing": obj.get("refresh_existing") if obj.get("refresh_existing") is not None else False
+            "refresh_existing": obj.get("refresh_existing")
         })
         return _obj
 

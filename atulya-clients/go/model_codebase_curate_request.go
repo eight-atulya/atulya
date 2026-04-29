@@ -38,12 +38,6 @@ type _CodebaseCurateRequest CodebaseCurateRequest
 func NewCodebaseCurateRequest(intent string) *CodebaseCurateRequest {
 	this := CodebaseCurateRequest{}
 	this.Intent = intent
-	var topKClusters int32 = 10
-	this.TopKClusters = &topKClusters
-	var topKSymbols int32 = 20
-	this.TopKSymbols = &topKSymbols
-	var includeDismissed bool = false
-	this.IncludeDismissed = &includeDismissed
 	return &this
 }
 
@@ -52,12 +46,6 @@ func NewCodebaseCurateRequest(intent string) *CodebaseCurateRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseCurateRequestWithDefaults() *CodebaseCurateRequest {
 	this := CodebaseCurateRequest{}
-	var topKClusters int32 = 10
-	this.TopKClusters = &topKClusters
-	var topKSymbols int32 = 20
-	this.TopKSymbols = &topKSymbols
-	var includeDismissed bool = false
-	this.IncludeDismissed = &includeDismissed
 	return &this
 }
 

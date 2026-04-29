@@ -514,94 +514,168 @@ class TestEntities:
 
 
 class TestTags:
-    """Tests for tags filtering functionality."""
+    """
+    Tests for tags filtering functionality.
+
+    Strategy: store memories with distinct, named entities so that
+    entity-specific queries score above the budget threshold even with
+    a small bank.  budget="high" is used throughout to avoid false-negative
+    misses caused by relevance scoring on a small bank.
+    """
 
     @pytest.fixture(autouse=True)
     def setup_memories(self, client, bank_id):
-        """Setup: Store memories with different tags."""
+        """Store memories with distinct per-user tags so recall can filter them."""
         client.retain_batch(
             bank_id=bank_id,
             items=[
-                {"content": "Alice presented the Q3 roadmap at the Monday standup", "tags": ["project_x", "meetings"]},
-                {"content": "Bob wrote the architecture document for the new auth system", "tags": ["project_x", "docs"]},
-                {"content": "Charlie led the sprint planning session for the mobile app", "tags": ["project_y", "meetings"]},
-                {"content": "Diana announced the company picnic for next Friday", "tags": ["company"]},
-                {"content": "Eve mentioned she likes pineapple on pizza"},  # no tags
+                # project_x + meetings
+                {
+                    "content": "Alice presented the Q3 roadmap at the Monday standup.",
+                    "tags": ["project_x", "meetings"],
+                },
+                # project_x + docs
+                {
+                    "content": "Bob wrote the architecture document for the new auth system.",
+                    "tags": ["project_x", "docs"],
+                },
+                # project_y + meetings  (intentionally different project)
+                {
+                    "content": "Charlie led the sprint planning session for the mobile app.",
+                    "tags": ["project_y", "meetings"],
+                },
+                # company only  (no project tag)
+                {
+                    "content": "Diana announced the company picnic for next Friday.",
+                    "tags": ["company"],
+                },
+                # no tags  (untagged)
+                {"content": "Eve mentioned she likes pineapple on pizza."},
             ],
             retain_async=False,
         )
 
+    # ------------------------------------------------------------------
+    # any  — OR match, untagged memories included
+    # ------------------------------------------------------------------
     def test_recall_with_tags_any(self, client, bank_id):
-        """Test recall with tags using 'any' match (includes untagged)."""
+        """'any' mode: returns tagged AND untagged memories; at least one result has the tag."""
         response = client.recall(
             bank_id=bank_id,
-            query="What has everyone been working on?",
+            query="Alice Q3 roadmap standup",
             tags=["project_x"],
             tags_match="any",
+            budget="high",
             max_tokens=16000,
         )
 
         assert response is not None
         assert response.results is not None
         assert len(response.results) > 0
-        # 'any' mode: results should include items matching the tag or untagged items
         result_tags = [set(r.tags) if r.tags else set() for r in response.results]
-        assert any("project_x" in tags for tags in result_tags)
+        assert any("project_x" in t for t in result_tags), (
+            "Expected at least one result with project_x tag"
+        )
 
+    # ------------------------------------------------------------------
+    # any_strict  — OR match, untagged excluded
+    # ------------------------------------------------------------------
     def test_recall_with_tags_any_strict(self, client, bank_id):
-        """Test recall with tags using 'any_strict' match (excludes untagged)."""
+        """'any_strict': every returned result must carry the requested tag."""
         response = client.recall(
             bank_id=bank_id,
-            query="What has everyone been working on?",
+            query="Alice Q3 roadmap Bob auth architecture",
             tags=["project_x"],
             tags_match="any_strict",
+            budget="high",
             max_tokens=16000,
         )
 
         assert response is not None
         assert response.results is not None
         assert len(response.results) > 0
-        # any_strict: every result must have the project_x tag
         for r in response.results:
-            assert r.tags is not None
-            assert "project_x" in r.tags
+            assert r.tags is not None, "any_strict must not return untagged results"
+            assert "project_x" in r.tags, f"Result missing project_x tag: {r.tags}"
 
+    # ------------------------------------------------------------------
+    # all_strict  — AND match, both tags must be present
+    # ------------------------------------------------------------------
     def test_recall_with_tags_all_strict(self, client, bank_id):
-        """Test recall with tags using 'all_strict' match (AND matching)."""
+        """'all_strict': every result must have ALL requested tags simultaneously."""
         response = client.recall(
             bank_id=bank_id,
-            query="What has everyone been working on?",
+            query="Alice Q3 roadmap standup",
             tags=["project_x", "meetings"],
             tags_match="all_strict",
+            budget="high",
             max_tokens=16000,
         )
 
         assert response is not None
         assert response.results is not None
         assert len(response.results) > 0
-        # all_strict: every result must have BOTH tags
         for r in response.results:
             assert r.tags is not None
-            assert "project_x" in r.tags
-            assert "meetings" in r.tags
+            assert "project_x" in r.tags, f"Missing project_x in {r.tags}"
+            assert "meetings" in r.tags, f"Missing meetings in {r.tags}"
 
+    # ------------------------------------------------------------------
+    # any_strict with multiple tags  — OR across tags, untagged excluded
+    # ------------------------------------------------------------------
     def test_recall_with_multiple_tags_any(self, client, bank_id):
-        """Test recall with multiple tags using 'any_strict' match (OR)."""
+        """'any_strict' + multiple tags: each result has at least one of the tags."""
         response = client.recall(
             bank_id=bank_id,
-            query="What has everyone been working on?",
+            query="Alice Q3 roadmap Charlie sprint planning",
             tags=["project_x", "project_y"],
             tags_match="any_strict",
+            budget="high",
             max_tokens=16000,
         )
 
         assert response is not None
         assert response.results is not None
         assert len(response.results) > 0
-        # any_strict with multiple tags: every result must have at least one of the tags
         for r in response.results:
             assert r.tags is not None
-            assert "project_x" in r.tags or "project_y" in r.tags
+            assert "project_x" in r.tags or "project_y" in r.tags, (
+                f"Result has neither project_x nor project_y: {r.tags}"
+            )
+
+    # ------------------------------------------------------------------
+    # negative: any_strict must NOT return untagged memory
+    # ------------------------------------------------------------------
+    def test_any_strict_excludes_untagged(self, client, bank_id):
+        """'any_strict' must never return memories with no tags."""
+        response = client.recall(
+            bank_id=bank_id,
+            query="Eve pineapple pizza",
+            tags=["company"],
+            tags_match="any_strict",
+            budget="high",
+            max_tokens=16000,
+        )
+        for r in (response.results or []):
+            assert r.tags, f"any_strict returned untagged result: {r.text}"
+
+    # ------------------------------------------------------------------
+    # negative: all_strict must not match when only ONE of two tags present
+    # ------------------------------------------------------------------
+    def test_all_strict_excludes_partial_match(self, client, bank_id):
+        """'all_strict' must not return memories that have only one of two required tags."""
+        response = client.recall(
+            bank_id=bank_id,
+            query="Bob auth architecture document",
+            tags=["project_x", "meetings"],   # Bob has project_x + docs, NOT meetings
+            tags_match="all_strict",
+            budget="high",
+            max_tokens=16000,
+        )
+        bob_results = [r for r in (response.results or []) if "Bob" in (r.text or "")]
+        assert len(bob_results) == 0, (
+            "Bob's memory has project_x+docs, not project_x+meetings — all_strict should exclude it"
+        )
 
     def test_reflect_with_tags(self, client, bank_id):
         """Test reflect with tags filtering."""

@@ -44,12 +44,6 @@ type _RecallRequest RecallRequest
 func NewRecallRequest(query string) *RecallRequest {
 	this := RecallRequest{}
 	this.Query = query
-	var maxTokens int32 = 4096
-	this.MaxTokens = &maxTokens
-	var trace bool = false
-	this.Trace = &trace
-	var tagsMatch string = "any"
-	this.TagsMatch = &tagsMatch
 	return &this
 }
 
@@ -58,12 +52,6 @@ func NewRecallRequest(query string) *RecallRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewRecallRequestWithDefaults() *RecallRequest {
 	this := RecallRequest{}
-	var maxTokens int32 = 4096
-	this.MaxTokens = &maxTokens
-	var trace bool = false
-	this.Trace = &trace
-	var tagsMatch string = "any"
-	this.TagsMatch = &tagsMatch
 	return &this
 }
 

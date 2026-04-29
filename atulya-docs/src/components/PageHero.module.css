@@ -1,0 +1,60 @@
+/* PageHero — full-bleed section title banner */
+
+.hero {
+  /* Break out of Docusaurus content max-width */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  margin-left: -50vw;
+  /* Cancel Docusaurus margin-vert--lg */
+  margin-top: -2rem;
+  padding: 4rem 1.5rem 3.5rem;
+  text-align: center;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(220, 38, 38, 0.12) 0%, transparent 70%),
+    var(--ifm-background-color);
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+  margin-bottom: 3rem;
+}
+
+[data-theme='dark'] .hero {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(248, 113, 113, 0.14) 0%, transparent 70%),
+    var(--ifm-background-color);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 800;
+  /* Atulya red gradient */
+  background: linear-gradient(135deg, #dc2626, #e11d48) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 0.75rem;
+  /* Override the global article h1 gradient-text rule */
+  display: inline-block;
+}
+
+.subtitle {
+  font-size: 1.05rem;
+  color: var(--ifm-color-emphasis-600);
+  max-width: 560px;
+  margin: 0 auto;
+  line-height: 1.7;
+  /* Reset global article link gradient for subtitle text */
+  -webkit-text-fill-color: unset;
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding: 2.5rem 1rem 2.5rem;
+  }
+
+  .title {
+    font-size: 2.2rem;
+  }
+}

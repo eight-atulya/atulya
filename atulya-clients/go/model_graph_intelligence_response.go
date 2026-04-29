@@ -42,8 +42,6 @@ func NewGraphIntelligenceResponse(nodes []GraphStateNodeResponse, edges []GraphR
 	this.ChangeEvents = changeEvents
 	this.TotalNodes = totalNodes
 	this.GeneratedAt = generatedAt
-	var cached bool = false
-	this.Cached = &cached
 	return &this
 }
 
@@ -52,8 +50,6 @@ func NewGraphIntelligenceResponse(nodes []GraphStateNodeResponse, edges []GraphR
 // but it doesn't guarantee that properties required by API are set
 func NewGraphIntelligenceResponseWithDefaults() *GraphIntelligenceResponse {
 	this := GraphIntelligenceResponse{}
-	var cached bool = false
-	this.Cached = &cached
 	return &this
 }
 

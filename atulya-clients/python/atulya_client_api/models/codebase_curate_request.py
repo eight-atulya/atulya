@@ -22,6 +22,7 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class CodebaseCurateRequest(BaseModel):
     """
@@ -30,13 +31,14 @@ class CodebaseCurateRequest(BaseModel):
     intent: StrictStr
     scope_hint: Optional[StrictStr] = None
     snapshot_id: Optional[StrictStr] = None
-    top_k_clusters: Optional[Annotated[int, Field(le=50, strict=True, ge=1)]] = 10
-    top_k_symbols: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = 20
-    include_dismissed: Optional[StrictBool] = False
+    top_k_clusters: Optional[Annotated[int, Field(le=50, strict=True, ge=1)]] = None
+    top_k_symbols: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None
+    include_dismissed: Optional[StrictBool] = None
     __properties: ClassVar[List[str]] = ["intent", "scope_hint", "snapshot_id", "top_k_clusters", "top_k_symbols", "include_dismissed"]
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -48,8 +50,7 @@ class CodebaseCurateRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -99,9 +100,9 @@ class CodebaseCurateRequest(BaseModel):
             "intent": obj.get("intent"),
             "scope_hint": obj.get("scope_hint"),
             "snapshot_id": obj.get("snapshot_id"),
-            "top_k_clusters": obj.get("top_k_clusters") if obj.get("top_k_clusters") is not None else 10,
-            "top_k_symbols": obj.get("top_k_symbols") if obj.get("top_k_symbols") is not None else 20,
-            "include_dismissed": obj.get("include_dismissed") if obj.get("include_dismissed") is not None else False
+            "top_k_clusters": obj.get("top_k_clusters"),
+            "top_k_symbols": obj.get("top_k_symbols"),
+            "include_dismissed": obj.get("include_dismissed")
         })
         return _obj
 

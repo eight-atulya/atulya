@@ -41,8 +41,6 @@ func NewCodebaseCurateResponse(codebaseId string, intent string) *CodebaseCurate
 	this := CodebaseCurateResponse{}
 	this.CodebaseId = codebaseId
 	this.Intent = intent
-	var totalCandidates int32 = 0
-	this.TotalCandidates = &totalCandidates
 	return &this
 }
 
@@ -51,8 +49,6 @@ func NewCodebaseCurateResponse(codebaseId string, intent string) *CodebaseCurate
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseCurateResponseWithDefaults() *CodebaseCurateResponse {
 	this := CodebaseCurateResponse{}
-	var totalCandidates int32 = 0
-	this.TotalCandidates = &totalCandidates
 	return &this
 }
 

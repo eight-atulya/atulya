@@ -200,6 +200,102 @@ export type AnomalyIntelligenceSummaryResponse = {
 };
 
 /**
+ * ApiKeyCreateRequest
+ */
+export type ApiKeyCreateRequest = {
+    /**
+     * ApiKeyCreateRequestName
+     *
+     * Human-readable label for this key
+     */
+    name: string;
+    /**
+     * ApiKeyCreateRequestRole
+     *
+     * Role: superuser | admin | user
+     */
+    role?: string;
+    /**
+     * ApiKeyCreateRequestSchemaName
+     *
+     * PostgreSQL schema this key operates in
+     */
+    schema_name?: string;
+    /**
+     * ApiKeyCreateRequestAllowedBankIds
+     *
+     * Restrict access to specific banks. None = unrestricted.
+     */
+    allowed_bank_ids?: Array<string> | null;
+    /**
+     * ApiKeyCreateRequestExpiresDays
+     *
+     * Days until key expires. None = never expires.
+     */
+    expires_days?: number | null;
+};
+
+/**
+ * ApiKeyResponse
+ */
+export type ApiKeyResponse = {
+    /**
+     * ApiKeyResponseId
+     */
+    id: string;
+    /**
+     * ApiKeyResponseName
+     */
+    name: string;
+    /**
+     * ApiKeyResponseRole
+     */
+    role: string;
+    /**
+     * ApiKeyResponseSchemaName
+     */
+    schema_name: string;
+    /**
+     * ApiKeyResponseAllowedBankIds
+     */
+    allowed_bank_ids: Array<string> | null;
+    /**
+     * ApiKeyResponseCreatedAt
+     */
+    created_at: string;
+    /**
+     * ApiKeyResponseExpiresAt
+     */
+    expires_at: string | null;
+    /**
+     * ApiKeyResponseRevokedAt
+     */
+    revoked_at: string | null;
+    /**
+     * ApiKeyResponseRawKey
+     */
+    raw_key?: string | null;
+};
+
+/**
+ * ApiKeyUpdateRequest
+ */
+export type ApiKeyUpdateRequest = {
+    /**
+     * ApiKeyUpdateRequestName
+     */
+    name?: string | null;
+    /**
+     * ApiKeyUpdateRequestRole
+     */
+    role?: string | null;
+    /**
+     * ApiKeyUpdateRequestAllowedBankIds
+     */
+    allowed_bank_ids?: Array<string> | null;
+};
+
+/**
  * AsyncOperationSubmitResponse
  *
  * Response model for submitting an async operation.
@@ -454,6 +550,24 @@ export type BodyImportBrainSnapshot = {
      * Brain snapshot payload
      */
     file: Blob | File;
+};
+
+/**
+ * Body_import_codebase_file
+ */
+export type BodyImportCodebaseFile = {
+    /**
+     * BodyImportCodebaseFileFile
+     *
+     * Source file to import
+     */
+    file: Blob | File;
+    /**
+     * BodyImportCodebaseFileRequest
+     *
+     * JSON string with CodebaseImportFileRequest model
+     */
+    request: string;
 };
 
 /**
@@ -1571,6 +1685,38 @@ export type CodebaseImpactSeedResponse = {
 };
 
 /**
+ * CodebaseImportFileResponse
+ *
+ * Queued single-file codebase import response.
+ */
+export type CodebaseImportFileResponse = {
+    /**
+     * CodebaseImportFileResponseCodebaseId
+     */
+    codebase_id: string;
+    /**
+     * CodebaseImportFileResponseSnapshotId
+     */
+    snapshot_id: string;
+    /**
+     * CodebaseImportFileResponseOperationId
+     */
+    operation_id: string;
+    /**
+     * CodebaseImportFileResponseStatus
+     */
+    status: string;
+    /**
+     * CodebaseImportFileResponseFilename
+     */
+    filename: string;
+    /**
+     * CodebaseImportFileResponseVirtualPath
+     */
+    virtual_path: string;
+};
+
+/**
  * CodebaseImportGithubRequest
  *
  * JSON payload for public GitHub-backed codebase import.
@@ -2542,6 +2688,32 @@ export type CreateWebhookRequest = {
      * HTTP delivery configuration (method, timeout, headers, params)
      */
     http_config?: WebhookHttpConfig;
+};
+
+/**
+ * DecommissionRequest
+ */
+export type DecommissionRequest = {
+    /**
+     * DecommissionRequestReleaseStuck
+     *
+     * Re-queue stuck tasks so another worker can pick them up (default: true).
+     */
+    release_stuck?: boolean;
+};
+
+/**
+ * DecommissionResponse
+ */
+export type DecommissionResponse = {
+    /**
+     * DecommissionResponseWorkerId
+     */
+    worker_id: string;
+    /**
+     * DecommissionResponseReleasedCount
+     */
+    released_count: number;
 };
 
 /**
@@ -3809,6 +3981,14 @@ export type GraphStateNodeResponse = {
      * GraphStateNodeResponseEvidenceIds
      */
     evidence_ids?: Array<string>;
+    /**
+     * GraphStateNodeResponseConviction
+     */
+    conviction?: number | null;
+    /**
+     * GraphStateNodeResponseSemanticChangeMagnitude
+     */
+    semantic_change_magnitude?: number | null;
 };
 
 /**
@@ -4428,6 +4608,48 @@ export type OperationStatusResponse = {
 };
 
 /**
+ * OperationSummaryResponse
+ */
+export type OperationSummaryResponse = {
+    /**
+     * OperationSummaryResponseOperationId
+     */
+    operation_id: string;
+    /**
+     * OperationSummaryResponseBankId
+     */
+    bank_id: string;
+    /**
+     * OperationSummaryResponseSchemaName
+     */
+    schema_name: string;
+    /**
+     * OperationSummaryResponseOperationType
+     */
+    operation_type: string;
+    /**
+     * OperationSummaryResponseStatus
+     */
+    status: string;
+    /**
+     * OperationSummaryResponseWorkerId
+     */
+    worker_id: string | null;
+    /**
+     * OperationSummaryResponseCreatedAt
+     */
+    created_at: string;
+    /**
+     * OperationSummaryResponseUpdatedAt
+     */
+    updated_at: string | null;
+    /**
+     * OperationSummaryResponseErrorMessage
+     */
+    error_message: string | null;
+};
+
+/**
  * OperationsListResponse
  *
  * Response model for list operations endpoint.
@@ -4992,6 +5214,38 @@ export type RetainResponse = {
 };
 
 /**
+ * RetryOperationResponse
+ *
+ * Response model for retry operation endpoint.
+ */
+export type RetryOperationResponse = {
+    /**
+     * RetryOperationResponseSuccess
+     */
+    success: boolean;
+    /**
+     * RetryOperationResponseMessage
+     */
+    message: string;
+    /**
+     * RetryOperationResponseOperationId
+     */
+    operation_id: string;
+    /**
+     * RetryOperationResponseRetriedFromOperationId
+     */
+    retried_from_operation_id: string;
+    /**
+     * RetryOperationResponseBankId
+     */
+    bank_id: string;
+    /**
+     * RetryOperationResponseOperationType
+     */
+    operation_type?: string | null;
+};
+
+/**
  * SourceFactsIncludeOptions
  *
  * Options for including source facts for observation-type results.
@@ -5086,6 +5340,48 @@ export type SubRoutineSubmitRequest = {
 };
 
 /**
+ * SystemHealthResponse
+ */
+export type SystemHealthResponse = {
+    /**
+     * SystemHealthResponseStatus
+     */
+    status: string;
+    /**
+     * SystemHealthResponseApiVersion
+     */
+    api_version: string;
+    /**
+     * SystemHealthResponseDbPoolMin
+     */
+    db_pool_min: number;
+    /**
+     * SystemHealthResponseDbPoolMax
+     */
+    db_pool_max: number;
+    /**
+     * SystemHealthResponseDbPoolSize
+     */
+    db_pool_size: number;
+    /**
+     * SystemHealthResponseDbPoolFree
+     */
+    db_pool_free: number;
+    /**
+     * SystemHealthResponseMigrationVersion
+     */
+    migration_version: string | null;
+    /**
+     * SystemHealthResponseWorkerCount
+     */
+    worker_count: number;
+    /**
+     * SystemHealthResponseAdminSchema
+     */
+    admin_schema: string;
+};
+
+/**
  * TagGroupAnd
  *
  * Logical AND over a list of nested groups.
@@ -5159,6 +5455,20 @@ export type TagItem = {
      * Number of memories with this tag
      */
     count: number;
+};
+
+/**
+ * TenantSummaryResponse
+ */
+export type TenantSummaryResponse = {
+    /**
+     * TenantSummaryResponseSchemaName
+     */
+    schema_name: string;
+    /**
+     * TenantSummaryResponseBankCount
+     */
+    bank_count: number;
 };
 
 /**
@@ -5701,6 +6011,32 @@ export type WebhookResponse = {
      * WebhookResponseUpdatedAt
      */
     updated_at?: string | null;
+};
+
+/**
+ * WorkerStatusResponse
+ */
+export type WorkerStatusResponse = {
+    /**
+     * WorkerStatusResponseWorkerId
+     */
+    worker_id: string;
+    /**
+     * WorkerStatusResponseSchemaName
+     */
+    schema_name: string;
+    /**
+     * WorkerStatusResponsePendingCount
+     */
+    pending_count: number;
+    /**
+     * WorkerStatusResponseStuckCount
+     */
+    stuck_count: number;
+    /**
+     * WorkerStatusResponseLastSeenAt
+     */
+    last_seen_at: string | null;
 };
 
 export type HealthEndpointHealthGetData = {
@@ -7662,6 +7998,46 @@ export type GetOperationResultResponses = {
 
 export type GetOperationResultResponse = GetOperationResultResponses[keyof GetOperationResultResponses];
 
+export type RetryOperationData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Operation Id
+         */
+        operation_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/operations/{operation_id}/retry';
+};
+
+export type RetryOperationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetryOperationError = RetryOperationErrors[keyof RetryOperationErrors];
+
+export type RetryOperationResponses = {
+    /**
+     * Successful Response
+     */
+    200: RetryOperationResponse;
+};
+
+export type RetryOperationResponse2 = RetryOperationResponses[keyof RetryOperationResponses];
+
 export type GetBankProfileData = {
     body?: never;
     headers?: {
@@ -8983,6 +9359,42 @@ export type ImportCodebaseZipResponses = {
 
 export type ImportCodebaseZipResponse = ImportCodebaseZipResponses[keyof ImportCodebaseZipResponses];
 
+export type ImportCodebaseFileData = {
+    body: BodyImportCodebaseFile;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/codebases/import/file';
+};
+
+export type ImportCodebaseFileErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ImportCodebaseFileError = ImportCodebaseFileErrors[keyof ImportCodebaseFileErrors];
+
+export type ImportCodebaseFileResponses = {
+    /**
+     * Successful Response
+     */
+    200: CodebaseImportFileResponse;
+};
+
+export type ImportCodebaseFileResponse = ImportCodebaseFileResponses[keyof ImportCodebaseFileResponses];
+
 export type ImportCodebaseGithubData = {
     body: CodebaseImportGithubRequest;
     headers?: {
@@ -9950,3 +10362,478 @@ export type AnalyzeCodebaseImpactResponses = {
 };
 
 export type AnalyzeCodebaseImpactResponse = AnalyzeCodebaseImpactResponses[keyof AnalyzeCodebaseImpactResponses];
+
+export type AdminSystemHealthData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/system/health';
+};
+
+export type AdminSystemHealthErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminSystemHealthError = AdminSystemHealthErrors[keyof AdminSystemHealthErrors];
+
+export type AdminSystemHealthResponses = {
+    /**
+     * Successful Response
+     */
+    200: SystemHealthResponse;
+};
+
+export type AdminSystemHealthResponse = AdminSystemHealthResponses[keyof AdminSystemHealthResponses];
+
+export type AdminListTenantsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/tenants';
+};
+
+export type AdminListTenantsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListTenantsError = AdminListTenantsErrors[keyof AdminListTenantsErrors];
+
+export type AdminListTenantsResponses = {
+    /**
+     * Response Admin List Tenants
+     *
+     * Successful Response
+     */
+    200: Array<TenantSummaryResponse>;
+};
+
+export type AdminListTenantsResponse = AdminListTenantsResponses[keyof AdminListTenantsResponses];
+
+export type AdminListTenantBanksData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Schema
+         */
+        schema: string;
+    };
+    query?: never;
+    url: '/v1/admin/tenants/{schema}/banks';
+};
+
+export type AdminListTenantBanksErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListTenantBanksError = AdminListTenantBanksErrors[keyof AdminListTenantBanksErrors];
+
+export type AdminListTenantBanksResponses = {
+    /**
+     * Response Admin List Tenant Banks
+     *
+     * Successful Response
+     */
+    200: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+export type AdminListTenantBanksResponse = AdminListTenantBanksResponses[keyof AdminListTenantBanksResponses];
+
+export type AdminListWorkersData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Schema
+         *
+         * Schema to inspect
+         */
+        schema?: string;
+    };
+    url: '/v1/admin/workers';
+};
+
+export type AdminListWorkersErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListWorkersError = AdminListWorkersErrors[keyof AdminListWorkersErrors];
+
+export type AdminListWorkersResponses = {
+    /**
+     * Response Admin List Workers
+     *
+     * Successful Response
+     */
+    200: Array<WorkerStatusResponse>;
+};
+
+export type AdminListWorkersResponse = AdminListWorkersResponses[keyof AdminListWorkersResponses];
+
+export type AdminDecommissionWorkerData = {
+    body: DecommissionRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Worker Id
+         */
+        worker_id: string;
+    };
+    query?: {
+        /**
+         * Schema
+         */
+        schema?: string;
+    };
+    url: '/v1/admin/workers/{worker_id}/decommission';
+};
+
+export type AdminDecommissionWorkerErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminDecommissionWorkerError = AdminDecommissionWorkerErrors[keyof AdminDecommissionWorkerErrors];
+
+export type AdminDecommissionWorkerResponses = {
+    /**
+     * Successful Response
+     */
+    200: DecommissionResponse;
+};
+
+export type AdminDecommissionWorkerResponse = AdminDecommissionWorkerResponses[keyof AdminDecommissionWorkerResponses];
+
+export type AdminListOperationsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Schema
+         */
+        schema?: string;
+        /**
+         * Status
+         */
+        status?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/admin/operations';
+};
+
+export type AdminListOperationsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListOperationsError = AdminListOperationsErrors[keyof AdminListOperationsErrors];
+
+export type AdminListOperationsResponses = {
+    /**
+     * Response Admin List Operations
+     *
+     * Successful Response
+     */
+    200: Array<OperationSummaryResponse>;
+};
+
+export type AdminListOperationsResponse = AdminListOperationsResponses[keyof AdminListOperationsResponses];
+
+export type AdminTriggerConsolidationData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Schema
+         */
+        schema: string;
+    };
+    query?: never;
+    url: '/v1/admin/consolidate/{schema}';
+};
+
+export type AdminTriggerConsolidationErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminTriggerConsolidationError = AdminTriggerConsolidationErrors[keyof AdminTriggerConsolidationErrors];
+
+export type AdminTriggerConsolidationResponses = {
+    /**
+     * Response Admin Trigger Consolidation
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type AdminTriggerConsolidationResponse = AdminTriggerConsolidationResponses[keyof AdminTriggerConsolidationResponses];
+
+export type AdminListApiKeysData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Schema
+         */
+        schema?: string;
+    };
+    url: '/v1/admin/api-keys';
+};
+
+export type AdminListApiKeysErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListApiKeysError = AdminListApiKeysErrors[keyof AdminListApiKeysErrors];
+
+export type AdminListApiKeysResponses = {
+    /**
+     * Response Admin List Api Keys
+     *
+     * Successful Response
+     */
+    200: Array<ApiKeyResponse>;
+};
+
+export type AdminListApiKeysResponse = AdminListApiKeysResponses[keyof AdminListApiKeysResponses];
+
+export type AdminCreateApiKeyData = {
+    body: ApiKeyCreateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Schema
+         */
+        schema?: string;
+    };
+    url: '/v1/admin/api-keys';
+};
+
+export type AdminCreateApiKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminCreateApiKeyError = AdminCreateApiKeyErrors[keyof AdminCreateApiKeyErrors];
+
+export type AdminCreateApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    201: ApiKeyResponse;
+};
+
+export type AdminCreateApiKeyResponse = AdminCreateApiKeyResponses[keyof AdminCreateApiKeyResponses];
+
+export type AdminRevokeApiKeyData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: {
+        /**
+         * Schema
+         */
+        schema?: string;
+    };
+    url: '/v1/admin/api-keys/{key_id}';
+};
+
+export type AdminRevokeApiKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminRevokeApiKeyError = AdminRevokeApiKeyErrors[keyof AdminRevokeApiKeyErrors];
+
+export type AdminRevokeApiKeyResponses = {
+    /**
+     * Response Admin Revoke Api Key
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: string;
+    };
+};
+
+export type AdminRevokeApiKeyResponse = AdminRevokeApiKeyResponses[keyof AdminRevokeApiKeyResponses];
+
+export type AdminUpdateApiKeyData = {
+    body: ApiKeyUpdateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Key Id
+         */
+        key_id: string;
+    };
+    query?: {
+        /**
+         * Schema
+         */
+        schema?: string;
+    };
+    url: '/v1/admin/api-keys/{key_id}';
+};
+
+export type AdminUpdateApiKeyErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminUpdateApiKeyError = AdminUpdateApiKeyErrors[keyof AdminUpdateApiKeyErrors];
+
+export type AdminUpdateApiKeyResponses = {
+    /**
+     * Successful Response
+     */
+    200: ApiKeyResponse;
+};
+
+export type AdminUpdateApiKeyResponse = AdminUpdateApiKeyResponses[keyof AdminUpdateApiKeyResponses];

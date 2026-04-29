@@ -60,12 +60,6 @@ func NewCodebaseResponse(id string, bankId string, name string, sourceType strin
 	this.BankId = bankId
 	this.Name = name
 	this.SourceType = sourceType
-	var clusterCount int32 = 0
-	this.ClusterCount = &clusterCount
-	var relatedChunkCount int32 = 0
-	this.RelatedChunkCount = &relatedChunkCount
-	var parseCoverage float32 = 0.0
-	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -74,12 +68,6 @@ func NewCodebaseResponse(id string, bankId string, name string, sourceType strin
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseResponseWithDefaults() *CodebaseResponse {
 	this := CodebaseResponse{}
-	var clusterCount int32 = 0
-	this.ClusterCount = &clusterCount
-	var relatedChunkCount int32 = 0
-	this.RelatedChunkCount = &relatedChunkCount
-	var parseCoverage float32 = 0.0
-	this.ParseCoverage = &parseCoverage
 	return &this
 }
 

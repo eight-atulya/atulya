@@ -24,11 +24,11 @@ from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-RESULT_ANY_OF_SCHEMAS = ["Dict[str, object]", "ReflectResponse"]
+OPERATIONRESULTRESPONSERESULT_ANY_OF_SCHEMAS = ["Dict[str, object]", "ReflectResponse"]
 
-class Result(BaseModel):
+class OperationResultResponseResult(BaseModel):
     """
-    Result
+    OperationResultResponseResult
     """
 
     # data type: ReflectResponse
@@ -61,7 +61,7 @@ class Result(BaseModel):
         if v is None:
             return v
 
-        instance = Result.model_construct()
+        instance = OperationResultResponseResult.model_construct()
         error_messages = []
         # validate data type: ReflectResponse
         if not isinstance(v, ReflectResponse):
@@ -77,7 +77,7 @@ class Result(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in Result with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in OperationResultResponseResult with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -111,7 +111,7 @@ class Result(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into Result with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into OperationResultResponseResult with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
         else:
             return instance
 

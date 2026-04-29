@@ -29,8 +29,6 @@ type CodebaseRefreshRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseRefreshRequest() *CodebaseRefreshRequest {
 	this := CodebaseRefreshRequest{}
-	var fullRebuild bool = false
-	this.FullRebuild = &fullRebuild
 	return &this
 }
 
@@ -39,8 +37,6 @@ func NewCodebaseRefreshRequest() *CodebaseRefreshRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRefreshRequestWithDefaults() *CodebaseRefreshRequest {
 	this := CodebaseRefreshRequest{}
-	var fullRebuild bool = false
-	this.FullRebuild = &fullRebuild
 	return &this
 }
 

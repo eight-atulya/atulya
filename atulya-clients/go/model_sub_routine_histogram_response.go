@@ -38,8 +38,6 @@ func NewSubRoutineHistogramResponse(bankId string, histogram []PredictionPoint) 
 	this := SubRoutineHistogramResponse{}
 	this.BankId = bankId
 	this.Histogram = histogram
-	var sampleCount int32 = 0
-	this.SampleCount = &sampleCount
 	return &this
 }
 
@@ -48,8 +46,6 @@ func NewSubRoutineHistogramResponse(bankId string, histogram []PredictionPoint) 
 // but it doesn't guarantee that properties required by API are set
 func NewSubRoutineHistogramResponseWithDefaults() *SubRoutineHistogramResponse {
 	this := SubRoutineHistogramResponse{}
-	var sampleCount int32 = 0
-	this.SampleCount = &sampleCount
 	return &this
 }
 

@@ -7,7 +7,8 @@ slug: /
 
 ## Why Atulya?
 
-Most agent systems fail long before the model fails.
+It all started with a simple observation: 
+> Why do same mistakes again and again? Im not talking about the ai-agent but the human behind it. I have to keep reminding myself to tell the agent what it should know, and it keeps forgetting. I wish there was a way to just tell it once and have it remember forever.
 
 The real problem is not just "memory." It is **continuity, integrity, and organizational coherence** across long-running agents, teams, tools, and time.
 

@@ -16,8 +16,8 @@ import (
 )
 
 
-// Not struct for Not
-type Not struct {
+// TagGroupNotNot struct for TagGroupNotNot
+type TagGroupNotNot struct {
 	TagGroupAnd *TagGroupAnd
 	TagGroupLeaf *TagGroupLeaf
 	TagGroupNot *TagGroupNot
@@ -25,7 +25,7 @@ type Not struct {
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
-func (dst *Not) UnmarshalJSON(data []byte) error {
+func (dst *TagGroupNotNot) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into TagGroupAnd
 	err = json.Unmarshal(data, &dst.TagGroupAnd);
@@ -79,11 +79,11 @@ func (dst *Not) UnmarshalJSON(data []byte) error {
 		dst.TagGroupOr = nil
 	}
 
-	return fmt.Errorf("data failed to match schemas in anyOf(Not)")
+	return fmt.Errorf("data failed to match schemas in anyOf(TagGroupNotNot)")
 }
 
 // Marshal data from the first non-nil pointers in the struct to JSON
-func (src *Not) MarshalJSON() ([]byte, error) {
+func (src TagGroupNotNot) MarshalJSON() ([]byte, error) {
 	if src.TagGroupAnd != nil {
 		return json.Marshal(&src.TagGroupAnd)
 	}
@@ -104,38 +104,38 @@ func (src *Not) MarshalJSON() ([]byte, error) {
 }
 
 
-type NullableNot struct {
-	value *Not
+type NullableTagGroupNotNot struct {
+	value *TagGroupNotNot
 	isSet bool
 }
 
-func (v NullableNot) Get() *Not {
+func (v NullableTagGroupNotNot) Get() *TagGroupNotNot {
 	return v.value
 }
 
-func (v *NullableNot) Set(val *Not) {
+func (v *NullableTagGroupNotNot) Set(val *TagGroupNotNot) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableNot) IsSet() bool {
+func (v NullableTagGroupNotNot) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableNot) Unset() {
+func (v *NullableTagGroupNotNot) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableNot(val *Not) *NullableNot {
-	return &NullableNot{value: val, isSet: true}
+func NewNullableTagGroupNotNot(val *TagGroupNotNot) *NullableTagGroupNotNot {
+	return &NullableTagGroupNotNot{value: val, isSet: true}
 }
 
-func (v NullableNot) MarshalJSON() ([]byte, error) {
+func (v NullableTagGroupNotNot) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableNot) UnmarshalJSON(src []byte) error {
+func (v *NullableTagGroupNotNot) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

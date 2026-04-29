@@ -29,8 +29,6 @@ type ToolCallsIncludeOptions struct {
 // will change when the set of required properties is changed
 func NewToolCallsIncludeOptions() *ToolCallsIncludeOptions {
 	this := ToolCallsIncludeOptions{}
-	var output bool = true
-	this.Output = &output
 	return &this
 }
 
@@ -39,8 +37,6 @@ func NewToolCallsIncludeOptions() *ToolCallsIncludeOptions {
 // but it doesn't guarantee that properties required by API are set
 func NewToolCallsIncludeOptionsWithDefaults() *ToolCallsIncludeOptions {
 	this := ToolCallsIncludeOptions{}
-	var output bool = true
-	this.Output = &output
 	return &this
 }
 

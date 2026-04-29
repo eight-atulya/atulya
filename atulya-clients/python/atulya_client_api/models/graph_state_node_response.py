@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr, f
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class GraphStateNodeResponse(BaseModel):
     """
@@ -40,7 +41,9 @@ class GraphStateNodeResponse(BaseModel):
     evidence_count: StrictInt
     tags: Optional[List[StrictStr]] = None
     evidence_ids: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["id", "title", "kind", "subtitle", "current_state", "status", "status_reason", "confidence", "change_score", "last_changed_at", "primary_timestamp", "evidence_count", "tags", "evidence_ids"]
+    conviction: Optional[Union[StrictFloat, StrictInt]] = None
+    semantic_change_magnitude: Optional[Union[StrictFloat, StrictInt]] = None
+    __properties: ClassVar[List[str]] = ["id", "title", "kind", "subtitle", "current_state", "status", "status_reason", "confidence", "change_score", "last_changed_at", "primary_timestamp", "evidence_count", "tags", "evidence_ids", "conviction", "semantic_change_magnitude"]
 
     @field_validator('kind')
     def kind_validate_enum(cls, value):
@@ -57,7 +60,8 @@ class GraphStateNodeResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -69,8 +73,7 @@ class GraphStateNodeResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -110,6 +113,16 @@ class GraphStateNodeResponse(BaseModel):
         if self.primary_timestamp is None and "primary_timestamp" in self.model_fields_set:
             _dict['primary_timestamp'] = None
 
+        # set to None if conviction (nullable) is None
+        # and model_fields_set contains the field
+        if self.conviction is None and "conviction" in self.model_fields_set:
+            _dict['conviction'] = None
+
+        # set to None if semantic_change_magnitude (nullable) is None
+        # and model_fields_set contains the field
+        if self.semantic_change_magnitude is None and "semantic_change_magnitude" in self.model_fields_set:
+            _dict['semantic_change_magnitude'] = None
+
         return _dict
 
     @classmethod
@@ -135,7 +148,9 @@ class GraphStateNodeResponse(BaseModel):
             "primary_timestamp": obj.get("primary_timestamp"),
             "evidence_count": obj.get("evidence_count"),
             "tags": obj.get("tags"),
-            "evidence_ids": obj.get("evidence_ids")
+            "evidence_ids": obj.get("evidence_ids"),
+            "conviction": obj.get("conviction"),
+            "semantic_change_magnitude": obj.get("semantic_change_magnitude")
         })
         return _obj
 

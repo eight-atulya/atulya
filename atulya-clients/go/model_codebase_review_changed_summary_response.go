@@ -30,12 +30,6 @@ type CodebaseReviewChangedSummaryResponse struct {
 // will change when the set of required properties is changed
 func NewCodebaseReviewChangedSummaryResponse() *CodebaseReviewChangedSummaryResponse {
 	this := CodebaseReviewChangedSummaryResponse{}
-	var addedFiles int32 = 0
-	this.AddedFiles = &addedFiles
-	var changedFiles int32 = 0
-	this.ChangedFiles = &changedFiles
-	var deletedFiles int32 = 0
-	this.DeletedFiles = &deletedFiles
 	return &this
 }
 
@@ -44,12 +38,6 @@ func NewCodebaseReviewChangedSummaryResponse() *CodebaseReviewChangedSummaryResp
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseReviewChangedSummaryResponseWithDefaults() *CodebaseReviewChangedSummaryResponse {
 	this := CodebaseReviewChangedSummaryResponse{}
-	var addedFiles int32 = 0
-	this.AddedFiles = &addedFiles
-	var changedFiles int32 = 0
-	this.ChangedFiles = &changedFiles
-	var deletedFiles int32 = 0
-	this.DeletedFiles = &deletedFiles
 	return &this
 }
 

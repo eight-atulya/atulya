@@ -44,8 +44,6 @@ func NewCreateMentalModelRequest(name string, sourceQuery string) *CreateMentalM
 	this := CreateMentalModelRequest{}
 	this.Name = name
 	this.SourceQuery = sourceQuery
-	var maxTokens int32 = 2048
-	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -54,8 +52,6 @@ func NewCreateMentalModelRequest(name string, sourceQuery string) *CreateMentalM
 // but it doesn't guarantee that properties required by API are set
 func NewCreateMentalModelRequestWithDefaults() *CreateMentalModelRequest {
 	this := CreateMentalModelRequest{}
-	var maxTokens int32 = 2048
-	this.MaxTokens = &maxTokens
 	return &this
 }
 

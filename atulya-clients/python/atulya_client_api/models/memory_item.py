@@ -20,23 +20,24 @@ import json
 from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.entity_input import EntityInput
-from atulya_client_api.models.observation_scopes import ObservationScopes
-from atulya_client_api.models.timestamp import Timestamp
+from atulya_client_api.models.memory_item_observation_scopes import MemoryItemObservationScopes
+from atulya_client_api.models.memory_item_timestamp import MemoryItemTimestamp
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class MemoryItem(BaseModel):
     """
     Single memory item for retain.
     """ # noqa: E501
     content: StrictStr
-    timestamp: Optional[Timestamp] = None
+    timestamp: Optional[MemoryItemTimestamp] = None
     context: Optional[StrictStr] = None
     metadata: Optional[Dict[str, StrictStr]] = None
     document_id: Optional[StrictStr] = None
     entities: Optional[List[EntityInput]] = None
     tags: Optional[List[StrictStr]] = None
-    observation_scopes: Optional[ObservationScopes] = None
+    observation_scopes: Optional[MemoryItemObservationScopes] = None
     update_mode: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["content", "timestamp", "context", "metadata", "document_id", "entities", "tags", "observation_scopes", "update_mode"]
 
@@ -51,7 +52,8 @@ class MemoryItem(BaseModel):
         return value
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -63,8 +65,7 @@ class MemoryItem(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -155,13 +156,13 @@ class MemoryItem(BaseModel):
 
         _obj = cls.model_validate({
             "content": obj.get("content"),
-            "timestamp": Timestamp.from_dict(obj["timestamp"]) if obj.get("timestamp") is not None else None,
+            "timestamp": MemoryItemTimestamp.from_dict(obj["timestamp"]) if obj.get("timestamp") is not None else None,
             "context": obj.get("context"),
             "metadata": obj.get("metadata"),
             "document_id": obj.get("document_id"),
             "entities": [EntityInput.from_dict(_item) for _item in obj["entities"]] if obj.get("entities") is not None else None,
             "tags": obj.get("tags"),
-            "observation_scopes": ObservationScopes.from_dict(obj["observation_scopes"]) if obj.get("observation_scopes") is not None else None,
+            "observation_scopes": MemoryItemObservationScopes.from_dict(obj["observation_scopes"]) if obj.get("observation_scopes") is not None else None,
             "update_mode": obj.get("update_mode")
         })
         return _obj

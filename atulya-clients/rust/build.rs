@@ -285,17 +285,37 @@ fn main() {
     println!("Generated client at: {}", dest_path.display());
 }
 
-/// Fix progenitor's generated code for optional header parameters
-/// Replaces patterns like `value.to_string().try_into()?` where value is Option<&str>
-/// with `value.unwrap_or_default().to_string().try_into()?`
+/// Fix progenitor's generated code for optional security header parameters.
+///
+/// Root cause: progenitor models optional auth headers as `Option<Option<&str>>`.
+/// The generated code does:
+///
+/// ```rust
+/// if let Some(value) = authorization {                      // value: Option<&str>
+///     header_map.append("authorization", value.to_string()  // COMPILE ERROR
+///         .try_into()?);
+/// }
+/// ```
+///
+/// `Option<&str>` does not implement `Display`, so `to_string()` fails.
+/// The correct fix strengthens the destructuring to `if let Some(Some(value))`
+/// so that `value: &str` (implements `Display`), and the header is only
+/// appended when a concrete value exists — `Some(None)` is silently skipped,
+/// never sending a spurious empty header.
 fn fix_optional_header_params(code: &str) -> String {
     use regex::Regex;
 
-    // Pattern: header_map.append("authorization", value.to_string().try_into()?);
-    // Should become: header_map.append("authorization", value.unwrap_or_default().to_string().try_into()?);
-    let re = Regex::new(r#"header_map\.append\("authorization", value\.to_string\(\)\.try_into\(\)\?\)"#)
-        .expect("Invalid regex");
+    // Match the 3-line block that progenitor emits for every optional header:
+    //   if let Some(value) = <var> {\n<ws>header_map.append("<hdr>", value.to_string().try_into()?);\n<ws>}
+    // Replace the outer destructure with `Some(Some(value))` so value: &str.
+    let re = Regex::new(
+        r"if let Some\(value\) = ([a-zA-Z_][a-zA-Z_0-9]*) \{(\n[ \t]*)header_map\.append\(([^)]+), value\.to_string\(\)(\.try_into\(\)\?)\);(\n[ \t]*)\}",
+    )
+    .expect("Invalid regex");
 
-    re.replace_all(code, r#"header_map.append("authorization", value.unwrap_or_default().to_string().try_into()?)"#)
-        .to_string()
+    re.replace_all(
+        code,
+        "if let Some(Some(value)) = $1 {${2}header_map.append($3, value.to_string()$4);${5}}",
+    )
+    .to_string()
 }

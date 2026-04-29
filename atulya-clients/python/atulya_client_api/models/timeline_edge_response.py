@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr, f
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
+from pydantic_core import to_jsonable_python
 
 class TimelineEdgeResponse(BaseModel):
     """
@@ -29,7 +30,7 @@ class TimelineEdgeResponse(BaseModel):
     source: StrictStr
     target: StrictStr
     edge_kind: StrictStr
-    weight: Optional[Union[StrictFloat, StrictInt]] = 1.0
+    weight: Optional[Union[StrictFloat, StrictInt]] = None
     __properties: ClassVar[List[str]] = ["source", "target", "edge_kind", "weight"]
 
     @field_validator('edge_kind')
@@ -40,7 +41,8 @@ class TimelineEdgeResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        populate_by_name=True,
+        validate_by_name=True,
+        validate_by_alias=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -52,8 +54,7 @@ class TimelineEdgeResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
-        return json.dumps(self.to_dict())
+        return json.dumps(to_jsonable_python(self.to_dict()))
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -93,7 +94,7 @@ class TimelineEdgeResponse(BaseModel):
             "source": obj.get("source"),
             "target": obj.get("target"),
             "edge_kind": obj.get("edge_kind"),
-            "weight": obj.get("weight") if obj.get("weight") is not None else 1.0
+            "weight": obj.get("weight")
         })
         return _obj
 

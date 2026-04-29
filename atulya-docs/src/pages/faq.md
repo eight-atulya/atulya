@@ -1,250 +1,199 @@
 ---
 title: Frequently Asked Questions
-description: Common questions and answers about Atulya
+description: Common questions about Atulya — plain English answers
 hide_table_of_contents: false
 ---
 
 # Frequently Asked Questions
 
-### What is Atulya and how does it differ from RAG?
+### What is Atulya?
 
-Atulya is an agent memory system that provides long-term memory for AI agents using biomimetic data structures. Unlike traditional RAG (Retrieval-Augmented Generation), Atulya:
+Your AI agent forgets everything between conversations. Every session starts blank.
 
-- **Stores structured facts** instead of raw document chunks
-- **Builds mental models** that consolidate knowledge over time
-- **Uses graph-based relationships** between entities and concepts
-- **Supports temporal reasoning** with time-aware retrieval
-- **Enables disposition-aware reflection** for nuanced reasoning
+Atulya fixes that. It gives your agent a persistent memory — facts it remembers, relationships it tracks, patterns it notices over time. Like giving your agent a brain instead of a notepad.
 
-For a detailed comparison, see [RAG vs Memory](/developer/rag-vs-atulya).
-
----
-
-### Why use Atulya instead of other solutions?
-
-Atulya is purpose-built for agent memory with unique advantages:
-
-- **State-of-the-art accuracy**: Ranked #1 LongMemEval benchmarks for agent memory (see [details](https://benchmarks.atulya.eightengine.com/))
-- **Built on proven technology**: PostgreSQL - battle-tested, reliable, and widely understood
-- **Cloud-native architecture**: Designed for modern cloud deployments with horizontal scalability
-- **Flexible deployment**: Self-host or use Atulya Cloud - works with any LLM provider
-- **True long-term memory**: Builds mental models that consolidate knowledge over time, not just retrieval
-- **Graph-based reasoning**: Understands relationships between entities and concepts for richer context
-- **Production-ready**: Scales to millions of memories with 50-500ms recall latency
-- **Developer-friendly**: Simple APIs (retain, recall, reflect), SDKs for Python/TypeScript/Go/Rust, integrations with LiteLLM/Vercel AI SDK
-
-Unlike vector databases (just search) or RAG systems (document retrieval), Atulya provides **living memory** that evolves with your users.
+Three things happen:
+- **retain** — agent learns something, Atulya stores it
+- **recall** — agent needs something, Atulya surfaces the right facts
+- **reflect** — agent asks a question, Atulya reasons across everything it remembers and gives an answer
 
 ---
 
-### Which LLM providers are supported?
+### How is this different from RAG?
 
-Atulya supports:
-- **OpenAI**
-- **Anthropic**
-- **Google Gemini**
-- **Groq**
-- **Ollama** (local models)
-- **LM Studio** (local models)
-- **Any OpenAI-compatible provider** (Together AI, Fireworks, DeepInfra, etc.)
-- **Any Anthropic-compatible provider**
+RAG stores documents and searches them. It is a search engine.
 
-**Using local models with Ollama:**
+Atulya stores **facts extracted from documents** — not the raw text. It builds a knowledge graph of who said what, when, and how those things relate. It gets smarter over time. RAG stays the same.
+
+| | RAG | Atulya |
+|---|---|---|
+| What it stores | Raw text chunks | Extracted facts + relationships |
+| Gets smarter over time | No | Yes |
+| Knows who is who | No | Yes |
+| Reasons across memories | No | Yes |
+| Best for | Document Q&A | Agent memory |
+
+See [RAG vs Memory](/developer/rag-vs-atulya) for a deeper comparison.
+
+---
+
+### Why not just use a vector database?
+
+A vector database finds similar text. That is all it does.
+
+Atulya knows **what** the text means, **who** it is about, **when** things happened, and how facts **contradict or reinforce each other**. Vector search is the plumbing inside Atulya — but Atulya is the whole house.
+
+---
+
+### Which LLM providers work with Atulya?
+
+All the major ones: OpenAI, Anthropic, Google Gemini, Groq.
+
+Local models too — Ollama and LM Studio work out of the box.
+
 ```bash
+# Ollama example
 ATULYA_API_LLM_PROVIDER=ollama
 ATULYA_API_LLM_MODEL=llama3.1
 ATULYA_API_LLM_BASE_URL=http://localhost:11434
 ```
 
-**Using local models with LM Studio:**
-```bash
-ATULYA_API_LLM_PROVIDER=lmstudio
-ATULYA_API_LLM_MODEL=your-model-name
-ATULYA_API_LLM_BASE_URL=http://localhost:1234/v1
+Any OpenAI-compatible endpoint works (Together AI, Fireworks, DeepInfra, etc.). See [Models](/developer/models) for the full list.
+
+---
+
+### Which model should I use?
+
+Start with **`gpt-4.1-nano` on OpenAI** (best accuracy) or **`openai/gpt-oss-20b` on Groq** (best speed + cost).
+
+[Full live leaderboard →](https://benchmarks.atulya.eightengine.com/)
+
+| Rank | Model | Provider | Score | Quality | Speed | Cost (per 1M) | Reliability |
+|:----:|-------|----------|------:|:-------:|:-----:|:-------------:|:-----------:|
+| 🥇 1 | `openai/gpt-oss-20b` | Groq | **81.2** | 83.9 · 84% | 7.5s · 2434 tok/s | $0.05/$0.08 | 100% |
+| 🥈 2 | `gpt-4.1-nano` | OpenAI | **79.7** | 87.2 · 87% | 8.5s · 263 tok/s | $0.07/$0.30 | 100% |
+| 🥉 3 | `openai/gpt-oss-120b` | Groq | **79.7** | 84.7 · 85% | 8.1s · 1604 tok/s | $0.10/$0.16 | 100% |
+| 4 | `gpt-4o-mini` | OpenAI | **74.3** | 81.0 · 81% | 9.0s · 183 tok/s | $0.15/$0.60 | 100% |
+| 5 | `llama-3.3-70b-versatile` | Groq | **73.7** | 85.5 · 86% | 4.8s · 306 tok/s | $0.59/$0.79 | 84% |
+| 6 | `gemini-2.5-flash-lite` | Google | **73.3** | 84.7 · 85% | 15.8s · 621 tok/s | $0.10/$0.40 | 96% |
+| 7 | `gpt-4.1-mini` | OpenAI | **73.2** | 86.4 · 86% | 15.4s · 229 tok/s | $0.15/$0.60 | 100% |
+
+---
+
+### Do I need to run my own server?
+
+No. Two options:
+
+1. **Atulya Cloud** — sign up at [ui.atulya.eightengine.com](https://ui.atulya.eightengine.com), no setup needed
+2. **Self-hosted** — run it yourself with Docker in ~10 minutes
+
+See [Installation](/developer/installation).
+
+---
+
+### What are the minimum requirements to self-host?
+
+- Python 3.11+
+- 4 GB RAM (8 GB recommended)
+- An LLM API key — or a local model via Ollama/LM Studio
+
+That is it.
+
+---
+
+### How do I keep different users' memories separate?
+
+Each user gets their own **memory bank** — a completely isolated "brain". No data leaks between banks.
+
+```python
+# Alice's brain
+client.retain(bank_id="user-alice", ...)
+
+# Bob's brain — completely separate
+client.retain(bank_id="user-bob", ...)
 ```
 
-Configure your provider using the `ATULYA_API_LLM_PROVIDER` environment variable. See [Configuration](/developer/configuration) and [Models](/developer/models) for details.
+If you also need to ask questions **across all users** (e.g. "what topics come up most?"), use a single shared bank and tag each memory with the user ID:
+
+```python
+client.retain(bank_id="my-app", items=[{
+    "content": "...",
+    "tags": ["user:alice"],
+}])
+
+# Get only Alice's memories
+client.recall(bank_id="my-app", query="...", tags=["user:alice"])
+```
+
+See [Memory Banks](/developer/api/memory-banks).
 
 ---
 
-### Which model should I use with Atulya?
+### What is the difference between retain, recall, and reflect?
 
-The **[Model Leaderboard](https://benchmarks.atulya.eightengine.com/)** benchmarks models across accuracy, speed, cost, and reliability for retain, reflect, and observation consolidation — it's the best place to find the right trade-off for your use case.
+Think of it like a human brain:
 
-[![Model Leaderboard](/img/leaderboard.png)](https://benchmarks.atulya.eightengine.com/)
-
-See [Models](/developer/models) for the full list of supported and tested models, provider defaults, and configuration examples.
-
----
-
-### Do I need to host my own infrastructure?
-
-No! You have two options:
-
-1. **Atulya Cloud** - Fully managed service at [ui.atulya.eightengine.com](https://ui.atulya.eightengine.com)
-2. **Self-hosted** - Deploy on your own infrastructure using Docker or direct installation
-
-See [Installation](/developer/installation) for self-hosting instructions.
-
----
-
-### What are the minimum system requirements for self-hosting?
-
-For running the Atulya API server locally:
-- Python 3.11+
-- 4GB RAM minimum (8GB recommended for production)
-- LLM API key (OpenAI, Anthropic, etc.) or local LLM setup
-
-See [Installation](/developer/installation) for setup instructions.
-
----
-
-### How do I isolate user data?
-
-A **memory bank** is an isolated memory store (like a "brain") that contains its own memories, entities, relationships, and optional disposition traits (skepticism, literalism, empathy). Banks are completely isolated from each other with no data leakage.
-
-There are two approaches for multi-user applications:
-
-**1. Per-user memory banks** (recommended for most use cases)
-- Create one bank per user (e.g., `bank_id="user-123"`)
-- Easiest setup and strongest data isolation
-- Perfect for per-user queries and personalization
-- Each bank can have unique disposition traits and background context
-- **Limitation**: Cannot perform cross-user analysis (e.g., "What is the most mentioned topic across all users?")
-
-**2. Single bank with tags** (for applications needing aggregated insights)
-- Use one bank for the entire application
-- Tag memories with user identifiers during retain (e.g., `tags={"user_id": "user-123"}`)
-- Filter by tags during recall/reflect for per-user queries
-- **Advantage**: Enables both per-user AND cross-user queries (e.g., analyze specific users or aggregate across all users)
-
-Choose per-user banks for simplicity and privacy, or single bank with tags if you need holistic reasoning across users. See [Memory Banks](/developer/api/memory-banks) for management details.
-
----
-
-### What's the difference between retain, recall, and reflect?
-
-Atulya has three core operations:
-
-- **Retain**: Store data (facts, entities, relationships)
-- **Recall**: Search and retrieve raw memory data based on a query
-- **Reflect**: Use an AI agent to answer a query using retrieved memories
-
-See [Operations](/developer/api/operations) for API details.
+| Operation | What it does | When to use |
+|---|---|---|
+| **retain** | Learns and stores new information | After every conversation turn |
+| **recall** | Returns raw facts matching a query | When you want to feed memories into your own prompt |
+| **reflect** | Reasons across memories and returns a full answer | When you want Atulya to do the thinking |
 
 ---
 
 ### When should I use recall vs reflect?
 
-**Use recall when:**
-- You want raw facts to feed into your own reasoning or prompt
-- You need maximum control over how memories are interpreted
-- You're doing simple fact lookup (e.g., "What did Alice say about X?")
-- Latency is critical — recall is significantly faster (50-500ms vs 1-10s)
-- You want to build your own answer synthesis layer on top of retrieved memories
-
-**Use reflect when:**
-- You want a ready-to-use answer generated from memories (no extra LLM call needed)
-- You need disposition-aware responses shaped by the bank's personality traits (skepticism, literalism, empathy)
-- The query requires multi-step reasoning across facts, observations, and mental models
-- You need structured output (via `response_schema`) from memory-grounded reasoning
-- You want citations — reflect returns which memories, mental models, and directives informed the answer
-
-**Key difference**: Recall returns data; reflect returns an answer. Recall gives you raw materials, reflect does the reasoning for you using the bank's disposition and an autonomous search loop.
-
-```
+**Use recall** when you want the raw facts and will do your own reasoning:
+```python
 recall("What food does Alice like?")
-→ ["Alice loves sushi", "Alice prefers vegetarian options"]   # raw facts
-
-reflect("What should I order for Alice?")
-→ "I'd recommend a vegetarian sushi platter — Alice loves sushi and prefers vegetarian options."  # grounded answer
+# → ["Alice loves sushi", "Alice prefers vegetarian options"]
 ```
+
+**Use reflect** when you want a ready answer:
+```python
+reflect("What should I order for Alice?")
+# → "I'd suggest a vegetarian sushi platter — Alice loves sushi and prefers vegetarian."
+```
+
+Rule of thumb: recall is faster (50–500ms), reflect is smarter (1–10s). Use recall for lookups, reflect for reasoning.
 
 See [Recall](/developer/api/recall) and [Reflect](/developer/reflect) for full API details.
 
 ---
 
-### When should I use mental models?
+### How fast is recall?
 
-**Mental models** are consolidated knowledge patterns synthesized from individual facts over time. Use them when you need:
+- Without reranking: **50–100ms**
+- With reranking: **200–500ms**
 
-- Higher-level understanding beyond raw facts (e.g., "User prefers functional programming patterns")
-- Long-term behavioral patterns (e.g., "Customer is price-sensitive but values quality")
-- Context for AI agent reasoning during **reflect** operations
-
-Mental models are automatically built during retain and used by reflect to provide richer, more contextual responses. See [Mental Models](/developer/api/mental-models).
+See [Performance](/developer/performance).
 
 ---
 
+### Can I filter memories by tag or user?
 
-### What's the typical latency for recall operations?
-
-Typical latencies:
-- **Without reranking**: 50-100ms
-- **With reranking**: 200-500ms (depends on reranker model and installation)
-
-See [Performance](/developer/performance) for tuning options.
-
----
-
-### Does Atulya support metadata filtering?
-
-Yes — through **Tags**. Tags are string labels attached to memories at retain time and used as a visibility filter at recall/reflect time. Only memories tagged with a matching value are returned.
+Yes. Attach tags when you store memories, filter by them when you search:
 
 ```python
-# Tag memories at retain time
+# Store with a tag
 client.retain(bank_id="my-bank", items=[{
-    "content": "...",
+    "content": "Alice prefers dark roast coffee.",
     "tags": ["user:alice"],
 }])
 
-# Filter by tag at recall time
-client.recall(bank_id="my-bank", query="...", tags=["user:alice"])
+# Retrieve only Alice's memories
+client.recall(bank_id="my-bank", query="coffee preferences", tags=["user:alice"])
 ```
 
-See [Tags](/developer/api/retain#tags-and-document_tags) for full details including document-level tagging.
+Entities (people, places, concepts) are also tracked automatically in a knowledge graph — querying "tell me about Alice" surfaces Alice-related memories without any manual tagging.
 
-**What about filtering by entities?**
-
-Entities (people, places, concepts) extracted from memories are stored in the knowledge graph and drive graph-based retrieval — so querying "tell me about Alice" will naturally surface Alice-related memories without any manual filtering.
-
-If you need explicit tag-based filtering on entity-like values, use **entity labels** with `tag: true`. Entity labels let you define a controlled vocabulary of `key:value` classifiers (e.g. `user:alice`, `topic:algebra`) extracted at retain time. Setting `tag: true` on a label group automatically writes each extracted label as a tag on the memory unit, making them available for standard `tags`/`tags_match` filtering:
-
-```python
-# Bank config: entity label group with tag: true
-{
-    "entity_labels": [{
-        "key": "user",
-        "type": "text",
-        "tag": True,
-        "description": "The user this memory belongs to"
-    }]
-}
-
-# The label "user:alice" is extracted and also written as a tag
-# Filter at recall time using the standard tags parameter
-client.recall(bank_id="my-bank", query="...", tags=["user:alice"])
-```
-
-See [Entity Labels](/developer/retain#entity-labels) for configuration details.
-
-**What about document `metadata`?**
-
-Document metadata (the `metadata` key-value pairs on a retain item) serves a different purpose. It is:
-- **Included in the fact extraction prompt**, so the LLM can use it as additional context when extracting facts — for example, knowing the document title or source can improve accuracy.
-- **Returned with every recalled memory** as-is, so your application can link memories back to source systems (e.g. a URL, thread ID, or ticket number) without extra lookups.
-
-Metadata is not a filter — use tags when you need recall to be scoped to a subset of documents.
+See [Tags](/developer/api/retain#tags-and-document_tags) and [Entity Labels](/developer/retain#entity-labels).
 
 ---
 
-### What is the recommended format for retaining conversations?
+### What format should I use for conversations?
 
-For **Anurag Atulya-style workflows** (AI systems design, memory engineering, and high-context technical conversations), pass the **entire conversation as a single document** and upsert it as the conversation grows.
-
-Atulya chunks it automatically, so you do not need to pre-split the transcript.
-
-**Preferred format: JSON array**
+Pass the full conversation as a JSON array. Atulya handles the chunking:
 
 ```json
 [
@@ -254,33 +203,29 @@ Atulya chunks it automatically, so you do not need to pre-split the transcript.
 ]
 ```
 
-Atulya has internal chunking optimizations for this JSON array shape because it is the most common conversation structure.
-
-**Alternative: prefixed plain text**
-
-```text
-[2025-06-01T10:32:00Z] user: I moved to Berlin last month.
-[2025-06-01T10:32:05Z] assistant: How are you finding it?
-[2025-06-01T10:32:20Z] user: Love it, especially the food scene.
-```
-
-Adding username and timestamp prefixes improves extraction quality because the model can attribute facts to the correct speaker and infer timeline accurately.
-
-**Use a stable document ID to upsert**
+Use a **stable document ID** so re-retaining the same conversation replaces the old memory instead of duplicating it:
 
 ```python
-await client.retain(
-    bank_id="anurag-brain",
+client.retain(
+    bank_id="user-alice",
     documents=[{
-        "id": "chat-session-abc123",  # stable ID enables upsert
-        "content": conversation,       # full conversation so far
+        "id": "chat-session-abc123",  # same ID = update, not duplicate
+        "content": conversation,
     }]
 )
 ```
 
-Re-retaining with the same `id` replaces the prior document and its facts, preventing duplicate memory growth as the conversation evolves.
+Do not pre-summarize or pre-extract facts yourself — Atulya does that better with full context.
 
-**Do not pre-summarize or pre-extract facts.**  
+---
+
+### What is a mental model?
+
+A mental model is a higher-level pattern Atulya builds by connecting individual facts over time.
+
+Example: from many separate facts — "Alice skips lunch often", "Alice orders coffee at 2pm", "Alice works late on Fridays" — Atulya might form the mental model: *"Alice is a high-output, low-maintenance worker with irregular eating patterns."*
+
+That pattern then informs future reflect answers without needing to spell it out every time. Mental models are built automatically. See [Mental Models](/developer/api/mental-models).  
 Atulya is built to do this automatically and needs full conversational context. Messages like "yes, exactly" or "go with option 2" are ambiguous without surrounding turns.
 
 ---
