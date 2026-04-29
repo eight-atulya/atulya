@@ -418,7 +418,7 @@ dev = [{ name = "pytest", specifier = ">=8.0.0" }]
 
 [[package]]
 name = "atulya-all"
-version = "0.8.4"
+version = "0.8.5"
 source = { editable = "atulya" }
 dependencies = [
     { name = "atulya-api" },
@@ -444,7 +444,7 @@ provides-extras = ["test"]
 
 [[package]]
 name = "atulya-api"
-version = "0.8.4"
+version = "0.8.5"
 source = { editable = "atulya-api" }
 dependencies = [
     { name = "aiohttp" },
@@ -616,7 +616,7 @@ dev = [
 
 [[package]]
 name = "atulya-client"
-version = "0.8.4"
+version = "0.8.5"
 source = { editable = "atulya-clients/python" }
 dependencies = [
     { name = "aiohttp" },
@@ -722,7 +722,7 @@ dev = [
 
 [[package]]
 name = "atulya-dev"
-version = "0.8.4"
+version = "0.8.5"
 source = { editable = "atulya-dev" }
 dependencies = [
     { name = "atulya-api" },
@@ -770,7 +770,7 @@ dev = [
 
 [[package]]
 name = "atulya-embed"
-version = "0.8.4"
+version = "0.8.5"
 source = { editable = "atulya-embed" }
 dependencies = [
     { name = "httpx" },

@@ -7,7 +7,7 @@ sidebar_label: Brain API Map
 # Atulya Brain API — Complete Semantic Map
 
 > Source of truth: `atulya-brain-openapi.json` (741KB, 113 endpoints, 186 schemas)
-> API Version: 0.8.4 | License: Apache 2.0
+> API Version: 0.8.5 | License: Apache 2.0
 > Local: `http://localhost:8888` | Auth: Bearer token
 > Generated: 2026-04-28 | Multi-pass verified: 0 gaps
 

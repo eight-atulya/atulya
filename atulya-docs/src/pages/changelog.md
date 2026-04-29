@@ -8,6 +8,13 @@ This changelog highlights user-facing changes only. Internal maintenance, CI/CD,
 
 For full release details, see [GitHub Releases](https://github.com/eight-atulya/atulya/releases).
 
+## [0.8.5](https://github.com/eight-atulya/atulya/releases/tag/v0.8.5)
+
+**Release Reliability**
+
+- Fixed the release Docker dependency lane by pinning `tree-sitter-language-pack` to the CPython 3.11-compatible wheel range used by the published images.
+- Fixed the GitHub Pages docs deployment trigger so large release pushes on `main` cannot silently skip docs publishing due to GitHub's 300-file path-filter diff limit.
+
 ## [0.8.4](https://github.com/eight-atulya/atulya/releases/tag/v0.8.4)
 
 **Features**
