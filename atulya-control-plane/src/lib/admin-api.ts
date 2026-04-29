@@ -6,18 +6,14 @@
  *
  */
 
-const DATAPLANE_URL =
-  process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
+const DATAPLANE_URL = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
 const ADMIN_KEY = process.env.ATULYA_CP_ADMIN_API_KEY || "";
 
 /**
  * Typed fetch wrapper for all /v1/admin/* endpoints.
  * Throws on non-2xx responses with the server's error detail.
  */
-export async function adminFetch<T>(
-  path: string,
-  init?: RequestInit
-): Promise<T> {
+export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const url = `${DATAPLANE_URL}/v1/admin${path}`;
   const res = await fetch(url, {
     ...init,

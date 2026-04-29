@@ -158,12 +158,12 @@ To switch between backends:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ATULYA_API_LLM_PROVIDER` | Provider: `openai`, `openai-codex`, `claude-code`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`, `vertexai` | `openai` |
+| `ATULYA_API_LLM_PROVIDER` | Provider: `openai`, `openai-codex`, `claude-code`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`, `vertexai`, `llamacpp` | `openai` |
 | `ATULYA_API_LLM_API_KEY` | API key for LLM provider | - |
 | `ATULYA_API_LLM_MODEL` | Model name | `gpt-5-mini` |
 | `ATULYA_API_LLM_BASE_URL` | Custom LLM endpoint | Provider default |
 | `ATULYA_API_LLM_MAX_CONCURRENT` | Max concurrent LLM requests | `32` |
-| `ATULYA_API_LLM_MAX_RETRIES` | Max retry attempts for LLM API calls | `10` |
+| `ATULYA_API_LLM_MAX_RETRIES` | Max retry attempts for LLM API calls | `3` |
 | `ATULYA_API_LLM_INITIAL_BACKOFF` | Initial retry backoff in seconds (exponential backoff) | `1.0` |
 | `ATULYA_API_LLM_MAX_BACKOFF` | Max retry backoff cap in seconds | `60.0` |
 | `ATULYA_API_LLM_TIMEOUT` | LLM request timeout in seconds | `120` |
@@ -230,10 +230,23 @@ export ATULYA_API_LLM_MODEL=gpt-5.2-codex
 export ATULYA_API_LLM_PROVIDER=claude-code
 export ATULYA_API_LLM_MODEL=claude-sonnet-4-5-20250929
 # No API key needed - uses claude auth login credentials
+
+# llamacpp — built-in GGUF provider (fully offline, no external server required)
+# Install: pip install 'atulya-api[local-llm]'
+# Quickstart (auto-downloads ~3.5 GB default model on first run):
+export ATULYA_API_LLM_PROVIDER=llamacpp
+# Custom model:
+# export ATULYA_API_LLAMACPP_MODEL_PATH=~/.atulya/models/your-model.gguf
+# export ATULYA_API_LLAMACPP_GPU_LAYERS=-1        # -1 = full GPU offload (Metal/CUDA)
+# export ATULYA_API_LLAMACPP_CONTEXT_SIZE=8192
+# export ATULYA_API_LLAMACPP_N_BATCH=512          # 512 safe for <8 GB VRAM; 2048 for 16 GB+
+# export ATULYA_API_LLAMACPP_FLASH_ATTN=false     # true only on CUDA/Metal — crashes on CPU
+# export ATULYA_API_LLAMACPP_LORA_PATH=~/.atulya/models/adapter.gguf   # fine-tuned adapters
+# See docs/developer/local-llm.md for full hardware-tier guide and failure-mode reference.
 ```
 
-:::tip OpenAI Codex, Claude Code & Vertex AI Setup
-For detailed setup instructions for **OpenAI Codex** (ChatGPT Plus/Pro), **Claude Code** (Claude Pro/Max), and **Vertex AI** (Google Cloud), see the [Models documentation](./models#openai-codex-setup-chatgpt-pluspro).
+:::tip OpenAI Codex, Claude Code, Vertex AI & Local GGUF Setup
+For detailed setup instructions for **OpenAI Codex** (ChatGPT Plus/Pro), **Claude Code** (Claude Pro/Max), **Vertex AI** (Google Cloud), and the **built-in GGUF provider** (fully offline), see the [Models documentation](./models#openai-codex-setup-chatgpt-pluspro) and the [Local LLM guide](./local-llm.md).
 :::
 
 ### Per-Operation LLM Configuration
@@ -269,10 +282,20 @@ Different memory operations have different requirements. **Retain** (fact extrac
 | `ATULYA_API_CONSOLIDATION_LLM_INITIAL_BACKOFF` | Initial backoff for consolidation retries (seconds) | Falls back to `ATULYA_API_LLM_INITIAL_BACKOFF` |
 | `ATULYA_API_CONSOLIDATION_LLM_MAX_BACKOFF` | Max backoff cap for consolidation retries (seconds) | Falls back to `ATULYA_API_LLM_MAX_BACKOFF` |
 | `ATULYA_API_CONSOLIDATION_LLM_TIMEOUT` | Timeout for consolidation requests (seconds) | Falls back to `ATULYA_API_LLM_TIMEOUT` |
+| `ATULYA_API_CONSOLIDATION_MAX_ATTEMPTS` | Max LLM-driven action attempts per consolidation batch. Bounds worst-case API calls per batch to `consolidation_max_attempts × (consolidation_llm_max_retries + 1)`. | `3` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER` | LLM provider for bank-level entity intelligence | Falls back to retain/default LLM |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_API_KEY` | API key for entity intelligence LLM | Falls back to retain/default LLM |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL` | Model for entity intelligence runs | Falls back to retain/default LLM |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_BASE_URL` | Base URL for entity intelligence LLM | Falls back to retain/default LLM |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_MAX_RETRIES` | Max retries for entity intelligence | Falls back to retain/default retries |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_INITIAL_BACKOFF` | Initial retry backoff for entity intelligence (seconds) | Falls back to retain/default backoff |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_MAX_BACKOFF` | Max retry backoff cap for entity intelligence (seconds) | Falls back to retain/default backoff |
+| `ATULYA_API_ENTITY_INTELLIGENCE_LLM_TIMEOUT` | Timeout for long entity intelligence requests (seconds) | Falls back to retain/default timeout |
 
 :::tip When to Use Per-Operation Config
 - **Retain**: Use models with strong structured output (e.g., GPT-4o, Claude) for accurate fact extraction
 - **Reflect**: Use faster/cheaper models (e.g., GPT-4o-mini, Groq) for reasoning and response generation
+- **Entity Intelligence**: Use a larger local or hosted model when building bank-level digital person summaries from hundreds or thousands of entities
 - **Recall**: Does not use LLM (pure retrieval), so no configuration needed
 :::
 
@@ -312,6 +335,19 @@ export ATULYA_API_RETAIN_LLM_INITIAL_BACKOFF=2.0  # Start at 2s instead of 1s
 export ATULYA_API_RETAIN_LLM_MAX_BACKOFF=120.0    # Cap at 2min instead of 1min
 ```
 
+**Example: Dedicated Local Model for Entity Intelligence**
+
+```bash
+export ATULYA_API_ENABLE_ENTITY_INTELLIGENCE=true
+export ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER=lmstudio
+export ATULYA_API_ENTITY_INTELLIGENCE_LLM_BASE_URL=http://localhost:1234/v1
+export ATULYA_API_ENTITY_INTELLIGENCE_LLM_API_KEY=lmstudio
+export ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL=your-large-local-model
+export ATULYA_API_ENTITY_INTELLIGENCE_LLM_TIMEOUT=900
+export ATULYA_API_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS=10000
+export ATULYA_API_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS=4096
+```
+
 ### Embeddings
 
 | Variable | Description | Default |
@@ -326,6 +362,7 @@ export ATULYA_API_RETAIN_LLM_MAX_BACKOFF=120.0    # Cap at 2min instead of 1min
 | `ATULYA_API_EMBEDDINGS_COHERE_API_KEY` | Cohere API key for embeddings | - |
 | `ATULYA_API_EMBEDDINGS_COHERE_MODEL` | Cohere embedding model | `embed-english-v3.0` |
 | `ATULYA_API_EMBEDDINGS_COHERE_BASE_URL` | Custom base URL for Cohere-compatible API (e.g., Azure-hosted) | - |
+| `ATULYA_API_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS` | Output embedding dimensions for Matryoshka-capable models (e.g. `embed-v4.0`). When set, overrides the model's default dimension and uses the Cohere v2 API. Values: `256`, `512`, `1024`. | - |
 | `ATULYA_API_EMBEDDINGS_LITELLM_API_BASE` | LiteLLM proxy base URL for embeddings | `http://localhost:4000` |
 | `ATULYA_API_EMBEDDINGS_LITELLM_API_KEY` | LiteLLM proxy API key for embeddings (optional, depends on proxy config) | - |
 | `ATULYA_API_EMBEDDINGS_LITELLM_MODEL` | LiteLLM embedding model (use provider prefix, e.g., `cohere/embed-english-v3.0`) | `text-embedding-3-small` |
@@ -362,6 +399,8 @@ export ATULYA_API_EMBEDDINGS_TEI_URL=http://localhost:8080
 export ATULYA_API_EMBEDDINGS_PROVIDER=cohere
 export ATULYA_API_EMBEDDINGS_COHERE_API_KEY=your-api-key
 export ATULYA_API_EMBEDDINGS_COHERE_MODEL=embed-english-v3.0  # 1024 dimensions
+# Optional: Matryoshka truncation for embed-v4.0+ (uses Cohere v2 API)
+# export ATULYA_API_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS=512  # 256 | 512 | 1024
 
 # Azure-hosted Cohere - embeddings via custom endpoint
 export ATULYA_API_EMBEDDINGS_PROVIDER=cohere
@@ -415,6 +454,7 @@ Supported OpenAI embedding dimensions:
 | `ATULYA_API_RERANKER_TEI_URL` | TEI server URL | - |
 | `ATULYA_API_RERANKER_TEI_BATCH_SIZE` | Batch size for TEI reranking | `128` |
 | `ATULYA_API_RERANKER_TEI_MAX_CONCURRENT` | Max concurrent TEI reranking requests | `8` |
+| `ATULYA_API_RERANKER_TEI_HTTP_TIMEOUT` | HTTP request timeout (seconds) for the TEI cross-encoder. Tunable independently of LLM timeouts. | `30.0` |
 | `ATULYA_API_RERANKER_COHERE_API_KEY` | Cohere API key for reranking | - |
 | `ATULYA_API_RERANKER_COHERE_MODEL` | Cohere rerank model | `rerank-english-v3.0` |
 | `ATULYA_API_RERANKER_COHERE_BASE_URL` | Custom base URL for Cohere-compatible API (e.g., Azure-hosted) | - |
@@ -756,6 +796,25 @@ export ATULYA_API_FILE_STORAGE_AZURE_ACCOUNT_KEY=base64encodedkey==
 For production deployments, use `s3`, `gcs`, or `azure` to avoid storing large binary files in your PostgreSQL database. Set `ATULYA_API_FILE_DELETE_AFTER_RETAIN=true` (the default) to delete files after memory extraction, which minimizes storage costs.
 :::
 
+### Entity Intelligence (Experimental) {#entity-intelligence}
+
+Entity intelligence creates a bank-level markdown document from the entity graph. It uses root entity
+classification metadata, trajectories, forecasts, and co-occurrence links to explain the bank as a
+plain-language map of people, tools, companies, projects, concepts, and relationships.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ATULYA_API_ENABLE_ENTITY_INTELLIGENCE` | Enable automatic bank-level entity intelligence | `false` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_TRIGGER_ENTITY_DELTA` | Queue recompute after this many new/touched entities since the last intelligence run | `8` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_MIN_ENTITIES` | Minimum entity count required before intelligence runs | `8` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_MAX_ENTITIES` | Maximum number of entities to include in the entity inventory | `2000` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_MAX_CONTEXT_TOKENS` | Approximate input context budget for entity inventory, relationship map, and prior document | `10000` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_MAX_COMPLETION_TOKENS` | Maximum LLM output tokens for the full document or delta operations | `4096` |
+| `ATULYA_API_ENTITY_INTELLIGENCE_PROMPT_VERSION` | Prompt and context schema version | `v2-digital-person-map` |
+
+The Control Plane bank config page can override the enable flag and token/entity thresholds per bank.
+The Trajectories view can manually queue recompute and inspect diffs between runs.
+
 ### Observations (Experimental) {#observations}
 
 Observations are consolidated knowledge synthesized from facts.
@@ -769,6 +828,7 @@ Observations are consolidated knowledge synthesized from facts.
 | `ATULYA_API_CONSOLIDATION_LLM_BATCH_SIZE` | Number of facts sent to the LLM in a single consolidation call. Higher values reduce LLM calls and improve throughput at the cost of larger prompts. Set to `1` to disable batching. Configurable per bank. | `8` |
 | `ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS` | Total token budget for source facts included with observations in the consolidation prompt. `-1` = unlimited. Configurable per bank. | `-1` |
 | `ATULYA_API_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS_PER_OBSERVATION` | Per-observation token cap for source facts in the consolidation prompt. Each observation independently gets at most this many tokens of source facts. `-1` = unlimited. Configurable per bank. | `256` |
+| `ATULYA_API_MAX_OBSERVATIONS_PER_SCOPE` | Hard cap on the number of observations the consolidator may keep per tag scope (`per_tag`, `combined`, or `all_combinations`, depending on `observation_scopes`). When the limit is reached, the consolidator passes `remaining_slots = 0` to the LLM, the response model is constrained to `max_length=0` for new creations, and only updates and deletes flow through. Untagged observations are exempt. Set to a non-negative integer to enable; leave unset (or empty) for unlimited. Configurable per bank. | unlimited |
 | `ATULYA_API_OBSERVATIONS_MISSION` | What this bank should synthesise into durable observations. Replaces the built-in consolidation rules — leave unset to use the server default. | - |
 
 #### Customizing observations: when to use what
@@ -1044,6 +1104,8 @@ export ATULYA_CP_DATAPLANE_API_URL=http://api.example.com:8888
 ### Hierarchical Configuration
 
 Atulya supports per-bank configuration overrides through a hierarchical system: **Global (env vars) → Tenant → Bank**.
+
+**Bank presets** (`bank_preset` on `PUT` / `PATCH` `/v1/default/banks/{bank_id}`) merge a curated default bundle (for example `codebase`) before any explicit fields you send. See [Bank presets](/developer/bank-presets).
 
 #### Type-Safe Config Access
 

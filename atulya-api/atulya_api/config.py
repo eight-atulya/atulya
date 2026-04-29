@@ -453,14 +453,14 @@ DEFAULT_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY = None  # Optional, uses ADC if not set
 DEFAULT_LLM_GEMINI_SAFETY_SETTINGS = None  # None = use Gemini default safety settings
 
 # Built-in llama.cpp defaults
-DEFAULT_LLAMACPP_GPU_LAYERS = -1           # -1 = offload all layers to GPU (Metal/CUDA)
+DEFAULT_LLAMACPP_GPU_LAYERS = -1  # -1 = offload all layers to GPU (Metal/CUDA)
 DEFAULT_LLAMACPP_CONTEXT_SIZE = 8192
-DEFAULT_LLAMACPP_CHAT_FORMAT = None        # None = auto-detect from GGUF metadata
-DEFAULT_LLAMACPP_NO_GRAMMAR = False        # True = disable JSON grammar (faster, less reliable)
-DEFAULT_LLAMACPP_EXTRA_ARGS = None         # Space-separated extra CLI args for llama.cpp server
-DEFAULT_LLAMACPP_FLASH_ATTN = False        # Opt-in: requires CUDA/Metal; crashes on CPU-only
-DEFAULT_LLAMACPP_N_BATCH = 512             # Safe default for <8 GB VRAM; tune up if memory permits
-DEFAULT_LLAMACPP_VERBOSE = False           # Suppress model-tensor metadata noise in production logs
+DEFAULT_LLAMACPP_CHAT_FORMAT = None  # None = auto-detect from GGUF metadata
+DEFAULT_LLAMACPP_NO_GRAMMAR = False  # True = disable JSON grammar (faster, less reliable)
+DEFAULT_LLAMACPP_EXTRA_ARGS = None  # Space-separated extra CLI args for llama.cpp server
+DEFAULT_LLAMACPP_FLASH_ATTN = False  # Opt-in: requires CUDA/Metal; crashes on CPU-only
+DEFAULT_LLAMACPP_N_BATCH = 512  # Safe default for <8 GB VRAM; tune up if memory permits
+DEFAULT_LLAMACPP_VERBOSE = False  # Suppress model-tensor metadata noise in production logs
 # DEFAULT_LLAMACPP_LORA_PATH — no default; None means disabled
 
 DEFAULT_EMBEDDINGS_PROVIDER = "local"
@@ -610,7 +610,7 @@ DEFAULT_WORKER_CONSOLIDATION_MAX_SLOTS = 2  # Max concurrent consolidation tasks
 DEFAULT_WORKER_SUB_ROUTINE_MAX_SLOTS = 2  # Max concurrent sub_routine tasks per worker
 
 # Admin / superuser defaults
-DEFAULT_ADMIN_ENABLED = False   # Safe-by-default: admin routes disabled
+DEFAULT_ADMIN_ENABLED = False  # Safe-by-default: admin routes disabled
 DEFAULT_SUPERUSER_KEY: str | None = None  # Must be set explicitly; no insecure fallback
 DEFAULT_SUPERUSER_SCHEMA = "public"
 
@@ -783,16 +783,16 @@ class AtulyaConfig:
     llm_gemini_safety_settings: list | None
 
     # Built-in llama.cpp / GGUF configuration (provider=llamacpp)
-    llamacpp_model_path: str | None    # Path to GGUF file; None = auto-download default
-    llamacpp_gpu_layers: int           # -1 = all layers on GPU, 0 = CPU only
-    llamacpp_context_size: int         # Context window size in tokens
-    llamacpp_chat_format: str | None   # Chat template (None = auto-detect from GGUF metadata)
-    llamacpp_no_grammar: bool          # Disable JSON grammar enforcement (faster, less reliable)
-    llamacpp_extra_args: str | None    # Space-separated extra CLI args for llama.cpp server
-    llamacpp_flash_attn: bool          # Flash attention — opt-in; requires CUDA/Metal
-    llamacpp_n_batch: int              # Prompt batch size; 512 is safe for <8 GB VRAM
-    llamacpp_verbose: bool             # Log model-tensor metadata (noisy; off in production)
-    llamacpp_lora_path: str | None     # Optional LoRA / fine-tuned adapter path
+    llamacpp_model_path: str | None  # Path to GGUF file; None = auto-download default
+    llamacpp_gpu_layers: int  # -1 = all layers on GPU, 0 = CPU only
+    llamacpp_context_size: int  # Context window size in tokens
+    llamacpp_chat_format: str | None  # Chat template (None = auto-detect from GGUF metadata)
+    llamacpp_no_grammar: bool  # Disable JSON grammar enforcement (faster, less reliable)
+    llamacpp_extra_args: str | None  # Space-separated extra CLI args for llama.cpp server
+    llamacpp_flash_attn: bool  # Flash attention — opt-in; requires CUDA/Metal
+    llamacpp_n_batch: int  # Prompt batch size; 512 is safe for <8 GB VRAM
+    llamacpp_verbose: bool  # Log model-tensor metadata (noisy; off in production)
+    llamacpp_lora_path: str | None  # Optional LoRA / fine-tuned adapter path
 
     # Per-operation LLM configuration (None = use default LLM config)
     retain_llm_provider: str | None

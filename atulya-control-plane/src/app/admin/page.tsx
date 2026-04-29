@@ -25,13 +25,15 @@ function StatCard({
     accent === "green"
       ? "text-green-500 dark:text-green-400"
       : accent === "red"
-      ? "text-destructive"
-      : "text-foreground";
+        ? "text-destructive"
+        : "text-foreground";
 
   return (
     <div className="rounded-xl border bg-card p-5 flex flex-col gap-3 shadow-sm hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{label}</p>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          {label}
+        </p>
         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted shrink-0">
           <Icon className="h-4 w-4 text-muted-foreground" />
         </div>
@@ -74,7 +76,10 @@ export default async function AdminSystemPage() {
       {health && (
         <div className="space-y-8">
           {/* Stat cards — fluid grid: fills width, min 260px per card */}
-          <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}>
+          <div
+            className="grid gap-4"
+            style={{ gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))" }}
+          >
             <StatCard
               icon={health.status === "healthy" ? CheckCircle2 : XCircle}
               label="Status"
@@ -103,8 +108,8 @@ export default async function AdminSystemPage() {
                 health.db_pool_free === 0
                   ? "red"
                   : health.db_pool_free < health.db_pool_size * 0.2
-                  ? "red"
-                  : "default"
+                    ? "red"
+                    : "default"
               }
             />
             <StatCard
@@ -130,14 +135,17 @@ export default async function AdminSystemPage() {
             </div>
             <div className="divide-y">
               {[
-                ["Admin Schema",    health.admin_schema],
+                ["Admin Schema", health.admin_schema],
                 ["Full Migration ID", health.migration_version ?? "unknown"],
-                ["Pool Free",       String(health.db_pool_free)],
-                ["Pool Total",      String(health.db_pool_size)],
-                ["Pool Min",        String(health.db_pool_min)],
-                ["Pool Max",        String(health.db_pool_max)],
+                ["Pool Free", String(health.db_pool_free)],
+                ["Pool Total", String(health.db_pool_size)],
+                ["Pool Min", String(health.db_pool_min)],
+                ["Pool Max", String(health.db_pool_max)],
               ].map(([label, value]) => (
-                <div key={label} className="flex items-center px-6 py-3.5 hover:bg-muted/10 transition-colors">
+                <div
+                  key={label}
+                  className="flex items-center px-6 py-3.5 hover:bg-muted/10 transition-colors"
+                >
                   <span className="w-48 text-sm text-muted-foreground shrink-0">{label}</span>
                   <span className="font-mono text-sm">{value}</span>
                 </div>

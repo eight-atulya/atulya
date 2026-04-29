@@ -59,7 +59,11 @@ export default async function AdminWorkersPage({
               {stuckCount} stuck task{stuckCount !== 1 ? "s" : ""} detected
             </p>
             <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-              Call <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">POST /v1/admin/workers/__all_stuck__/decommission</code> to re-queue
+              Call{" "}
+              <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">
+                POST /v1/admin/workers/__all_stuck__/decommission
+              </code>{" "}
+              to re-queue
             </p>
           </div>
         </div>
@@ -77,10 +81,16 @@ export default async function AdminWorkersPage({
           <span className="text-muted-foreground">Pending:</span>
           <span className="font-semibold">{totalPending}</span>
         </div>
-        <div className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs ${stuckCount > 0 ? "bg-destructive/10 border-destructive/30" : "bg-card"}`}>
-          <AlertTriangle className={`h-3.5 w-3.5 ${stuckCount > 0 ? "text-destructive" : "text-muted-foreground"}`} />
+        <div
+          className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs ${stuckCount > 0 ? "bg-destructive/10 border-destructive/30" : "bg-card"}`}
+        >
+          <AlertTriangle
+            className={`h-3.5 w-3.5 ${stuckCount > 0 ? "text-destructive" : "text-muted-foreground"}`}
+          />
           <span className="text-muted-foreground">Stuck:</span>
-          <span className={`font-semibold ${stuckCount > 0 ? "text-destructive" : ""}`}>{stuckCount}</span>
+          <span className={`font-semibold ${stuckCount > 0 ? "text-destructive" : ""}`}>
+            {stuckCount}
+          </span>
         </div>
       </div>
 
@@ -105,7 +115,9 @@ export default async function AdminWorkersPage({
             >
               <span className="font-mono text-xs truncate">{w.worker_id}</span>
               <span className="text-sm tabular-nums">{w.pending_count}</span>
-              <span className={`text-sm font-semibold tabular-nums ${w.stuck_count > 0 ? "text-destructive" : "text-muted-foreground"}`}>
+              <span
+                className={`text-sm font-semibold tabular-nums ${w.stuck_count > 0 ? "text-destructive" : "text-muted-foreground"}`}
+              >
                 {w.stuck_count > 0 ? w.stuck_count : "—"}
               </span>
               <span className="text-xs text-muted-foreground font-mono">
@@ -134,7 +146,8 @@ export default async function AdminWorkersPage({
           POST /v1/admin/workers/&#123;worker_id&#125;/decommission
         </code>
         <p className="text-xs text-muted-foreground mt-1">
-          Body: <code className="bg-muted px-1 rounded">{`{"release_stuck": true}`}</code> — re-queues tasks to healthy workers.
+          Body: <code className="bg-muted px-1 rounded">{`{"release_stuck": true}`}</code> —
+          re-queues tasks to healthy workers.
         </p>
       </div>
     </div>

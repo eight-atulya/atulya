@@ -9,10 +9,10 @@ import { CheckCircle2, Clock, ListOrdered, Loader2, XCircle } from "lucide-react
 import { adminFetch, OperationSummaryResponse } from "@/lib/admin-api";
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType }> = {
-  pending:     { color: "text-yellow-600 dark:text-yellow-400",  icon: Clock },
-  in_progress: { color: "text-blue-600 dark:text-blue-400",      icon: Loader2 },
-  completed:   { color: "text-green-600 dark:text-green-400",    icon: CheckCircle2 },
-  failed:      { color: "text-destructive",                      icon: XCircle },
+  pending: { color: "text-yellow-600 dark:text-yellow-400", icon: Clock },
+  in_progress: { color: "text-blue-600 dark:text-blue-400", icon: Loader2 },
+  completed: { color: "text-green-600 dark:text-green-400", icon: CheckCircle2 },
+  failed: { color: "text-destructive", icon: XCircle },
 };
 
 const STATUS_OPTIONS = ["", "pending", "in_progress", "completed", "failed"];
@@ -52,9 +52,13 @@ export default async function AdminOperationsPage({
           <p className="text-sm text-muted-foreground mt-1">
             Schema: <code className="text-xs bg-muted px-1 py-0.5 rounded">{schema}</code>
             {status && (
-              <> · Status: <code className="text-xs bg-muted px-1 py-0.5 rounded">{status}</code></>
+              <>
+                {" "}
+                · Status: <code className="text-xs bg-muted px-1 py-0.5 rounded">{status}</code>
+              </>
             )}
-            {" · "}{ops.length} rows
+            {" · "}
+            {ops.length} rows
           </p>
         </div>
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
@@ -76,7 +80,10 @@ export default async function AdminOperationsPage({
             const cfg = STATUS_CONFIG[s];
             const Icon = cfg?.icon ?? Clock;
             return (
-              <div key={s} className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs bg-card ${cfg?.color ?? ""}`}>
+              <div
+                key={s}
+                className={`flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-xs bg-card ${cfg?.color ?? ""}`}
+              >
                 <Icon className="h-3 w-3" />
                 <span className="capitalize">{s}:</span>
                 <span className="font-semibold">{count}</span>
@@ -109,14 +116,18 @@ export default async function AdminOperationsPage({
                   i < ops.length - 1 ? "border-b" : ""
                 }`}
               >
-                <span className="font-mono text-xs text-muted-foreground">{op.operation_id.slice(0, 8)}</span>
+                <span className="font-mono text-xs text-muted-foreground">
+                  {op.operation_id.slice(0, 8)}
+                </span>
                 <span className="text-xs truncate">{op.operation_type}</span>
                 <span className="font-mono text-xs truncate">{op.bank_id}</span>
                 <div className={`flex items-center gap-1 text-xs font-medium ${cfg?.color ?? ""}`}>
                   <Icon className="h-3 w-3 shrink-0" />
                   {op.status}
                 </div>
-                <span className="font-mono text-xs text-muted-foreground truncate">{op.worker_id?.slice(0, 10) ?? "—"}</span>
+                <span className="font-mono text-xs text-muted-foreground truncate">
+                  {op.worker_id?.slice(0, 10) ?? "—"}
+                </span>
                 <span className="text-xs text-muted-foreground">{op.created_at?.slice(0, 16)}</span>
               </div>
             );
@@ -139,7 +150,9 @@ export default async function AdminOperationsPage({
               key={s || "all"}
               href={`/admin/operations?schema=${schema}${s ? `&status=${s}` : ""}&limit=${limit}`}
               className={`text-xs px-2 py-1 rounded border transition-colors hover:bg-accent ${
-                status === s ? "bg-accent text-accent-foreground border-border" : "text-muted-foreground border-transparent"
+                status === s
+                  ? "bg-accent text-accent-foreground border-border"
+                  : "text-muted-foreground border-transparent"
               }`}
             >
               {s || "all"}

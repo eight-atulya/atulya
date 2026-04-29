@@ -12,6 +12,7 @@ from pathlib import Path
 
 from atulya_api import MemoryEngine
 from atulya_api.api import create_app
+from atulya_api.config import clear_config_cache
 
 
 def generate_openapi_spec(output_path: str = None):
@@ -29,6 +30,11 @@ def generate_openapi_spec(output_path: str = None):
         memory_llm_api_key="mock",
         memory_llm_model="mock",
     )
+    # Include admin routes in the published spec so generated SDKs and docs
+    # reflect the full product surface even when the local shell has no admin env.
+    os.environ.setdefault("ATULYA_API_ADMIN_ENABLED", "true")
+    os.environ.setdefault("ATULYA_API_SUPERUSER_KEY", "openapi-spec-superuser-key")
+    clear_config_cache()
     app = create_app(_memory)
 
     # Get the OpenAPI schema from the app

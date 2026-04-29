@@ -21,11 +21,11 @@ import { isAdminConfigured } from "@/lib/admin-api";
 export const metadata = { title: "Atulya Admin" };
 
 const NAV_ITEMS = [
-  { href: "/admin",            label: "System",     icon: Activity },
-  { href: "/admin/tenants",    label: "Tenants",    icon: Building2 },
-  { href: "/admin/workers",    label: "Workers",    icon: Cpu },
+  { href: "/admin", label: "System", icon: Activity },
+  { href: "/admin/tenants", label: "Tenants", icon: Building2 },
+  { href: "/admin/workers", label: "Workers", icon: Cpu },
   { href: "/admin/operations", label: "Operations", icon: ListOrdered },
-  { href: "/admin/api-keys",   label: "API Keys",   icon: KeyRound },
+  { href: "/admin/api-keys", label: "API Keys", icon: KeyRound },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -40,7 +40,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
      *   row 2 = body (fills remaining viewport height)
      */
     <div className="grid min-h-screen grid-cols-[14rem_1fr] grid-rows-[3.5rem_1fr] bg-background">
-
       {/* ── [row1, col1] Sidebar brand ────────────────────────────── */}
       <div className="flex items-center gap-3 px-4 border-r border-b">
         <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary shrink-0">
@@ -93,11 +92,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* ── [row2, col2] Main content ─────────────────────────────── */}
       <main className="overflow-auto">
-        <div className="px-8 py-8 w-full max-w-[1400px]">
-          {children}
-        </div>
+        <div className="px-8 py-8 w-full max-w-[1400px]">{children}</div>
       </main>
-
     </div>
   );
 }

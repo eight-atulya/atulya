@@ -58,7 +58,7 @@ app = typer.Typer(name="atulya-admin", help="Atulya administrative commands")
 # ---------------------------------------------------------------------------
 BACKUP_TABLES: list[str] = [
     # --- Layer 0: roots (no FK parents) ---
-    "api_keys",              # admin RBAC key store — no FK deps
+    "api_keys",  # admin RBAC key store — no FK deps
     "banks",
     "file_storage",
     # --- Layer 1: reference banks ---
@@ -76,28 +76,28 @@ BACKUP_TABLES: list[str] = [
     "codebases",
     "dream_runs",
     # --- Layer 2: reference Layer 1 ---
-    "memory_units",          # → banks, documents
-    "chunks",                # → documents
+    "memory_units",  # → banks, documents
+    "chunks",  # → documents
     "entity_cooccurrences",  # → entities
-    "anomaly_corrections",   # → anomaly_events
-    "codebase_snapshots",    # → codebases
-    "dream_predictions",     # → dream_runs
-    "dream_proposals",       # → dream_runs
+    "anomaly_corrections",  # → anomaly_events
+    "codebase_snapshots",  # → codebases
+    "dream_predictions",  # → dream_runs
+    "dream_proposals",  # → dream_runs
     # --- Layer 3: reference Layer 2 ---
-    "unit_entities",         # → memory_units, entities
-    "memory_links",          # → memory_units
-    "codebase_files",        # → codebases, codebase_snapshots
-    "codebase_symbols",      # → codebases, codebase_snapshots
-    "codebase_review_routes",# → codebase_snapshots
+    "unit_entities",  # → memory_units, entities
+    "memory_links",  # → memory_units
+    "codebase_files",  # → codebases, codebase_snapshots
+    "codebase_symbols",  # → codebases, codebase_snapshots
+    "codebase_review_routes",  # → codebase_snapshots
     "dream_prediction_outcomes",  # → dream_predictions
     # --- Layer 4: reference Layer 3 ---
-    "codebase_edges",        # → codebase_symbols
-    "codebase_chunks",       # → codebase_files, codebase_snapshots
-    "codebase_intel_artifacts",   # → codebases, codebase_snapshots
-    "codebase_saved_intents",     # → codebases
+    "codebase_edges",  # → codebase_symbols
+    "codebase_chunks",  # → codebase_files, codebase_snapshots
+    "codebase_intel_artifacts",  # → codebases, codebase_snapshots
+    "codebase_saved_intents",  # → codebases
     # --- Layer 5: reference Layer 4 ---
-    "codebase_chunk_edges",           # → codebase_chunks
-    "codebase_auto_triage_overrides", # → codebases, codebase_snapshots, codebase_chunks
+    "codebase_chunk_edges",  # → codebase_chunks
+    "codebase_auto_triage_overrides",  # → codebases, codebase_snapshots, codebase_chunks
 ]
 
 # Materialized views refreshed after restore (not in COPY cycle).
@@ -297,7 +297,9 @@ def restore(
 
     total_rows = sum(t["rows"] for t in manifest["tables"].values())
     typer.echo(f"Restored {len(BACKUP_TABLES)} tables, {total_rows:,} rows")
-    typer.echo(f"Backup was from atulya v{manifest.get('atulya_version', 'unknown')} at {manifest.get('created_at', 'unknown')}")
+    typer.echo(
+        f"Backup was from atulya v{manifest.get('atulya_version', 'unknown')} at {manifest.get('created_at', 'unknown')}"
+    )
     typer.echo("Restore complete")
 
 

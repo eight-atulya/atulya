@@ -61,14 +61,14 @@ MODELS_DIR = Path.home() / ".atulya" / "models"
 # Defaults — overridden by config/env; module-local so this file is
 # self-contained (config.py values are read in llm_wrapper.py).
 # ------------------------------------------------------------------
-DEFAULT_LLAMACPP_GPU_LAYERS: int = -1          # -1 = all layers on GPU
+DEFAULT_LLAMACPP_GPU_LAYERS: int = -1  # -1 = all layers on GPU
 DEFAULT_LLAMACPP_CONTEXT_SIZE: int = 8192
 DEFAULT_LLAMACPP_CHAT_FORMAT: str | None = None  # auto-detect from GGUF metadata
 DEFAULT_LLAMACPP_NO_GRAMMAR: bool = False
 DEFAULT_LLAMACPP_EXTRA_ARGS: str | None = None
 # Hardware-safety defaults: off until operator opts in.
 DEFAULT_LLAMACPP_FLASH_ATTN: bool = False
-DEFAULT_LLAMACPP_N_BATCH: int = 512            # safe for <8 GB VRAM
+DEFAULT_LLAMACPP_N_BATCH: int = 512  # safe for <8 GB VRAM
 DEFAULT_LLAMACPP_VERBOSE: bool = False
 
 # ------------------------------------------------------------------
@@ -76,7 +76,7 @@ DEFAULT_LLAMACPP_VERBOSE: bool = False
 # retain/reflect/consolidation each reuse the same subprocess.
 # ------------------------------------------------------------------
 _shared_server: "LlamaCppServer | None" = None
-_shared_model_path: "Path | None" = None          # tracks which model the singleton is serving
+_shared_model_path: "Path | None" = None  # tracks which model the singleton is serving
 _shared_server_lock = asyncio.Lock()
 _atexit_registered: bool = False
 
@@ -228,15 +228,24 @@ class LlamaCppServer:
     def _build_cmd(self) -> list[str]:
         """Construct the llama-cpp-python server CLI command."""
         cmd = [
-            sys.executable, "-m", "llama_cpp.server",
-            "--model", str(self.model_path),
-            "--host", "127.0.0.1",
-            "--port", str(self.port),
-            "--n_gpu_layers", str(self.gpu_layers),
-            "--n_ctx", str(self.context_size),
-            "--n_batch", str(self.n_batch),
+            sys.executable,
+            "-m",
+            "llama_cpp.server",
+            "--model",
+            str(self.model_path),
+            "--host",
+            "127.0.0.1",
+            "--port",
+            str(self.port),
+            "--n_gpu_layers",
+            str(self.gpu_layers),
+            "--n_ctx",
+            str(self.context_size),
+            "--n_batch",
+            str(self.n_batch),
             # Silence model-tensor loading noise in production logs.
-            "--verbose", "true" if self.verbose else "false",
+            "--verbose",
+            "true" if self.verbose else "false",
         ]
         # Flash attention: requires CUDA/Metal — opt-in only, not a safe default.
         if self.flash_attn:
@@ -323,9 +332,7 @@ class LlamaCppServer:
 
             now = time.monotonic()
             if now - last_log > 15:
-                logger.info(
-                    "[INFO] Waiting for llama.cpp to load model... (%ds elapsed)", int(now - start)
-                )
+                logger.info("[INFO] Waiting for llama.cpp to load model... (%ds elapsed)", int(now - start))
                 last_log = now
             await asyncio.sleep(1.0)
 
@@ -549,7 +556,9 @@ class LlamaCppLLM(LLMInterface):
                 if "address already in use" in log.lower() or "EADDRINUSE" in log:
                     logger.warning(
                         "[WARNING] Port %d taken (attempt %d/%d); retrying with new port...",
-                        port, attempt, _MAX_PORT_RETRIES,
+                        port,
+                        attempt,
+                        _MAX_PORT_RETRIES,
                     )
                     continue
                 raise  # Non-recoverable error — do not retry

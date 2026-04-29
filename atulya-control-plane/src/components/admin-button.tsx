@@ -23,7 +23,7 @@ export function AdminButton() {
     setChecking(true);
     try {
       const res = await fetch("/api/admin-access");
-      const { enabled } = await res.json() as { enabled: boolean };
+      const { enabled } = (await res.json()) as { enabled: boolean };
 
       if (enabled) {
         router.push("/admin");

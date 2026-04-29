@@ -1,6 +1,6 @@
 {
   "name": "@eight-atulya/atulya-client",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "TypeScript client for Atulya \u2014 a living algorithm for machine intelligence (MI).",
   "main": "./dist/src/index.js",
   "types": "./dist/src/index.d.ts",

@@ -1,6 +1,4 @@
-"""Tenant Extension for multi-tenancy and API key authentication.
-
-"""
+"""Tenant Extension for multi-tenancy and API key authentication."""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field

@@ -34,7 +34,9 @@ export default async function AdminTenantBanksPage({
         <Link href="/admin/tenants" className="text-muted-foreground hover:text-foreground text-sm">
           ← Tenants
         </Link>
-        <h1 className="text-xl font-semibold">Banks in schema: <code className="font-mono">{schema}</code></h1>
+        <h1 className="text-xl font-semibold">
+          Banks in schema: <code className="font-mono">{schema}</code>
+        </h1>
       </div>
 
       {error && <p className="text-destructive mb-4">[error] {error}</p>}
@@ -51,7 +53,9 @@ export default async function AdminTenantBanksPage({
           {banks.map((b) => (
             <tr key={b.bank_id} className="border-b hover:bg-muted/30">
               <td className="py-2 pr-4 font-mono text-xs">{b.bank_id}</td>
-              <td className="py-2 pr-4">{b.name ?? <span className="text-muted-foreground">—</span>}</td>
+              <td className="py-2 pr-4">
+                {b.name ?? <span className="text-muted-foreground">—</span>}
+              </td>
               <td className="py-2 text-muted-foreground text-xs">{b.created_at?.slice(0, 19)}</td>
             </tr>
           ))}

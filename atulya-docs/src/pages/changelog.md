@@ -8,9 +8,17 @@ This changelog highlights user-facing changes only. Internal maintenance, CI/CD,
 
 For full release details, see [GitHub Releases](https://github.com/eight-atulya/atulya/releases).
 
-## Upcoming
+## [0.8.4](https://github.com/eight-atulya/atulya/releases/tag/v0.8.4)
 
-No unreleased entries yet.
+**Features**
+
+- Added the new admin operating surface and built-in `llamacpp` local-GGUF runtime, including superuser-gated `/v1/admin/*` endpoints and control-plane admin workflows. ([`5b009e7`](https://github.com/eight-atulya/atulya/commit/5b009e7))
+- Added single-file codebase import so teams can ingest, review, and hydrate one source file at a time through the API and control plane. ([`13c3cab`](https://github.com/eight-atulya/atulya/commit/13c3cab))
+- Upgraded brain, graph, and entity intelligence with stronger semantic signals, richer graph-state metrics, and refreshed control-plane visualizations. ([`2188a8e`](https://github.com/eight-atulya/atulya/commit/2188a8e))
+
+**Docs And SDKs**
+
+- Regenerated the Python, TypeScript, Go, and Rust SDK contracts and expanded the developer docs, release posts, and docs UX around admin APIs, local LLMs, code intelligence, and brain intelligence. ([`6d74710`](https://github.com/eight-atulya/atulya/commit/6d74710))
 
 ## [0.8.3](https://github.com/eight-atulya/atulya/releases/tag/v0.8.3)
 

@@ -16387,7 +16387,7 @@ class MemoryEngine(MemoryEngineInterface):
             limit: Max rows (capped at 500 internally).
         """
         limit = min(limit, 500)
-        where = f"WHERE status = $1" if status else ""
+        where = "WHERE status = $1" if status else ""
         args: list = [status] if status else []
         pool = await self._get_pool()
         async with pool.acquire() as conn:

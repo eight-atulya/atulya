@@ -159,11 +159,13 @@ async def _resolve_tenant_context(
 
     if not provided_key:
         from fastapi import HTTPException
+
         raise HTTPException(status_code=401, detail="API key required for admin access")
 
     superuser_key = config.superuser_key
     if not superuser_key:
         from fastapi import HTTPException
+
         raise HTTPException(
             status_code=503,
             detail="Admin is enabled but ATULYA_API_SUPERUSER_KEY is not configured",
@@ -171,6 +173,7 @@ async def _resolve_tenant_context(
 
     if not hmac.compare_digest(provided_key.encode(), superuser_key.encode()):
         from fastapi import HTTPException
+
         raise HTTPException(status_code=403, detail="Superuser access required")
 
     schema = config.superuser_schema or "public"
@@ -571,8 +574,7 @@ def create_admin_router(memory: Any) -> APIRouter:
         status_code=201,
         summary="Create API key",
         description=(
-            "Creates a new API key and returns the raw key **once**. "
-            "Store it securely — it cannot be retrieved again."
+            "Creates a new API key and returns the raw key **once**. Store it securely — it cannot be retrieved again."
         ),
         tags=["Admin"],
         operation_id="admin_create_api_key",

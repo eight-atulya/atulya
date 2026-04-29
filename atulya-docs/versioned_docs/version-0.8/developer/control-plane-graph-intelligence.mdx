@@ -49,7 +49,19 @@ If you only remember one thing, remember this:
 
 - **State Graph** tells you the story.
 - **Evidence Graph** shows you the proof.
-- **The analyst** helps you move between the two without getting lost.
+- **The graph assistant** helps you move between the two without getting lost.
+
+## Words We Use In This Page
+
+To keep the docs easy to scan, we use the same words everywhere:
+
+| Term | Meaning |
+|---|---|
+| State | The current view of a topic or entity |
+| Evidence | The raw memory items behind that state |
+| Proof | The exact evidence path that supports an answer |
+| Focus area | The small part of the graph you are reviewing right now |
+| Filter | A way to show less noise (for example, anomaly-only nodes) |
 
 | If you want to... | Start here | Why |
 |---|---|---|
@@ -69,7 +81,7 @@ The new model is more useful because it starts with meaning:
 - show important state instead of every raw memory first
 - highlight changes, contradictions, and stale assumptions
 - explain why Atulya believes something
-- let the user drill into proof only when needed
+- let the user open proof only when needed
 
 The raw graph still exists, but it is now a supporting investigation tool instead of the default landing view.
 
@@ -131,17 +143,63 @@ Typical questions:
 | Connection tracing | How one memory led to another |
 | Human review | The exact path behind a state or analyst answer |
 
+## New Controls for Faster Human Review
+
+The latest graph update focuses on simple controls that reduce clutter without hiding useful information.
+
+### Right-click node menu
+
+Right-clicking a node opens quick actions. This lets users focus the graph without opening multiple panels first.
+
+| Surface | Right-click actions |
+|---|---|
+| State Graph node | Focus neighbors, filter to entity/topic, reset filters |
+| Evidence Graph node | Focus node, show connected focus area, anomaly-only view, clear focus, reset filters |
+
+```mermaid
+flowchart LR
+    A["Right-click node"] --> B["Quick actions menu"]
+    B --> C["Focus graph"]
+    B --> D["Filter graph"]
+    C --> E["Review evidence faster"]
+    D --> E
+```
+
+### Anomaly-focused review
+
+Evidence Graph now includes anomaly review controls so teams can quickly inspect risky areas.
+
+| Control | What it does |
+|---|---|
+| Filter Anomalies | Shows only nodes linked to anomaly events |
+| Severity Overlay | Colors nodes by highest anomaly severity |
+| Top anomaly type chips | Shows the most common anomaly categories in the current result |
+
+### Link meaning improvements
+
+Links are still grouped into semantic, temporal, entity, and causal, but causal links now keep their subtype meaning.
+
+| Link type | Color in UI |
+|---|---|
+| `semantic` | red |
+| `temporal` | dark red |
+| `entity` | amber |
+| `causes` | violet |
+| `caused_by` | indigo |
+| `enables` | green |
+| `prevents` | red |
+
 ## A Simple Human Workflow
 
 The intended flow is:
 
 1. Open a memory bank.
 2. Start in **State Graph** to see the important changes.
-3. Ask the graph analyst a question such as `What changed about X?`
+3. Ask the graph assistant a question such as `What changed about X?`
 4. Inspect the answer and the focused subgraph.
 5. Open **Evidence Graph** when you want the raw proof.
 
-This keeps the experience text-first and human-readable, while still giving full traceability.
+This keeps the experience text-first and human-readable, while still keeping proof easy to verify.
 
 ```mermaid
 sequenceDiagram
@@ -173,11 +231,11 @@ For larger banks, the Control Plane uses progressive exploration instead of tryi
 
 ### Detail Mode
 
-For smaller focused neighborhoods, Atulya shows full cards and rich interaction.
+For smaller focus areas, Atulya shows full cards and rich interaction.
 
 ### Compact Mode
 
-For medium-sized neighborhoods, cards become lighter and more condensed.
+For medium-sized focus areas, cards become lighter and more condensed.
 
 ### Overview Mode
 
@@ -187,7 +245,7 @@ For larger graphs, Atulya switches to an overview that summarizes the bank using
 - bundled paths
 - top-use memories
 - top-use chunks
-- focused neighborhood expansion
+- focused area expansion
 
 This is important because the goal is not "show every node." The goal is "help a human understand the bank quickly."
 
@@ -196,7 +254,7 @@ flowchart LR
     A["Small focused graph"] --> B["Detail mode"]
     C["Medium graph"] --> D["Compact mode"]
     E["Large graph"] --> F["Overview mode"]
-    F --> G["Expand useful neighborhood"]
+    F --> G["Expand useful focus area"]
     G --> B
 ```
 
@@ -205,7 +263,7 @@ flowchart LR
 | Small | Shows rich cards directly | Full detail is still easy to read |
 | Medium | Uses lighter cards | Keeps the canvas readable |
 | Large | Starts with an overview | Avoids turning the browser into a wall of boxes |
-| Very large | Expands only the useful neighborhood | Keeps the experience fast and understandable |
+| Very large | Expands only the useful focus area | Keeps the experience fast and understandable |
 
 ## What the Analyst Layer Adds
 
@@ -218,7 +276,7 @@ Atulya also builds a read model that lifts raw memory evidence into higher-level
 - contradictory state
 - stale state
 
-The analyst flow then returns:
+The graph assistant then returns:
 
 - a short answer
 - the focused nodes and edges
@@ -253,6 +311,7 @@ The Control Plane is backed by dedicated graph endpoints:
 - `POST /v1/default/banks/{bank_id}/graph/investigate`
 - `GET /v1/default/banks/{bank_id}/graph/summary`
 - `GET /v1/default/banks/{bank_id}/graph/neighborhood`
+- `POST /v1/default/banks/{bank_id}/anomaly/intelligence`
 
 The first two power the meaning-first workflow:
 
@@ -262,14 +321,15 @@ The first two power the meaning-first workflow:
 The second two support scaling:
 
 - summarize large graphs
-- expand a focused neighborhood without loading the whole bank into the canvas
+- expand a focused area without loading the whole bank into the canvas
 
 | Endpoint | What it is for |
 |---|---|
 | `GET /graph/intelligence` | Build the meaning-first state graph |
 | `POST /graph/investigate` | Ask a question and get a focused answer |
 | `GET /graph/summary` | Summarize a large graph into a readable overview |
-| `GET /graph/neighborhood` | Load the part of the graph a human actually needs |
+| `GET /graph/neighborhood` | Load the focus area a human actually needs |
+| `POST /anomaly/intelligence` | Fetch anomaly events and correction history for overlays and filters |
 
 ## Good Use Cases
 

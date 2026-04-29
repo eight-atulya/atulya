@@ -30,7 +30,7 @@ See [Configuration](./configuration#llm-provider) for setup examples.
 
 Not sure which model to use? The **[Model Leaderboard](https://benchmarks.atulya.eightengine.com/)** benchmarks models across accuracy, speed, cost, and reliability for retain, reflect, and observation consolidation so you can pick the right trade-off for your use case.
 
-**`retain()` Leaderboard** — ranked by Quality × Speed × Cost × Reliability. [Full live leaderboard →](https://benchmarks.atulya.eightengine.com/)
+**`retain()` Leaderboard** — ranked by Quality × Speed × Cost × Reliability.
 
 | Rank | Model | Provider | Score | Quality (LoComo) | Speed | Cost (per 1M tokens) | Reliability |
 |:----:|-------|----------|------:|:----------------:|:-----:|:--------------------:|:-----------:|
@@ -42,7 +42,7 @@ Not sure which model to use? The **[Model Leaderboard](https://benchmarks.atulya
 | 6 | `gemini-2.5-flash-lite` | Google | **73.3** | 84.7 · 85% acc | 15.8s · 621 tok/s | $0.10/$0.40 | 96% (48/50) |
 | 7 | `gpt-4.1-mini` | OpenAI | **73.2** | 86.4 · 86% acc | 15.4s · 229 tok/s | $0.15/$0.60 | 100% (50/50) |
 
-> Score = composite of Quality + Speed + Cost + Reliability. Data sourced from [benchmarks.atulya.eightengine.com](https://benchmarks.atulya.eightengine.com/).
+> Score = composite of Quality + Speed + Cost + Reliability.
 
 ### Tested Models
 
@@ -77,6 +77,7 @@ Each provider has a recommended default model that's used when `ATULYA_API_LLM_M
 | `groq` | `openai/gpt-oss-120b` |
 | `ollama` | `gemma3:12b` |
 | `lmstudio` | `local-model` |
+| `llamacpp` | `gemma-4-e2b-it` (auto-downloaded GGUF) |
 | `vertexai` | `gemini-2.0-flash-001` |
 | `openai-codex` | `gpt-5.2-codex` |
 | `claude-code` | `claude-sonnet-4-5-20250929` |
@@ -156,6 +157,11 @@ export ATULYA_API_LLM_PROVIDER=lmstudio
 export ATULYA_API_LLM_BASE_URL=http://localhost:1234/v1
 export ATULYA_API_LLM_MODEL=your-local-model
 
+# llamacpp — built-in GGUF (fully offline, no external server)
+# pip install 'atulya-api[local-llm]'  — then just set the provider
+export ATULYA_API_LLM_PROVIDER=llamacpp
+# ATULYA_API_LLAMACPP_MODEL_PATH=~/.atulya/models/your-model.gguf  # optional; auto-downloads default
+
 # Vertex AI (Google Cloud)
 export ATULYA_API_LLM_PROVIDER=vertexai
 export ATULYA_API_LLM_MODEL=gemini-2.0-flash-001
@@ -167,6 +173,44 @@ export ATULYA_API_LLM_VERTEXAI_PROJECT_ID=your-gcp-project-id
 ```
 
 **Note:** The LLM is the primary bottleneck for retain operations. See [Performance](./performance) for optimization strategies.
+
+---
+
+### Built-in GGUF Provider (`llamacpp`) Setup
+
+Run Atulya fully offline using any GGUF model. No Ollama, no LM Studio, no API key.
+
+**Prerequisites:**
+- Python 3.10+
+- `pip install 'atulya-api[local-llm]'`
+- A GGUF model file (or let Atulya auto-download one)
+
+**Quickstart:**
+```bash
+export ATULYA_API_LLM_PROVIDER=llamacpp
+# First run auto-downloads google_gemma-4-E2B-it-Q4_K_M.gguf (~3.5 GB) into ~/.atulya/models/
+atulya-api
+```
+
+**Hardware tiers:**
+
+| Tier | GPU | Key settings |
+|---|---|---|
+| Tier 1 | Apple Silicon / NVIDIA ≥16 GB | `GPU_LAYERS=-1`, `N_BATCH=2048`, `FLASH_ATTN=true` |
+| Tier 2 | NVIDIA 8–12 GB | `GPU_LAYERS=28` (tune), `N_BATCH=512`, `FLASH_ATTN=false` |
+| Tier 3 | CPU-only | `GPU_LAYERS=0`, `N_BATCH=256`, `FLASH_ATTN=false` |
+
+:::warning Flash Attention
+`ATULYA_API_LLAMACPP_FLASH_ATTN=true` requires a CUDA or Metal build of `llama-cpp-python`. It **will crash** on CPU-only builds. Default is `false`.
+:::
+
+**Using fine-tuned / LoRA adapters:**
+```bash
+export ATULYA_API_LLAMACPP_MODEL_PATH=~/.atulya/models/base-model.gguf
+export ATULYA_API_LLAMACPP_LORA_PATH=~/.atulya/models/brain-adapter.gguf
+```
+
+For the complete environment variable reference, hardware tier guide, failure-mode table, and architecture overview, see the **[Local LLM guide](./local-llm.md)**.
 
 ---
 

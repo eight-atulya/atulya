@@ -70,6 +70,6 @@ The next step is fine-tuned models specifically trained on Atulya's memory tasks
 
 ## Documentation
 
-- [Local LLM guide](/local-llm) — full environment variable reference, hardware tiers, failure modes, architecture
-- [Configuration reference](/configuration#llm-provider) — provider list and examples
-- [Models reference](/models) — provider default models table
+- [Local LLM guide](/developer/local-llm) — full environment variable reference, hardware tiers, failure modes, architecture
+- [Configuration reference](/developer/configuration#llm-provider) — provider list and examples
+- [Models reference](/developer/models) — provider default models table

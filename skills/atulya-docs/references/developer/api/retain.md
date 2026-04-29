@@ -174,7 +174,7 @@ Controls which [observations](../observations) this memory contributes to during
 During consolidation, Atulya uses `all_strict` matching to find existing observations to update — only observations whose tags exactly match the current scope are considered. This keeps scopes isolated: a memory consolidated under `["student:alice"]` will never bleed into an observation tagged `["student:alice", "teacher:bob"]`.
 > **💡 Per-scope cap**
 > 
-Each scope is also bounded by the bank-level [`max_observations_per_scope`](../configuration#max_observations_per_scope) cap. When a scope reaches its limit the consolidator is constrained to only `update` or `delete` existing observations during that pass — no new ones are created until existing ones are retired. Untagged consolidation passes are exempt from the cap.
+Each scope is also bounded by the bank-level [`max_observations_per_scope`](../configuration) cap. When a scope reaches its limit the consolidator is constrained to only `update` or `delete` existing observations during that pass — no new ones are created until existing ones are retired. Untagged consolidation passes are exempt from the cap.
 The examples below use a lesson transcript retained with `tags: ["student:alice", "teacher:bob", "session-id:s1"]`.
 
 #### combined *(default)*
@@ -252,7 +252,7 @@ If no document with that `document_id` exists yet, `append` falls back to a clea
 
 > **💡 Pair with observation_scopes**
 > 
-`append` updates the document body but observations are still gated by [`observation_scopes`](#observation_scopes) and the bank-level [`max_observations_per_scope`](../configuration#max_observations_per_scope) cap. New facts may consolidate into existing observations rather than creating new ones — that is by design.
+`append` updates the document body but observations are still gated by [`observation_scopes`](#observation_scopes) and the bank-level [`max_observations_per_scope`](../configuration) cap. New facts may consolidate into existing observations rather than creating new ones — that is by design.
 ### Response
 
 The synchronous retain response includes:

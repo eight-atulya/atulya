@@ -1,19 +1,55 @@
----
-sidebar_position: 1
-slug: /
----
+
 
 # Overview
 
+> **Your organization is hemorrhaging intelligence. Every day.**
+>
+> Someone leaves ~ their context goes with them.  
+> A decision gets made ~ nobody remembers why.  
+> An agent solves a problem ~ the next agent starts from zero.  
+> A new engineer joins ~ six months to get up to speed. Again.
+>
+> This is not a people problem. It is an infrastructure problem.  
+> **There is no place for organizational knowledge to live.**
+
+---
+
+## The Organizational Brain
+
+Atulya is the memory infrastructure that makes your organization permanently smarter.
+
+Not smarter today. **Permanently.**
+
+Every conversation your agents have. Every decision your team makes. Every code change, every incident, every lesson learned ~ **retained, connected, reasoned over**. Forever.
+
+When someone leaves, the knowledge stays.  
+When a new agent starts, it inherits everything the org has ever learned.  
+When the same mistake almost happens again ~ Atulya notices. It has seen this before.
+
+This is not a chatbot with memory. This is not a vector database with a nice API.
+
+**This is the organizational brain your company has never had.**
+
+Start with one agent. One team. One use case.  
+The brain keeps growing. The intelligence compounds.  
+**There is no ceiling.**
+
+---
+
 ## Why Atulya?
 
-Most agent systems fail long before the model fails.
+:::tip[Deep reference]
+Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 113 endpoints, 186 schemas, all design patterns in one page.
+It all started with a simple observation: 
+> Why do same mistakes again and again? I'm not talking about the ai-agent but the human behind it. I have to keep reminding myself to tell the agent what it should know, and it keeps forgetting. I wish there was a way to just tell it once and have it remember forever.
+> **A intelligent system that can match the learning efficiency of humans.**
+The real problem is not just "memory." It is how do we maintain **continuity, integrity, and organizational coherence** across long-running task, agents, teams, tools, and time.
 
-The real problem is not just "memory." It is **continuity, integrity, and organizational coherence** across long-running agents, teams, tools, and time.
+If we can solve that problem, we solve the core bottleneck "contradiction" ~> the fundamental root cause of most failures.
 
-A single chatbot forgetting prior context is annoying. In an enterprise agentic organization, the same failure becomes much more expensive:
+A single ai-agent forgetting prior context is annoying. In an enterprise agentic organization, the same failure becomes much more expensive:
 
-- agents lose operational context between sessions
+- agents lose operational context between sessions does same mistakes again and again
 - facts drift apart across tools, repos, docs, and conversations
 - decisions become hard to audit, explain, or trust
 - multiple agents can act on inconsistent assumptions
@@ -23,14 +59,17 @@ This is exactly the direction behind the broader **BRAIN** thesis: memory must e
 
 **The problem is harder than it looks:**
 
-- **Simple vector search isn't enough** — "What did Alice do last spring?" requires temporal reasoning, not just semantic similarity
-- **Facts get disconnected** — Knowing "Alice works at Google" and "Google is in Mountain View" should let you answer "Where does Alice work?" even if you never stored that directly
-- **AI Agents need to consolidate knowledge** — A coding assistant that remembers "the user prefers functional programming" should consolidate this into an observation and weigh it when making recommendations
-- **Context matters** — The same information means different things to different memory banks with different personalities
-- **Enterprise agents need provenance and guardrails** — It is not enough to answer well; organizations need to know where the answer came from, what evidence supports it, and which rules shaped the decision
-- **Long-running systems need integrity, not just recall** — When new evidence contradicts old beliefs, the system should not silently accumulate inconsistency
+- **We spend 10$ to solve a 2$ problem**
+- **Simple vector search isn't enough** ~ "What did Anurag do to solve pg0 installation issue?" requires temporal reasoning, not just semantic similarity
+- **Facts get disconnected** ~ Knowing "Anurag works at BY" and "BY is in Mountain View" should let you answer "Where does Anurag work?" even if you never stored that directly
+- **AI Agents need to consolidate knowledge** ~ A coding assistant that remembers "the user prefers functional programming" should consolidate this into an observation and weigh it when making recommendations
+- **Context matters** ~ The same information means different things to different memory banks with different personalities
+- **Enterprise agents need provenance and guardrails** ~ It is not enough to answer well; organizations need to know where the answer came from, what evidence supports it, and which rules shaped the decision
+- **Long-running systems need integrity, not just recall** ~ When new evidence contradicts old beliefs, the system should not silently accumulate inconsistency
 
-Atulya solves these problems with a memory system designed specifically for AI agents, and it points toward a future where agents operate with stronger integrity, better organizational memory, and more durable reasoning over time.
+Atulya solves these problems with a strong foundation with a memory system designed specifically for AI agents, and it points toward a future where agents operate with stronger integrity, better organizational memory, and more durable reasoning over time.
+
+<IntegrationsBanner />
 
 ## Start Here If You Build Coding Agents
 
@@ -95,21 +134,25 @@ Use it when you want to:
 
 See [Control Plane Graph Intelligence](/developer/control-plane-graph-intelligence) for the full walkthrough.
 
-## Why This Matters For Enterprise Agentic Organizations
+## Why This Matters For Enterprise
 
-Enterprise agentic organizations do not just need assistants that can answer questions. They need systems that can:
+Most enterprise software makes work faster.  
+Atulya makes the **organization itself smarter** — permanently.
 
-- preserve operational memory across days, teams, and workflows
-- connect facts across tickets, code, documents, logs, and user interactions
-- keep reasoning aligned with mission, policy, and role
-- support many agents working on shared reality instead of isolated chat histories
-- make decisions explainable enough for review, governance, and recovery
+The difference is compounding.
 
-That is the gap between a helpful demo and a durable organizational substrate.
+| Without Atulya | With Atulya |
+|---|---|
+| Agent answers a question. Context evaporates. | Every answer adds to permanent organizational memory |
+| New hire takes 6 months to learn the codebase | Agents inherit everything the org has ever retained |
+| Incident resolved. Lessons lost. | Every incident becomes institutional knowledge |
+| Agents work in isolation, duplicate effort | Shared memory banks let agents build on each other |
+| "Why did we make this decision?" — nobody knows | Every decision is traceable to the evidence that drove it |
+| Knowledge lives in people. People leave. | Knowledge lives in Atulya. It compounds forever. |
 
-Atulya is built for that substrate. It gives each agent or workflow a structured memory bank, retrieval across semantic, keyword, graph, and temporal signals, and a consolidation layer that turns repeated raw facts into higher-level observations.
-
-The BRAIN direction extends that idea further: not just remembering more, but maintaining integrity across what the system believes, why it believes it, and how those beliefs evolve.
+The organizations that connect Atulya to their workflows today are building a compounding advantage.  
+Every day, their agents learn. Their knowledge deepens. Their decisions sharpen.  
+**The gap between them and organizations that didn't will never close.**
 
 ## Atulya Today, BRAIN Direction Tomorrow
 
@@ -322,3 +365,14 @@ In practice, this is one of the first steps toward integrity-aware agent behavio
 
 ### Deployment
 - [**Server Setup**](/developer/installation) — Deploy with Docker Compose, Helm, or pip
+
+---
+
+### SDK Clients
+<ClientsGrid />
+
+### Integrations
+<IntegrationsGrid />
+
+### LLM Providers
+<LLMProvidersGrid />
