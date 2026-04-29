@@ -1,17 +1,14 @@
 "use client";
 
+/**
+ *
+ * Landing dashboard — clean single-focus layout.
+ * Progressive disclosure: hero CTA → existing banks → starter kits → benchmark.
+ */
+
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  ArrowRight,
-  Brain,
-  Building2,
-  ChartNoAxesCombined,
-  CheckCircle2,
-  FlaskConical,
-  Sparkles,
-  Wand2,
-} from "lucide-react";
+import { ArrowRight, CheckCircle2, FlaskConical, Loader2, Plus, Zap } from "lucide-react";
 import { BankSelector } from "@/components/bank-selector";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -108,273 +105,210 @@ export default function DashboardPage() {
   const liveRecall = benchmark?.leaderboard?.strategies?.api_recall?.overall;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background">
       <BankSelector />
 
-      <div className="relative min-h-[calc(100vh-80px)] overflow-hidden bg-gradient-to-b from-muted/40 via-background to-background">
-        <div className="pointer-events-none absolute inset-0 opacity-60">
-          <div className="absolute left-[15%] top-[18%] h-40 w-40 rounded-full bg-red-500/10 blur-3xl" />
-          <div className="absolute right-[12%] top-[28%] h-52 w-52 rounded-full bg-orange-500/10 blur-3xl" />
-          <div className="absolute left-[35%] bottom-[15%] h-44 w-44 rounded-full bg-rose-500/10 blur-3xl" />
-        </div>
+      {/* Single centered column — grows with viewport */}
+      <div className="mx-auto w-full max-w-2xl px-4 sm:px-6 sm:max-w-3xl lg:max-w-4xl xl:max-w-5xl">
+        {/* ── Hero ──────────────────────────────────────────────── */}
+        <section className="flex flex-col items-center py-16 text-center sm:py-20 lg:py-24">
+          {bankCount > 0 && (
+            <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+              {bankCount} memory bank{bankCount === 1 ? "" : "s"} available
+            </span>
+          )}
 
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl items-center px-6 py-12">
-          <div className="grid w-full gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-            <section className="rounded-2xl border border-border/60 bg-card/80 p-8 shadow-xl backdrop-blur-sm">
-              <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300">
-                <Sparkles className="h-3.5 w-3.5" />
-                Never stop learning
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight text-card-foreground md:text-4xl">
-                Learn continuously about your people, your workflows, and your organization.
-              </h1>
-              <p className="mt-4 max-w-2xl text-base text-muted-foreground">
-                Build a living memory system that turns historical evidence into better decisions.
-                Atulya helps teams move from guesswork to math-backed confidence.
+          <h1 className="max-w-lg text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
+            Which memory bank would you like to open?
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground sm:text-[15px]">
+            Create a new bank or jump into an existing one.
+          </p>
+
+          {/* Quick-create row */}
+          <div className="mt-8 flex w-full max-w-sm flex-col gap-2 sm:max-w-lg sm:flex-row">
+            <Input
+              value={quickBankId}
+              onChange={(e) => setQuickBankId(e.target.value)}
+              placeholder="e.g. my-org, sales-intel"
+              className="h-11 flex-1"
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !isCreatingQuickBank) void handleQuickCreate();
+              }}
+            />
+            <Button
+              onClick={handleQuickCreate}
+              disabled={isCreatingQuickBank || !quickBankId.trim()}
+              className="h-11 shrink-0 gap-2 px-5"
+            >
+              {isCreatingQuickBank ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              {isCreatingQuickBank ? "Creating..." : "Create and Start"}
+            </Button>
+          </div>
+
+          {quickError && (
+            <p className="mt-2 text-xs text-red-600 dark:text-red-300">{quickError}</p>
+          )}
+          {quickMessage && (
+            <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">{quickMessage}</p>
+          )}
+        </section>
+
+        {/* ── Your banks ────────────────────────────────────────── */}
+        {bankCount > 0 && (
+          <>
+            <div className="border-t border-border" />
+            <section className="py-10 sm:py-12">
+              <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                Your banks
               </p>
-
-              <div className="mt-6 rounded-xl border border-border bg-background/60 p-4">
-                <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Wand2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  Quick Start
-                </div>
-                <p className="mb-3 text-xs text-muted-foreground">
-                  Create your first memory bank now, then jump directly into memories and reasoning.
-                </p>
-                <div className="flex w-full max-w-xl flex-col gap-2 sm:grid sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-                  <Input
-                    value={quickBankId}
-                    onChange={(e) => setQuickBankId(e.target.value)}
-                    placeholder="e.g. my-org, sales-intel"
-                    className="h-11 w-full"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !isCreatingQuickBank) void handleQuickCreate();
-                    }}
-                  />
-                  <Button
-                    onClick={handleQuickCreate}
-                    disabled={isCreatingQuickBank || !quickBankId.trim()}
-                    className="h-11 w-full sm:w-auto sm:px-6"
+              <div
+                className="grid gap-2"
+                style={{ gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 180px), 1fr))" }}
+              >
+                {banks.map((bank) => (
+                  <button
+                    key={bank}
+                    type="button"
+                    onClick={() => setCurrentBank(bank)}
+                    className="group flex items-center justify-between rounded-lg border border-border bg-card/60 px-3.5 py-3 text-left text-sm font-medium text-foreground transition-colors hover:bg-accent"
                   >
-                    {isCreatingQuickBank ? "Creating..." : "Create and Start"}
-                  </Button>
-                </div>
-
-                <div className="mt-4 space-y-2 max-w-3xl">
-                  <p className="text-xs font-medium text-muted-foreground">Starter kit</p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => setStarterKit("")}
-                      className={`rounded-lg border p-3 text-left transition-colors ${
-                        starterKit === ""
-                          ? "border-red-500/60 bg-red-500/10"
-                          : "border-border bg-background/70 hover:bg-muted/40"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-foreground">
-                          Default (blank bank)
-                        </p>
-                        {starterKit === "" ? (
-                          <CheckCircle2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        ) : null}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Start clean with no presets. Best for custom workflows.
-                      </p>
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-300">
-                        Use this starter
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setStarterKit("codebase")}
-                      className={`rounded-lg border p-3 text-left transition-colors ${
-                        starterKit === "codebase"
-                          ? "border-red-500/60 bg-red-500/10"
-                          : "border-border bg-background/70 hover:bg-muted/40"
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm font-semibold text-foreground">Code repository kit</p>
-                        {starterKit === "codebase" ? (
-                          <CheckCircle2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        ) : null}
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        Tuned retain/reflect rules, observation synthesis, pinned guides, and one
-                        evidence-first directive.
-                      </p>
-                      <span className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-red-700 dark:text-red-300">
-                        Use this starter
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </span>
-                    </button>
-                  </div>
-                </div>
-                {quickError ? (
-                  <p className="mt-2 text-xs text-red-600 dark:text-red-300">{quickError}</p>
-                ) : null}
-                {quickMessage ? (
-                  <p className="mt-2 text-xs text-emerald-600 dark:text-emerald-300">
-                    {quickMessage}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="mt-4 flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onClick={openHeaderBankSelector}
-                  className="inline-flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted/70"
-                  aria-label="Open memory bank selector"
-                >
-                  Select an existing memory bank
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-                <div className="text-xs text-muted-foreground">
-                  {bankCount > 0
-                    ? `${bankCount} memory bank${bankCount === 1 ? "" : "s"} available.`
-                    : "No banks yet. Create your first one in one click."}
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-border bg-background/70 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Brain className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    Adaptive Organizational Memory
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Capture what happened, why it mattered, and what should happen next.
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border bg-background/70 p-4">
-                  <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <ChartNoAxesCombined className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    Decision Intelligence
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Use proven signals, trends, and confidence bands before committing to action.
-                  </p>
-                </div>
+                    <span className="min-w-0 truncate pr-2">{bank}</span>
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-foreground" />
+                  </button>
+                ))}
               </div>
             </section>
+          </>
+        )}
 
-            <div className="space-y-6">
-              <aside className="rounded-2xl border border-border/60 bg-card/70 p-6 shadow-lg backdrop-blur-sm">
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Building2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  What changes for your team
+        {/* ── Starter kits ──────────────────────────────────────── */}
+        <div className="border-t border-border" />
+        <section className="py-10 sm:py-12">
+          <p className="mb-4 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Starter kits
+          </p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {(
+              [
+                {
+                  id: "" as const,
+                  label: "Default (blank bank)",
+                  desc: "Start clean with no presets. Best for custom workflows.",
+                },
+                {
+                  id: "codebase" as const,
+                  label: "Code repository kit",
+                  desc: "Tuned retain/reflect rules, observation synthesis, pinned guides.",
+                },
+              ] as const
+            ).map(({ id, label, desc }) => (
+              <button
+                key={id || "blank"}
+                type="button"
+                onClick={() => setStarterKit(id)}
+                className={`rounded-xl border p-4 text-left transition-colors ${
+                  starterKit === id
+                    ? "border-red-500/60 bg-red-500/10"
+                    : "border-border bg-card/60 hover:bg-muted/40"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <p className="text-sm font-semibold leading-snug text-foreground">{label}</p>
+                  {starterKit === id && (
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                  )}
                 </div>
-                <div className="space-y-3">
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-sm font-medium text-foreground">Faster alignment</p>
-                    <p className="text-xs text-muted-foreground">
-                      Shared memory reduces repeated context-switching across teams.
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-sm font-medium text-foreground">Lower decision risk</p>
-                    <p className="text-xs text-muted-foreground">
-                      Historical patterns and quantified influence improve strategic calls.
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-sm font-medium text-foreground">Compounding intelligence</p>
-                    <p className="text-xs text-muted-foreground">
-                      Dream and Brain systems keep learning, distilling, and improving over time.
-                    </p>
-                  </div>
-                </div>
-              </aside>
-
-              <aside className="rounded-2xl border border-border/60 bg-card/70 p-6 shadow-lg backdrop-blur-sm">
-                <div className="mb-4 flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <FlaskConical className="h-4 w-4 text-red-600 dark:text-red-400" />
-                  Benchmark Lab
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Run the live local memory-to-skill experiment against a real Atulya API with
-                  `.brain` export/import. This is meant to be a fun credibility check for anyone
-                  cloning the repo.
-                </p>
-
-                <div className="mt-4 flex items-center gap-3">
-                  <Button onClick={handleRunBenchmark} disabled={isBenchmarkRunning}>
-                    {isBenchmarkRunning ? "Running live benchmark..." : "Run Live Benchmark"}
-                  </Button>
-                  <span className="text-xs text-muted-foreground">
-                    {isBenchmarkLoading
-                      ? "Loading last run..."
-                      : benchmark?.generated_at
-                        ? `Last run: ${new Date(benchmark.generated_at).toLocaleString()}`
-                        : "No run yet"}
-                  </span>
-                </div>
-
-                {benchmarkError ? (
-                  <p className="mt-3 text-xs text-red-600 dark:text-red-300">{benchmarkError}</p>
-                ) : null}
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      API Recall
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {liveRecall ? `${(liveRecall.recall_accuracy * 100).toFixed(0)}%` : "--"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Top-hit live recall accuracy</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Memory-to-Skill
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {liveOverall
-                        ? `${((liveOverall.skill_reuse_success_rate ?? 0) * 100).toFixed(0)}%`
-                        : "--"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Skill reuse success from live artifact flow
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Answer Time
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {liveOverall?.time_to_useful_answer_ms != null
-                        ? `${liveOverall.time_to_useful_answer_ms.toFixed(1)} ms`
-                        : "--"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Current local benchmark latency</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-background/70 p-3">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
-                      Scenarios
-                    </p>
-                    <p className="mt-1 text-lg font-semibold text-foreground">
-                      {benchmark?.leaderboard?.scenario_count ?? "--"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      24 deterministic scenarios in live mode
-                    </p>
-                  </div>
-                </div>
-
-                <p className="mt-4 text-xs text-muted-foreground">
-                  Publish/share can come next. For now this gives every downloader a local benchmark
-                  lab instead of just a claim in the README.
-                </p>
-              </aside>
-            </div>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{desc}</p>
+              </button>
+            ))}
           </div>
-        </div>
+        </section>
+
+        {/* ── Benchmark Lab ─────────────────────────────────────── */}
+        <div className="border-t border-border" />
+        <section className="py-10 pb-20 sm:py-12 sm:pb-24">
+          <div className="overflow-hidden rounded-xl border border-border bg-card/60">
+            {/* Header */}
+            <div className="flex items-center justify-between gap-4 px-5 py-4">
+              <div className="flex items-center gap-2.5">
+                <FlaskConical className="h-4 w-4 shrink-0 text-red-600 dark:text-red-400" />
+                <p className="text-sm font-semibold text-foreground">Benchmark Lab</p>
+                <span className="text-xs text-muted-foreground">
+                  {isBenchmarkLoading
+                    ? "Loading..."
+                    : benchmark?.generated_at
+                      ? `Last run ${new Date(benchmark.generated_at).toLocaleDateString()}`
+                      : "No run yet"}
+                </span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRunBenchmark}
+                disabled={isBenchmarkRunning}
+                className="h-8 gap-1.5 px-3 text-xs"
+              >
+                {isBenchmarkRunning ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Zap className="h-3.5 w-3.5" />
+                )}
+                {isBenchmarkRunning ? "Running..." : "Run benchmark"}
+              </Button>
+            </div>
+
+            {/* Metrics — 4 equal columns, always */}
+            <div className="grid grid-cols-2 border-t border-border sm:grid-cols-4">
+              {[
+                {
+                  label: "API Recall",
+                  value: liveRecall ? `${(liveRecall.recall_accuracy * 100).toFixed(0)}%` : "--",
+                },
+                {
+                  label: "Memory-to-Skill",
+                  value: liveOverall
+                    ? `${((liveOverall.skill_reuse_success_rate ?? 0) * 100).toFixed(0)}%`
+                    : "--",
+                },
+                {
+                  label: "Answer Time",
+                  value:
+                    liveOverall?.time_to_useful_answer_ms != null
+                      ? `${liveOverall.time_to_useful_answer_ms.toFixed(0)} ms`
+                      : "--",
+                },
+                {
+                  label: "Scenarios",
+                  value: String(benchmark?.leaderboard?.scenario_count ?? "--"),
+                },
+              ].map(({ label, value }, i) => (
+                <div
+                  key={label}
+                  className={`px-5 py-4 ${i > 0 ? "border-l border-border" : ""} ${i >= 2 ? "border-t border-border sm:border-t-0" : ""}`}
+                >
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    {label}
+                  </p>
+                  <p className="mt-1.5 font-mono text-xl font-bold leading-none text-foreground">
+                    {value}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {benchmarkError && (
+              <p className="border-t border-border px-5 py-3 text-xs text-red-600 dark:text-red-300">
+                {benchmarkError}
+              </p>
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );

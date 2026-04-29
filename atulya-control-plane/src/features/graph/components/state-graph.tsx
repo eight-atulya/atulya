@@ -66,8 +66,8 @@ function estimateStateHeight(node: GraphStateNode) {
   );
   const reasonLines = Math.max(0, Math.ceil(safeText(node.status_reason).length / 44));
   return Math.max(
-    216,
-    Math.min(320, 108 + titleLines * 24 + subtitleLines * 16 + previewLines * 18 + reasonLines * 12)
+    240,
+    Math.min(340, 108 + titleLines * 24 + subtitleLines * 16 + previewLines * 18 + reasonLines * 12)
   );
 }
 
@@ -159,6 +159,8 @@ export function StateGraph({
       meta: node.kind,
       timestampLabel: formatShortDate(node.primary_timestamp),
       reason: safeText(node.status_reason),
+      conviction: node.conviction ?? null,
+      semanticChangeMagnitude: node.semantic_change_magnitude ?? null,
       width: 312,
       height: estimateStateHeight(node),
       priority:

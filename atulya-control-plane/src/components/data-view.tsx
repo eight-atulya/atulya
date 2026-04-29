@@ -51,9 +51,18 @@ import { MentalModelDetailModal } from "./mental-model-detail-modal";
 import { Graph2D, convertAtulyaGraphData, GraphNode } from "../features/graph/components/graph-2d";
 import { StateGraph } from "../features/graph/components/state-graph";
 import { TimelineGraph } from "../features/graph/components/timeline-graph";
+import { Constellation } from "./constellation";
+import { ScatterChart } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type FactType = "world" | "experience" | "observation";
-type ViewMode = "graph" | "table" | "timeline";
+type ViewMode = "graph" | "table" | "timeline" | "constellation";
 type GraphSurfaceMode = "state" | "evidence";
 
 interface DataViewProps {
@@ -81,6 +90,8 @@ function stateNodeFromNeighborhood(node: GraphNeighborhoodNode): StateGraphNode 
     evidence_count: node.evidence_count ?? 0,
     tags: [],
     evidence_ids: [],
+    conviction: null,
+    semantic_change_magnitude: null,
   };
 }
 
@@ -88,7 +99,7 @@ export function DataView({ factType }: DataViewProps) {
   const { currentBank } = useBank();
   const { features } = useFeatures();
   const [isCompactGraphLayout, setIsCompactGraphLayout] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("graph");
+  const [viewMode, setViewMode] = useState<ViewMode>("constellation");
   const [data, setData] = useState<any>(null);
   const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -475,6 +486,174 @@ export function DataView({ factType }: DataViewProps) {
     showOnlyAnomalyNodes,
     visibleLinkTypes,
   ]);
+
+  // ── Constellation: recency heat by chosen timestamp ──────────────────────────
+  type ConstellationColorBy =
+    | "recency_mentioned"
+    | "recency_occurred"
+    | "proof_count"
+    | "entity_count"
+    | "links";
+  const CONSTELLATION_COLOR_LABELS: Record<ConstellationColorBy, string> = {
+    recency_mentioned: "Recency · Mentioned",
+    recency_occurred: "Recency · Occurred",
+    proof_count: "Proof count",
+    entity_count: "Entity density",
+    links: "Connection degree",
+  };
+  const [constellationColorBy, setConstellationColorBy] =
+    useState<ConstellationColorBy>("recency_mentioned");
+
+  const recencyLookup = useMemo(() => {
+    if (!data?.table_rows?.length) return null;
+    type Row = {
+      id: string;
+      mentioned_at?: string | null;
+      occurred_start?: string | null;
+      occurred_end?: string | null;
+    };
+    const times = new Map<string, number>();
+    let minT = Infinity;
+    let maxT = -Infinity;
+    const field = constellationColorBy === "recency_occurred" ? "occurred_start" : "mentioned_at";
+    for (const row of data.table_rows as Row[]) {
+      const ts = row[field];
+      if (!ts) continue;
+      const t = Date.parse(ts);
+      if (Number.isNaN(t)) continue;
+      times.set(row.id, t);
+      if (t < minT) minT = t;
+      if (t > maxT) maxT = t;
+    }
+    if (!Number.isFinite(minT) || !Number.isFinite(maxT) || maxT === minT) return null;
+    return { times, minT, maxT };
+  }, [data, constellationColorBy]);
+
+  const recencyHeatFn = useCallback(
+    (node: GraphNode) => {
+      if (!recencyLookup) return 0.5;
+      const t = recencyLookup.times.get(node.id);
+      if (t === undefined) return 0;
+      return (t - recencyLookup.minT) / (recencyLookup.maxT - recencyLookup.minT);
+    },
+    [recencyLookup]
+  );
+
+  // ── Constellation: numeric heat lookups ──────────────────────────────────────
+  const numericHeatLookup = useMemo(() => {
+    if (!data?.table_rows?.length) return null;
+    if (constellationColorBy !== "proof_count" && constellationColorBy !== "entity_count")
+      return null;
+    const vals = new Map<string, number>();
+    let maxV = 1;
+    for (const row of data.table_rows as Array<{
+      id: string;
+      proof_count?: number | null;
+      entities?: string | null;
+    }>) {
+      let v = 0;
+      if (constellationColorBy === "proof_count") {
+        v = Number(row.proof_count ?? 0);
+      } else {
+        // entity_count: count comma-separated entities string
+        const ents = row.entities ? String(row.entities).split(",").filter(Boolean) : [];
+        v = ents.length;
+      }
+      vals.set(row.id, v);
+      if (v > maxV) maxV = v;
+    }
+    return { vals, maxV };
+  }, [data, constellationColorBy]);
+
+  const numericHeatFn = useCallback(
+    (node: GraphNode) => {
+      if (!numericHeatLookup) return 0;
+      const v = numericHeatLookup.vals.get(node.id) ?? 0;
+      return Math.log1p(v) / Math.log1p(numericHeatLookup.maxV);
+    },
+    [numericHeatLookup]
+  );
+
+  // Derive active heat fn based on colorBy selection
+  const activeHeatFn = useMemo(() => {
+    if (
+      constellationColorBy === "recency_mentioned" ||
+      constellationColorBy === "recency_occurred"
+    ) {
+      return recencyLookup ? recencyHeatFn : undefined;
+    }
+    if (constellationColorBy === "proof_count" || constellationColorBy === "entity_count") {
+      return numericHeatLookup ? numericHeatFn : undefined;
+    }
+    // "links" — let constellation use its own log-degree default (no external heat fn)
+    return undefined;
+  }, [constellationColorBy, recencyLookup, recencyHeatFn, numericHeatLookup, numericHeatFn]);
+
+  const activeHeatLabel = useMemo(() => {
+    return CONSTELLATION_COLOR_LABELS[constellationColorBy];
+  }, [constellationColorBy]);
+
+  const activeHeatEndpoints = useMemo((): [string, string] | undefined => {
+    if (
+      (constellationColorBy === "recency_mentioned" ||
+        constellationColorBy === "recency_occurred") &&
+      recencyLookup
+    ) {
+      return [
+        new Date(recencyLookup.minT).toISOString().slice(0, 10),
+        new Date(recencyLookup.maxT).toISOString().slice(0, 10),
+      ];
+    }
+    if (constellationColorBy === "proof_count") return ["1 source", "many sources"];
+    if (constellationColorBy === "entity_count") return ["0 entities", "many entities"];
+    if (constellationColorBy === "links") return ["isolated", "highly connected"];
+    return undefined;
+  }, [constellationColorBy, recencyLookup]);
+
+  // ── Constellation: size = access_count (0–N, good spread) ──────────────────
+  // access_count reflects how often a memory was recalled — direct importance signal.
+  // proof_count (1–6) is too narrow; most nodes hit floor. access_count [0..17+] spreads well.
+  const constellationSizeLookup = useMemo(() => {
+    if (!data?.table_rows?.length) return null;
+    const vals = new Map<string, number>();
+    let maxV = 1;
+    for (const row of data.table_rows as Array<{ id: string; access_count?: number | null }>) {
+      const v = Math.max(0, Number(row.access_count ?? 0));
+      vals.set(row.id, v);
+      if (v > maxV) maxV = v;
+    }
+    return { vals, maxV };
+  }, [data]);
+
+  const constellationNodeSizeFn = useCallback(
+    (node: GraphNode) => {
+      if (!constellationSizeLookup) return 5;
+      const v = constellationSizeLookup.vals.get(node.id) ?? 0;
+      // log scale: 3px floor (unseen) → 13px ceiling (most recalled)
+      return 3 + (Math.log1p(v) / Math.log1p(constellationSizeLookup.maxV)) * 10;
+    },
+    [constellationSizeLookup]
+  );
+
+  // ── Constellation: ring = fact_type glyph ────────────────────────────────────
+  const FACT_TYPE_RING: Record<string, string> = {
+    world: "#0074d9", // blue
+    experience: "#059669", // green
+    observation: "#f59e0b", // amber
+  };
+  const constellationNodeRingFn = useCallback((node: GraphNode) => {
+    const meta = node.metadata as Record<string, any> | undefined;
+    const ft = meta?.fact_type || node.group || "";
+    return FACT_TYPE_RING[ft] ?? null;
+  }, []);
+
+  // ── Constellation: memory-level link colour (same palette as graph) ──────────
+  const constellationLinkColorFn = useCallback((link: any) => {
+    if (link.type === "temporal") return "#009296";
+    if (link.type === "entity") return "#f59e0b";
+    if (["causes", "caused_by", "enables", "prevents"].includes(link.type ?? "")) return "#8b5cf6";
+    return "#0074d9";
+  }, []);
 
   // Calculate link stats for display
   const linkStats = useMemo(() => {
@@ -1139,6 +1318,17 @@ export function DataView({ factType }: DataViewProps) {
               >
                 <Calendar className="w-4 h-4" />
                 Timeline
+              </button>
+              <button
+                onClick={() => setViewMode("constellation")}
+                className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5 ${
+                  viewMode === "constellation"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <ScatterChart className="w-4 h-4" />
+                Constellation
               </button>
             </div>
           </div>
@@ -2077,6 +2267,147 @@ export function DataView({ factType }: DataViewProps) {
                 onMemoryClick={(id) => setModalMemoryId(id)}
               />
             ))}
+
+          {viewMode === "constellation" && (
+            <div className="flex gap-0">
+              <div className="flex-1 min-w-0 border border-border rounded-lg overflow-hidden">
+                {graph2DData.nodes.length === 0 ? (
+                  <div className="flex items-center justify-center h-[700px] text-sm text-muted-foreground">
+                    No memories to display
+                  </div>
+                ) : (
+                  <Constellation
+                    data={graph2DData}
+                    height={700}
+                    onNodeClick={(node) => {
+                      const nodeData = data?.table_rows?.find((row: any) => row.id === node.id);
+                      if (nodeData) setSelectedGraphNode(nodeData);
+                    }}
+                    nodeSizeFn={constellationNodeSizeFn}
+                    sizeLegendLabel="recall count"
+                    nodeHeatFn={activeHeatFn}
+                    heatLegendLabel={activeHeatLabel}
+                    heatLegendEndpoints={activeHeatEndpoints}
+                    nodeRingFn={constellationNodeRingFn}
+                    compactLabels
+                  />
+                )}
+              </div>
+              <button
+                onClick={() => setShowControlPanel(!showControlPanel)}
+                className="flex-shrink-0 w-5 h-[700px] bg-transparent hover:bg-muted/50 flex items-center justify-center transition-colors"
+              >
+                {showControlPanel ? (
+                  <ChevronRight className="w-3 h-3 text-muted-foreground" />
+                ) : (
+                  <ChevronLeft className="w-3 h-3 text-muted-foreground" />
+                )}
+              </button>
+              {showControlPanel && (
+                <div className="w-72 flex-shrink-0 border border-border rounded-lg bg-muted/20 overflow-y-auto h-[700px] p-4 space-y-4">
+                  {selectedGraphNode ? (
+                    <MemoryDetailPanel
+                      memory={selectedGraphNode}
+                      onClose={() => setSelectedGraphNode(null)}
+                      inPanel
+                      bankId={currentBank || undefined}
+                    />
+                  ) : (
+                    <>
+                      <h3 className="text-sm font-semibold">Constellation View</h3>
+                      <p className="text-xs text-muted-foreground">
+                        Canvas memory map. Scroll to zoom, drag to pan, click a node for details.
+                      </p>
+
+                      {/* ── Signal legend ── */}
+                      <div className="space-y-1 pt-2 text-xs text-muted-foreground">
+                        <div className="font-medium text-foreground">Encoding</div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex gap-0.5">
+                            {[3, 6, 10].map((s) => (
+                              <span
+                                key={s}
+                                className="rounded-full bg-zinc-400 dark:bg-zinc-500 inline-block"
+                                style={{ width: s, height: s, marginTop: (10 - s) / 2 }}
+                              />
+                            ))}
+                          </span>
+                          <span>Size = proof count</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex gap-1">
+                            {["#3882dc", "#aa82c8", "#f0643c"].map((c) => (
+                              <span
+                                key={c}
+                                className="rounded-full inline-block w-2.5 h-2.5"
+                                style={{ background: c }}
+                              />
+                            ))}
+                          </span>
+                          <span>Fill = color-by signal</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex gap-1">
+                            {[
+                              { c: "#0074d9", l: "world" },
+                              { c: "#059669", l: "exp" },
+                              { c: "#f59e0b", l: "obs" },
+                            ].map(({ c, l }) => (
+                              <span
+                                key={l}
+                                className="rounded-full border-2 inline-block w-3 h-3"
+                                style={{ borderColor: c }}
+                                title={l}
+                              />
+                            ))}
+                          </span>
+                          <span>Ring = fact type</span>
+                        </div>
+                      </div>
+
+                      {/* ── Color by ── */}
+                      <div className="space-y-2 pt-2">
+                        <h4 className="text-xs font-medium text-muted-foreground">Color by</h4>
+                        <Select
+                          value={constellationColorBy}
+                          onValueChange={(v) => setConstellationColorBy(v as ConstellationColorBy)}
+                        >
+                          <SelectTrigger className="h-8 w-full text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="recency_mentioned">Recency · Mentioned</SelectItem>
+                            <SelectItem value="recency_occurred">Recency · Occurred</SelectItem>
+                            <SelectItem value="proof_count">Proof count</SelectItem>
+                            <SelectItem value="entity_count">Entity density</SelectItem>
+                            <SelectItem value="links">Connection degree</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* ── Ring legend ── */}
+                      <div className="space-y-1 pt-1 text-xs text-muted-foreground">
+                        <div className="font-medium text-foreground">Ring · Fact type</div>
+                        {[
+                          { color: "#0074d9", label: "World" },
+                          { color: "#059669", label: "Experience" },
+                          { color: "#f59e0b", label: "Observation" },
+                        ].map(({ color, label }) => (
+                          <div key={label} className="flex items-center gap-2">
+                            <span
+                              className="w-3 h-3 rounded-full border-2 flex-shrink-0"
+                              style={{ borderColor: color }}
+                            />
+                            <span>{label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </>
       ) : (
         <div className="flex items-center justify-center py-20">

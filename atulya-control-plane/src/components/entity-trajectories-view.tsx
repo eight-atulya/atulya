@@ -27,12 +27,200 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Loader2, RefreshCw } from "lucide-react";
+import { Loader2, Network, RefreshCw, X } from "lucide-react";
+import { Constellation } from "./constellation";
+import type { GraphData, GraphNode } from "../features/graph/components/graph-2d";
 
 /** Design tokens use oklch — use var(--token) in SVG; do not use hsl(var(--primary)). */
 const CHART_ACCENT = "var(--chart-1)";
 const CHART_GRID = "var(--border)";
 const CHART_AXIS = "var(--muted-foreground)";
+
+// ── Intelligence graph constants ──────────────────────────────────────────────
+type EntityContextEntry = {
+  id: string;
+  name: string;
+  circle: string;
+  category: string;
+  mentions: number;
+  role_hint?: string;
+  first_seen?: string;
+  last_seen?: string;
+  type_confidence?: number;
+};
+
+/** Map circle name → hex color (matches Constellation palette) */
+const CIRCLE_COLOR: Record<string, string> = {
+  inner_people: "#ef4444",
+  active_people: "#f97316",
+  peripheral_people: "#eab308",
+  projects_products: "#22c55e",
+  operating_tools: "#3b82f6",
+  mind_themes: "#a855f7",
+  life_context: "#06b6d4",
+  artifacts_surfaces: "#64748b",
+};
+
+const CIRCLE_LABEL: Record<string, string> = {
+  inner_people: "Inner People",
+  active_people: "Active People",
+  peripheral_people: "Peripheral People",
+  projects_products: "Projects & Products",
+  operating_tools: "Tools",
+  mind_themes: "Mind Themes",
+  life_context: "Life Context",
+  artifacts_surfaces: "Artifacts",
+};
+
+/** Convert entity_context entries → GraphData for Constellation.
+ *  Nodes: each entity.
+ *  Links: entity → hub (virtual center node) weighted by mentions,
+ *         plus co-circle links between entities in the same circle to
+ *         cluster them visually.
+ */
+function buildEntityGraphData(entities: EntityContextEntry[]): GraphData {
+  if (!entities.length) return { nodes: [], links: [] };
+
+  // Virtual hub node
+  const HUB_ID = "__hub__";
+  const hubNode: GraphNode = { id: HUB_ID, label: "·", color: "var(--foreground)", size: 2 };
+
+  const nodes: GraphNode[] = [
+    hubNode,
+    ...entities.map((e) => ({
+      id: e.id,
+      label: e.name,
+      color: CIRCLE_COLOR[e.circle] ?? "#64748b",
+      size: 3 + Math.round(Math.sqrt(e.mentions) * 2),
+      group: e.circle,
+      metadata: {
+        role_hint: e.role_hint,
+        category: e.category,
+        first_seen: e.first_seen,
+        last_seen: e.last_seen,
+        mentions: e.mentions,
+        type_confidence: e.type_confidence,
+      },
+    })),
+  ];
+
+  const links: import("../features/graph/components/graph-2d").GraphLink[] = [];
+
+  // Hub spokes (weak, just to anchor layout)
+  for (const e of entities) {
+    links.push({
+      source: HUB_ID,
+      target: e.id,
+      color: CIRCLE_COLOR[e.circle] ?? "#64748b",
+      type: "entity",
+      weight: 0.2,
+    });
+  }
+
+  // Within-circle links (cluster pull)
+  const byCircle: Record<string, EntityContextEntry[]> = {};
+  for (const e of entities) (byCircle[e.circle] ??= []).push(e);
+  for (const members of Object.values(byCircle)) {
+    for (let i = 0; i < members.length - 1; i++) {
+      links.push({
+        source: members[i].id,
+        target: members[i + 1].id,
+        color: CIRCLE_COLOR[members[i].circle] ?? "#64748b",
+        type: "semantic",
+        weight: 0.8,
+      });
+    }
+  }
+
+  return { nodes, links };
+}
+
+function EntityIntelligenceGraph({ entities }: { entities: EntityContextEntry[] }) {
+  const [selected, setSelected] = useState<GraphNode | null>(null);
+
+  const graphData = useMemo(() => buildEntityGraphData(entities), [entities]);
+
+  // Deduplicate circles present in data for legend
+  const presentCircles = useMemo(() => [...new Set(entities.map((e) => e.circle))], [entities]);
+
+  const nodeSizeFn = useCallback((node: GraphNode) => node.size ?? 5, []);
+  const nodeColorFn = useCallback((node: GraphNode) => node.color ?? "#64748b", []);
+
+  return (
+    <div className="space-y-3">
+      <div className="rounded-lg border border-border/70 overflow-hidden">
+        <Constellation
+          data={graphData}
+          height={580}
+          onNodeClick={(node) => setSelected(node.id === "__hub__" ? null : node)}
+          nodeSizeFn={nodeSizeFn}
+          nodeColorFn={nodeColorFn}
+          compactLabels
+        />
+      </div>
+
+      {/* Legend */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+        {presentCircles.map((circle) => (
+          <div key={circle} className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span
+              className="inline-block h-2.5 w-2.5 flex-shrink-0 rounded-full"
+              style={{ background: CIRCLE_COLOR[circle] ?? "#64748b" }}
+            />
+            {CIRCLE_LABEL[circle] ?? circle}
+          </div>
+        ))}
+      </div>
+
+      {/* Selected node detail panel */}
+      {selected && selected.id !== "__hub__" && (
+        <div className="rounded-lg border border-border/70 bg-card p-3 text-xs space-y-2">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-semibold text-sm text-foreground leading-snug">{selected.label}</p>
+              {selected.metadata?.role_hint && (
+                <p className="mt-0.5 text-muted-foreground leading-relaxed">
+                  {String(selected.metadata.role_hint)}
+                </p>
+              )}
+            </div>
+            <button
+              onClick={() => setSelected(null)}
+              className="flex-shrink-0 text-muted-foreground hover:text-foreground mt-0.5"
+              aria-label="Close"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+            <dt className="text-muted-foreground/70">Circle</dt>
+            <dd style={{ color: selected.color }}>
+              {CIRCLE_LABEL[selected.group ?? ""] ?? selected.group ?? "—"}
+            </dd>
+            <dt className="text-muted-foreground/70">Category</dt>
+            <dd className="text-foreground">{String(selected.metadata?.category ?? "—")}</dd>
+            <dt className="text-muted-foreground/70">Mentions</dt>
+            <dd className="tabular-nums text-foreground">
+              {String(selected.metadata?.mentions ?? "—")}
+            </dd>
+            <dt className="text-muted-foreground/70">First seen</dt>
+            <dd className="text-foreground">{String(selected.metadata?.first_seen ?? "—")}</dd>
+            <dt className="text-muted-foreground/70">Last seen</dt>
+            <dd className="text-foreground">{String(selected.metadata?.last_seen ?? "—")}</dd>
+            {selected.metadata?.type_confidence != null && (
+              <>
+                <dt className="text-muted-foreground/70">Type confidence</dt>
+                <dd className="tabular-nums text-foreground">
+                  {(Number(selected.metadata.type_confidence) * 100).toFixed(0)}%
+                </dd>
+              </>
+            )}
+          </dl>
+        </div>
+      )}
+    </div>
+  );
+}
 
 interface EntityRow {
   id: string;
@@ -225,6 +413,7 @@ export function EntityTrajectoriesView() {
   const [intelNotFound, setIntelNotFound] = useState(false);
   const [intelError, setIntelError] = useState<string | null>(null);
   const [recomputingIntel, setRecomputingIntel] = useState(false);
+  const [intelViewMode, setIntelViewMode] = useState<"narrative" | "graph">("narrative");
 
   const loadEntities = useCallback(async () => {
     if (!currentBank) return;
@@ -467,11 +656,43 @@ export function EntityTrajectoriesView() {
                 Context compaction: {intelligence.entity_context.compaction}
               </p>
             )}
-            <div className="max-h-[42rem] overflow-auto rounded-lg border border-border/70 bg-muted/10 p-5">
-              <div className="prose prose-sm max-w-none break-words leading-relaxed dark:prose-invert prose-headings:font-heading prose-headings:tracking-tight prose-li:my-1 [overflow-wrap:anywhere]">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{intelligence.content}</ReactMarkdown>
-              </div>
+
+            {/* View mode toggle: Narrative ↔ Graph */}
+            <div className="flex items-center gap-1 bg-muted rounded-lg p-1 w-fit">
+              <button
+                onClick={() => setIntelViewMode("narrative")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  intelViewMode === "narrative"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Narrative
+              </button>
+              <button
+                onClick={() => setIntelViewMode("graph")}
+                className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all flex items-center gap-1.5 ${
+                  intelViewMode === "graph"
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Network className="w-3.5 h-3.5" />
+                Graph
+              </button>
             </div>
+
+            {intelViewMode === "narrative" ? (
+              <div className="max-h-[42rem] overflow-auto rounded-lg border border-border/70 bg-muted/10 p-5">
+                <div className="prose prose-sm max-w-none break-words leading-relaxed dark:prose-invert prose-headings:font-heading prose-headings:tracking-tight prose-li:my-1 [overflow-wrap:anywhere]">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{intelligence.content}</ReactMarkdown>
+                </div>
+              </div>
+            ) : (
+              <EntityIntelligenceGraph
+                entities={(intelligence.entity_context?.entities ?? []) as EntityContextEntry[]}
+              />
+            )}
             {previousIntelligenceContent && (
               <details className="rounded-lg border border-border/70 bg-muted/10">
                 <summary className="cursor-pointer px-4 py-3 text-sm font-medium text-foreground">

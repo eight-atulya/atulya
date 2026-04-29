@@ -1853,6 +1853,9 @@ class GraphStateNodeResponse(BaseModel):
     evidence_count: int
     tags: list[str] = Field(default_factory=list)
     evidence_ids: list[str] = Field(default_factory=list)
+    # Embedding-derived signals — None when < 2 units have embeddings
+    conviction: float | None = None  # mean pairwise cosine: how consistent is org memory on this entity
+    semantic_change_magnitude: float | None = None  # max cosine distance between consecutive states
 
 
 class GraphRelationEdgeResponse(BaseModel):

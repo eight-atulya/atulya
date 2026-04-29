@@ -140,6 +140,13 @@ class GraphStateNode(BaseModel):
     evidence_count: int
     tags: list[str] = Field(default_factory=list)
     evidence_ids: list[str] = Field(default_factory=list)
+    # ── Embedding-derived signals (optional — only set when embeddings are available) ──
+    # conviction: 0..1  — avg pairwise cosine of all distinct units.
+    #   High (>0.75) = org's memory is consistent.  Low (<0.45) = belief is in flux.
+    conviction: float | None = None
+    # semantic_change_magnitude: 0..1  — cosine distance between the two most different
+    #   consecutive distinct units.  Graded: <0.15 minor, 0.15–0.35 shift, >0.35 major.
+    semantic_change_magnitude: float | None = None
 
 
 class GraphRelationEdge(BaseModel):
@@ -149,6 +156,10 @@ class GraphRelationEdge(BaseModel):
     relation_type: str
     strength: float
     evidence_count: int
+    # semantic_weight: cosine similarity between the mean embeddings of the two endpoints.
+    # Captures true semantic proximity, not just co-mention frequency.
+    # None when embeddings are unavailable.
+    semantic_weight: float | None = None
 
 
 class GraphChangeEvent(BaseModel):
@@ -327,6 +338,116 @@ def _importance_for_units(units: list[GraphEvidenceUnit], centrality: float) -> 
     return round(_clamp(0.4 * centrality + 0.35 * evidence_component + 0.25 * support_component), 3)
 
 
+# ── Embedding-powered signals ────────────────────────────────────────────────
+
+
+def _mean_embedding(units: list[GraphEvidenceUnit]) -> list[float] | None:
+    """Compute the centroid of all unit embeddings. Returns None if no embeddings available."""
+    vecs = [u.embedding for u in units if u.embedding is not None]
+    if not vecs:
+        return None
+    dim = len(vecs[0])
+    centroid = [sum(v[i] for v in vecs) / len(vecs) for i in range(dim)]
+    return centroid
+
+
+def _compute_conviction(distinct_units: list[GraphEvidenceUnit]) -> float | None:
+    """Mean pairwise cosine similarity of all distinct units for an entity.
+
+    Interpretation:
+      > 0.75  — org memory is consistent: all facts agree on the entity's state
+      0.45–0.75 — moderate: some drift, possibly a transition period
+      < 0.45  — low: belief is fragmented or actively shifting
+
+    Returns None when fewer than 2 units have embeddings (cannot compute pairwise).
+    """
+    embedded = [u for u in distinct_units if u.embedding is not None]
+    if len(embedded) < 2:
+        return None
+    sims: list[float] = []
+    for i, a in enumerate(embedded):
+        for b in embedded[i + 1 :]:
+            sim = cosine_similarity(a.embedding, b.embedding)
+            if sim is not None:
+                sims.append(sim)
+    if not sims:
+        return None
+    return round(float(sum(sims) / len(sims)), 3)
+
+
+def _compute_semantic_change_magnitude(distinct_units: list[GraphEvidenceUnit]) -> float | None:
+    """Maximum semantic distance (1 - cosine) between any two consecutive distinct units.
+
+    Graded interpretation:
+      < 0.15  — minor update (paraphrase / number tweak)
+      0.15–0.35 — role/state shift (different role, same org)
+      > 0.35  — major transition (company change, city, fundamental flip)
+
+    Returns None when fewer than 2 consecutive pairs have embeddings.
+    Also returns (prev_id, curr_id) of the highest-drift pair for provenance.
+    """
+    pairs = list(zip(distinct_units[:-1], distinct_units[1:]))
+    max_dist: float | None = None
+    for prev, curr in pairs:
+        if prev.embedding is None or curr.embedding is None:
+            continue
+        sim = cosine_similarity(prev.embedding, curr.embedding)
+        if sim is None:
+            continue
+        dist = round(1.0 - sim, 3)
+        if max_dist is None or dist > max_dist:
+            max_dist = dist
+    return max_dist
+
+
+def _semantic_change_gate(
+    previous: GraphEvidenceUnit,
+    current: GraphEvidenceUnit,
+    jaccard: float,
+) -> bool:
+    """Return True if this pair represents a genuine semantic change worth surfacing.
+
+    Uses embeddings as primary signal when available; falls back to Jaccard.
+
+    Logic:
+      - If embeddings available: cosine distance >= 0.12 → genuine change.
+        (0.12 ≈ "same subject, meaningfully different predicate")
+      - If no embeddings: fall back to Jaccard < 0.55 (existing behaviour).
+
+    Replacing raw Jaccard as the gate fixes cases where vocabulary changes completely
+    (e.g. Kreator3d → Sytolab) but the sentences are about the same dimension of a person.
+    Those SHOULD still be gated on whether the entity led both sentences — which the
+    caller (`_build_change_events`) already checks via `_leading_entity`.
+    """
+    if previous.embedding is not None and current.embedding is not None:
+        sim = cosine_similarity(previous.embedding, current.embedding)
+        if sim is not None:
+            # cosine distance < 0.12  → near-identical (paraphrase / minor update) → skip
+            return (1.0 - sim) >= 0.12
+        # embedding comparison failed — fall through to Jaccard
+    return jaccard < 0.55
+
+
+def _semantic_edge_weight(
+    source_units: list[GraphEvidenceUnit],
+    target_units: list[GraphEvidenceUnit],
+) -> float | None:
+    """Cosine similarity between the mean embeddings of two entity groups.
+
+    High weight (> 0.7) = entities share semantic context (same project/team/era).
+    Low weight (< 0.4)  = co-mentioned but semantically distant (unrelated domains).
+
+    Used to enrich edge strength beyond raw co-occurrence count.
+    Returns None when either side has no embeddings.
+    """
+    src_centroid = _mean_embedding(source_units)
+    tgt_centroid = _mean_embedding(target_units)
+    if src_centroid is None or tgt_centroid is None:
+        return None
+    sim = cosine_similarity(src_centroid, tgt_centroid)
+    return round(sim, 3) if sim is not None else None
+
+
 # Cosine threshold above which two units are considered the same semantic state
 # (paraphrase / re-statement of same fact — not a genuine state transition).
 _SEMANTIC_DEDUP_COSINE_THRESHOLD = 0.97
@@ -455,15 +576,34 @@ def _build_change_events(
             continue
 
         similarity = _jaccard_similarity(previous.text, current.text)
-        if similarity >= 0.55:
+        # Use embedding-aware gate: falls back to Jaccard when embeddings unavailable.
+        if not _semantic_change_gate(previous, current, similarity):
             continue
 
         if summary.kind == "entity":
-            node_slug = _slugify(summary.title)
+            # Compare against lowercased title (spaces), not slug (hyphens).
+            # _leading_entity() returns entity.lower() which preserves spaces —
+            # comparing to _slugify() would never match multi-word names.
+            node_key = summary.title.lower()
             prev_lead = _leading_entity(previous)
             curr_lead = _leading_entity(current)
-            if prev_lead != node_slug and curr_lead != node_slug:
+            if prev_lead != node_key and curr_lead != node_key:
                 continue
+
+        # Compute semantic distance for this pair (richer than Jaccard alone).
+        sem_dist: float | None = None
+        if previous.embedding is not None and current.embedding is not None:
+            sim = cosine_similarity(previous.embedding, current.embedding)
+            sem_dist = round(1.0 - sim, 3) if sim is not None else None
+
+        magnitude_label = ""
+        if sem_dist is not None:
+            if sem_dist < 0.15:
+                magnitude_label = " (minor update)"
+            elif sem_dist < 0.35:
+                magnitude_label = " (role/state shift)"
+            else:
+                magnitude_label = " (major transition)"
 
         event_confidence = round(_clamp(confidence * (1.0 - similarity * 0.45)), 3)
         events.append(
@@ -478,7 +618,8 @@ def _build_change_events(
                 evidence_ids=[previous.id, current.id],
                 summary=(
                     f"{summary.title} appears to have changed from "
-                    f"'{_shorten(previous.text, 70)}' to '{_shorten(current.text, 70)}'."
+                    f"'{_shorten(previous.text, 70)}' to '{_shorten(current.text, 70)}'"
+                    f"{magnitude_label}."
                 ),
             )
         )
@@ -486,11 +627,12 @@ def _build_change_events(
     for i, left in enumerate(distinct_units):
         left_doc = left.doc_key()
         for right in distinct_units[i + 1 :]:
-            node_slug = _slugify(summary.title)
+            # Same fix: use lowercased title not slug for ownership comparison.
+            node_key = summary.title.lower()
             left_lead = _leading_entity(left)
             right_lead = _leading_entity(right)
-            both_led_by_node = left_lead == node_slug and right_lead == node_slug
-            either_led_by_node = left_lead == node_slug or right_lead == node_slug
+            both_led_by_node = left_lead == node_key and right_lead == node_key
+            either_led_by_node = left_lead == node_key or right_lead == node_key
 
             same_doc = bool(left_doc and left_doc == right.doc_key())
             if same_doc and not both_led_by_node:
@@ -581,6 +723,12 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
         elif any(event.change_type == "change" for event in events):
             status = "changed"
 
+        distinct_for_metrics = _sorted_distinct_units(summary.units)
+        # Conviction uses ALL units (including near-duplicates): more reaffirmations = stronger belief.
+        # Semantic change magnitude uses distinct units only: we want the actual state transitions.
+        conviction = _compute_conviction(summary.units)
+        semantic_change_magnitude = _compute_semantic_change_magnitude(distinct_for_metrics)
+
         node = GraphStateNode(
             id=make_node_id(summary.kind, summary.title),
             title=summary.title,
@@ -596,6 +744,8 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
             evidence_count=len(summary.units),
             tags=sorted({tag for unit in summary.units for tag in unit.tags}),
             evidence_ids=[unit.id for unit in sorted(summary.units, key=lambda item: item.id)],
+            conviction=conviction,
+            semantic_change_magnitude=semantic_change_magnitude,
         )
         raw_nodes.append(node)
         group_index[node.id] = summary
@@ -614,6 +764,11 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
     # Build deterministic relation edges from entity co-occurrence and entity-topic links.
     edges_by_key: dict[tuple[str, str, str], _EdgeAccumulator] = {}
     included_node_ids = {node.id for node in raw_nodes}
+
+    # Pre-compute per-entity unit lists for semantic edge weighting.
+    entity_units_by_node_id: dict[str, list[GraphEvidenceUnit]] = {
+        node.id: group_index[node.id].units for node in raw_nodes if node.id in group_index
+    }
 
     if options.node_kind in ("all", "entity"):
         for unit in units:
@@ -663,6 +818,13 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
             continue
         centrality_counts[accumulator.source_id] += evidence_count
         centrality_counts[accumulator.target_id] += evidence_count
+
+        # Semantic weight: cosine between the two entities' mean embeddings.
+        # Enriches structural co-occurrence with actual semantic proximity.
+        src_units = entity_units_by_node_id.get(accumulator.source_id, [])
+        tgt_units = entity_units_by_node_id.get(accumulator.target_id, [])
+        sem_weight = _semantic_edge_weight(src_units, tgt_units)
+
         all_edges.append(
             GraphRelationEdge(
                 id=f"edge:{accumulator.relation_type}:{_slugify(accumulator.source_id)}:{_slugify(accumulator.target_id)}",
@@ -671,6 +833,7 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
                 relation_type=accumulator.relation_type,
                 strength=round(_clamp(math.log1p(evidence_count) / 2.0), 3),
                 evidence_count=evidence_count,
+                semantic_weight=sem_weight,
             )
         )
 
@@ -734,6 +897,14 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
                     event_boost += ev.confidence * 0.1
             event_boost = _clamp(event_boost, 0.0, 0.35)
         stale_boost = 0.1 if any(event.change_type == "stale" for event in node_events) else 0.0
+
+        # Conviction boost: nodes with fragmented/diverging memory rank higher because
+        # they need human attention more than nodes the org consistently agrees on.
+        # Low conviction (< 0.45) adds up to 0.1 to change_score.
+        conviction_boost = 0.0
+        if node.conviction is not None:
+            conviction_boost = _clamp((0.55 - node.conviction) * 0.2, 0.0, 0.1)
+
         surface_confidence = _surface_confidence(node.confidence, node_events, options.contradiction_confidence_penalty)
         node.change_score = round(
             _clamp(
@@ -743,6 +914,7 @@ def build_graph_intelligence(units: list[GraphEvidenceUnit], options: GraphBuild
                 + 0.2 * importance
                 + event_boost
                 + stale_boost
+                + conviction_boost
             ),
             3,
         )

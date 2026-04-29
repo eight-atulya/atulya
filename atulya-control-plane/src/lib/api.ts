@@ -381,6 +381,8 @@ export interface GraphStateNode {
   evidence_count: number;
   tags: string[];
   evidence_ids: string[];
+  conviction: number | null;
+  semantic_change_magnitude: number | null;
 }
 
 export interface GraphRelationEdge {
@@ -1237,6 +1239,35 @@ export class ControlPlaneClient {
     return this.fetchApi(`/api/stats/${bankId}`);
   }
 
+  /**
+   * Get memories ingested timeseries bucketed by period.
+   * period: "1h" | "12h" | "1d" | "7d" | "30d" | "90d"
+   */
+  async getMemoriesTimeseries(bankId: string, period: string) {
+    return this.fetchApi<{
+      bank_id: string;
+      period: string;
+      trunc: string;
+      buckets: Array<{
+        time: string;
+        world: number;
+        experience: number;
+        observation: number;
+      }>;
+    }>(`/api/stats/${bankId}/memories-timeseries?period=${encodeURIComponent(period)}`);
+  }
+
+  /**
+   * Recover failed consolidation for a bank (reset memories marked consolidation_failed_at)
+   */
+  async recoverConsolidation(bankId: string) {
+    return this.fetchApi<{
+      retried_count: number;
+    }>(`/api/banks/${bankId}/consolidation-recover`, {
+      method: "POST",
+    });
+  }
+
   async getBenchmark(mode: "deterministic" | "live-api" = "live-api") {
     return this.fetchApi<BenchmarkResponse>(`/api/benchmark?mode=${mode}`, {
       cache: "no-store" as RequestCache,
@@ -1484,6 +1515,35 @@ export class ControlPlaneClient {
    */
   async getEntity(entityId: string, bankId: string) {
     return this.fetchApi(`/api/entities/${entityId}?bank_id=${bankId}`);
+  }
+
+  /**
+   * Get entity co-occurrence graph.
+   */
+  async getEntityGraph(params: { bank_id: string; limit?: number; min_count?: number }) {
+    const queryParams = new URLSearchParams();
+    queryParams.append("bank_id", params.bank_id);
+    if (params.limit) queryParams.append("limit", params.limit.toString());
+    if (params.min_count !== undefined)
+      queryParams.append("min_count", params.min_count.toString());
+    return this.fetchApi<{
+      nodes: Array<{ data: { id: string; label: string; mentionCount: number; color: string } }>;
+      edges: Array<{
+        data: {
+          id: string;
+          source: string;
+          target: string;
+          linkType: string;
+          weight: number;
+          color: string;
+          lineStyle: string;
+          lastCooccurred: string | null;
+        };
+      }>;
+      total_entities: number;
+      total_edges: number;
+      limit: number;
+    }>(`/api/entities/graph?${queryParams}`);
   }
 
   /**

@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useBank } from "@/lib/bank-context";
 import { client } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import { AdminButton } from "@/components/admin-button";
 import {
   Command,
   CommandEmpty,
@@ -392,7 +393,15 @@ function BankSelectorInner() {
     <div className="bg-card text-card-foreground px-5 py-3 border-b-4 border-primary-gradient">
       <div className="flex items-center gap-4 text-sm">
         {/* Logo */}
-        <Link href="/dashboard" aria-label="Go to dashboard" className="inline-flex">
+        <button
+          type="button"
+          aria-label="Go to dashboard"
+          onClick={() => {
+            setCurrentBank("");
+            router.push("/dashboard");
+          }}
+          className="inline-flex cursor-pointer rounded transition-opacity hover:opacity-80"
+        >
           <Image
             src="/logo.png"
             alt="Atulya"
@@ -401,7 +410,7 @@ function BankSelectorInner() {
             className="h-10 w-auto"
             unoptimized
           />
-        </Link>
+        </button>
 
         {/* Separator */}
         <div className="h-8 w-px bg-border" />
@@ -503,6 +512,12 @@ function BankSelectorInner() {
 
         {/* Spacer */}
         <div className="flex-1" />
+
+        {/* Admin Panel Button */}
+        <AdminButton />
+
+        {/* Separator */}
+        <div className="h-8 w-px bg-border" />
 
         {/* GitHub Link */}
         <a
@@ -1132,7 +1147,11 @@ export function BankSelector() {
       fallback={
         <div className="bg-card text-card-foreground px-5 py-3 border-b-4 border-primary-gradient">
           <div className="flex items-center gap-4 text-sm">
-            <Link href="/dashboard" aria-label="Go to dashboard" className="inline-flex">
+            <Link
+              href="/dashboard"
+              aria-label="Go to dashboard"
+              className="inline-flex cursor-pointer rounded transition-opacity hover:opacity-80"
+            >
               <Image
                 src="/logo.png"
                 alt="Atulya"

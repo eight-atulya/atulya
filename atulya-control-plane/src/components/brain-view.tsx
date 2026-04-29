@@ -9,9 +9,44 @@ import { useFeatures } from "@/lib/features-context";
 import { client } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Line,
+  ResponsiveContainer,
+  Tooltip,
+  type TooltipContentProps,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type LearningType = "auto" | "distilled" | "structured" | "raw_mirror";
 const WEEKDAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+const C_AXIS = "var(--muted-foreground)";
+const C_GRID = "var(--border)";
+
+function EwmaTooltip({ active, payload, label }: Partial<TooltipContentProps<number, string>>) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur-sm px-3 py-2 shadow-md min-w-[8rem]">
+      <div className="text-[11px] font-medium text-foreground mb-1.5">Step {label}</div>
+      {payload.map((p, i) => (
+        <div key={i} className="flex items-center gap-2 text-[11px]">
+          <span
+            className="w-2 h-2 rounded-[2px]"
+            style={{ backgroundColor: p.color ?? (p as any).stroke }}
+          />
+          <span className="text-muted-foreground">{p.name}</span>
+          <span className="ml-auto pl-3 font-semibold tabular-nums text-foreground">
+            {typeof p.value === "number" ? `${(p.value * 100).toFixed(1)}%` : "—"}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export function BrainView() {
   const { currentBank } = useBank();
@@ -137,58 +172,6 @@ export function BrainView() {
       latest,
       delta,
       direction: delta > 0.01 ? "rising" : delta < -0.01 ? "falling" : "steady",
-    };
-  }, [influence?.trend]);
-  const ewmaChart = useMemo(() => {
-    const series = (influence?.trend ?? [])
-      .map((point, index) => ({
-        x: point.index ?? index,
-        y: Number(point.ewma),
-      }))
-      .filter((point) => Number.isFinite(point.y));
-    if (series.length < 2) return null;
-
-    const width = 640;
-    const height = 220;
-    const left = 52;
-    const right = 18;
-    const top = 16;
-    const bottom = 32;
-    const plotWidth = width - left - right;
-    const plotHeight = height - top - bottom;
-    const ys = series.map((point) => point.y);
-    const rawMin = Math.min(...ys);
-    const rawMax = Math.max(...ys);
-    const span = Math.max(0.02, rawMax - rawMin);
-    const minY = rawMin - span * 0.12;
-    const maxY = rawMax + span * 0.12;
-    const scaleX = (index: number) => left + (index / Math.max(1, series.length - 1)) * plotWidth;
-    const scaleY = (value: number) =>
-      top + (1 - (value - minY) / Math.max(1e-6, maxY - minY)) * plotHeight;
-    const points = series.map((point, index) => ({
-      px: scaleX(index),
-      py: scaleY(point.y),
-      value: point.y,
-    }));
-    const linePath = points
-      .map(
-        (point, index) => `${index === 0 ? "M" : "L"} ${point.px.toFixed(2)} ${point.py.toFixed(2)}`
-      )
-      .join(" ");
-    const areaPath = `${linePath} L ${points[points.length - 1].px.toFixed(2)} ${(top + plotHeight).toFixed(2)} L ${points[0].px.toFixed(2)} ${(top + plotHeight).toFixed(2)} Z`;
-    const yTicks = [maxY, (maxY + minY) / 2, minY];
-    return {
-      width,
-      height,
-      left,
-      right,
-      top,
-      bottom,
-      plotHeight,
-      points,
-      linePath,
-      areaPath,
-      yTicks,
     };
   }, [influence?.trend]);
 
@@ -508,106 +491,92 @@ export function BrainView() {
                       Smoothed signal line to show direction without noisy spikes.
                     </p>
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {trendStats.direction === "rising"
-                      ? "rising"
-                      : trendStats.direction === "falling"
-                        ? "falling"
-                        : "steady"}
-                    {trendStats.latest !== null
-                      ? ` · now ${Math.round(trendStats.latest * 100)}%`
-                      : ""}
-                    {trendStats.delta !== null
-                      ? ` · ${trendStats.delta >= 0 ? "+" : ""}${Math.round(trendStats.delta * 100)} pts`
-                      : ""}
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <span
+                      className="font-medium"
+                      style={{
+                        color:
+                          trendStats.direction === "rising"
+                            ? "#10b981"
+                            : trendStats.direction === "falling"
+                              ? "#ef4444"
+                              : "#6b7280",
+                      }}
+                    >
+                      {trendStats.direction}
+                    </span>
+                    {trendStats.latest !== null && (
+                      <span className="text-muted-foreground">
+                        · now {Math.round(trendStats.latest * 100)}%
+                      </span>
+                    )}
+                    {trendStats.delta !== null && (
+                      <span style={{ color: trendStats.delta >= 0 ? "#10b981" : "#ef4444" }}>
+                        · {trendStats.delta >= 0 ? "+" : ""}
+                        {Math.round(trendStats.delta * 100)} pts
+                      </span>
+                    )}
                   </div>
                 </div>
-                {ewmaChart ? (
-                  <svg
-                    viewBox={`0 0 ${ewmaChart.width} ${ewmaChart.height}`}
-                    className="h-64 w-full rounded-md border border-border/60 bg-background/60"
-                  >
-                    <defs>
-                      <linearGradient id="ewmaFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="currentColor" stopOpacity="0.35" />
-                        <stop offset="100%" stopColor="currentColor" stopOpacity="0.03" />
-                      </linearGradient>
-                    </defs>
 
-                    {ewmaChart.yTicks.map((tickValue, idx) => {
-                      const y =
-                        ewmaChart.top +
-                        (idx / Math.max(1, ewmaChart.yTicks.length - 1)) * ewmaChart.plotHeight;
-                      return (
-                        <g key={`y-tick-${idx}`}>
-                          <line
-                            x1={ewmaChart.left}
-                            y1={y}
-                            x2={ewmaChart.width - ewmaChart.right}
-                            y2={y}
-                            stroke="currentColor"
-                            opacity={0.12}
-                          />
-                          <text
-                            x={ewmaChart.left - 8}
-                            y={y + 4}
-                            textAnchor="end"
-                            className="fill-muted-foreground text-[10px]"
-                          >
-                            {Math.round(tickValue * 100)}%
-                          </text>
-                        </g>
-                      );
-                    })}
-
-                    <path d={ewmaChart.areaPath} fill="url(#ewmaFill)" />
-                    <path
-                      d={ewmaChart.linePath}
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    />
-
-                    {ewmaChart.points.map((point, index) => (
-                      <circle
-                        key={`ewma-point-${index}`}
-                        cx={point.px}
-                        cy={point.py}
-                        r={index === ewmaChart.points.length - 1 ? 4.5 : 2.2}
-                        fill="currentColor"
-                        opacity={index === ewmaChart.points.length - 1 ? 1 : 0.55}
-                      />
-                    ))}
-
-                    <text
-                      x={ewmaChart.left}
-                      y={ewmaChart.height - 10}
-                      className="fill-muted-foreground text-[10px]"
-                    >
-                      Oldest
-                    </text>
-                    <text
-                      x={ewmaChart.width / 2}
-                      y={ewmaChart.height - 10}
-                      textAnchor="middle"
-                      className="fill-muted-foreground text-[10px]"
-                    >
-                      Mid-window
-                    </text>
-                    <text
-                      x={ewmaChart.width - ewmaChart.right}
-                      y={ewmaChart.height - 10}
-                      textAnchor="end"
-                      className="fill-muted-foreground text-[10px]"
-                    >
-                      Latest
-                    </text>
-                  </svg>
+                {(influence?.trend ?? []).length >= 2 ? (
+                  <div className="h-56 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart
+                        data={(influence?.trend ?? []).map((p, i) => ({
+                          i: p.index ?? i,
+                          ewma: Number(p.ewma),
+                        }))}
+                        margin={{ top: 8, right: 12, bottom: 4, left: 4 }}
+                      >
+                        <defs>
+                          <linearGradient id="brainEwmaGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.25} />
+                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0.02} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid stroke={C_GRID} strokeDasharray="3 3" strokeOpacity={0.4} />
+                        <XAxis
+                          dataKey="i"
+                          tick={{ fill: C_AXIS, fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={{ stroke: C_GRID }}
+                          label={{
+                            value: "Step",
+                            position: "insideBottomRight",
+                            offset: -4,
+                            fill: C_AXIS,
+                            fontSize: 10,
+                          }}
+                        />
+                        <YAxis
+                          tick={{ fill: C_AXIS, fontSize: 10 }}
+                          tickLine={false}
+                          axisLine={false}
+                          width={42}
+                          tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
+                        />
+                        <Tooltip content={<EwmaTooltip />} cursor={{ stroke: C_GRID }} />
+                        <Area
+                          type="monotone"
+                          dataKey="ewma"
+                          stroke="#f8fafc"
+                          strokeWidth={2.5}
+                          fill="url(#brainEwmaGrad)"
+                          dot={false}
+                          activeDot={{ r: 4, fill: "#f8fafc", strokeWidth: 0 }}
+                          name="EWMA"
+                          isAnimationActive={false}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
                 ) : (
-                  <div className="flex h-64 w-full items-center justify-center rounded-md border border-dashed border-border/60 bg-background/40 text-xs text-muted-foreground">
+                  <div className="flex h-56 w-full items-center justify-center rounded-md border border-dashed border-border/60 bg-background/40 text-xs text-muted-foreground">
                     Not enough trend points yet to plot EWMA meaningfully.
                   </div>
                 )}
+
                 <div className="mt-3 rounded-md border border-border bg-background/70 px-3 py-2 text-xs text-muted-foreground">
                   <span className="font-medium text-foreground">How to read:</span> Upward slope
                   means influence momentum is increasing, flat means stable, downward means cooling

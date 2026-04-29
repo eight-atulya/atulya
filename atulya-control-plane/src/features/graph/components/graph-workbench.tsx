@@ -87,6 +87,8 @@ export interface WorkbenchGraphNode {
   timestampLabel?: string | null;
   reason?: string | null;
   accentColor?: string | null;
+  conviction?: number | null;
+  semanticChangeMagnitude?: number | null;
   width: number;
   height: number;
   priority: number;
@@ -439,14 +441,22 @@ const StateNodeCard = memo(function StateNodeCard({ data }: NodeProps<Node<Workb
               {formatMetric("Signal", data.payload.signalScore)}
             </span>
           ) : null}
+          {typeof data.payload.conviction === "number" && data.payload.conviction < 0.65 ? (
+            // Only surface conviction when drifting/shifting (< 0.65) — stable nodes don't need it
+            <span className="rounded-full border px-2.5 py-1 font-semibold" style={CHIP_STYLE}>
+              {`Conviction ${Math.round(data.payload.conviction * 100)}%`}
+            </span>
+          ) : null}
+          {typeof data.payload.semanticChangeMagnitude === "number" &&
+          data.payload.semanticChangeMagnitude >= 0.15 ? (
+            // Only surface magnitude when it's a role-shift or major transition (≥ 0.15)
+            <span className="rounded-full border px-2.5 py-1 font-semibold" style={CHIP_STYLE}>
+              {`Δ ${Math.round(data.payload.semanticChangeMagnitude * 100)}%`}
+            </span>
+          ) : null}
           {typeof data.payload.evidenceCount === "number" ? (
             <span className="rounded-full border px-2.5 py-1 font-medium" style={CHIP_STYLE}>
               {data.payload.evidenceCount} evidence
-            </span>
-          ) : null}
-          {data.payload.meta ? (
-            <span className="rounded-full border px-2.5 py-1 font-medium" style={CHIP_STYLE}>
-              {truncate(data.payload.meta, 30)}
             </span>
           ) : null}
         </div>
@@ -663,10 +673,11 @@ const AnimatedGraphEdge = memo(function AnimatedGraphEdge({
       {payload?.label ? (
         <EdgeLabelRenderer>
           <div
-            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] shadow-sm"
+            className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full border px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] shadow-sm opacity-0 hover:opacity-100 transition-opacity duration-150"
             style={{
               ...PANEL_STYLE,
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+              pointerEvents: "none",
             }}
           >
             {truncate(relationLabel(payload.label), 24)}
@@ -1031,12 +1042,30 @@ function GraphWorkbenchInner({
   const selectedSet = useMemo(() => new Set(selectedIds.filter(Boolean)), [selectedIds]);
   const highlightedNodeSet = useMemo(() => new Set(highlightedNodeIds), [highlightedNodeIds]);
   const highlightedEdgeSet = useMemo(() => new Set(highlightedEdgeIds), [highlightedEdgeIds]);
+  // Keyed on node IDs only — content/size changes don't trigger re-layout
+  const nodeIdsKey = useMemo(
+    () =>
+      nodes
+        .map((n) => n.id)
+        .sort()
+        .join("|"),
+    [nodes]
+  );
+  const edgeIdsKey = useMemo(
+    () =>
+      edges
+        .map((e) => e.id)
+        .sort()
+        .join("|"),
+    [edges]
+  );
   const selectedKey = useMemo(() => selectedIds.filter(Boolean).join("|"), [selectedIds]);
   const highlightedNodeKey = useMemo(() => highlightedNodeIds.join("|"), [highlightedNodeIds]);
   const highlightedEdgeKey = useMemo(() => highlightedEdgeIds.join("|"), [highlightedEdgeIds]);
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [zoomLabel, setZoomLabel] = useState(100);
   const [measuredNodeSizes, setMeasuredNodeSizes] = useState<Record<string, MeasuredNodeSize>>({});
+  const measuredNodeSizesRef = useRef<Record<string, MeasuredNodeSize>>({});
   const [layoutSettled, setLayoutSettled] = useState(false);
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const emptyPinsFallback = useMemo(() => ({}), []);
@@ -1119,6 +1148,9 @@ function GraphWorkbenchInner({
           next[id] = measured;
           changed = true;
         }
+        if (changed) {
+          measuredNodeSizesRef.current = next;
+        }
         return changed ? next : current;
       });
     });
@@ -1182,8 +1214,8 @@ function GraphWorkbenchInner({
         layoutMode,
         nodes: nodes.map((node) => ({
           id: node.id,
-          width: measuredNodeSizes[node.id]?.width ?? node.width,
-          height: measuredNodeSizes[node.id]?.height ?? node.height,
+          width: measuredNodeSizesRef.current[node.id]?.width ?? node.width,
+          height: measuredNodeSizesRef.current[node.id]?.height ?? node.height,
           priority: node.priority,
           pinnedPosition: pinnedNodes[node.id] ?? null,
         })),
@@ -1196,6 +1228,17 @@ function GraphWorkbenchInner({
       });
 
       if (!active) return;
+
+      // Auto-persist all computed positions on first settle — prevents jump on next data refresh
+      const newPins: Record<string, { x: number; y: number }> = {};
+      nodes.forEach((node) => {
+        if (!pinnedNodes[node.id] && layout.positions[node.id]) {
+          newPins[node.id] = layout.positions[node.id];
+        }
+      });
+      if (Object.keys(newPins).length > 0) {
+        setPinnedNodes((current) => ({ ...current, ...newPins }));
+      }
 
       const nextNodes: Node<WorkbenchNodeData>[] = nodes.map((node) => {
         const position = pinnedNodes[node.id] ?? layout.positions[node.id] ?? { x: 0, y: 0 };
@@ -1216,7 +1259,7 @@ function GraphWorkbenchInner({
             onMeasured: handleNodeMeasured,
           },
           style: {
-            width: measuredNodeSizes[node.id]?.width ?? node.width,
+            width: measuredNodeSizesRef.current[node.id]?.width ?? node.width,
           },
         };
       });
@@ -1260,15 +1303,18 @@ function GraphWorkbenchInner({
       window.clearTimeout(timeoutId);
     };
   }, [
-    edges,
+    // Keyed on IDs only — prevents re-layout from content/size changes
+    nodeIdsKey,
+    edgeIdsKey,
     layoutMode,
     nodes,
+    edges,
     renderMode,
     pinnedNodes,
     pinsHydrated,
-    measuredNodeSizes,
     surfaceMode,
     viewportHydrated,
+    setPinnedNodes,
   ]);
 
   useEffect(() => {
@@ -1489,9 +1535,6 @@ function GraphWorkbenchInner({
               <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
                 {badgeLabel}
               </div>
-              <div className="text-sm text-muted-foreground lg:truncate">
-                Drag cards, scroll to zoom, click empty space to clear.
-              </div>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground lg:justify-end">
@@ -1501,6 +1544,28 @@ function GraphWorkbenchInner({
             <div className="rounded-full border px-3 py-1.5 text-sm font-medium" style={CHIP_STYLE}>
               {edges.length} links
             </div>
+            <button
+              onClick={() => {
+                if (!storageKey || typeof window === "undefined") return;
+                window.localStorage.removeItem(
+                  `${storageKey}:${surfaceMode}:pins:${STORAGE_VERSION}`
+                );
+                window.localStorage.removeItem(
+                  `${storageKey}:${surfaceMode}:viewport:inline:${STORAGE_VERSION}`
+                );
+                window.localStorage.removeItem(
+                  `${storageKey}:${surfaceMode}:viewport:fullscreen:${STORAGE_VERSION}`
+                );
+                initializedViewportRef.current = false;
+                setPinnedNodes({});
+                setInlineViewport({ x: 0, y: 0, zoom: 1 });
+                setFullscreenViewport({ x: 0, y: 0, zoom: 1 });
+              }}
+              title="Reset all node positions"
+              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 font-medium text-foreground/80 hover:bg-accent"
+            >
+              Reset
+            </button>
             <button
               onClick={() => {
                 if (renderMode === "overview") {
@@ -1574,8 +1639,7 @@ function GraphWorkbenchInner({
                 edgeTypes={edgeTypesRef.current}
                 nodesDraggable
                 nodesFocusable
-                fitView
-                minZoom={0.45}
+                minZoom={0.28}
                 maxZoom={1.7}
                 panOnDrag
                 proOptions={{ hideAttribution: true }}

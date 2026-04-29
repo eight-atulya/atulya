@@ -5415,6 +5415,19 @@ class MemoryEngine(MemoryEngineInterface):
 
         logger.info(f"Connecting to PostgreSQL at {mask_network_location(self.db_url)}")
 
+        # Needs review later
+        async def _init_conn(conn: asyncpg.Connection) -> None:
+            # Register pgvector's `vector` type as a plain text codec so that
+            # `embedding::text` columns are returned as Python str and not as
+            # raw bytes / None when the type OID is unknown to asyncpg.
+            await conn.set_type_codec(
+                "vector",
+                encoder=str,
+                decoder=str,
+                schema="public",
+                format="text",
+            )
+
         # Create connection pool
         # For read-heavy workloads with many parallel think/search operations,
         # we need a larger pool. Read operations don't need strong isolation.
@@ -5425,6 +5438,7 @@ class MemoryEngine(MemoryEngineInterface):
             command_timeout=self._db_command_timeout,
             statement_cache_size=0,  # Disable prepared statement cache
             timeout=self._db_acquire_timeout,  # Connection acquisition timeout (seconds)
+            init=_init_conn,
         )
 
         # Initialize entity resolver with pool and configured lookup strategy
@@ -8629,7 +8643,7 @@ class MemoryEngine(MemoryEngineInterface):
             f"""
             SELECT id, text, fact_type, context, occurred_start, mentioned_at, created_at,
                    proof_count, access_count, tags, source_memory_ids, chunk_id,
-                   embedding::text AS embedding_text
+                   CAST(embedding AS text) AS embedding_text
             FROM {fq_table("memory_units")}
             {where_clause}
             ORDER BY COALESCE(occurred_start, mentioned_at, created_at) DESC NULLS LAST, created_at DESC
@@ -8659,12 +8673,20 @@ class MemoryEngine(MemoryEngineInterface):
 
         units: list[GraphEvidenceUnit] = []
         for row in rows:
+            _emb = parse_embedding_text(row["embedding_text"])
+            if _emb is None:
+                logger.debug(
+                    "graph_intelligence.load: embedding=None for unit %s (raw type=%s len=%s)",
+                    row["id"],
+                    type(row["embedding_text"]).__name__,
+                    len(row["embedding_text"]) if row["embedding_text"] else 0,
+                )
             units.append(
                 GraphEvidenceUnit(
                     id=str(row["id"]),
                     text=row["text"],
                     fact_type=row["fact_type"],
-                    embedding=parse_embedding_text(row["embedding_text"]),
+                    embedding=_emb,
                     context=row["context"],
                     occurred_start=row["occurred_start"],
                     mentioned_at=row["mentioned_at"],
@@ -8733,6 +8755,9 @@ class MemoryEngine(MemoryEngineInterface):
                 tags_match=tags_match,
                 window_days=window_days,
             )
+
+        with_emb = sum(1 for u in units if u.embedding is not None)
+        logger.info("graph_intelligence.build: units=%d with_embedding=%d bank=%s", len(units), with_emb, bank_id)
 
         intelligence = build_graph_intelligence(
             units,

@@ -28,6 +28,7 @@ from atulya_api.engine.reflect.delta_ops import (
     ReplaceSectionBlocksOp,
     apply_operations,
 )
+from atulya_api.engine.entity_trajectory.bank_intelligence import _parse_delta_text
 from atulya_api.engine.reflect.structured_doc import (
     BulletListBlock,
     CodeBlock,
@@ -476,3 +477,45 @@ class TestDeltaOperationListJSON:
                 '{"operations": [{"op": "remove_section", '
                 '"section_id": "x", "bogus": 1}]}'
             )
+
+
+# ----- _parse_delta_text: LLM markdown-fence stripping -----------------------
+# Regression guard for the bug where ```json-fenced LLM output caused
+# "Invalid JSON: expected value at line 1 column 1" in the delta fallback path.
+
+
+class TestParseDeltaText:
+    _BARE_JSON = '{"operations": [{"op": "remove_section", "section_id": "s1"}]}'
+
+    def test_bare_json_string(self):
+        result = _parse_delta_text(self._BARE_JSON)
+        assert isinstance(result, DeltaOperationList)
+        assert len(result.operations) == 1
+
+    def test_markdown_fenced_json(self):
+        """Root-cause regression: LLM wraps output in ```json ... ```."""
+        fenced = f"```json\n{self._BARE_JSON}\n```"
+        result = _parse_delta_text(fenced)
+        assert isinstance(result, DeltaOperationList)
+
+    def test_plain_fenced_json(self):
+        fenced = f"```\n{self._BARE_JSON}\n```"
+        result = _parse_delta_text(fenced)
+        assert isinstance(result, DeltaOperationList)
+
+    def test_already_parsed_passthrough(self):
+        op_list = DeltaOperationList.model_validate_json(self._BARE_JSON)
+        assert _parse_delta_text(op_list) is op_list
+
+    def test_dict_input(self):
+        import json
+        result = _parse_delta_text(json.loads(self._BARE_JSON))
+        assert isinstance(result, DeltaOperationList)
+
+    def test_invalid_type_raises(self):
+        with pytest.raises(TypeError, match="delta LLM returned"):
+            _parse_delta_text(42)
+
+    def test_malformed_json_raises(self):
+        with pytest.raises(Exception):
+            _parse_delta_text("not json at all")

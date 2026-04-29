@@ -1,15 +1,231 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { LayoutPanelTop, PanelTopOpen } from "lucide-react";
 import { client } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  ReferenceDot,
+  ResponsiveContainer,
+  Tooltip,
+  type TooltipContentProps,
+  XAxis,
+  YAxis,
+} from "recharts";
+import dynamic from "next/dynamic";
 
 const Plot = dynamic(() => import("react-plotly.js"), { ssr: false }) as any;
+
+// ─── Design tokens (match bank-stats-view palette) ────────────────────────────
+const C = {
+  raw: "#6366f1", // indigo — raw signal
+  ewma: "#f8fafc", // near-white — smooth EWMA line
+  band: "#6366f1", // same as raw for confidence band fill
+  accent: "#8b5cf6", // purple — bars
+  axis: "var(--muted-foreground)",
+  grid: "var(--border)",
+};
+
+type TrendPoint = { index: number; raw: number; ewma: number; lower: number; upper: number };
+
+// Tooltip shared between charts
+type TTP = Partial<TooltipContentProps<number, string>>;
+function ChartTooltip({ active, payload, label }: TTP) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="rounded-lg border border-border/60 bg-popover/95 backdrop-blur-sm px-3 py-2 shadow-md min-w-[9rem]">
+      {label != null && (
+        <div className="text-[11px] font-medium text-foreground mb-1.5">Step {label}</div>
+      )}
+      <div className="space-y-1">
+        {payload.map((p, i) => (
+          <div key={i} className="flex items-center gap-2 text-[11px]">
+            <span
+              className="w-2 h-2 rounded-[2px]"
+              style={{ backgroundColor: p.color ?? p.stroke }}
+            />
+            <span className="text-muted-foreground">{p.name}</span>
+            <span className="ml-auto pl-3 font-semibold tabular-nums text-foreground">
+              {typeof p.value === "number" ? p.value.toFixed(3) : "—"}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function EwmaTrendChart({
+  trend,
+  anomalies,
+}: {
+  trend: TrendPoint[];
+  anomalies: Array<{ index: number; score: number; zscore: number; iqr?: boolean }>;
+}) {
+  // Flatten upper/lower into same rows for AreaChart fill trick
+  const chartData = trend.map((p) => ({
+    i: p.index,
+    raw: p.raw,
+    ewma: p.ewma,
+    bandLow: p.lower,
+    // recharts area fill: we need bandHigh relative to bandLow
+    bandRange: Math.max(0, p.upper - p.lower),
+    anomaly: anomalies.find((a) => a.index === p.index) ? p.raw : undefined,
+  }));
+
+  const yMin = Math.min(...trend.map((p) => p.lower));
+  const yMax = Math.max(...trend.map((p) => p.upper));
+  const yPad = (yMax - yMin) * 0.08;
+
+  // Summary stats
+  const first = trend[0]?.ewma ?? 0;
+  const last = trend[trend.length - 1]?.ewma ?? 0;
+  const delta = last - first;
+  const direction = delta > 0.01 * first ? "rising" : delta < -0.01 * first ? "falling" : "stable";
+  const dirColor =
+    direction === "rising" ? "#10b981" : direction === "falling" ? "#ef4444" : "#6b7280";
+
+  return (
+    <div className="space-y-3">
+      {/* Header row */}
+      <div className="flex items-baseline justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-foreground">EWMA Trend</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Smoothed signal line to show direction without noisy spikes.
+          </p>
+        </div>
+        <div className="text-right shrink-0">
+          <span className="text-xs font-medium" style={{ color: dirColor }}>
+            {direction}
+          </span>
+          <span className="text-xs text-muted-foreground ml-2">·</span>
+          <span className="text-xs text-muted-foreground ml-2">now {(last * 100).toFixed(0)}%</span>
+          <span className="text-xs text-muted-foreground ml-2">·</span>
+          <span className="text-xs tabular-nums" style={{ color: dirColor }}>
+            {delta >= 0 ? "+" : ""}
+            {(delta * 100).toFixed(0)} pts
+          </span>
+        </div>
+      </div>
+
+      {/* Chart */}
+      <div className="h-64 w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={chartData} margin={{ top: 8, right: 12, bottom: 4, left: 4 }}>
+            <defs>
+              <linearGradient id="ewmaGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={C.raw} stopOpacity={0.18} />
+                <stop offset="95%" stopColor={C.raw} stopOpacity={0.02} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid stroke={C.grid} strokeDasharray="3 3" strokeOpacity={0.4} />
+            <XAxis
+              dataKey="i"
+              tick={{ fill: C.axis, fontSize: 10 }}
+              tickLine={false}
+              axisLine={{ stroke: C.grid }}
+              label={{
+                value: "Step",
+                position: "insideBottomRight",
+                offset: -4,
+                fill: C.axis,
+                fontSize: 10,
+              }}
+            />
+            <YAxis
+              domain={[yMin - yPad, yMax + yPad]}
+              tick={{ fill: C.axis, fontSize: 10 }}
+              tickLine={false}
+              axisLine={false}
+              width={42}
+              tickFormatter={(v) => `${(v * 100).toFixed(0)}%`}
+            />
+            <Tooltip content={<ChartTooltip />} cursor={{ stroke: C.grid }} />
+
+            {/* Confidence band — stacked area trick */}
+            <Area
+              dataKey="bandLow"
+              stroke="none"
+              fill="none"
+              legendType="none"
+              name="band floor"
+              isAnimationActive={false}
+            />
+            <Area
+              dataKey="bandRange"
+              stackId="band"
+              stroke="none"
+              fill={C.band}
+              fillOpacity={0.1}
+              name="Confidence band"
+              isAnimationActive={false}
+            />
+
+            {/* Raw signal */}
+            <Area
+              dataKey="raw"
+              stroke={C.raw}
+              strokeWidth={1.5}
+              fill="url(#ewmaGrad)"
+              dot={false}
+              name="Raw"
+              strokeOpacity={0.7}
+              isAnimationActive={false}
+            />
+
+            {/* EWMA smooth line */}
+            <Line
+              type="monotone"
+              dataKey="ewma"
+              stroke={C.ewma}
+              strokeWidth={2.5}
+              dot={false}
+              activeDot={{ r: 4, fill: C.ewma, strokeWidth: 0 }}
+              name="EWMA"
+              isAnimationActive={false}
+            />
+
+            {/* Anomaly markers */}
+            {anomalies.map((a) => (
+              <ReferenceDot
+                key={a.index}
+                x={a.index}
+                y={chartData.find((d) => d.i === a.index)?.raw ?? 0}
+                r={5}
+                fill="#ef4444"
+                stroke="var(--background)"
+                strokeWidth={1.5}
+              />
+            ))}
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+
+      <p className="text-[11px] text-muted-foreground">
+        <span className="font-medium text-foreground/80">How to read:</span> Upward slope means
+        influence momentum is increasing, flat means stable, downward means cooling down.
+        {anomalies.length > 0 && (
+          <span className="ml-2 text-[#ef4444]">
+            ● {anomalies.length} anomal{anomalies.length === 1 ? "y" : "ies"} flagged
+            {anomalies.some((a) => a.iqr) ? " (z-score + IQR)" : " (z-score)"}
+          </span>
+        )}
+      </p>
+    </div>
+  );
+}
 
 type BrainInfluencePayload = {
   entity_type: string;
@@ -268,56 +484,8 @@ export default function BrainIntelligencePage() {
       </Card>
 
       <Card>
-        <CardContent className="p-4">
-          <h2 className="font-semibold mb-2">Influence Trend (raw vs EWMA)</h2>
-          <Plot
-            data={[
-              {
-                x: (data?.trend ?? []).map((p) => p.index),
-                y: (data?.trend ?? []).map((p) => p.raw),
-                type: "scatter",
-                mode: "lines+markers",
-                name: "raw",
-              },
-              {
-                x: (data?.trend ?? []).map((p) => p.index),
-                y: (data?.trend ?? []).map((p) => p.ewma),
-                type: "scatter",
-                mode: "lines",
-                name: "ewma",
-              },
-              {
-                x: (data?.trend ?? []).map((p) => p.index),
-                y: (data?.trend ?? []).map((p) => p.upper),
-                type: "scatter",
-                mode: "lines",
-                line: { width: 0 },
-                hoverinfo: "skip",
-                showlegend: false,
-              },
-              {
-                x: (data?.trend ?? []).map((p) => p.index),
-                y: (data?.trend ?? []).map((p) => p.lower),
-                type: "scatter",
-                mode: "lines",
-                fill: "tonexty",
-                fillcolor: "rgba(99,102,241,0.15)",
-                line: { width: 0 },
-                name: "confidence band",
-              },
-            ]}
-            layout={{ autosize: true, margin: { l: 32, r: 16, t: 16, b: 28 }, height: 320 }}
-            style={{ width: "100%" }}
-            config={{ displayModeBar: false, responsive: true }}
-          />
-          <p className="text-xs text-muted-foreground">
-            EWMA stabilizes noisy retrieval bursts and surfaces persistent directionality in
-            influence.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            anomaly flags: {data?.anomalies?.length ?? 0} (
-            {data?.anomalies?.some((a) => a.iqr) ? "z-score + IQR" : "z-score"})
-          </p>
+        <CardContent className="p-5">
+          <EwmaTrendChart trend={data?.trend ?? []} anomalies={data?.anomalies ?? []} />
         </CardContent>
       </Card>
 

@@ -585,18 +585,44 @@ def _parse_structured_document(raw: Any, *, context: dict[str, Any]) -> Structur
     return _default_document(context)
 
 
+def _strip_md_fences(text: str) -> str:
+    """Remove markdown code fences (```[lang]...```) from LLM output."""
+    stripped = text.strip()
+    if stripped.startswith("```"):
+        stripped = stripped.split("\n", 1)[1] if "\n" in stripped else stripped[3:]
+        if stripped.endswith("```"):
+            stripped = stripped[:-3]
+        stripped = stripped.strip()
+    return stripped
+
+
 def _parse_delta_text(raw: Any) -> DeltaOperationList:
+    """
+    Parse LLM output into DeltaOperationList.
+
+    Execution path (in order):
+      1. Already the right type  → return as-is.
+      2. dict                    → validate directly.
+      3. str                     → strip fences, then try JSON parse → validate.
+                                   If JSON parse fails, let the error surface
+                                   (do NOT re-feed fenced text to model_validate_json).
+
+    """
     if isinstance(raw, DeltaOperationList):
         return raw
     if isinstance(raw, dict):
         return DeltaOperationList.model_validate(raw)
     if not isinstance(raw, str):
         raise TypeError(f"delta LLM returned {type(raw).__name__}")
+
+    # Strip fences once — both parse paths must use the same cleaned text.
+    clean = _strip_md_fences(raw)
     try:
-        parsed = parse_llm_json(raw)
+        parsed = json.loads(clean)
         return DeltaOperationList.model_validate(parsed)
-    except Exception:
-        return DeltaOperationList.model_validate_json(raw)
+    except json.JSONDecodeError:
+        # Last resort: pydantic's own JSON parser (handles minor whitespace quirks).
+        return DeltaOperationList.model_validate_json(clean)
 
 
 def _snapshot_hash(context: dict[str, Any]) -> str:
