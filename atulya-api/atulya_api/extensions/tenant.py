@@ -1,11 +1,22 @@
-"""Tenant Extension for multi-tenancy and API key authentication."""
+"""Tenant Extension for multi-tenancy and API key authentication.
+
+"""
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Literal
 
 from atulya_api.extensions.base import Extension
 from atulya_api.models import RequestContext
+
+# ---------------------------------------------------------------------------
+# Role vocabulary — single source of truth for all auth checks.
+# Extend here if new roles are needed; consumers use TenantContext.is_superuser
+# or TenantContext.role directly — no scattered string comparisons.
+# ---------------------------------------------------------------------------
+Role = Literal["superuser", "admin", "user"]
+
+ROLES_ORDERED: list[Role] = ["superuser", "admin", "user"]  # descending privilege
 
 
 class AuthenticationError(Exception):
@@ -22,12 +33,54 @@ class TenantContext:
     """
     Tenant context returned by authentication.
 
-    Contains the PostgreSQL schema name for tenant isolation.
-    All database queries will use fully-qualified table names
-    with this schema (e.g., schema_name.memory_units).
+    Contains the PostgreSQL schema name for tenant isolation and the resolved
+    role/permission envelope for RBAC + ABAC enforcement.
+
+    All database queries use fully-qualified table names with schema_name
+    (e.g., schema_name.memory_units).
+
+    Fields
+    ------
+    schema_name:
+        PostgreSQL schema for this tenant.  Required.
+    role:
+        Resolved role string: "superuser" | "admin" | "user".
+        Default is "user" — safe for all existing callers that only set schema_name.
+    allowed_bank_ids:
+        None  → unrestricted (can access every bank in schema).
+        list  → ABAC allowlist; access denied for any bank_id not in the list.
+    is_superuser:
+        Derived from role == "superuser".  Set automatically in __post_init__.
+        Never set this field directly — set role instead.
     """
 
     schema_name: str
+    role: Role = "user"
+    allowed_bank_ids: list[str] | None = None
+    # Derived field — never pass in constructor; always computed from role.
+    is_superuser: bool = field(init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "is_superuser", self.role == "superuser")
+
+    def has_role(self, minimum_role: Role) -> bool:
+        """Return True if this context's role is at least as privileged as minimum_role."""
+        required_idx = ROLES_ORDERED.index(minimum_role)
+        actual_idx = ROLES_ORDERED.index(self.role) if self.role in ROLES_ORDERED else len(ROLES_ORDERED)
+        return actual_idx <= required_idx
+
+    def can_access_bank(self, bank_id: str) -> bool:
+        """
+        ABAC check: can this context access the given bank_id?
+
+        Superusers bypass the allowlist entirely.
+        All other roles respect allowed_bank_ids (None = unrestricted).
+        """
+        if self.is_superuser:
+            return True
+        if self.allowed_bank_ids is None:
+            return True
+        return bank_id in self.allowed_bank_ids
 
 
 @dataclass

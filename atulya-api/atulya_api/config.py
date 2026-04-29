@@ -189,6 +189,7 @@ ENV_EMBEDDINGS_OPENAI_BASE_URL = "ATULYA_API_EMBEDDINGS_OPENAI_BASE_URL"
 ENV_EMBEDDINGS_COHERE_API_KEY = "ATULYA_API_EMBEDDINGS_COHERE_API_KEY"
 ENV_EMBEDDINGS_COHERE_MODEL = "ATULYA_API_EMBEDDINGS_COHERE_MODEL"
 ENV_EMBEDDINGS_COHERE_BASE_URL = "ATULYA_API_EMBEDDINGS_COHERE_BASE_URL"
+ENV_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS = "ATULYA_API_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS"
 ENV_RERANKER_COHERE_API_KEY = "ATULYA_API_RERANKER_COHERE_API_KEY"
 ENV_RERANKER_COHERE_MODEL = "ATULYA_API_RERANKER_COHERE_MODEL"
 ENV_RERANKER_COHERE_BASE_URL = "ATULYA_API_RERANKER_COHERE_BASE_URL"
@@ -347,6 +348,18 @@ ENV_WEBHOOK_SECRET = "ATULYA_API_WEBHOOK_SECRET"
 ENV_WEBHOOK_EVENT_TYPES = "ATULYA_API_WEBHOOK_EVENT_TYPES"
 ENV_WEBHOOK_DELIVERY_POLL_INTERVAL_SECONDS = "ATULYA_API_WEBHOOK_DELIVERY_POLL_INTERVAL_SECONDS"
 
+# Built-in llama.cpp / GGUF configuration (provider=llamacpp)
+ENV_LLAMACPP_MODEL_PATH = "ATULYA_API_LLAMACPP_MODEL_PATH"
+ENV_LLAMACPP_GPU_LAYERS = "ATULYA_API_LLAMACPP_GPU_LAYERS"
+ENV_LLAMACPP_CONTEXT_SIZE = "ATULYA_API_LLAMACPP_CONTEXT_SIZE"
+ENV_LLAMACPP_CHAT_FORMAT = "ATULYA_API_LLAMACPP_CHAT_FORMAT"
+ENV_LLAMACPP_NO_GRAMMAR = "ATULYA_API_LLAMACPP_NO_GRAMMAR"
+ENV_LLAMACPP_EXTRA_ARGS = "ATULYA_API_LLAMACPP_EXTRA_ARGS"
+ENV_LLAMACPP_FLASH_ATTN = "ATULYA_API_LLAMACPP_FLASH_ATTN"
+ENV_LLAMACPP_N_BATCH = "ATULYA_API_LLAMACPP_N_BATCH"
+ENV_LLAMACPP_VERBOSE = "ATULYA_API_LLAMACPP_VERBOSE"
+ENV_LLAMACPP_LORA_PATH = "ATULYA_API_LLAMACPP_LORA_PATH"
+
 # Optimization flags
 ENV_SKIP_LLM_VERIFICATION = "ATULYA_API_SKIP_LLM_VERIFICATION"
 ENV_LAZY_RERANKER = "ATULYA_API_LAZY_RERANKER"
@@ -368,6 +381,14 @@ ENV_WORKER_MAX_RETRIES = "ATULYA_API_WORKER_MAX_RETRIES"
 ENV_WORKER_HTTP_PORT = "ATULYA_API_WORKER_HTTP_PORT"
 ENV_WORKER_MAX_SLOTS = "ATULYA_API_WORKER_MAX_SLOTS"
 ENV_WORKER_CONSOLIDATION_MAX_SLOTS = "ATULYA_API_WORKER_CONSOLIDATION_MAX_SLOTS"
+
+# Admin / superuser configuration
+# ATULYA_API_ADMIN_ENABLED=true  — mount /v1/admin/* routes (default: false, safe for existing deployments)
+# ATULYA_API_SUPERUSER_KEY=<secret>  — API key that grants superuser role (required when admin enabled)
+# ATULYA_API_SUPERUSER_SCHEMA=public  — PostgreSQL schema superuser operates in
+ENV_ADMIN_ENABLED = "ATULYA_API_ADMIN_ENABLED"
+ENV_SUPERUSER_KEY = "ATULYA_API_SUPERUSER_KEY"
+ENV_SUPERUSER_SCHEMA = "ATULYA_API_SUPERUSER_SCHEMA"
 
 # Atulya brain / sub_routine configuration
 ENV_BRAIN_ENABLED = "ATULYA_API_BRAIN_ENABLED"
@@ -406,6 +427,7 @@ PROVIDER_DEFAULT_MODELS = {
     "groq": "openai/gpt-oss-120b",
     "ollama": "gemma3:12b",
     "lmstudio": "local-model",
+    "llamacpp": "gemma-4-e2b-it",
     "vertexai": "google/gemini-2.5-flash-lite",
     "openai-codex": "gpt-5.2-codex",
     "claude-code": "claude-sonnet-4-5-20250929",
@@ -429,6 +451,17 @@ DEFAULT_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY = None  # Optional, uses ADC if not set
 
 # Gemini safety settings defaults
 DEFAULT_LLM_GEMINI_SAFETY_SETTINGS = None  # None = use Gemini default safety settings
+
+# Built-in llama.cpp defaults
+DEFAULT_LLAMACPP_GPU_LAYERS = -1           # -1 = offload all layers to GPU (Metal/CUDA)
+DEFAULT_LLAMACPP_CONTEXT_SIZE = 8192
+DEFAULT_LLAMACPP_CHAT_FORMAT = None        # None = auto-detect from GGUF metadata
+DEFAULT_LLAMACPP_NO_GRAMMAR = False        # True = disable JSON grammar (faster, less reliable)
+DEFAULT_LLAMACPP_EXTRA_ARGS = None         # Space-separated extra CLI args for llama.cpp server
+DEFAULT_LLAMACPP_FLASH_ATTN = False        # Opt-in: requires CUDA/Metal; crashes on CPU-only
+DEFAULT_LLAMACPP_N_BATCH = 512             # Safe default for <8 GB VRAM; tune up if memory permits
+DEFAULT_LLAMACPP_VERBOSE = False           # Suppress model-tensor metadata noise in production logs
+# DEFAULT_LLAMACPP_LORA_PATH — no default; None means disabled
 
 DEFAULT_EMBEDDINGS_PROVIDER = "local"
 DEFAULT_EMBEDDINGS_LOCAL_MODEL = "BAAI/bge-small-en-v1.5"
@@ -575,6 +608,11 @@ DEFAULT_WORKER_HTTP_PORT = 8889  # HTTP port for worker metrics/health
 DEFAULT_WORKER_MAX_SLOTS = 10  # Total concurrent tasks per worker
 DEFAULT_WORKER_CONSOLIDATION_MAX_SLOTS = 2  # Max concurrent consolidation tasks per worker
 DEFAULT_WORKER_SUB_ROUTINE_MAX_SLOTS = 2  # Max concurrent sub_routine tasks per worker
+
+# Admin / superuser defaults
+DEFAULT_ADMIN_ENABLED = False   # Safe-by-default: admin routes disabled
+DEFAULT_SUPERUSER_KEY: str | None = None  # Must be set explicitly; no insecure fallback
+DEFAULT_SUPERUSER_SCHEMA = "public"
 
 # Atulya brain defaults
 DEFAULT_BRAIN_ENABLED = False
@@ -744,6 +782,18 @@ class AtulyaConfig:
     # Gemini safety settings (None = use Gemini defaults; list of dicts with category/threshold)
     llm_gemini_safety_settings: list | None
 
+    # Built-in llama.cpp / GGUF configuration (provider=llamacpp)
+    llamacpp_model_path: str | None    # Path to GGUF file; None = auto-download default
+    llamacpp_gpu_layers: int           # -1 = all layers on GPU, 0 = CPU only
+    llamacpp_context_size: int         # Context window size in tokens
+    llamacpp_chat_format: str | None   # Chat template (None = auto-detect from GGUF metadata)
+    llamacpp_no_grammar: bool          # Disable JSON grammar enforcement (faster, less reliable)
+    llamacpp_extra_args: str | None    # Space-separated extra CLI args for llama.cpp server
+    llamacpp_flash_attn: bool          # Flash attention — opt-in; requires CUDA/Metal
+    llamacpp_n_batch: int              # Prompt batch size; 512 is safe for <8 GB VRAM
+    llamacpp_verbose: bool             # Log model-tensor metadata (noisy; off in production)
+    llamacpp_lora_path: str | None     # Optional LoRA / fine-tuned adapter path
+
     # Per-operation LLM configuration (None = use default LLM config)
     retain_llm_provider: str | None
     retain_llm_api_key: str | None
@@ -798,6 +848,7 @@ class AtulyaConfig:
     embeddings_cohere_api_key: str | None
     embeddings_cohere_model: str
     embeddings_cohere_base_url: str | None
+    embeddings_cohere_output_dimensions: int | None  # Matryoshka truncation; requires v4.0+ and v2 API
     embeddings_litellm_api_base: str
     embeddings_litellm_api_key: str | None
     embeddings_litellm_model: str
@@ -960,6 +1011,14 @@ class AtulyaConfig:
     worker_max_slots: int
     worker_consolidation_max_slots: int
     worker_sub_routine_max_slots: int
+
+    # Admin / superuser access
+    # admin_enabled=False  → /v1/admin/* routes are not mounted (safe default).
+    # superuser_key        → raw key compared with HMAC-safe compare; never logged.
+    # superuser_schema     → schema superuser queries operate in.
+    admin_enabled: bool
+    superuser_key: str | None
+    superuser_schema: str
 
     # Atulya brain / sub_routine runtime
     brain_enabled: bool
@@ -1237,6 +1296,20 @@ class AtulyaConfig:
             or DEFAULT_LLM_VERTEXAI_SERVICE_ACCOUNT_KEY,
             # Gemini safety settings (JSON-encoded list of {category, threshold} dicts)
             llm_gemini_safety_settings=json.loads(os.getenv(ENV_LLM_GEMINI_SAFETY_SETTINGS, "null")),
+            # Built-in llama.cpp / GGUF configuration
+            llamacpp_model_path=os.getenv(ENV_LLAMACPP_MODEL_PATH) or None,
+            llamacpp_gpu_layers=int(os.getenv(ENV_LLAMACPP_GPU_LAYERS, str(DEFAULT_LLAMACPP_GPU_LAYERS))),
+            llamacpp_context_size=int(os.getenv(ENV_LLAMACPP_CONTEXT_SIZE, str(DEFAULT_LLAMACPP_CONTEXT_SIZE))),
+            llamacpp_chat_format=os.getenv(ENV_LLAMACPP_CHAT_FORMAT) or DEFAULT_LLAMACPP_CHAT_FORMAT,
+            llamacpp_no_grammar=os.getenv(ENV_LLAMACPP_NO_GRAMMAR, str(DEFAULT_LLAMACPP_NO_GRAMMAR)).lower()
+            in ("1", "true", "yes"),
+            llamacpp_extra_args=os.getenv(ENV_LLAMACPP_EXTRA_ARGS) or DEFAULT_LLAMACPP_EXTRA_ARGS,
+            llamacpp_flash_attn=os.getenv(ENV_LLAMACPP_FLASH_ATTN, str(DEFAULT_LLAMACPP_FLASH_ATTN)).lower()
+            in ("1", "true", "yes"),
+            llamacpp_n_batch=int(os.getenv(ENV_LLAMACPP_N_BATCH, str(DEFAULT_LLAMACPP_N_BATCH))),
+            llamacpp_verbose=os.getenv(ENV_LLAMACPP_VERBOSE, str(DEFAULT_LLAMACPP_VERBOSE)).lower()
+            in ("1", "true", "yes"),
+            llamacpp_lora_path=os.getenv(ENV_LLAMACPP_LORA_PATH) or None,
             # Per-operation LLM config (None = use default)
             retain_llm_provider=os.getenv(ENV_RETAIN_LLM_PROVIDER) or None,
             retain_llm_api_key=os.getenv(ENV_RETAIN_LLM_API_KEY) or None,
@@ -1349,6 +1422,9 @@ class AtulyaConfig:
             embeddings_cohere_api_key=os.getenv(ENV_EMBEDDINGS_COHERE_API_KEY) or os.getenv(ENV_COHERE_API_KEY),
             embeddings_cohere_model=os.getenv(ENV_EMBEDDINGS_COHERE_MODEL, DEFAULT_EMBEDDINGS_COHERE_MODEL),
             embeddings_cohere_base_url=os.getenv(ENV_EMBEDDINGS_COHERE_BASE_URL) or None,
+            embeddings_cohere_output_dimensions=int(v)
+            if (v := os.getenv(ENV_EMBEDDINGS_COHERE_OUTPUT_DIMENSIONS))
+            else None,
             # LiteLLM embeddings (with backward-compatible fallback to shared config)
             embeddings_litellm_api_base=os.getenv(ENV_EMBEDDINGS_LITELLM_API_BASE)
             or os.getenv(ENV_LITELLM_API_BASE, DEFAULT_LITELLM_API_BASE),
@@ -1661,6 +1737,10 @@ class AtulyaConfig:
             ).lower()
             == "true",
             brain_max_file_size_mb=int(os.getenv(ENV_BRAIN_MAX_FILE_SIZE_MB, str(DEFAULT_BRAIN_MAX_FILE_SIZE_MB))),
+            # Admin / superuser
+            admin_enabled=os.getenv(ENV_ADMIN_ENABLED, str(DEFAULT_ADMIN_ENABLED)).lower() in ("true", "1", "yes"),
+            superuser_key=os.getenv(ENV_SUPERUSER_KEY) or DEFAULT_SUPERUSER_KEY,
+            superuser_schema=os.getenv(ENV_SUPERUSER_SCHEMA, DEFAULT_SUPERUSER_SCHEMA),
             # Reflect agent settings
             reflect_max_iterations=int(os.getenv(ENV_REFLECT_MAX_ITERATIONS, str(DEFAULT_REFLECT_MAX_ITERATIONS))),
             reflect_max_context_tokens=int(

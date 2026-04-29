@@ -80,7 +80,7 @@ Configure via environment variables:
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ATULYA_API_DATABASE_URL` | PostgreSQL connection string | `pg0` (embedded) |
-| `ATULYA_API_LLM_PROVIDER` | `openai`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio` | `openai` |
+| `ATULYA_API_LLM_PROVIDER` | `openai`, `anthropic`, `gemini`, `groq`, `ollama`, `lmstudio`, `llamacpp` | `openai` |
 | `ATULYA_API_LLM_API_KEY` | API key for LLM provider | - |
 | `ATULYA_API_LLM_MODEL` | Model name | `gpt-4o-mini` |
 | `ATULYA_API_HOST` | Server bind address | `0.0.0.0` |
@@ -93,6 +93,23 @@ export ATULYA_API_DATABASE_URL=postgresql://user:pass@localhost:5432/atulya
 export ATULYA_API_LLM_PROVIDER=groq
 export ATULYA_API_LLM_API_KEY=gsk_xxxxxxxxxxxx
 
+atulya-api
+```
+
+### Example: Fully Offline with Built-in GGUF Provider
+
+```bash
+# Install extra dependency
+pip install 'atulya-api[local-llm]'
+
+# Run completely offline — auto-downloads default model on first run
+export ATULYA_API_LLM_PROVIDER=llamacpp
+atulya-api
+
+# Or point to your own GGUF / fine-tuned model
+export ATULYA_API_LLAMACPP_MODEL_PATH=~/.atulya/models/your-model.gguf
+export ATULYA_API_LLAMACPP_GPU_LAYERS=-1       # full GPU offload (Metal/CUDA)
+export ATULYA_API_LLAMACPP_LORA_PATH=~/.atulya/models/adapter.gguf  # optional LoRA
 atulya-api
 ```
 

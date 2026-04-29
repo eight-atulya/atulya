@@ -91,4 +91,8 @@ if [ -z "$PORT_OVERRIDE" ]; then
 fi
 
 log_info "startup.exec" "Starting Atulya API"
-exec uv run atulya-api "${API_ARGS[@]}"
+if [ "${#API_ARGS[@]}" -gt 0 ]; then
+  exec uv run atulya-api "${API_ARGS[@]}"
+fi
+
+exec uv run atulya-api

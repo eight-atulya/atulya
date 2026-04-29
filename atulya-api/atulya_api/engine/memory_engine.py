@@ -5100,6 +5100,10 @@ class MemoryEngine(MemoryEngineInterface):
         self._config_resolver = ConfigResolver(pool=self._pool, tenant_extension=self._tenant_extension)
         logger.debug("Config resolver initialized for hierarchical configuration")
 
+        # DB-backed tenant extensions need the live pool after engine startup.
+        if hasattr(self._tenant_extension, "_pool") and getattr(self._tenant_extension, "_pool") is None:
+            self._tenant_extension._pool = self._pool  # type: ignore[attr-defined]
+
         # Initialize file storage
         from .storage import create_file_storage
 
@@ -15793,3 +15797,107 @@ class MemoryEngine(MemoryEngineInterface):
             )
             queued += 1
         return queued
+
+    # -------------------------------------------------------------------------
+    # Admin methods — superuser-only, cross-schema operations
+    # -------------------------------------------------------------------------
+
+    async def admin_list_workers(self, schema: str) -> list[dict]:
+        """
+        Return worker-level aggregates from async_operations for a schema.
+
+        Each row: {worker_id, pending, stuck, last_seen}.
+        'stuck' = operations in-progress with no heartbeat for >5 min.
+        """
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT
+                    worker_id,
+                    COUNT(*) FILTER (WHERE status = 'pending')  AS pending,
+                    COUNT(*) FILTER (
+                        WHERE status = 'in_progress'
+                        AND updated_at < NOW() - INTERVAL '5 minutes'
+                    )                                            AS stuck,
+                    MAX(updated_at)                              AS last_seen
+                FROM {schema}.async_operations
+                WHERE worker_id IS NOT NULL
+                GROUP BY worker_id
+                ORDER BY last_seen DESC
+                """
+            )
+        return [dict(r) for r in rows]
+
+    async def admin_decommission_worker(
+        self,
+        worker_id: str | None,
+        schema: str,
+        *,
+        release_stuck: bool = True,
+    ) -> int:
+        """
+        Mark stuck in-progress operations as failed for a given worker.
+
+        Args:
+            worker_id: Target worker. Pass None to target ALL stuck workers.
+            schema: DB schema to operate on.
+            release_stuck: When True (default) reset in-progress ops >5 min old
+                           back to 'pending' so another worker can pick them up.
+
+        Returns:
+            Number of operations affected.
+        """
+        stuck_threshold = "NOW() - INTERVAL '5 minutes'"
+        condition = (
+            f"worker_id = $1 AND status = 'in_progress' AND updated_at < {stuck_threshold}"
+            if worker_id
+            else f"status = 'in_progress' AND updated_at < {stuck_threshold}"
+        )
+        new_status = "pending" if release_stuck else "failed"
+        args: list = [worker_id] if worker_id else []
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            result = await conn.execute(
+                f"""
+                UPDATE {schema}.async_operations
+                SET status = '{new_status}', updated_at = NOW(), worker_id = NULL
+                WHERE {condition}
+                """,
+                *args,
+            )
+        # asyncpg returns "UPDATE <n>"
+        return int(result.split()[-1]) if result else 0
+
+    async def admin_list_operations(
+        self,
+        schema: str,
+        *,
+        status: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """
+        Return async_operations rows for a schema, newest first.
+
+        Args:
+            schema: DB schema.
+            status: Optional filter ('pending', 'in_progress', 'completed', 'failed').
+            limit: Max rows (capped at 500 internally).
+        """
+        limit = min(limit, 500)
+        where = f"WHERE status = $1" if status else ""
+        args: list = [status] if status else []
+        pool = await self._get_pool()
+        async with pool.acquire() as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT operation_id, operation_type, bank_id, status,
+                       worker_id, created_at, updated_at
+                FROM {schema}.async_operations
+                {where}
+                ORDER BY created_at DESC
+                LIMIT {limit}
+                """,
+                *args,
+            )
+        return [dict(r) for r in rows]

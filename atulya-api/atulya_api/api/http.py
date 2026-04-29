@@ -3088,6 +3088,16 @@ def create_app(
     # Register all routes
     _register_routes(app)
 
+    # Mount admin router when explicitly enabled (safe-by-default: disabled)
+    if config.admin_enabled:
+        from atulya_api.api.admin import create_admin_router
+
+        admin_router = create_admin_router(memory)
+        app.include_router(admin_router, prefix="/v1/admin", tags=["Admin"])
+        logging.info("Admin router mounted at /v1/admin/ (ATULYA_API_ADMIN_ENABLED=true)")
+    else:
+        logging.debug("Admin router disabled (set ATULYA_API_ADMIN_ENABLED=true to enable)")
+
     # Mount HTTP extension router if available
     if http_extension:
         extension_router = http_extension.get_router(memory)

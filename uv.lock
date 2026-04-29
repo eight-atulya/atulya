@@ -506,6 +506,10 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+local-llm = [
+    { name = "huggingface-hub" },
+    { name = "llama-cpp-python" },
+]
 test = [
     { name = "filelock" },
     { name = "pytest" },
@@ -550,11 +554,13 @@ requires-dist = [
     { name = "google-genai", specifier = ">=1.0.0" },
     { name = "greenlet", specifier = ">=3.2.4" },
     { name = "httpx", specifier = ">=0.27.0" },
+    { name = "huggingface-hub", marker = "extra == 'local-llm'", specifier = ">=0.26.0" },
     { name = "langchain-core", specifier = ">=1.2.11" },
     { name = "langchain-text-splitters", specifier = ">=0.3.0" },
     { name = "langsmith", specifier = ">=0.6.3" },
     { name = "litellm", specifier = ">=1.0.0" },
     { name = "lizard", specifier = ">=1.17.10" },
+    { name = "llama-cpp-python", marker = "extra == 'local-llm'", specifier = ">=0.3.0" },
     { name = "markitdown", extras = ["pdf", "docx", "pptx", "xlsx", "xls"], specifier = ">=0.1.4" },
     { name = "networkx", specifier = ">=3.2" },
     { name = "obstore", specifier = ">=0.4.0" },
@@ -593,7 +599,7 @@ requires-dist = [
     { name = "uvloop", specifier = ">=0.22.1" },
     { name = "wsproto", specifier = ">=1.0.0" },
 ]
-provides-extras = ["test"]
+provides-extras = ["local-llm", "test"]
 
 [package.metadata.requires-dev]
 dev = [
@@ -2451,6 +2457,18 @@ sdist = { url = "https://files.pythonhosted.org/packages/6d/e6/c9ffd177f15905835
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7c/80/778b6274e0e45bcae98ad6d63a000a1e74edd6a82f57815300bd084dd606/lizard-1.21.6-py2.py3-none-any.whl", hash = "sha256:15de71e63a9a6fcd0c2228eacac42067c4803604d5fae1d72417e3bff7c720eb", size = 98556, upload-time = "2026-04-17T07:51:05.311Z" },
 ]
+
+[[package]]
+name = "llama-cpp-python"
+version = "0.3.21"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "diskcache" },
+    { name = "jinja2" },
+    { name = "numpy" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/e6/0f/17c0e400ed17094b360e3bcc07e7fbca890e0042a5a1e9dabb056693d57f/llama_cpp_python-0.3.21.tar.gz", hash = "sha256:533636e23953d1efcf16ddf5862d963405e4bc0bccfc04ba90e9ee7afefefa75", size = 67604365, upload-time = "2026-04-27T05:17:44.296Z" }
 
 [[package]]
 name = "lupa"

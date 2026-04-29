@@ -117,6 +117,7 @@ _PROVIDERS_WITHOUT_API_KEY = frozenset(
     {
         "ollama",
         "lmstudio",
+        "llamacpp",
         "openai-codex",
         "claude-code",
         "mock",
@@ -143,6 +144,17 @@ def create_llm_provider(
     vertexai_region: str | None = None,
     vertexai_credentials: Any = None,
     gemini_safety_settings: list | None = None,
+    # llama.cpp / GGUF
+    llamacpp_model_path: str | None = None,
+    llamacpp_gpu_layers: int = -1,
+    llamacpp_context_size: int = 8192,
+    llamacpp_chat_format: str | None = None,
+    llamacpp_no_grammar: bool = False,
+    llamacpp_extra_args: str | None = None,
+    llamacpp_flash_attn: bool = False,
+    llamacpp_n_batch: int = 512,
+    llamacpp_verbose: bool = False,
+    llamacpp_lora_path: str | None = None,
 ) -> Any:  # Returns LLMInterface
     """
     Factory function to create the appropriate LLM provider implementation.
@@ -169,6 +181,7 @@ def create_llm_provider(
         ClaudeCodeLLM,
         CodexLLM,
         GeminiLLM,
+        LlamaCppLLM,
         MockLLM,
         OpenAICompatibleLLM,
     )
@@ -239,6 +252,25 @@ def create_llm_provider(
             timeout=timeout,
         )
 
+    elif provider_lower == "llamacpp":
+        return LlamaCppLLM(
+            provider=provider,
+            api_key=api_key or "llamacpp",
+            base_url=base_url or "",
+            model=model,
+            reasoning_effort=reasoning_effort,
+            model_path=llamacpp_model_path,
+            gpu_layers=llamacpp_gpu_layers,
+            context_size=llamacpp_context_size,
+            chat_format=llamacpp_chat_format,
+            no_grammar=llamacpp_no_grammar,
+            extra_args=llamacpp_extra_args,
+            flash_attn=llamacpp_flash_attn,
+            n_batch=llamacpp_n_batch,
+            verbose=llamacpp_verbose,
+            lora_path=llamacpp_lora_path,
+        )
+
     else:
         raise ValueError(f"Unknown provider: {provider}")
 
@@ -296,6 +328,7 @@ class LLMProvider:
             "anthropic",
             "anthropic-foundry",
             "lmstudio",
+            "llamacpp",
             "vertexai",
             "openai-codex",
             "claude-code",
@@ -367,6 +400,36 @@ class LLMProvider:
             except Exception:
                 pass  # Config may not be initialized in test environments
 
+        # For llamacpp: read GGUF config from global config
+        llamacpp_model_path: str | None = None
+        llamacpp_gpu_layers: int = -1
+        llamacpp_context_size: int = 8192
+        llamacpp_chat_format: str | None = None
+        llamacpp_no_grammar: bool = False
+        llamacpp_extra_args: str | None = None
+        llamacpp_flash_attn: bool = False
+        llamacpp_n_batch: int = 512
+        llamacpp_verbose: bool = False
+        llamacpp_lora_path: str | None = None
+
+        if self.provider == "llamacpp":
+            from ..config import _get_raw_config
+
+            try:
+                raw_config = _get_raw_config()
+                llamacpp_model_path = raw_config.llamacpp_model_path
+                llamacpp_gpu_layers = raw_config.llamacpp_gpu_layers
+                llamacpp_context_size = raw_config.llamacpp_context_size
+                llamacpp_chat_format = raw_config.llamacpp_chat_format
+                llamacpp_no_grammar = raw_config.llamacpp_no_grammar
+                llamacpp_extra_args = raw_config.llamacpp_extra_args
+                llamacpp_flash_attn = raw_config.llamacpp_flash_attn
+                llamacpp_n_batch = raw_config.llamacpp_n_batch
+                llamacpp_verbose = raw_config.llamacpp_verbose
+                llamacpp_lora_path = raw_config.llamacpp_lora_path
+            except Exception:
+                pass  # Config may not be initialized in test environments
+
         # Create provider implementation using factory
         self._provider_impl = create_llm_provider(
             provider=self.provider,
@@ -381,6 +444,16 @@ class LLMProvider:
             vertexai_region=vertexai_region,
             vertexai_credentials=vertexai_credentials,
             gemini_safety_settings=self.gemini_safety_settings,
+            llamacpp_model_path=llamacpp_model_path,
+            llamacpp_gpu_layers=llamacpp_gpu_layers,
+            llamacpp_context_size=llamacpp_context_size,
+            llamacpp_chat_format=llamacpp_chat_format,
+            llamacpp_no_grammar=llamacpp_no_grammar,
+            llamacpp_extra_args=llamacpp_extra_args,
+            llamacpp_flash_attn=llamacpp_flash_attn,
+            llamacpp_n_batch=llamacpp_n_batch,
+            llamacpp_verbose=llamacpp_verbose,
+            llamacpp_lora_path=llamacpp_lora_path,
         )
 
         # Backward compatibility: Keep mock provider properties

@@ -34,31 +34,96 @@ logger = logging.getLogger(__name__)
 
 app = typer.Typer(name="atulya-admin", help="Atulya administrative commands")
 
-# Tables to backup/restore in dependency order
-# Import must happen in this order due to foreign key constraints
-BACKUP_TABLES = [
+# ---------------------------------------------------------------------------
+# Backup table manifest — complete ordered list of every user-data table.
+#
+# Rules:
+#   1. Order is strict FK-dependency order (parent before child) so that
+#      COPY-in during restore never violates a constraint.
+#   2. Reverse of this list is the correct TRUNCATE order on restore.
+#   3. Materialized views (memory_units_bm25) are NOT included — they are
+#      derived from memory_units and are refreshed at the end of restore.
+#   4. alembic_version is NOT included — schema version is the target DB's
+#      responsibility, not the data backup's.
+#   5. When a new migration adds a table, add it here in the correct layer.
+#      Adding to the wrong layer causes restore to fail with a FK violation,
+#      which is loud and safe (backup itself is never corrupted by this).
+#
+# Layer 0 — root tables (no FK parents)
+# Layer 1 — reference banks directly
+# Layer 2 — reference Layer 1 tables
+# Layer 3 — reference Layer 2 tables
+# Layer 4 — reference Layer 3 tables
+# Layer 5 — reference Layer 4 tables
+# ---------------------------------------------------------------------------
+BACKUP_TABLES: list[str] = [
+    # --- Layer 0: roots (no FK parents) ---
+    "api_keys",              # admin RBAC key store — no FK deps
     "banks",
+    "file_storage",
+    # --- Layer 1: reference banks ---
     "documents",
     "entities",
-    "chunks",
-    "memory_units",
-    "unit_entities",
-    "entity_cooccurrences",
-    "memory_links",
+    "async_operations",
+    "webhooks",
+    "directives",
+    "mental_models",
+    "dream_artifacts",
+    "anomaly_events",
+    "pattern_library",
+    "entity_trajectories",
+    "entity_intelligence",
+    "codebases",
+    "dream_runs",
+    # --- Layer 2: reference Layer 1 ---
+    "memory_units",          # → banks, documents
+    "chunks",                # → documents
+    "entity_cooccurrences",  # → entities
+    "anomaly_corrections",   # → anomaly_events
+    "codebase_snapshots",    # → codebases
+    "dream_predictions",     # → dream_runs
+    "dream_proposals",       # → dream_runs
+    # --- Layer 3: reference Layer 2 ---
+    "unit_entities",         # → memory_units, entities
+    "memory_links",          # → memory_units
+    "codebase_files",        # → codebases, codebase_snapshots
+    "codebase_symbols",      # → codebases, codebase_snapshots
+    "codebase_review_routes",# → codebase_snapshots
+    "dream_prediction_outcomes",  # → dream_predictions
+    # --- Layer 4: reference Layer 3 ---
+    "codebase_edges",        # → codebase_symbols
+    "codebase_chunks",       # → codebase_files, codebase_snapshots
+    "codebase_intel_artifacts",   # → codebases, codebase_snapshots
+    "codebase_saved_intents",     # → codebases
+    # --- Layer 5: reference Layer 4 ---
+    "codebase_chunk_edges",           # → codebase_chunks
+    "codebase_auto_triage_overrides", # → codebases, codebase_snapshots, codebase_chunks
 ]
 
-MANIFEST_VERSION = "1"
+# Materialized views refreshed after restore (not in COPY cycle).
+REFRESH_VIEWS: list[str] = [
+    "memory_units_bm25",
+]
+
+# Bump this when BACKUP_TABLES changes in a breaking way (tables added/removed).
+# Restore rejects a backup whose manifest_version != MANIFEST_VERSION with a
+# clear error so the operator knows to use the matching atulya-admin version.
+MANIFEST_VERSION = "2"
 
 
 async def _backup(database_url: str, output_path: Path, schema: str = "public") -> dict[str, Any]:
     """Backup all tables to a zip file using binary COPY protocol."""
+    from atulya_api import __version__ as atulya_version
+
     conn = await asyncpg.connect(database_url)
     try:
         tables: dict[str, Any] = {}
         manifest: dict[str, Any] = {
             "version": MANIFEST_VERSION,
+            "atulya_version": atulya_version,
             "created_at": datetime.now(timezone.utc).isoformat(),
             "schema": schema,
+            "table_count": len(BACKUP_TABLES),
             "tables": tables,
         }
 
@@ -104,8 +169,26 @@ async def _restore(database_url: str, input_path: Path, schema: str = "public") 
         with zipfile.ZipFile(input_path, "r") as zf:
             # Read and validate manifest
             manifest: dict[str, Any] = json.loads(zf.read("manifest.json"))
-            if manifest.get("version") != MANIFEST_VERSION:
-                raise ValueError(f"Unsupported backup version: {manifest.get('version')}")
+            backup_version = manifest.get("version")
+            if backup_version != MANIFEST_VERSION:
+                raise ValueError(
+                    f"[ERROR] Backup version mismatch: backup is v{backup_version}, "
+                    f"this atulya-admin requires v{MANIFEST_VERSION}.\n"
+                    "Use the atulya-admin version that matches the backup, or re-create "
+                    "the backup with the current atulya-admin."
+                )
+
+            # Warn about tables in BACKUP_TABLES that are absent from the archive.
+            # This indicates a corrupt/truncated backup — abort rather than partially restore.
+            archive_files = set(zf.namelist())
+            missing = [t for t in BACKUP_TABLES if f"{t}.bin" not in archive_files]
+            if missing:
+                raise ValueError(
+                    f"[ERROR] Backup archive is missing {len(missing)} expected table(s): "
+                    f"{', '.join(missing)}.\n"
+                    "The backup file may be corrupt or was created with an older atulya-admin. "
+                    "Do not restore from this file."
+                )
 
             # Use a transaction for atomic restore - either all tables are
             # restored or none are, preventing partial/inconsistent state.
@@ -119,10 +202,6 @@ async def _restore(database_url: str, input_path: Path, schema: str = "public") 
                 # Restore tables in forward order
                 for i, table in enumerate(BACKUP_TABLES, 1):
                     filename = f"{table}.bin"
-                    if filename not in zf.namelist():
-                        typer.echo(f"  [{i}/{len(BACKUP_TABLES)}] {table}: skipped (not in backup)")
-                        continue
-
                     expected_rows = manifest["tables"].get(table, {}).get("rows", "?")
                     typer.echo(f"  [{i}/{len(BACKUP_TABLES)}] Restoring {table}... {expected_rows} rows")
 
@@ -131,9 +210,12 @@ async def _restore(database_url: str, input_path: Path, schema: str = "public") 
                     # asyncpg requires schema_name as separate parameter
                     await conn.copy_to_table(table, schema_name=schema, source=buffer, format="binary")
 
-                # Refresh materialized view
+                # Refresh all materialized views derived from restored data
                 typer.echo("  Refreshing materialized views...")
-                await conn.execute(f"REFRESH MATERIALIZED VIEW {_fq_table('memory_units_bm25', schema)}")
+                for view in REFRESH_VIEWS:
+                    qualified_view = _fq_table(view, schema)
+                    await conn.execute(f"REFRESH MATERIALIZED VIEW {qualified_view}")
+                    typer.echo(f"    {view} refreshed")
 
         return manifest
     finally:
@@ -179,7 +261,9 @@ def backup(
     manifest = asyncio.run(_run_backup(config.database_url, output, schema))
 
     total_rows = sum(t["rows"] for t in manifest["tables"].values())
-    typer.echo(f"Backed up {total_rows} rows across {len(BACKUP_TABLES)} tables")
+    size_bytes = sum(t.get("size_bytes", 0) for t in manifest["tables"].values())
+    typer.echo(f"Backed up {len(BACKUP_TABLES)} tables, {total_rows:,} rows, {size_bytes / 1024 / 1024:.1f} MB")
+    typer.echo(f"Atulya version: {manifest.get('atulya_version', 'unknown')}")
     typer.echo(f"Backup saved to {output}")
 
 
@@ -212,7 +296,8 @@ def restore(
     manifest = asyncio.run(_run_restore(config.database_url, input_file, schema))
 
     total_rows = sum(t["rows"] for t in manifest["tables"].values())
-    typer.echo(f"Restored {total_rows} rows across {len(BACKUP_TABLES)} tables")
+    typer.echo(f"Restored {len(BACKUP_TABLES)} tables, {total_rows:,} rows")
+    typer.echo(f"Backup was from atulya v{manifest.get('atulya_version', 'unknown')} at {manifest.get('created_at', 'unknown')}")
     typer.echo("Restore complete")
 
 

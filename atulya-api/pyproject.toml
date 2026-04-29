@@ -75,6 +75,10 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+local-llm = [
+    "llama-cpp-python>=0.3.0",   # GGUF inference server (OpenAI-compatible)
+    "huggingface-hub>=0.26.0",   # Auto-download GGUF from HuggingFace
+]
 test = [
     "pytest>=7.0.0",
     "pytest-asyncio>=0.21.0",
