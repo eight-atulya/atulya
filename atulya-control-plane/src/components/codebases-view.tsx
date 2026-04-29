@@ -81,7 +81,7 @@ import {
   Zap,
 } from "lucide-react";
 
-type ImportTab = "github" | "zip";
+type ImportTab = "github" | "zip" | "file";
 type WorkspaceTab =
   | "review"
   | "files"
@@ -388,6 +388,13 @@ function sourceLabel(codebase: CodebaseSummary): string {
         ? codebase.source_config.repo_url
         : codebase.name;
   }
+  if (codebase.source_type === "file") {
+    const filename = (codebase.source_config as any).filename as string | undefined;
+    const virtualPath = (codebase.source_config as any).virtual_path as string | undefined;
+    return virtualPath && virtualPath !== filename
+      ? `${filename} → ${virtualPath}`
+      : filename || codebase.name;
+  }
   return codebase.name;
 }
 
@@ -447,6 +454,12 @@ export function CodebasesView() {
   const [zipExclude, setZipExclude] = useState("");
   const [zipRefreshExisting, setZipRefreshExisting] = useState(true);
   const [submittingZip, setSubmittingZip] = useState(false);
+
+  const [singleFile, setSingleFile] = useState<File | null>(null);
+  const [singleFileName, setSingleFileName] = useState("");
+  const [singleVirtualPath, setSingleVirtualPath] = useState("");
+  const [singleRefreshExisting, setSingleRefreshExisting] = useState(true);
+  const [submittingFile, setSubmittingFile] = useState(false);
 
   const [refreshRef, setRefreshRef] = useState("");
   const [refreshingCodebase, setRefreshingCodebase] = useState(false);
@@ -943,6 +956,48 @@ export function CodebasesView() {
     }
   };
 
+  const handleFileImport = async () => {
+    if (!currentBank || !singleFile) {
+      toast.error("Choose a source file before importing.");
+      return;
+    }
+
+    const inferredName = singleFileName.trim() || singleFile.name;
+    if (!inferredName) {
+      toast.error("File imports need a codebase name.");
+      return;
+    }
+
+    setSubmittingFile(true);
+    try {
+      const response = await client.importCodebaseFile(currentBank, {
+        file: singleFile,
+        name: inferredName,
+        virtual_path: singleVirtualPath.trim() || undefined,
+        refresh_existing: singleRefreshExisting,
+      });
+      setSelectedCodebaseId(response.codebase_id);
+      setActiveOperationId(response.operation_id);
+      setOperationStatus({
+        operation_id: response.operation_id,
+        status: "pending",
+        operation_type: "codebase_import",
+        created_at: null,
+        updated_at: null,
+        completed_at: null,
+        error_message: null,
+        stage: "queued",
+      });
+      setOperationResult(null);
+      toast.success(`Queued single-file import for ${singleFile.name} → ${response.virtual_path}.`);
+      await loadCodebases(false);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "File import failed.");
+    } finally {
+      setSubmittingFile(false);
+    }
+  };
+
   const handleRefresh = async () => {
     if (!currentBank || !selectedCodebase) return;
 
@@ -1406,15 +1461,16 @@ export function CodebasesView() {
               Import Codebase
             </CardTitle>
             <CardDescription>
-              Use public GitHub for live repositories or ZIP uploads for private and offline
-              snapshots.
+              Use public GitHub for live repositories, ZIP uploads for private/offline snapshots, or
+              single-file for self-contained scripts and standalone applications.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs value={importTab} onValueChange={(value) => setImportTab(value as ImportTab)}>
-              <TabsList className="mb-4 grid w-full grid-cols-2">
+              <TabsList className="mb-4 grid w-full grid-cols-3">
                 <TabsTrigger value="github">GitHub</TabsTrigger>
                 <TabsTrigger value="zip">ZIP</TabsTrigger>
+                <TabsTrigger value="file">Single File</TabsTrigger>
               </TabsList>
 
               <TabsContent value="github" className="space-y-4">
@@ -1632,6 +1688,109 @@ export function CodebasesView() {
                       <Upload className="mr-2 h-4 w-4" />
                     )}
                     Import ZIP
+                  </Button>
+                </div>
+              </TabsContent>
+
+              {/* ── Single File ─────────────────────────────────── */}
+              <TabsContent value="file" className="space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="single-file">Source File</Label>
+                    <Input
+                      id="single-file"
+                      type="file"
+                      accept=".py,.ts,.tsx,.js,.jsx,.rs,.go,.java,.cs,.rb,.swift,.kt,.cpp,.c,.h"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0] || null;
+                        setSingleFile(file);
+                        if (file) {
+                          if (!singleFileName.trim()) setSingleFileName(file.name);
+                          if (!singleVirtualPath.trim()) setSingleVirtualPath(file.name);
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Any parseable source file — Python, TypeScript, JavaScript, Rust, Go, etc.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="single-file-name">Codebase Name</Label>
+                    <Input
+                      id="single-file-name"
+                      value={singleFileName}
+                      onChange={(event) => setSingleFileName(event.target.value)}
+                      placeholder="my-agent"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Logical name for this codebase in the bank — defaults to the filename.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="single-virtual-path">
+                      Virtual Path{" "}
+                      <span className="font-normal text-muted-foreground">(optional)</span>
+                    </Label>
+                    <Input
+                      id="single-virtual-path"
+                      value={singleVirtualPath}
+                      onChange={(event) => setSingleVirtualPath(event.target.value)}
+                      placeholder="src/agents/main.py"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Controls the logical path recorded in the snapshot. Affects symbol FQNs and
+                      import-edge resolution. Defaults to the bare filename.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="single-refresh-existing">Import Mode</Label>
+                    <Select
+                      value={singleRefreshExisting ? "refresh" : "new"}
+                      onValueChange={(value) => setSingleRefreshExisting(value === "refresh")}
+                    >
+                      <SelectTrigger id="single-refresh-existing">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="refresh">
+                          Replace existing file codebase by name
+                        </SelectItem>
+                        <SelectItem value="new">Require a new codebase name</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {singleFile && (
+                  <div className="rounded-lg border border-border/60 bg-muted/15 px-4 py-3 text-sm">
+                    <span className="font-medium text-foreground">{singleFile.name}</span>
+                    <span className="ml-2 text-muted-foreground">
+                      {formatBytes(singleFile.size)}
+                    </span>
+                    {singleVirtualPath && singleVirtualPath !== singleFile.name && (
+                      <span className="ml-2 text-muted-foreground">
+                        → <span className="font-mono">{singleVirtualPath}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between gap-4 rounded-lg border border-border/70 bg-muted/20 p-4">
+                  <div className="text-sm text-muted-foreground">
+                    Runs the full ASD parse → chunk → code-intel → review pipeline on a single file.
+                    Ideal for self-contained scripts, standalone agents, or files too granular for a
+                    full ZIP import.
+                  </div>
+                  <Button onClick={handleFileImport} disabled={submittingFile || !singleFile}>
+                    {submittingFile ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <FileCode2 className="mr-2 h-4 w-4" />
+                    )}
+                    Import File
                   </Button>
                 </div>
               </TabsContent>

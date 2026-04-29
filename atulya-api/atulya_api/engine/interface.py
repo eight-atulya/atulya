@@ -542,6 +542,26 @@ class MemoryEngineInterface(ABC):
         ...
 
     @abstractmethod
+    async def submit_async_codebase_file_import(
+        self,
+        bank_id: str,
+        *,
+        name: str,
+        filename: str,
+        file_bytes: bytes,
+        virtual_path: str | None = None,
+        refresh_existing: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue a single-file codebase import.
+
+        Runs the full ASD parse → chunk → code-intel → ASD review pipeline
+        on one source file.  The file is stored as raw bytes (not zipped) so
+        it can be re-fetched on refresh without re-upload.
+        """
+        ...
+
+    @abstractmethod
     async def submit_async_codebase_github_import(
         self,
         bank_id: str,

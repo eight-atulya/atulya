@@ -735,6 +735,12 @@ export interface CodebaseGithubImportResult extends CodebaseImportResult {
   resolved_commit_sha: string;
 }
 
+/** Result from POST /codebases/import/file */
+export interface CodebaseFileImportResult extends CodebaseImportResult {
+  filename: string;
+  virtual_path: string;
+}
+
 export interface CodebaseRefreshResult {
   snapshot_id: string | null;
   operation_id: string | null;
@@ -2444,6 +2450,37 @@ export class ControlPlaneClient {
         }),
       }
     );
+  }
+
+  async importCodebaseFile(
+    bankId: string,
+    params: {
+      file: File;
+      name: string;
+      virtual_path?: string;
+      refresh_existing?: boolean;
+    }
+  ) {
+    const formData = new FormData();
+    formData.append("file", params.file);
+    formData.append(
+      "request",
+      JSON.stringify({
+        name: params.name,
+        virtual_path: params.virtual_path || undefined,
+        refresh_existing: params.refresh_existing ?? false,
+      })
+    );
+
+    const response = await fetch(`/api/banks/${bankId}/codebases/import/file`, {
+      method: "POST",
+      body: formData,
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || `HTTP ${response.status}`);
+    }
+    return response.json() as Promise<CodebaseFileImportResult>;
   }
 
   async refreshCodebase(

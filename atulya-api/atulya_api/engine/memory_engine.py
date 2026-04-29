@@ -245,6 +245,7 @@ from .codebase_index import (
     IndexedEdge,
     IndexedFile,
     build_archive_index,
+    load_single_file,
     load_zip_archive,
 )
 from .cross_encoder import CrossEncoderModel
@@ -2608,6 +2609,342 @@ class MemoryEngine(MemoryEngineInterface):
             operation_id=task_dict.get("operation_id"),
         )
 
+    async def _handle_codebase_import_file(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        """Handle single-file codebase import tasks."""
+        storage_key = task_dict.get("storage_key")
+        if not storage_key:
+            raise ValueError("storage_key is required for single-file codebase import")
+        file_bytes = await self._file_storage.retrieve(storage_key)
+        return await self._process_codebase_single_file(
+            bank_id=task_dict["bank_id"],
+            codebase_id=task_dict["codebase_id"],
+            snapshot_id=task_dict["snapshot_id"],
+            filename=task_dict["filename"],
+            file_bytes=file_bytes,
+            virtual_path=task_dict.get("virtual_path"),
+            file_storage_key=storage_key,
+            operation_id=task_dict.get("operation_id"),
+        )
+
+    async def _process_codebase_single_file(
+        self,
+        *,
+        bank_id: str,
+        codebase_id: str,
+        snapshot_id: str,
+        filename: str,
+        file_bytes: bytes,
+        virtual_path: str | None,
+        file_storage_key: str | None,
+        operation_id: str | None,
+    ) -> dict[str, Any]:
+        """Build a reviewable ASD snapshot from a single source file.
+
+        Runs the identical parse → chunk → code-intel → triage pipeline as
+        _process_codebase_archive.  Key differences:
+        - load_single_file() replaces load_zip_archive() (no archive unpacking)
+        - module_map is pre-seeded with only this file (import edges within the
+          file resolve correctly; cross-file edges emit as unresolved target_ref)
+        - No previous_hashes diff — single-file snapshots are always fresh
+        - Raw bytes stored at a ``.raw`` key (not ``.zip``) for future refresh
+        """
+        if operation_id:
+            await self._set_operation_stage(
+                operation_id, "processing", {"snapshot_id": snapshot_id, "codebase_id": codebase_id}
+            )
+        await self._update_codebase_snapshot(snapshot_id, status="processing")
+
+        if not file_storage_key:
+            effective_path = virtual_path or filename
+            file_storage_key = f"banks/{bank_id}/codebases/{codebase_id}/snapshots/{snapshot_id}/source.raw"
+            await self._file_storage.store(
+                file_data=file_bytes,
+                key=file_storage_key,
+                metadata={
+                    "bank_id": bank_id,
+                    "codebase_id": codebase_id,
+                    "snapshot_id": snapshot_id,
+                    "filename": filename,
+                    "virtual_path": effective_path,
+                },
+            )
+            pool = await self._get_pool()
+            async with acquire_with_retry(pool) as conn:
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebase_snapshots")}
+                    SET source_archive_storage_key = $2, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(snapshot_id),
+                    file_storage_key,
+                )
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            async with conn.transaction():
+                codebase_row = await conn.fetchrow(
+                    f"""
+                    SELECT current_snapshot_id
+                    FROM {fq_table("codebases")}
+                    WHERE id = $1 AND bank_id = $2
+                    """,
+                    uuid.UUID(codebase_id),
+                    bank_id,
+                )
+                if not codebase_row:
+                    raise ValueError(f"Codebase {codebase_id} not found in bank {bank_id}")
+
+                # Single-file snapshots do not diff against previous versions;
+                # re-import always produces a fresh snapshot for clear review lineage.
+                for table in (
+                    "codebase_review_routes",
+                    "codebase_chunk_edges",
+                    "codebase_chunks",
+                    "codebase_edges",
+                    "codebase_symbols",
+                    "codebase_files",
+                ):
+                    await conn.execute(f"DELETE FROM {fq_table(table)} WHERE snapshot_id = $1", uuid.UUID(snapshot_id))
+
+                source_files = load_single_file(filename, file_bytes, virtual_path=virtual_path)
+                index_result = build_archive_index(source_files, previous_hashes=None)
+                file_edges = [edge for indexed_file in index_result.files for edge in indexed_file.edges]
+                chunk_rows, chunk_edge_rows = await self._build_codebase_chunk_graph(
+                    indexed_files=index_result.files,
+                    file_edges=file_edges,
+                )
+
+                triage_settings = await self._load_codebase_triage_settings(conn, codebase_id=codebase_id)
+                code_intel_result = self._run_code_intel_safe(
+                    indexed_files=index_result.files,
+                    file_edges=file_edges,
+                    chunk_rows=chunk_rows,
+                    triage_settings=triage_settings,
+                )
+
+                if operation_id:
+                    await self._set_operation_stage(
+                        operation_id,
+                        "asd_indexing",
+                        {
+                            "total_files": len(index_result.files),
+                            "total_chunks": len(chunk_rows),
+                        },
+                    )
+
+                symbol_count = 0
+                edge_count = 0
+                indexed_count = 0
+                retained_count = 0
+
+                for indexed_file in index_result.files:
+                    for symbol in indexed_file.symbols:
+                        await conn.execute(
+                            f"""
+                            INSERT INTO {fq_table("codebase_symbols")}
+                                (codebase_id, snapshot_id, bank_id, path, language, name, kind, fq_name, container, start_line, end_line)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                            """,
+                            uuid.UUID(codebase_id),
+                            uuid.UUID(snapshot_id),
+                            bank_id,
+                            symbol.path,
+                            symbol.language,
+                            symbol.name,
+                            symbol.kind,
+                            symbol.fq_name,
+                            symbol.container,
+                            symbol.start_line,
+                            symbol.end_line,
+                        )
+                    for edge in indexed_file.edges:
+                        await conn.execute(
+                            f"""
+                            INSERT INTO {fq_table("codebase_edges")}
+                                (codebase_id, snapshot_id, bank_id, edge_type, from_path, from_symbol, to_path, to_symbol, target_ref, label)
+                            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                            """,
+                            uuid.UUID(codebase_id),
+                            uuid.UUID(snapshot_id),
+                            bank_id,
+                            edge.edge_type,
+                            edge.from_path,
+                            edge.from_symbol,
+                            edge.to_path,
+                            edge.to_symbol,
+                            edge.target_ref,
+                            edge.label,
+                        )
+                    await conn.execute(
+                        f"""
+                        INSERT INTO {fq_table("codebase_files")}
+                            (codebase_id, snapshot_id, bank_id, path, language, size_bytes, content_hash, document_id, status, change_kind, reason)
+                        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                        """,
+                        uuid.UUID(codebase_id),
+                        uuid.UUID(snapshot_id),
+                        bank_id,
+                        indexed_file.path,
+                        indexed_file.language,
+                        indexed_file.size_bytes,
+                        indexed_file.content_hash,
+                        None,
+                        indexed_file.status,
+                        indexed_file.change_kind,
+                        indexed_file.reason,
+                    )
+                    symbol_count += len(indexed_file.symbols)
+                    edge_count += len(indexed_file.edges)
+                    if indexed_file.status == "indexed":
+                        indexed_count += 1
+                    else:
+                        retained_count += 1
+
+                chunk_id_map: dict[str, uuid.UUID] = {}
+                route_counts = {"unrouted": 0, "memory": 0, "research": 0, "dismissed": 0}
+                for chunk_row in chunk_rows:
+                    chunk_key = chunk_row["chunk_key"]
+                    intel_score = code_intel_result.chunk_scores.get(chunk_key)
+                    significance_score = float(intel_score.score) if intel_score else 0.0
+                    significance_components = (
+                        json.dumps(_significance_components_payload(intel_score)) if intel_score else None
+                    )
+                    file_role_value = code_intel_result.chunk_file_role.get(chunk_key)
+                    auto_route_reason = intel_score.reason if intel_score else None
+                    complexity_payload = code_intel_result.chunk_complexity.get(chunk_key)
+                    complexity_score_val = (
+                        float(complexity_payload["cyclomatic_complexity"]) if complexity_payload else None
+                    )
+                    safety_tags_val = code_intel_result.chunk_safety_tags.get(chunk_key, [])
+                    pagerank_val = code_intel_result.chunk_pagerank.get(chunk_key)
+                    fanin_val = int(code_intel_result.chunk_fanin.get(chunk_key, 0))
+
+                    inserted = await conn.fetchrow(
+                        f"""
+                        INSERT INTO {fq_table("codebase_chunks")}
+                            (codebase_id, snapshot_id, bank_id, chunk_key, document_id, path, language, kind, label,
+                             content_hash, preview_text, content_text, start_line, end_line, container,
+                             parent_symbol, parent_fq_name, parse_confidence, cluster_id, cluster_label,
+                             significance_score, significance_components, file_role, auto_route_reason,
+                             complexity_score, safety_tags, pagerank_centrality, fanin_count)
+                        VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                                $20, $21::jsonb, $22, $23, $24, $25, $26, $27)
+                        RETURNING id
+                        """,
+                        uuid.UUID(codebase_id),
+                        uuid.UUID(snapshot_id),
+                        bank_id,
+                        chunk_key,
+                        chunk_row["path"],
+                        chunk_row["language"],
+                        chunk_row["kind"],
+                        chunk_row["label"],
+                        chunk_row["content_hash"],
+                        chunk_row["preview_text"],
+                        chunk_row["content_text"],
+                        chunk_row["start_line"],
+                        chunk_row["end_line"],
+                        chunk_row["container"],
+                        chunk_row["parent_symbol"],
+                        chunk_row["parent_fq_name"],
+                        chunk_row["parse_confidence"],
+                        chunk_row["cluster_id"],
+                        chunk_row["cluster_label"],
+                        significance_score,
+                        significance_components,
+                        file_role_value,
+                        auto_route_reason,
+                        complexity_score_val,
+                        safety_tags_val,
+                        pagerank_val,
+                        fanin_val,
+                    )
+                    chunk_id = inserted["id"]
+                    chunk_id_map[chunk_key] = chunk_id
+                    # Single-file imports always start unrouted — no previous snapshot to inherit from
+                    route_target = "unrouted"
+                    route_counts["unrouted"] += 1
+                    await conn.execute(
+                        f"""
+                        INSERT INTO {fq_table("codebase_review_routes")}
+                            (snapshot_id, bank_id, codebase_id, chunk_id, route_target, route_source)
+                        VALUES ($1, $2, $3, $4, $5, $6)
+                        """,
+                        uuid.UUID(snapshot_id),
+                        bank_id,
+                        uuid.UUID(codebase_id),
+                        chunk_id,
+                        route_target,
+                        "initial",
+                    )
+
+                for chunk_edge_row in chunk_edge_rows:
+                    from_id = chunk_id_map.get(chunk_edge_row["from_chunk_key"])
+                    to_id = chunk_id_map.get(chunk_edge_row["to_chunk_key"])
+                    if from_id and to_id:
+                        await conn.execute(
+                            f"""
+                            INSERT INTO {fq_table("codebase_chunk_edges")}
+                                (snapshot_id, bank_id, codebase_id, from_chunk_id, to_chunk_id, edge_type)
+                            VALUES ($1, $2, $3, $4, $5, $6)
+                            ON CONFLICT DO NOTHING
+                            """,
+                            uuid.UUID(snapshot_id),
+                            bank_id,
+                            uuid.UUID(codebase_id),
+                            from_id,
+                            to_id,
+                            chunk_edge_row.get("edge_type", "dependency"),
+                        )
+
+                stats = {
+                    "file_count": len(index_result.files),
+                    "indexed_count": indexed_count,
+                    "retained_count": retained_count,
+                    "symbol_count": symbol_count,
+                    "edge_count": edge_count,
+                    "chunk_count": len(chunk_rows),
+                    "parse_coverage": index_result.parse_coverage,
+                    "review_counts": route_counts,
+                    "source_type": "file",
+                }
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebase_snapshots")}
+                    SET status = 'review_required',
+                        stats = $2::jsonb,
+                        updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(snapshot_id),
+                    json.dumps(stats),
+                )
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebases")}
+                    SET current_snapshot_id = $2, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(codebase_id),
+                    uuid.UUID(snapshot_id),
+                )
+
+                await self._persist_code_intel_artifacts(
+                    conn,
+                    codebase_id=codebase_id,
+                    snapshot_id=snapshot_id,
+                    bank_id=bank_id,
+                    result=code_intel_result,
+                )
+
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "stats": stats,
+            "status": "review_required",
+        }
+
     async def _handle_codebase_approve(self, task_dict: dict[str, Any]) -> dict[str, Any]:
         """Hydrate the selected reviewable snapshot into memory after explicit approval."""
         from atulya_api.models import RequestContext
@@ -4224,6 +4561,8 @@ class MemoryEngine(MemoryEngineInterface):
                 task_result_payload = await self._handle_codebase_import_zip(task_dict)
             elif task_type == "codebase_import_github":
                 task_result_payload = await self._handle_codebase_import_github(task_dict)
+            elif task_type == "codebase_import_file":
+                task_result_payload = await self._handle_codebase_import_file(task_dict)
             elif task_type == "codebase_approve":
                 task_result_payload = await self._handle_codebase_approve(task_dict)
             elif task_type == "consolidation":
@@ -4316,7 +4655,7 @@ class MemoryEngine(MemoryEngineInterface):
                         error_message=str(e),
                         schema=schema,
                     )
-                elif task_type in ("codebase_import_zip", "codebase_import_github"):
+                elif task_type in ("codebase_import_zip", "codebase_import_github", "codebase_import_file"):
                     retry_count = task_dict.get("_retry_count", 0)
                     if retry_count >= 3:
                         snapshot_id = task_dict.get("snapshot_id")
@@ -12540,6 +12879,144 @@ class MemoryEngine(MemoryEngineInterface):
             "codebase_id": codebase_id,
             "snapshot_id": snapshot_id,
             "operation_id": operation["operation_id"],
+            "status": "pending",
+        }
+
+    async def submit_async_codebase_file_import(
+        self,
+        bank_id: str,
+        *,
+        name: str,
+        filename: str,
+        file_bytes: bytes,
+        virtual_path: str | None = None,
+        refresh_existing: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Queue a single-file codebase import.
+
+        Accepts raw file bytes from any supported language.  The file is stored
+        as ``source.raw`` (not zipped) so refresh re-uses the same storage
+        path.  ``virtual_path`` controls the logical path recorded inside the
+        snapshot — useful when the filename alone is ambiguous (e.g. ``main.py``).
+        The full ASD parse → chunk → code-intel → ASD review pipeline runs
+        identically to a ZIP import; only the unpack stage is skipped.
+        """
+        from atulya_api.extensions import BankWriteContext
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            ctx = BankWriteContext(bank_id=bank_id, operation="submit_codebase_import", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+
+        config = get_config()
+        max_bytes = config.file_conversion_max_batch_size_bytes
+        if len(file_bytes) > max_bytes:
+            file_mb = len(file_bytes) / (1024 * 1024)
+            raise ValueError(
+                f"File size ({file_mb:.1f}MB) exceeds maximum of {config.file_conversion_max_batch_size_mb}MB"
+            )
+
+        effective_virtual_path = virtual_path or filename
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            existing = await conn.fetchrow(
+                f"""
+                SELECT id
+                FROM {fq_table("codebases")}
+                WHERE bank_id = $1 AND name = $2 AND source_type = 'file'
+                """,
+                bank_id,
+                name,
+            )
+            if existing and not refresh_existing:
+                raise ValueError(f"Codebase '{name}' already exists in bank {bank_id}. Use refresh_existing=true.")
+
+            if existing:
+                codebase_id = str(existing["id"])
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("codebases")}
+                    SET source_config = $2::jsonb, updated_at = NOW()
+                    WHERE id = $1
+                    """,
+                    uuid.UUID(codebase_id),
+                    json.dumps({"filename": filename, "virtual_path": effective_virtual_path}),
+                )
+            else:
+                codebase_row = await conn.fetchrow(
+                    f"""
+                    INSERT INTO {fq_table("codebases")} (bank_id, name, source_type, source_config)
+                    VALUES ($1, $2, 'file', $3::jsonb)
+                    RETURNING id
+                    """,
+                    bank_id,
+                    name,
+                    json.dumps({"filename": filename, "virtual_path": effective_virtual_path}),
+                )
+                codebase_id = str(codebase_row["id"])
+
+            snapshot_row = await conn.fetchrow(
+                f"""
+                INSERT INTO {fq_table("codebase_snapshots")} (codebase_id, bank_id, source_ref, status)
+                VALUES ($1, $2, $3, 'pending')
+                RETURNING id
+                """,
+                uuid.UUID(codebase_id),
+                bank_id,
+                filename,
+            )
+            snapshot_id = str(snapshot_row["id"])
+
+        storage_key = f"banks/{bank_id}/codebases/{codebase_id}/snapshots/{snapshot_id}/source.raw"
+        await self._file_storage.store(
+            file_data=file_bytes,
+            key=storage_key,
+            metadata={
+                "bank_id": bank_id,
+                "codebase_id": codebase_id,
+                "snapshot_id": snapshot_id,
+                "filename": filename,
+                "virtual_path": effective_virtual_path,
+            },
+        )
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            await conn.execute(
+                f"""
+                UPDATE {fq_table("codebase_snapshots")}
+                SET source_archive_storage_key = $2, updated_at = NOW()
+                WHERE id = $1
+                """,
+                uuid.UUID(snapshot_id),
+                storage_key,
+            )
+
+        operation = await self._submit_async_operation(
+            bank_id=bank_id,
+            operation_type="codebase_import",
+            task_type="codebase_import_file",
+            task_payload={
+                "codebase_id": codebase_id,
+                "snapshot_id": snapshot_id,
+                "storage_key": storage_key,
+                "filename": filename,
+                "virtual_path": effective_virtual_path,
+            },
+            result_metadata=CodebaseOperationMetadata(
+                codebase_id=codebase_id,
+                snapshot_id=snapshot_id,
+                source_type="file",
+                source_ref=filename,
+            ).to_dict(),
+            dedupe_by_bank=False,
+        )
+        return {
+            "codebase_id": codebase_id,
+            "snapshot_id": snapshot_id,
+            "operation_id": operation["operation_id"],
+            "filename": filename,
+            "virtual_path": effective_virtual_path,
             "status": "pending",
         }
 

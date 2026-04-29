@@ -705,6 +705,21 @@ class CodebaseImportZipRequest(BaseModel):
     refresh_existing: bool = False
 
 
+class CodebaseImportFileRequest(BaseModel):
+    """JSON payload for single-file codebase import.
+
+    ``name`` is the logical codebase name stored in the bank — usually the
+    filename, but can be anything meaningful (e.g. ``agent_v2``).
+    ``virtual_path`` controls the path recorded inside the snapshot; if
+    omitted the original filename is used.  This matters for symbol FQNs
+    and import-edge resolution when the file is later refreshed.
+    """
+
+    name: str
+    virtual_path: str | None = None
+    refresh_existing: bool = False
+
+
 class CodebaseImportGithubRequest(BaseModel):
     """JSON payload for public GitHub-backed codebase import."""
 
@@ -768,6 +783,13 @@ class CodebaseImportResponse(BaseModel):
     snapshot_id: str
     operation_id: str
     status: str
+
+
+class CodebaseImportFileResponse(CodebaseImportResponse):
+    """Queued single-file codebase import response."""
+
+    filename: str
+    virtual_path: str
 
 
 class CodebaseGithubImportResponse(CodebaseImportResponse):
@@ -6720,6 +6742,58 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/import/zip: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/codebases/import/file",
+        response_model=CodebaseImportFileResponse,
+        summary="Import a single source file as a codebase",
+        description=(
+            "Upload one source file and run the full ASD parse → chunk → code-intel → review pipeline on it. "
+            "Useful for self-contained scripts, single-file applications, or files too granular for a full ZIP import. "
+            "``virtual_path`` controls the logical path recorded in the snapshot (defaults to the uploaded filename)."
+        ),
+        operation_id="import_codebase_file",
+        tags=["Codebases"],
+    )
+    async def api_codebase_import_file(
+        bank_id: str,
+        file: UploadFile = File(..., description="Source file to import"),
+        request: str = Form(..., description="JSON string with CodebaseImportFileRequest model"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        """Import a single source file into a bank as a reviewable codebase snapshot."""
+        try:
+            try:
+                request_data = CodebaseImportFileRequest.model_validate_json(request)
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Invalid request JSON: {str(e)}")
+
+            file_bytes = await file.read()
+            if not file_bytes:
+                raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+            result = await app.state.memory.submit_async_codebase_file_import(
+                bank_id=bank_id,
+                name=request_data.name,
+                filename=file.filename or "file",
+                file_bytes=file_bytes,
+                virtual_path=request_data.virtual_path,
+                refresh_existing=request_data.refresh_existing,
+                request_context=request_context,
+            )
+            return CodebaseImportFileResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/codebases/import/file: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post(

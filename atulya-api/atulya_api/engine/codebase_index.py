@@ -280,6 +280,25 @@ def _path_matches_globs(path: str, patterns: list[str] | None) -> bool:
     return any(fnmatch.fnmatch(path, pattern) for pattern in patterns)
 
 
+def load_single_file(
+    filename: str,
+    content_bytes: bytes,
+    *,
+    virtual_path: str | None = None,
+) -> list[ArchiveSourceFile]:
+    """Wrap a single raw file as a one-element ArchiveSourceFile list.
+
+    virtual_path overrides the logical path stored in the snapshot (useful
+    when the caller wants to represent the file as e.g. ``src/agent.py``).
+    Defaults to the bare filename.  The result is directly consumable by
+    build_archive_index — no special-casing required downstream.
+    """
+    effective_path = _normalize_path(virtual_path or filename)
+    if not effective_path:
+        effective_path = PurePosixPath(filename).name or "file.py"
+    return [ArchiveSourceFile(path=effective_path, data=content_bytes, size_bytes=len(content_bytes))]
+
+
 def load_zip_archive(
     archive_bytes: bytes,
     *,
