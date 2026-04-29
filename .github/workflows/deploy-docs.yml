@@ -2,10 +2,9 @@ name: Deploy Docs to GitHub Pages
 
 on:
   push:
+    # Do not path-filter this workflow. Large release pushes can exceed
+    # GitHub's 300-file diff window and silently skip docs deployment.
     branches: [main]
-    paths:
-      - 'atulya-docs/**'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
