@@ -11,8 +11,11 @@
 # Firecrawl’s `nuq-postgres` service is Firecrawl’s internal job DB, not Atulya’s DB.
 #
 # Wire Atulya (env on your Atulya process, same Docker host or shared network):
-#   ATULYA_API_CORTEX_SEARXNG_BASE_URL=http://searxng:8080
+#   ATULYA_API_CORTEX_SEARXNG_BASE_URL=http://searxng:8080   # host: http://127.0.0.1:${SEARXNG_HOST_PORT:-18080}
 #   ATULYA_API_CORTEX_FIRECRAWL_API_URL=http://firecrawl-api:3002
+# Self-hosted Firecrawl expects a UUID Bearer token (any valid UUID when USE_DB_AUTHENTICATION=false):
+#   ATULYA_API_CORTEX_FIRECRAWL_API_KEY=11111111-1111-4111-8111-111111111111
+# SearXNG ships HTML-only formats by default; ./searxng/settings.yml enables JSON for API clients.
 # If Atulya runs outside this compose network, publish ports and use host URLs, or:
 #   docker network connect atulya-internet <atulya-container-name>
 #
@@ -28,11 +31,20 @@ services:
     image: docker.io/searxng/searxng:latest
     container_name: atulya-searxng
     restart: unless-stopped
+    volumes:
+      # :rw so entrypoint chown succeeds; do not reuse this secret in production.
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:rw
     networks:
       - atulya-internet
-    # Uncomment for host / LAN debugging:
-    # ports:
-    #   - "8080:8080"
+    ports:
+      # Host e2e + local Atulya without joining this network (loopback only)
+      - "127.0.0.1:${SEARXNG_HOST_PORT:-18080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
 
   redis:
     image: redis:alpine
@@ -84,6 +96,18 @@ services:
     image: ghcr.io/firecrawl/firecrawl:latest
     container_name: atulya-firecrawl-api
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/v0/health/liveness').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
     depends_on:
       searxng:
         condition: service_started
