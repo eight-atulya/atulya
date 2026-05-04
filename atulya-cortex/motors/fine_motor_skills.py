@@ -30,12 +30,44 @@ import re
 import time
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Mapping
+from urllib.parse import urlparse
 
 import httpx
 
 from cortex.bus import ActionResult, Intent
 
 Tool = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
+
+def _web_fetch_is_search_engine_serp(url: str) -> bool:
+    """True for URLs whose HTML is almost always noise for an LLM (SERP / redirect soup)."""
+
+    raw = (url or "").strip()
+    if not raw:
+        return False
+    try:
+        p = urlparse(raw)
+    except ValueError:
+        return False
+    host = (p.netloc or "").lower()
+    path = (p.path or "").lower()
+    if not host:
+        return False
+    # Google web / lite / custom search URLs
+    if "google." in host:
+        if "/search" in path or path == "/search" or "q=" in (p.query or "").lower():
+            return True
+    if host in ("www.bing.com", "bing.com", "cn.bing.com", "www4.bing.com") and "/search" in path:
+        return True
+    if "search.yahoo.com" in host:
+        return True
+    if "duckduckgo.com" in host or "html.duckduckgo.com" in host:
+        return True
+    if "yandex.com" in host and "/search" in path:
+        return True
+    if "baidu.com" in host and ("/s" in path or "wd=" in (p.query or "").lower()):
+        return True
+    return False
+
 
 _FORBIDDEN_BASH = (
     re.compile(r"\brm\s+-rf?\s+/(?:\s|$)"),
@@ -247,6 +279,16 @@ class Hand:
 
     async def _tool_web_fetch(self, args: dict[str, Any]) -> dict[str, Any]:
         url = str(args["url"])
+        if _web_fetch_is_search_engine_serp(url):
+            if "web_search" in self._tools:
+                raise ValueError(
+                    "web_fetch: search-engine pages are not machine-readable here. "
+                    'Use web_search with {"query": "your keywords"} instead.'
+                )
+            raise ValueError(
+                "web_fetch: this is a search-engine URL (HTML is noise). "
+                "Enable tools.internet_search_enabled and run SearXNG (see docker/docker-compose/internet-search)."
+            )
         timeout = float(args.get("timeout_s") or self._web_fetch_timeout_s)
         max_bytes = int(args.get("max_bytes") or self._web_fetch_max_bytes)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:

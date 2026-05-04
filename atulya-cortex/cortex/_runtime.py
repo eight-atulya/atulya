@@ -286,6 +286,26 @@ def _build_hand_from_config(
     )
 
     specs: list[ToolSpec] = []
+    # When SearXNG is on, list web_search first so small models reach for metasearch
+    # instead of bash+curl or web_fetch against Google HTML.
+    if t.internet_search_enabled:
+        specs.append(
+            ToolSpec(
+                name="web_search",
+                signature="query, max_hits?",
+                description="ONLY right way to search the web — SearXNG digest (titles+URLs+snippets). Never curl Google",
+                example_args={"query": "sytolab company"},
+            )
+        )
+    if t.internet_extract_enabled:
+        specs.append(
+            ToolSpec(
+                name="web_extract",
+                signature="url, max_chars?",
+                description="Firecrawl markdown for one https URL after web_search picked it",
+                example_args={"url": "https://docs.python.org/3/whatsnew/3.13.html"},
+            )
+        )
     if t.bash_enabled:
         specs.append(
             ToolSpec(
@@ -320,30 +340,12 @@ def _build_hand_from_config(
                 example_args={"path": f"{safe_root_str}/notes/scratch.md", "old": "foo", "new": "bar"},
             )
         )
-    if t.internet_search_enabled:
-        specs.append(
-            ToolSpec(
-                name="web_search",
-                signature="query, max_hits?",
-                description="metasearch (SearXNG); short digest of titles+URLs+snippets — call first for fresh facts",
-                example_args={"query": "Python 3.13 release highlights"},
-            )
-        )
-    if t.internet_extract_enabled:
-        specs.append(
-            ToolSpec(
-                name="web_extract",
-                signature="url, max_chars?",
-                description="one-page markdown via Firecrawl — only after web_search names a URL you must read",
-                example_args={"url": "https://docs.python.org/3/whatsnew/3.13.html"},
-            )
-        )
     if t.web_fetch_enabled:
         specs.append(
             ToolSpec(
                 name="web_fetch",
                 signature="url",
-                description="raw HTTP GET (no JS); tiny static HTML only — prefer web_search/web_extract otherwise",
+                description="raw GET for one small static page (no JS). NOT for Google/search pages — blocked; use web_search",
                 example_args={"url": "https://example.com"},
             )
         )

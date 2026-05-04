@@ -86,6 +86,10 @@ Prefer **web_search → web_extract**; **web_fetch** only for tiny static HTML (
 | No tools in prompt | `allowed_channels` must include channel root (`tui`, `whatsapp`, …) |
 | `atulya_api` import warning | `atulya-cortex` needs `atulya-api` installed (workspace `uv sync`) |
 
+## Why “search” looked dumb before
+
+Small models often `bash curl` or `web_fetch` **Google SERP HTML** — useless. With `internet_search_enabled`, **web_search is listed first** in the tool catalogue, and **web_fetch is rejected** for common search-engine URLs with an error that points at `web_search`. Still set `internet_search_enabled=true` and run SearXNG.
+
 ## Token discipline (defaults)
 
 - `web_search`: digest cap ~1100 chars; tune `internet_search_max_hits`, `internet_search_snippet_max_chars`.

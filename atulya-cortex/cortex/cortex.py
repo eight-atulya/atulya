@@ -665,6 +665,7 @@ class Cortex:
                     "- Prefer web_search first — it returns a short digest, not full pages.\n"
                     "- Use web_extract only with one https URL you must read (markdown, still capped).\n"
                     "- Use web_fetch only for tiny static HTML; it returns raw markup and burns context.\n"
+                    "- Do not use bash curl/wget against Google or other search URLs — use web_search.\n"
                     "- Do not chain more than one search unless the first digest was clearly wrong."
                 )
         if sandboxed:
