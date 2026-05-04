@@ -6963,6 +6963,7 @@ class MemoryEngine(MemoryEngineInterface):
             fusion_span.set_attribute("atulya.graph_count", len(graph_results))
             fusion_span.set_attribute("atulya.temporal_count", len(temporal_results) if temporal_results else 0)
 
+            merged_candidates: list = []
             try:
                 # Merge 3 or 4 result lists depending on temporal constraint
                 if temporal_results:

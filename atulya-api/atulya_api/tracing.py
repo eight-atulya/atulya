@@ -12,6 +12,7 @@ to Langfuse (or any OTLP-compatible backend) via OTLP HTTP protocol.
 
 import json
 import logging
+import math
 import time
 from typing import Any, Optional
 
@@ -116,6 +117,9 @@ class GenAIAttributes:
 
     # Response metadata
     FINISH_REASONS = "gen_ai.response.finish_reasons"
+
+    # Full tool-call payloads on the span (Langfuse maps span attrs to IO; events alone are often hidden)
+    TOOL_CALLS_JSON = "gen_ai.tool_calls.json"
 
     # Error tracking
     ERROR_TYPE = "error.type"
@@ -247,6 +251,31 @@ def is_tracing_enabled() -> bool:
 MAX_CONTENT_LENGTH = 100_000  # characters
 
 
+def _safe_duration_seconds(duration: float) -> float:
+    """Sanitize LLM duration for span math (non-finite or negative → 0)."""
+    try:
+        d = float(duration)
+    except (TypeError, ValueError):
+        return 0.0
+    if not math.isfinite(d) or d < 0:
+        return 0.0
+    return d
+
+
+def _current_span_start_time_ns() -> int | None:
+    """Start time (ns since epoch) of the active recording span, if any."""
+    try:
+        span = trace.get_current_span()
+        if span is None or not span.is_recording():
+            return None
+        st = getattr(span, "start_time", None)
+        if st is None:
+            return None
+        return int(st)
+    except Exception:
+        return None
+
+
 def _truncate_content(content: str) -> str:
     """Truncate content if too large for span."""
     if len(content) > MAX_CONTENT_LENGTH:
@@ -311,15 +340,30 @@ class LLMSpanRecorder:
                 # Fallback to chat {model} if no scope provided
                 span_name = f"{operation_name} {model}"
 
-            # Calculate timestamps
-            end_time_ns = time.time_ns()
-            start_time_ns = end_time_ns - int(duration * 1_000_000_000)
+            # Start time is derived from LLM duration; span end is wall-clock when this block
+            # finishes. Use end_on_exit=True so the SDK ends the span *after* body work — that
+            # keeps default-timestamped add_event / record_exception events strictly before end(),
+            # which OTel requires. A fixed end_time_ns captured *before* the body + end_on_exit=False
+            # made events (or use_span's exception hook) land after the declared end → Langfuse 500
+            # "Invalid time value".
+            entry_ns = time.time_ns()
+            dur_s = _safe_duration_seconds(duration)
+            start_time_ns = entry_ns - int(dur_s * 1_000_000_000)
+            if start_time_ns < 0:
+                start_time_ns = 0
+            if start_time_ns > entry_ns:
+                start_time_ns = entry_ns
+            # Nested under atulya.retain / etc.: synthetic start can lie before parent span start.
+            parent_start_ns = _current_span_start_time_ns()
+            if parent_start_ns is not None and start_time_ns < parent_start_ns:
+                start_time_ns = parent_start_ns
+            if start_time_ns > entry_ns:
+                start_time_ns = entry_ns
 
-            # Create span with explicit timestamps
             with self.tracer.start_as_current_span(
                 span_name,
                 start_time=start_time_ns,
-                end_on_exit=False,  # We'll set end time manually
+                end_on_exit=True,
             ) as span:
                 # Set required attributes
                 span.set_attribute(GenAIAttributes.OPERATION_NAME, operation_name)
@@ -358,6 +402,21 @@ class LLMSpanRecorder:
                 if finish_reason:
                     event_attrs[GenAIAttributes.FINISH_REASONS] = json.dumps([finish_reason])
 
+                # Langfuse (and similar UIs) map generation input/output from **span attributes** such as
+                # gen_ai.input.messages / gen_ai.output.messages (see Langfuse OTEL property mapping).
+                # We still emit the same data on the semconv event for other collectors.
+                if input_messages_json:
+                    span.set_attribute(GenAIAttributes.INPUT_MESSAGES, input_messages_json)
+                if output_messages_json:
+                    span.set_attribute(GenAIAttributes.OUTPUT_MESSAGES, output_messages_json)
+                if system_instructions:
+                    span.set_attribute(GenAIAttributes.SYSTEM_INSTRUCTIONS, system_instructions)
+                if tool_calls:
+                    try:
+                        span.set_attribute(GenAIAttributes.TOOL_CALLS_JSON, json.dumps(tool_calls))
+                    except (TypeError, ValueError):
+                        span.set_attribute(GenAIAttributes.TOOL_CALLS_JSON, "[]")
+
                 span.add_event(
                     "gen_ai.client.inference.operation.details",
                     attributes=event_attrs,
@@ -371,7 +430,10 @@ class LLMSpanRecorder:
                             "tool.id": tc.get("id", ""),
                             "tool.arguments": json.dumps(tc.get("arguments", {})),
                         }
-                        span.add_event(f"gen_ai.tool_call.{i}", attributes=tool_event_attrs)
+                        span.add_event(
+                            f"gen_ai.tool_call.{i}",
+                            attributes=tool_event_attrs,
+                        )
 
                 # Handle errors
                 if error:
@@ -380,9 +442,6 @@ class LLMSpanRecorder:
                     span.record_exception(error)
                 else:
                     span.set_status(Status(StatusCode.OK))
-
-                # Set end time
-                span.end(end_time=end_time_ns)
 
         except Exception as e:
             # Don't let tracing errors break LLM calls

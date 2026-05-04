@@ -169,6 +169,7 @@ def test_llm_span_recorder_record_success(mock_time):
     mock_tracer.start_as_current_span.assert_called_once()
     call_args = mock_tracer.start_as_current_span.call_args
     assert call_args[0][0] == "atulya.test"
+    assert call_args[1].get("end_on_exit") is True
 
     # Verify attributes were set
     assert mock_span.set_attribute.called
@@ -182,6 +183,12 @@ def test_llm_span_recorder_record_success(mock_time):
     assert attribute_calls[GenAIAttributes.USAGE_OUTPUT_TOKENS] == 5
     assert attribute_calls["atulya.scope"] == "test"
 
+    # Prompt / completion on span (Langfuse maps these; not only on span events)
+    assert GenAIAttributes.INPUT_MESSAGES in attribute_calls
+    assert GenAIAttributes.OUTPUT_MESSAGES in attribute_calls
+    assert '"Hello"' in attribute_calls[GenAIAttributes.INPUT_MESSAGES]
+    assert "Hi there!" in attribute_calls[GenAIAttributes.OUTPUT_MESSAGES]
+
     # Verify event was added
     mock_span.add_event.assert_called_once()
     event_call = mock_span.add_event.call_args
@@ -190,8 +197,7 @@ def test_llm_span_recorder_record_success(mock_time):
     # Verify status was set to OK
     mock_span.set_status.assert_called()
 
-    # Verify span was ended
-    mock_span.end.assert_called_once()
+    # Span end is performed by the SDK context manager (end_on_exit=True), not mock_span.end()
 
 
 @patch("atulya_api.tracing.time")
@@ -232,7 +238,7 @@ def test_llm_span_recorder_record_error(mock_time):
     attribute_calls = {call[0][0]: call[0][1] for call in mock_span.set_attribute.call_args_list}
     assert attribute_calls[GenAIAttributes.ERROR_TYPE] == "ValueError"
 
-    # Verify exception was recorded
+    # Verify exception was recorded (during span, before auto end_on_exit)
     mock_span.record_exception.assert_called_once_with(error)
 
 
