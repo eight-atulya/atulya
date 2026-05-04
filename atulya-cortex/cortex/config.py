@@ -230,6 +230,17 @@ class ToolsConfig(_Section):
     web_fetch_timeout_s: float = Field(default=30.0, gt=0.0, le=600.0)
     web_fetch_max_bytes: int = Field(default=2_000_000, ge=1024, le=20_000_000)
     fs_write_enabled: bool = True
+    # SearXNG + Firecrawl (same env vars as atulya-api `InternetConnectorConfig`).
+    # Off by default; enable only when docker compose `internet-search` (or equivalent) is up.
+    internet_search_enabled: bool = False
+    internet_extract_enabled: bool = False
+    # Non-empty values override env for fixed deployments.
+    internet_searxng_base_url: str = ""
+    internet_firecrawl_base_url: str = ""
+    internet_firecrawl_api_key: str = ""
+    internet_search_max_hits: int = Field(default=5, ge=1, le=12)
+    internet_search_snippet_max_chars: int = Field(default=140, ge=40, le=400)
+    internet_extract_max_chars: int = Field(default=1200, ge=200, le=8000)
 
 
 class SelfHealingConfig(_Section):

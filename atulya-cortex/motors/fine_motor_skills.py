@@ -12,6 +12,8 @@ In v1 the toolset is small and side-effect-bounded:
 - `write_file`  — file write, sandboxed under `safe_root`.
 - `edit_file`   — atomic str-replace, sandboxed under `safe_root`.
 - `web_fetch`   — httpx GET with timeout and size cap.
+- `web_search`  — optional SearXNG metasearch (compact digest; cheap).
+- `web_extract` — optional Firecrawl markdown for one URL (trimmed; heavier).
 
 Adding a tool is one entry in `Hand._tools`. Tools that need broader access
 (databases, MCP servers, etc.) belong in `motors/movement.py`, not here.
@@ -27,7 +29,9 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping
+
+import httpx
 
 from cortex.bus import ActionResult, Intent
 
@@ -51,11 +55,17 @@ class Hand:
         bash_timeout_s: float = 30.0,
         web_fetch_timeout_s: float = 30.0,
         web_fetch_max_bytes: int = 2_000_000,
+        internet_stack: Any | None = None,
+        internet_limits: Mapping[str, Any] | None = None,
+        internet_search_enabled: bool = False,
+        internet_extract_enabled: bool = False,
     ) -> None:
         self._safe_root = Path(safe_root).resolve() if safe_root is not None else None
         self._bash_timeout_s = bash_timeout_s
         self._web_fetch_timeout_s = web_fetch_timeout_s
         self._web_fetch_max_bytes = web_fetch_max_bytes
+        self._internet_stack = internet_stack
+        self._internet_limits: dict[str, Any] = dict(internet_limits or {})
         self._tools: dict[str, Tool] = {
             "bash": self._tool_bash,
             "read_file": self._tool_read_file,
@@ -63,6 +73,10 @@ class Hand:
             "edit_file": self._tool_edit_file,
             "web_fetch": self._tool_web_fetch,
         }
+        if internet_stack is not None and internet_search_enabled:
+            self._tools["web_search"] = self._tool_web_search
+        if internet_stack is not None and internet_extract_enabled:
+            self._tools["web_extract"] = self._tool_web_extract
 
     def register(self, name: str, tool: Tool) -> None:
         self._tools[name] = tool
@@ -202,9 +216,36 @@ class Hand:
 
         return await asyncio.get_running_loop().run_in_executor(None, _edit)
 
-    async def _tool_web_fetch(self, args: dict[str, Any]) -> dict[str, Any]:
-        import httpx
+    async def _tool_web_search(self, args: dict[str, Any]) -> dict[str, Any]:
+        if self._internet_stack is None:
+            raise RuntimeError("web_search is not configured")
+        q = str(args.get("query", "")).strip()
+        if not q:
+            raise ValueError("web_search: missing 'query'")
+        lim = self._internet_limits
+        max_hits = int(args.get("max_hits") or lim.get("search_max_hits", 5))
+        title_max = int(lim.get("search_title_max", 72))
+        snippet_max = int(lim.get("search_snippet_max", 140))
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            return await self._internet_stack.tool_web_search_compact(
+                client,
+                q,
+                max_hits=max_hits,
+                title_max=title_max,
+                snippet_max=snippet_max,
+            )
 
+    async def _tool_web_extract(self, args: dict[str, Any]) -> dict[str, Any]:
+        if self._internet_stack is None:
+            raise RuntimeError("web_extract is not configured")
+        url = str(args.get("url", "")).strip()
+        if not url:
+            raise ValueError("web_extract: missing 'url'")
+        max_chars = int(args.get("max_chars") or self._internet_limits.get("extract_max_chars", 1200))
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            return await self._internet_stack.tool_web_extract_compact(client, url, max_chars=max_chars)
+
+    async def _tool_web_fetch(self, args: dict[str, Any]) -> dict[str, Any]:
         url = str(args["url"])
         timeout = float(args.get("timeout_s") or self._web_fetch_timeout_s)
         max_bytes = int(args.get("max_bytes") or self._web_fetch_max_bytes)

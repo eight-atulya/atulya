@@ -263,3 +263,59 @@ class InternetStackClient:
 
         report.attempts.append("scrape_exhausted_candidates")
         return report
+
+    @staticmethod
+    def truncate_for_tool(text: str, max_chars: int) -> tuple[str, bool]:
+        """Collapse vertical whitespace and trim to a hard char cap (tool_result budget)."""
+
+        t = re.sub(r"\n{3,}", "\n\n", (text or "").strip())
+        if len(t) <= max_chars:
+            return t, False
+        return t[: max_chars - 22].rstrip() + "\n…[truncated]", True
+
+    async def tool_web_search_compact(
+        self,
+        client: httpx.AsyncClient,
+        query: str,
+        *,
+        max_hits: int = 5,
+        title_max: int = 72,
+        snippet_max: int = 140,
+    ) -> dict[str, Any]:
+        """SearXNG results as a dense digest for LLM tool channels (token-efficient)."""
+
+        payload = await self.searxng_search_json(client, query.strip())
+        rows = (payload.get("results") or [])[: max(1, min(int(max_hits), 12))]
+        lines: list[str] = []
+        for i, r in enumerate(rows, 1):
+            title = str(r.get("title") or "").replace("\n", " ")[:title_max]
+            url = str(r.get("url") or "")
+            snip = str(r.get("content") or "").replace("\n", " ")[:snippet_max]
+            if url:
+                lines.append(f"{i}. {title} | {url}")
+                if snip:
+                    lines.append(f"   {snip}")
+        digest = "\n".join(lines) if lines else "(no hits)"
+        digest, truncated = self.truncate_for_tool(digest, 1100)
+        return {
+            "query": query.strip(),
+            "n": len(rows),
+            "digest": digest,
+            "truncated": truncated,
+        }
+
+    async def tool_web_extract_compact(
+        self,
+        client: httpx.AsyncClient,
+        url: str,
+        *,
+        max_chars: int = 1200,
+    ) -> dict[str, Any]:
+        """Firecrawl markdown trimmed for tool_result / small-model context."""
+
+        u = str(url).strip()
+        if not u.startswith(("http://", "https://")):
+            raise ValueError("web_extract: url must be http(s)")
+        md = await self.firecrawl_scrape_markdown(client, u)
+        body, truncated = self.truncate_for_tool(md, int(max_chars))
+        return {"url": u, "markdown": body, "truncated": truncated}

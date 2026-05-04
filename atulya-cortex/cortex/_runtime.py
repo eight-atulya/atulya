@@ -31,8 +31,17 @@ from cortex.skills import Skills
 from cortex.tool_protocol import ToolSpec
 from motors.fine_motor_skills import Hand
 
+try:
+    from atulya_api.cortex.internet_connectors import InternetConnectorConfig, InternetStackClient
+
+    _HAS_ATULYA_API_INTERNET = True
+except ImportError:  # pragma: no cover - optional in minimal installs
+    InternetConnectorConfig = None  # type: ignore[misc, assignment]
+    InternetStackClient = None  # type: ignore[misc, assignment]
+    _HAS_ATULYA_API_INTERNET = False
+
 if TYPE_CHECKING:
-    from cortex.config import CortexConfig
+    from cortex.config import CortexConfig, ToolsConfig
     from cortex.home import CortexHome
 
 logger = logging.getLogger(__name__)
@@ -264,11 +273,16 @@ def _build_hand_from_config(
         return None, ()
 
     safe_root_str = t.safe_root.strip() or str(home.root)
+    internet_stack, internet_limits, inet_search_on, inet_extract_on = _internet_stack_for_tools(t)
     hand = Hand(
         safe_root=safe_root_str,
         bash_timeout_s=t.bash_timeout_s,
         web_fetch_timeout_s=t.web_fetch_timeout_s,
         web_fetch_max_bytes=t.web_fetch_max_bytes,
+        internet_stack=internet_stack,
+        internet_limits=internet_limits,
+        internet_search_enabled=inet_search_on,
+        internet_extract_enabled=inet_extract_on,
     )
 
     specs: list[ToolSpec] = []
@@ -306,12 +320,30 @@ def _build_hand_from_config(
                 example_args={"path": f"{safe_root_str}/notes/scratch.md", "old": "foo", "new": "bar"},
             )
         )
+    if t.internet_search_enabled:
+        specs.append(
+            ToolSpec(
+                name="web_search",
+                signature="query, max_hits?",
+                description="metasearch (SearXNG); short digest of titles+URLs+snippets — call first for fresh facts",
+                example_args={"query": "Python 3.13 release highlights"},
+            )
+        )
+    if t.internet_extract_enabled:
+        specs.append(
+            ToolSpec(
+                name="web_extract",
+                signature="url, max_chars?",
+                description="one-page markdown via Firecrawl — only after web_search names a URL you must read",
+                example_args={"url": "https://docs.python.org/3/whatsnew/3.13.html"},
+            )
+        )
     if t.web_fetch_enabled:
         specs.append(
             ToolSpec(
                 name="web_fetch",
                 signature="url",
-                description="HTTP GET a URL and return text body (no JS rendering)",
+                description="raw HTTP GET (no JS); tiny static HTML only — prefer web_search/web_extract otherwise",
                 example_args={"url": "https://example.com"},
             )
         )
@@ -323,6 +355,44 @@ def _build_hand_from_config(
         if name not in enabled_names:
             hand._tools.pop(name, None)  # noqa: SLF001 — single source of truth lives here.
     return hand, tuple(specs)
+
+
+def _internet_stack_for_tools(
+    tools: "ToolsConfig",
+) -> tuple[Any | None, dict[str, Any], bool, bool]:
+    """Build `InternetStackClient` when internet tools are enabled in config."""
+
+    if not tools.internet_search_enabled and not tools.internet_extract_enabled:
+        return None, {}, False, False
+    if not _HAS_ATULYA_API_INTERNET:
+        logger.warning(
+            "tools.internet_* enabled but atulya_api is not installed; "
+            "install the atulya-api package or disable internet_*_enabled."
+        )
+        return None, {}, False, False
+    base = InternetConnectorConfig.from_env()
+    cfg = InternetConnectorConfig(
+        searxng_base_url=(tools.internet_searxng_base_url or base.searxng_base_url).rstrip("/"),
+        firecrawl_base_url=(tools.internet_firecrawl_base_url or base.firecrawl_base_url).rstrip("/"),
+        firecrawl_api_key=(tools.internet_firecrawl_api_key or base.firecrawl_api_key),
+        search_timeout=base.search_timeout,
+        scrape_timeout=base.scrape_timeout,
+        max_attempts=base.max_attempts,
+        base_backoff_s=base.base_backoff_s,
+        max_backoff_s=base.max_backoff_s,
+    )
+    limits = {
+        "search_max_hits": tools.internet_search_max_hits,
+        "search_snippet_max": tools.internet_search_snippet_max_chars,
+        "search_title_max": 72,
+        "extract_max_chars": tools.internet_extract_max_chars,
+    }
+    return (
+        InternetStackClient(cfg),
+        limits,
+        tools.internet_search_enabled,
+        tools.internet_extract_enabled,
+    )
 
 
 # ---------------------------------------------------------------------------

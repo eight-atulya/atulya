@@ -40,8 +40,8 @@ from cortex.peer_banks import peer_bank_id
 from cortex.peer_memory import PeerMemoryBridge
 from cortex.personality import Personality
 from cortex.plasticity_prompt_memory import PlasticityPromptMemory
-from cortex.semantic_facts import FactStore
 from cortex.self_healing import SelfHealingEngine
+from cortex.semantic_facts import FactStore
 from cortex.skills import Skills, render_skills_block
 from cortex.tool_protocol import (
     ToolCall,
@@ -659,6 +659,14 @@ class Cortex:
             tools_block = render_protocol_block(self._tool_specs)
             if tools_block:
                 system_parts.append(tools_block)
+            if any(s.name in ("web_search", "web_extract") for s in self._tool_specs):
+                system_parts.append(
+                    "Internet tools (token discipline):\n"
+                    "- Prefer web_search first — it returns a short digest, not full pages.\n"
+                    "- Use web_extract only with one https URL you must read (markdown, still capped).\n"
+                    "- Use web_fetch only for tiny static HTML; it returns raw markup and burns context.\n"
+                    "- Do not chain more than one search unless the first digest was clearly wrong."
+                )
         if sandboxed:
             system_parts.append("This channel is sandboxed: do not call tools or delegate. Reply only with safe text.")
         system_text = "\n\n".join(p for p in system_parts if p.strip())

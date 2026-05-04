@@ -156,6 +156,18 @@ web_fetch_enabled = true
 web_fetch_timeout_s = 30.0
 web_fetch_max_bytes = 2000000
 fs_write_enabled = true
+# SearXNG + Firecrawl (see repo docker/docker-compose/internet-search). Same env
+# vars as atulya-api: ATULYA_API_CORTEX_SEARXNG_BASE_URL, _FIRECRAWL_API_URL, _FIRECRAWL_API_KEY.
+internet_search_enabled = false
+internet_extract_enabled = false
+internet_searxng_base_url = ""
+internet_firecrawl_base_url = ""
+internet_firecrawl_api_key = ""
+internet_search_max_hits = 5
+internet_search_snippet_max_chars = 140
+internet_extract_max_chars = 1200
+# If you enable internet_search and/or internet_extract, consider max_actions = 4
+# so the model can search → read one URL → answer without hitting the tool budget.
 
 [self_healing]
 # Global reply self-healing for all channels (TUI, WhatsApp, Telegram).
