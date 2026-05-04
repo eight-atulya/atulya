@@ -1,0 +1,64 @@
+# Atulya + PostgreSQL + SearXNG for Atulya Cortex hybrid internet (search + optional crawl).
+# Firecrawl is not bundled here (heavy stack: Redis, Playwright, RabbitMQ). Run it from the
+# Firecrawl repo or a hosted API, then point ATULYA_API_CORTEX_FIRECRAWL_API_URL at it.
+#
+# Required: ATULYA_DB_PASSWORD, OPENAI_API_KEY (or your LLM env per image defaults)
+#
+# Usage (from repo root):
+#   docker compose -f docker/docker-compose/internet-search/docker-compose.yaml up -d
+#
+# Optional:
+# - ATULYA_VERSION, ATULYA_DB_USER, ATULYA_DB_NAME, ATULYA_DB_VERSION (see external-pg stack)
+# - ATULYA_API_CORTEX_FIRECRAWL_API_URL — e.g. http://host.docker.internal:3002 when Firecrawl
+#   is published on the host from ../firecrawl/docker-compose.yaml (PORT default 3002)
+
+services:
+  db:
+    image: pgvector/pgvector:pg${ATULYA_DB_VERSION:-18}
+    container_name: atulya-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${ATULYA_DB_USER:-atulya_user}
+      POSTGRES_PASSWORD: ${ATULYA_DB_PASSWORD:?Please set the ATULYA_DB_PASSWORD env variable}
+      POSTGRES_DB: ${ATULYA_DB_NAME:-atulya_db}
+    volumes:
+      - pg_data:/var/lib/postgresql/${ATULYA_DB_VERSION:-18}/docker
+    networks:
+      - atulya-net
+
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: atulya-searxng
+    restart: always
+    networks:
+      - atulya-net
+    # Uncomment to debug SearXNG from the host:
+    # ports:
+    #   - "8080:8080"
+
+  atulya:
+    image: ghcr.io/eight-atulya/atulya:${ATULYA_VERSION:-latest}
+    container_name: atulya-app
+    ports:
+      - "8888:8888"
+      - "9999:9999"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      - ATULYA_API_LLM_API_KEY=${OPENAI_API_KEY?Please set the OPENAI_API_KEY env variable}
+      - ATULYA_API_DATABASE_URL=postgresql://${ATULYA_DB_USER:-atulya_user}:${ATULYA_DB_PASSWORD:?Please set the ATULYA_DB_PASSWORD env variable}@db:5432/${ATULYA_DB_NAME:-atulya_db}
+      # Cortex internet connectors (read by API once feature is implemented)
+      - ATULYA_API_CORTEX_SEARXNG_BASE_URL=${ATULYA_API_CORTEX_SEARXNG_BASE_URL:-http://searxng:8080}
+      - ATULYA_API_CORTEX_FIRECRAWL_API_URL=${ATULYA_API_CORTEX_FIRECRAWL_API_URL:-}
+    depends_on:
+      - db
+      - searxng
+    networks:
+      - atulya-net
+
+networks:
+  atulya-net:
+    driver: bridge
+
+volumes:
+  pg_data:
