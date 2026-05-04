@@ -2,7 +2,14 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useBank } from "@/lib/bank-context";
-import { client, type ReflectResponse } from "@/lib/api";
+import {
+  client,
+  type ChildOperationStatus,
+  type OperationListItem,
+  type OperationProgress,
+  type OperationStatus,
+  type ReflectResponse,
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import {
@@ -31,56 +38,11 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { RefreshCw, Clock, AlertCircle, CheckCircle, Loader2, X, RotateCcw } from "lucide-react";
 
-interface Operation {
-  id: string;
-  task_type: string;
-  items_count: number;
-  document_id: string | null;
-  created_at: string;
-  status: string;
-  error_message: string | null;
-}
-
-interface ChildOperationStatus {
-  operation_id: string;
-  status: string;
-  sub_batch_index: number | null;
-  items_count: number | null;
-  error_message: string | null;
-}
-
 type OperationDetails =
+  | (OperationStatus & { error?: never })
   | {
-      operation_id: string;
-      status: string;
-      operation_type: string | null;
-      created_at: string | null;
-      updated_at: string | null;
-      completed_at: string | null;
-      error_message: string | null;
-      stage?: string | null;
-      result_metadata?: {
-        items_count?: number;
-        total_tokens?: number;
-        num_sub_batches?: number;
-        is_parent?: boolean;
-        [key: string]: any;
-      } | null;
-      child_operations?: ChildOperationStatus[] | null;
-      error?: never; // Not present in success case
-    }
-  | {
-      error: string; // Error state when loading fails
+      error: string;
       operation_id?: never;
-      status?: never;
-      operation_type?: never;
-      created_at?: never;
-      updated_at?: never;
-      completed_at?: never;
-      error_message?: never;
-      stage?: never;
-      result_metadata?: never;
-      child_operations?: never;
     };
 
 const OPERATION_TYPE_OPTIONS = [
@@ -110,9 +72,61 @@ function isReflectResponse(result: unknown): result is ReflectResponse {
   );
 }
 
+function formatStatusLabel(value: string | null | undefined): string {
+  if (!value) return "N/A";
+  return value.replace(/_/g, " ");
+}
+
+function formatProgressText(progress?: OperationProgress | null): string | null {
+  if (!progress) return null;
+  const unit = progress.unit ? ` ${progress.unit.replace(/_/g, " ")}` : "";
+  const label = progress.label ? `${progress.label} · ` : "";
+  const failed = progress.failed && progress.failed > 0 ? ` · ${progress.failed} failed` : "";
+  return `${label}${progress.current}/${progress.total}${unit}${failed}`;
+}
+
+function progressPercent(progress?: OperationProgress | null): number | null {
+  if (!progress || progress.total <= 0) return null;
+  return Math.max(0, Math.min(100, Math.round((progress.current / progress.total) * 100)));
+}
+
+function getStatusPresentation(operation: {
+  status: string;
+  queue_state?: "queued" | "processing" | null;
+  error_message?: string | null;
+}) {
+  if (operation.status === "completed") {
+    return {
+      icon: CheckCircle,
+      label: "completed",
+      className:
+        "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+    };
+  }
+  if (operation.status === "failed") {
+    return {
+      icon: AlertCircle,
+      label: "failed",
+      className: "bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20",
+    };
+  }
+  if (operation.queue_state === "processing") {
+    return {
+      icon: Loader2,
+      label: "running",
+      className: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20",
+    };
+  }
+  return {
+    icon: Clock,
+    label: operation.queue_state === "queued" ? "queued" : "pending",
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+  };
+}
+
 export function BankOperationsView() {
   const { currentBank } = useBank();
-  const [operations, setOperations] = useState<Operation[]>([]);
+  const [operations, setOperations] = useState<OperationListItem[]>([]);
   const [totalOperations, setTotalOperations] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
   const [taskTypeFilter, setTaskTypeFilter] = useState<string | null>(null);
@@ -195,7 +209,7 @@ export function BankOperationsView() {
     try {
       const details = await client.getOperationStatus(currentBank, operationId);
       setSelectedOperation(details);
-      if (details.operation_type === "reflect" && details.status === "completed") {
+      if (details.status === "completed") {
         const result = await client.getOperationResult(currentBank, operationId);
         setSelectedOperationResult(result.result);
       }
@@ -232,11 +246,55 @@ export function BankOperationsView() {
     }
   }, [currentBank, loadOperations, offset, statusFilter, taskTypeFilter]);
 
+  useEffect(() => {
+    if (!dialogOpen || !currentBank || !selectedOperation || "error" in selectedOperation) {
+      return;
+    }
+    if (selectedOperation.status !== "pending") {
+      return;
+    }
+
+    let cancelled = false;
+    const operationId = selectedOperation.operation_id;
+
+    const refreshDetails = async () => {
+      try {
+        const details = await client.getOperationStatus(currentBank, operationId);
+        if (cancelled) return;
+        setSelectedOperation(details);
+
+        if (details.status === "completed") {
+          const result = await client.getOperationResult(currentBank, operationId);
+          if (!cancelled) {
+            setSelectedOperationResult(result.result);
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          console.error("Error refreshing operation details:", error);
+        }
+      }
+    };
+
+    const interval = window.setInterval(() => {
+      void refreshDetails();
+    }, 3000);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
+  }, [currentBank, dialogOpen, selectedOperation]);
+
   const reflectResult = isReflectResponse(selectedOperationResult) ? selectedOperationResult : null;
   const rawOperationResult =
     selectedOperationResult && !isReflectResponse(selectedOperationResult)
       ? selectedOperationResult
       : null;
+  const operationDetails =
+    selectedOperation && !("error" in selectedOperation) ? selectedOperation : null;
+  const operationDetailsError =
+    selectedOperation && "error" in selectedOperation ? selectedOperation.error : null;
 
   if (!currentBank) return null;
 
@@ -342,27 +400,33 @@ export function BankOperationsView() {
                         {new Date(op.created_at).toLocaleString()}
                       </TableCell>
                       <TableCell>
-                        {op.status === "pending" && (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            <Clock className="w-3 h-3" />
-                            pending
-                          </span>
-                        )}
-                        {op.status === "failed" && (
-                          <span
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20"
-                            title={op.error_message ?? undefined}
-                          >
-                            <AlertCircle className="w-3 h-3" />
-                            failed
-                          </span>
-                        )}
-                        {op.status === "completed" && (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                            <CheckCircle className="w-3 h-3" />
-                            completed
-                          </span>
-                        )}
+                        {(() => {
+                          const badge = getStatusPresentation(op);
+                          const Icon = badge.icon;
+                          const progressText = formatProgressText(op.progress);
+                          const showSecondaryStatus =
+                            op.status === "pending" || op.status === "failed";
+                          return (
+                            <div className="space-y-1">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}
+                                title={op.error_message ?? undefined}
+                              >
+                                <Icon
+                                  className={`w-3 h-3 ${badge.label === "running" ? "animate-spin" : ""}`}
+                                />
+                                {badge.label}
+                              </span>
+                              {showSecondaryStatus && (op.stage || progressText) && (
+                                <div className="text-xs text-muted-foreground">
+                                  {op.stage ? formatStatusLabel(op.stage) : null}
+                                  {op.stage && progressText ? " · " : ""}
+                                  {progressText}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </TableCell>
                       <TableCell>
                         {op.status === "pending" && (
@@ -451,8 +515,8 @@ export function BankOperationsView() {
           <DialogHeader>
             <DialogTitle>Operation Details</DialogTitle>
             <DialogDescription>
-              {selectedOperation?.operation_id && (
-                <span className="font-mono text-xs">{selectedOperation.operation_id}</span>
+              {operationDetails?.operation_id && (
+                <span className="font-mono text-xs">{operationDetails.operation_id}</span>
               )}
             </DialogDescription>
           </DialogHeader>
@@ -462,81 +526,129 @@ export function BankOperationsView() {
             </div>
           ) : selectedOperation ? (
             <div className="space-y-4">
-              {selectedOperation.error ? (
-                <div className="text-red-600 dark:text-red-400">{selectedOperation.error}</div>
+              {operationDetailsError ? (
+                <div className="text-red-600 dark:text-red-400">{operationDetailsError}</div>
               ) : (
                 <>
                   {/* Basic Info */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Status</div>
-                      <div className="mt-1">
-                        {selectedOperation.status === "pending" && (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
-                            <Clock className="w-3 h-3" />
-                            pending
-                          </span>
-                        )}
-                        {selectedOperation.status === "failed" && (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20">
-                            <AlertCircle className="w-3 h-3" />
-                            failed
-                          </span>
-                        )}
-                        {selectedOperation.status === "completed" && (
-                          <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                            <CheckCircle className="w-3 h-3" />
-                            completed
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Type</div>
-                      <div className="mt-1 font-mono text-sm">
-                        {selectedOperation.operation_type}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Stage</div>
-                      <div className="mt-1 text-sm">{selectedOperation.stage || "N/A"}</div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Created</div>
-                      <div className="mt-1 text-sm">
-                        {selectedOperation.created_at
-                          ? new Date(selectedOperation.created_at).toLocaleString()
-                          : "N/A"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-muted-foreground">Updated</div>
-                      <div className="mt-1 text-sm">
-                        {selectedOperation.updated_at
-                          ? new Date(selectedOperation.updated_at).toLocaleString()
-                          : "N/A"}
-                      </div>
-                    </div>
-                    {selectedOperation.completed_at && (
-                      <div>
-                        <div className="text-sm font-medium text-muted-foreground">Completed</div>
-                        <div className="mt-1 text-sm">
-                          {new Date(selectedOperation.completed_at).toLocaleString()}
-                        </div>
-                      </div>
-                    )}
-                    {selectedOperation.result_metadata?.items_count !== undefined && (
-                      <div>
-                        <div className="text-sm font-medium text-muted-foreground">Total Items</div>
-                        <div className="mt-1 text-sm">
-                          {selectedOperation.result_metadata.items_count}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  {(() => {
+                    if (!operationDetails) {
+                      return null;
+                    }
 
-                  {selectedOperation.operation_type === "reflect" &&
-                    selectedOperation.status === "completed" && (
+                    const badge = getStatusPresentation(operationDetails);
+                    const Icon = badge.icon;
+                    const progressText = formatProgressText(operationDetails.progress);
+                    const percent = progressPercent(operationDetails.progress);
+                    return (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground">Status</div>
+                            <div className="mt-1">
+                              <span
+                                className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}
+                              >
+                                <Icon
+                                  className={`w-3 h-3 ${badge.label === "running" ? "animate-spin" : ""}`}
+                                />
+                                {badge.label}
+                              </span>
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground">Type</div>
+                            <div className="mt-1 font-mono text-sm">
+                              {operationDetails.operation_type}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Queue State
+                            </div>
+                            <div className="mt-1 text-sm">
+                              {operationDetails.queue_state
+                                ? formatStatusLabel(operationDetails.queue_state)
+                                : "N/A"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground">Stage</div>
+                            <div className="mt-1 text-sm">
+                              {formatStatusLabel(operationDetails.stage)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground">Created</div>
+                            <div className="mt-1 text-sm">
+                              {operationDetails.created_at
+                                ? new Date(operationDetails.created_at).toLocaleString()
+                                : "N/A"}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm font-medium text-muted-foreground">Updated</div>
+                            <div className="mt-1 text-sm">
+                              {operationDetails.updated_at
+                                ? new Date(operationDetails.updated_at).toLocaleString()
+                                : "N/A"}
+                            </div>
+                          </div>
+                          {operationDetails.completed_at && (
+                            <div>
+                              <div className="text-sm font-medium text-muted-foreground">
+                                Completed
+                              </div>
+                              <div className="mt-1 text-sm">
+                                {new Date(operationDetails.completed_at).toLocaleString()}
+                              </div>
+                            </div>
+                          )}
+                          {operationDetails.result_metadata?.items_count !== undefined && (
+                            <div>
+                              <div className="text-sm font-medium text-muted-foreground">
+                                Total Items
+                              </div>
+                              <div className="mt-1 text-sm">
+                                {operationDetails.result_metadata.items_count}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {(progressText || percent !== null) && (
+                          <div className="rounded-lg border p-4">
+                            <div className="flex items-center justify-between gap-3">
+                              <div>
+                                <div className="text-sm font-medium text-foreground">Progress</div>
+                                {progressText && (
+                                  <div className="text-sm text-muted-foreground">
+                                    {progressText}
+                                  </div>
+                                )}
+                              </div>
+                              {percent !== null && (
+                                <div className="text-sm font-medium text-foreground">
+                                  {percent}%
+                                </div>
+                              )}
+                            </div>
+                            {percent !== null && (
+                              <div className="mt-3 h-2 rounded-full bg-muted">
+                                <div
+                                  className="h-2 rounded-full bg-sky-500 transition-all"
+                                  style={{ width: `${percent}%` }}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  {operationDetails?.operation_type === "reflect" &&
+                    operationDetails.status === "completed" && (
                       <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
@@ -595,25 +707,25 @@ export function BankOperationsView() {
                   )}
 
                   {/* Error Message */}
-                  {selectedOperation.error_message && (
+                  {operationDetails?.error_message && (
                     <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3">
                       <div className="text-sm font-medium text-red-600 dark:text-red-400 mb-1">
                         Error
                       </div>
                       <div className="text-sm text-red-600/80 dark:text-red-400/80 font-mono">
-                        {selectedOperation.error_message}
+                        {operationDetails.error_message}
                       </div>
                     </div>
                   )}
 
                   {/* Child Operations (for parent operations) */}
-                  {selectedOperation.child_operations &&
-                    selectedOperation.child_operations.length > 0 && (
+                  {operationDetails?.child_operations &&
+                    operationDetails.child_operations.length > 0 && (
                       <div>
                         <div className="text-sm font-medium text-muted-foreground mb-2">
                           Sub-batches (
-                          {selectedOperation.result_metadata?.num_sub_batches ||
-                            selectedOperation.child_operations.length}
+                          {operationDetails.result_metadata?.num_sub_batches ||
+                            operationDetails.child_operations.length}
                           )
                         </div>
                         <div className="rounded-lg border">
@@ -627,38 +739,48 @@ export function BankOperationsView() {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {selectedOperation.child_operations.map((child) => (
-                                <TableRow key={child.operation_id}>
-                                  <TableCell className="text-sm">{child.sub_batch_index}</TableCell>
-                                  <TableCell className="font-mono text-xs text-muted-foreground">
-                                    {child.operation_id.substring(0, 8)}
-                                  </TableCell>
-                                  <TableCell className="text-sm">{child.items_count}</TableCell>
-                                  <TableCell>
-                                    {child.status === "pending" && (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                                        <Clock className="w-3 h-3" />
-                                        pending
-                                      </span>
-                                    )}
-                                    {child.status === "failed" && (
-                                      <span
-                                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-600 dark:text-red-400"
-                                        title={child.error_message ?? undefined}
-                                      >
-                                        <AlertCircle className="w-3 h-3" />
-                                        failed
-                                      </span>
-                                    )}
-                                    {child.status === "completed" && (
-                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                                        <CheckCircle className="w-3 h-3" />
-                                        completed
-                                      </span>
-                                    )}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
+                              {operationDetails.child_operations.map(
+                                (child: ChildOperationStatus) => (
+                                  <TableRow key={child.operation_id}>
+                                    <TableCell className="text-sm">
+                                      {child.sub_batch_index}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs text-muted-foreground">
+                                      {child.operation_id.substring(0, 8)}
+                                    </TableCell>
+                                    <TableCell className="text-sm">{child.items_count}</TableCell>
+                                    <TableCell>
+                                      {(() => {
+                                        const badge = getStatusPresentation(child);
+                                        const Icon = badge.icon;
+                                        const progressText = formatProgressText(child.progress);
+                                        return (
+                                          <div className="space-y-1">
+                                            <span
+                                              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}
+                                              title={child.error_message ?? undefined}
+                                            >
+                                              <Icon
+                                                className={`w-3 h-3 ${badge.label === "running" ? "animate-spin" : ""}`}
+                                              />
+                                              {badge.label}
+                                            </span>
+                                            {(child.stage || progressText) && (
+                                              <div className="text-xs text-muted-foreground">
+                                                {child.stage
+                                                  ? formatStatusLabel(child.stage)
+                                                  : null}
+                                                {child.stage && progressText ? " · " : ""}
+                                                {progressText}
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })()}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
                             </TableBody>
                           </Table>
                         </div>

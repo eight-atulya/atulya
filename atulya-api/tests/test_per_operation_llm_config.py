@@ -20,10 +20,16 @@ def setup_test_env():
         "ATULYA_API_LAZY_RERANKER": "true",
         "ATULYA_API_LLM_PROVIDER": "mock",
         "ATULYA_API_LLM_MODEL": "default-model",
+        "ATULYA_API_LLM_TIMEOUT": "555",
         "ATULYA_API_RETAIN_LLM_PROVIDER": "mock",
         "ATULYA_API_RETAIN_LLM_MODEL": "retain-model",
+        "ATULYA_API_RETAIN_LLM_TIMEOUT": "777",
         "ATULYA_API_REFLECT_LLM_PROVIDER": "mock",
         "ATULYA_API_REFLECT_LLM_MODEL": "reflect-model",
+        "ATULYA_API_CONSOLIDATION_LLM_PROVIDER": "mock",
+        "ATULYA_API_CONSOLIDATION_LLM_MODEL": "consolidation-model",
+        "ATULYA_API_CONSOLIDATION_LLM_TIMEOUT": "888",
+        "ATULYA_API_CONSOLIDATION_MAX_COMPLETION_TOKENS": "1234",
         "ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER": "mock",
         "ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL": "entity-intelligence-model",
         "ATULYA_API_ENTITY_INTELLIGENCE_LLM_TIMEOUT": "900",
@@ -57,9 +63,10 @@ class TestPerOperationLLMConfig:
 
     def test_config_loads_per_operation_settings(self):
         """Test that config correctly loads per-operation LLM settings."""
-        from atulya_api.config import get_config
+        from atulya_api.config import _get_raw_config, get_config
 
         config = get_config()
+        raw_config = _get_raw_config()
 
         # Default config
         assert config.llm_provider == "mock"
@@ -68,10 +75,17 @@ class TestPerOperationLLMConfig:
         # Retain config
         assert config.retain_llm_provider == "mock"
         assert config.retain_llm_model == "retain-model"
+        assert config.retain_llm_timeout == 777.0
 
         # Reflect config
         assert config.reflect_llm_provider == "mock"
         assert config.reflect_llm_model == "reflect-model"
+
+        # Consolidation config
+        assert config.consolidation_llm_provider == "mock"
+        assert config.consolidation_llm_model == "consolidation-model"
+        assert config.consolidation_llm_timeout == 888.0
+        assert raw_config.consolidation_max_completion_tokens == 1234
 
         # Entity intelligence config
         assert config.entity_intelligence_llm_provider == "mock"
@@ -94,10 +108,16 @@ class TestPerOperationLLMConfig:
         # Verify retain config
         assert engine._retain_llm_config.provider == "mock"
         assert engine._retain_llm_config.model == "retain-model"
+        assert engine._retain_llm_config.timeout == 777.0
 
         # Verify reflect config
         assert engine._reflect_llm_config.provider == "mock"
         assert engine._reflect_llm_config.model == "reflect-model"
+
+        # Verify consolidation config
+        assert engine._consolidation_llm_config.provider == "mock"
+        assert engine._consolidation_llm_config.model == "consolidation-model"
+        assert engine._consolidation_llm_config.timeout == 888.0
 
         # Verify bank-level entity intelligence config
         assert engine._entity_intelligence_llm_config.provider == "mock"
@@ -135,6 +155,8 @@ class TestPerOperationLLMConfig:
         retain_model = os.environ.pop("ATULYA_API_RETAIN_LLM_MODEL", None)
         reflect_provider = os.environ.pop("ATULYA_API_REFLECT_LLM_PROVIDER", None)
         reflect_model = os.environ.pop("ATULYA_API_REFLECT_LLM_MODEL", None)
+        consolidation_provider = os.environ.pop("ATULYA_API_CONSOLIDATION_LLM_PROVIDER", None)
+        consolidation_model = os.environ.pop("ATULYA_API_CONSOLIDATION_LLM_MODEL", None)
         intelligence_provider = os.environ.pop("ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER", None)
         intelligence_model = os.environ.pop("ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL", None)
 
@@ -151,6 +173,7 @@ class TestPerOperationLLMConfig:
             assert engine._llm_config.model == "default-model"
             assert engine._retain_llm_config.model == "default-model"
             assert engine._reflect_llm_config.model == "default-model"
+            assert engine._consolidation_llm_config.model == "default-model"
             assert engine._entity_intelligence_llm_config.model == "default-model"
         finally:
             # Restore env vars
@@ -162,10 +185,35 @@ class TestPerOperationLLMConfig:
                 os.environ["ATULYA_API_REFLECT_LLM_PROVIDER"] = reflect_provider
             if reflect_model:
                 os.environ["ATULYA_API_REFLECT_LLM_MODEL"] = reflect_model
+            if consolidation_provider:
+                os.environ["ATULYA_API_CONSOLIDATION_LLM_PROVIDER"] = consolidation_provider
+            if consolidation_model:
+                os.environ["ATULYA_API_CONSOLIDATION_LLM_MODEL"] = consolidation_model
             if intelligence_provider:
                 os.environ["ATULYA_API_ENTITY_INTELLIGENCE_LLM_PROVIDER"] = intelligence_provider
             if intelligence_model:
                 os.environ["ATULYA_API_ENTITY_INTELLIGENCE_LLM_MODEL"] = intelligence_model
+            clear_cache()
+
+    def test_consolidation_llm_timeout_falls_back_to_global_timeout(self):
+        """Test that consolidation timeout uses the global timeout when unset."""
+        from atulya_api.config import clear_config_cache as clear_cache
+
+        consolidation_timeout = os.environ.pop("ATULYA_API_CONSOLIDATION_LLM_TIMEOUT", None)
+
+        try:
+            clear_cache()
+            from atulya_api import MemoryEngine
+
+            engine = MemoryEngine(
+                skip_llm_verification=True,
+                lazy_reranker=True,
+            )
+
+            assert engine._consolidation_llm_config.timeout == 555.0
+        finally:
+            if consolidation_timeout is not None:
+                os.environ["ATULYA_API_CONSOLIDATION_LLM_TIMEOUT"] = consolidation_timeout
             clear_cache()
 
 

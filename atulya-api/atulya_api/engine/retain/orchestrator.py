@@ -73,6 +73,17 @@ from .types import EntityLink, ProcessedFact, RetainContent, RetainContentDict
 logger = logging.getLogger(__name__)
 
 
+async def _report_progress(
+    progress_callback: Callable[[str, dict[str, Any] | None], Awaitable[None]] | None,
+    stage: str,
+    extras: dict[str, Any] | None = None,
+) -> None:
+    """Report retain progress when an operation callback is available."""
+    if progress_callback is None:
+        return
+    await progress_callback(stage, extras)
+
+
 async def retain_batch(
     pool,
     embeddings_model,
@@ -90,6 +101,7 @@ async def retain_batch(
     operation_id: str | None = None,
     schema: str | None = None,
     outbox_callback: Callable[["asyncpg.Connection", list[str]], Awaitable[None]] | None = None,
+    progress_callback: Callable[[str, dict[str, Any] | None], Awaitable[None]] | None = None,
 ) -> tuple[list[list[str]], TokenUsage]:
     """
     Process a batch of content through the retain pipeline.
@@ -182,7 +194,14 @@ async def retain_batch(
     step_start = time.time()
 
     extracted_facts, chunks, usage = await fact_extraction.extract_facts_from_contents(
-        contents, llm_config, agent_name, config, pool, operation_id, schema
+        contents,
+        llm_config,
+        agent_name,
+        config,
+        pool,
+        operation_id,
+        schema,
+        progress_callback=progress_callback,
     )
     log_buffer.append(
         f"[1] Extract facts: {len(extracted_facts)} facts, {len(chunks)} chunks from {len(contents)} contents in {time.time() - step_start:.3f}s"
@@ -193,6 +212,19 @@ async def retain_batch(
         from collections import defaultdict
 
         docs_tracked = 0
+        total_documents = (
+            1 if document_id else len({item.get("document_id") for item in contents_dicts}) or len(contents_dicts)
+        )
+        await _report_progress(
+            progress_callback,
+            "storing_documents",
+            {
+                "progress_current": 0,
+                "progress_total": total_documents,
+                "progress_unit": "documents",
+                "progress_label": "Documents stored",
+            },
+        )
         async with acquire_with_retry(pool) as conn:
             async with conn.transaction():
                 # Group contents by document_id (consistent with normal path)
@@ -276,6 +308,16 @@ async def retain_batch(
 
         total_time = time.time() - start_time
         doc_status = f"{docs_tracked} document(s) tracked" if docs_tracked > 0 else "no document tracked"
+        await _report_progress(
+            progress_callback,
+            "finalizing",
+            {
+                "progress_current": docs_tracked,
+                "progress_total": total_documents,
+                "progress_unit": "documents",
+                "progress_label": "Documents stored",
+            },
+        )
         logger.info(
             f"RETAIN_BATCH COMPLETE: 0 facts extracted from {len(contents)} contents in {total_time:.3f}s ({doc_status}, no facts)"
         )
@@ -287,6 +329,16 @@ async def retain_batch(
             fact.fact_type = fact_type_override
 
     # Step 2: Augment texts and generate embeddings
+    await _report_progress(
+        progress_callback,
+        "generating_embeddings",
+        {
+            "progress_current": 0,
+            "progress_total": len(extracted_facts),
+            "progress_unit": "facts",
+            "progress_label": "Facts embedded",
+        },
+    )
     step_start = time.time()
     augmented_texts = embedding_processing.augment_texts_with_dates(extracted_facts, format_date_fn)
     embeddings = await embedding_processing.generate_embeddings_batch(embeddings_model, augmented_texts)
@@ -308,6 +360,19 @@ async def retain_batch(
     for idx, content_dict in enumerate(contents_dicts):
         doc_id = content_dict.get("document_id")
         contents_by_doc[doc_id].append((idx, content_dict))
+
+    total_documents = 1 if document_id else len(contents_by_doc)
+    await _report_progress(
+        progress_callback,
+        "storing_memory",
+        {
+            "progress_current": 0,
+            "progress_total": len(processed_facts),
+            "progress_unit": "facts",
+            "progress_label": "Facts stored",
+            "total_documents": total_documents,
+        },
+    )
 
     # Step 4: Database transaction
     async with acquire_with_retry(pool) as conn:
@@ -565,6 +630,16 @@ async def retain_batch(
         # Flush entity stats (mention_count / last_seen) now that the transaction
         # has committed.  Uses a fresh pool connection — no locks held.
         await entity_resolver.flush_pending_stats()
+        await _report_progress(
+            progress_callback,
+            "finalizing",
+            {
+                "progress_current": len(unit_ids),
+                "progress_total": len(unit_ids),
+                "progress_unit": "facts",
+                "progress_label": "Facts stored",
+            },
+        )
 
         # Log final summary
         total_time = time.time() - start_time

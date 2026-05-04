@@ -2426,6 +2426,16 @@ class UpdateMentalModelRequest(BaseModel):
     trigger: MentalModelTrigger | None = Field(default=None, description="Trigger settings")
 
 
+class OperationProgressResponse(BaseModel):
+    """Typed progress payload for async operations when totals are known."""
+
+    current: int
+    total: int
+    unit: str | None = None
+    label: str | None = None
+    failed: int | None = None
+
+
 class OperationResponse(BaseModel):
     """Response model for a single async operation."""
 
@@ -2449,6 +2459,9 @@ class OperationResponse(BaseModel):
     document_id: str | None = None
     created_at: str
     status: str
+    queue_state: Literal["queued", "processing"] | None = None
+    stage: str | None = None
+    progress: OperationProgressResponse | None = None
     error_message: str | None
 
 
@@ -2536,6 +2549,9 @@ class ChildOperationStatus(BaseModel):
 
     operation_id: str
     status: str
+    queue_state: Literal["queued", "processing"] | None = None
+    stage: str | None = None
+    progress: OperationProgressResponse | None = None
     sub_batch_index: int | None = None
     items_count: int | None = None
     error_message: str | None = None
@@ -2565,9 +2581,14 @@ class OperationStatusResponse(BaseModel):
     updated_at: str | None = None
     completed_at: str | None = None
     error_message: str | None = None
+    queue_state: Literal["queued", "processing"] | None = None
     stage: str | None = Field(
         default=None,
         description="High-level progress stage for pending async work, derived from result_metadata.operation_stage.",
+    )
+    progress: OperationProgressResponse | None = Field(
+        default=None,
+        description="Typed progress counters when the operation exposes known totals.",
     )
     result_metadata: dict[str, Any] | None = Field(
         default=None,
@@ -2620,7 +2641,10 @@ class OperationResultResponse(BaseModel):
     updated_at: str | None = None
     completed_at: str | None = None
     error_message: str | None = None
+    queue_state: Literal["queued", "processing"] | None = None
     stage: str | None = None
+    progress: OperationProgressResponse | None = None
+    result_metadata: dict[str, Any] | None = None
     result: ReflectResponse | dict[str, Any] | None = None
 
 

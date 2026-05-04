@@ -768,6 +768,7 @@ class MemoryEngine(MemoryEngineInterface):
             api_key=retain_api_key,
             base_url=retain_base_url,
             model=retain_model,
+            timeout=config.retain_llm_timeout or config.llm_timeout,
         )
 
         # Reflect LLM config - for think/observe operations (can use lighter models)
@@ -810,7 +811,7 @@ class MemoryEngine(MemoryEngineInterface):
             api_key=consolidation_api_key,
             base_url=consolidation_base_url,
             model=consolidation_model,
-            timeout=config.consolidation_llm_timeout,
+            timeout=config.consolidation_llm_timeout or config.llm_timeout,
         )
 
         # Entity intelligence LLM config - bank-wide synthesis can use a larger/slower local model.
@@ -968,6 +969,22 @@ class MemoryEngine(MemoryEngineInterface):
             f"[BATCH_RETAIN_TASK] Starting background batch retain for bank_id={bank_id}, {len(contents)} items, operation_id={operation_id}"
         )
 
+        if operation_id:
+            await self._set_operation_stage(operation_id, "preparing", {"total_items": len(contents)})
+            try:
+                pool = await self._get_pool()
+                async with acquire_with_retry(pool) as conn:
+                    row = await conn.fetchrow(
+                        f"SELECT result_metadata FROM {fq_table('async_operations')} WHERE operation_id = $1",
+                        uuid.UUID(operation_id),
+                    )
+                    child_metadata = decode_jsonb(row["result_metadata"], {}) if row else {}
+                    parent_operation_id = child_metadata.get("parent_operation_id")
+                if parent_operation_id:
+                    await self._set_operation_stage(parent_operation_id, "processing_sub_batches")
+            except Exception as exc:
+                logger.debug("Failed to mark parent retain operation as started (%s): %s", operation_id, exc)
+
         # Restore tenant_id/api_key_id from task payload so extensions
         # (e.g., operation validators) can attribute the operation correctly.
         # internal=True to skip extension auth (worker has no API key),
@@ -980,6 +997,7 @@ class MemoryEngine(MemoryEngineInterface):
             tenant_id=task_dict.get("_tenant_id"),
             api_key_id=task_dict.get("_api_key_id"),
         )
+
         await self.retain_batch_async(
             bank_id=bank_id,
             contents=contents,
@@ -4894,6 +4912,18 @@ class MemoryEngine(MemoryEngineInterface):
 
         return _callback
 
+    def _build_operation_stage_callback(
+        self, operation_id: str | None
+    ) -> "Callable[[str, dict[str, Any] | None], Awaitable[None]] | None":
+        """Build a lightweight async callback for stage and progress updates."""
+        if not operation_id:
+            return None
+
+        async def _callback(stage: str, extras: dict[str, Any] | None = None) -> None:
+            await self._set_operation_stage(operation_id, stage, extras)
+
+        return _callback
+
     async def _update_webhook_delivery_metadata(
         self, operation_id: str, status_code: int | None, response_body: str | None
     ) -> None:
@@ -5037,11 +5067,20 @@ class MemoryEngine(MemoryEngineInterface):
                     await conn.execute(
                         f"""
                         UPDATE {fq_table("async_operations")}
-                        SET status = 'failed', error_message = $2, updated_at = NOW()
+                        SET status = 'failed',
+                            error_message = $2,
+                            result_metadata = COALESCE(result_metadata, '{{}}'::jsonb) || $3::jsonb,
+                            updated_at = NOW()
                         WHERE operation_id = $1
                         """,
                         uuid.UUID(operation_id),
                         truncated_error,
+                        json.dumps(
+                            {
+                                "operation_stage": "failed",
+                                "stage_updated_at": datetime.now(UTC).isoformat(),
+                            }
+                        ),
                     )
                     logger.info(f"Marked async operation as failed: {operation_id}")
 
@@ -5066,22 +5105,38 @@ class MemoryEngine(MemoryEngineInterface):
                         await conn.execute(
                             f"""
                             UPDATE {fq_table("async_operations")}
-                            SET status = 'completed', updated_at = NOW(), completed_at = NOW()
+                            SET status = 'completed',
+                                result_metadata = COALESCE(result_metadata, '{{}}'::jsonb) || $2::jsonb,
+                                updated_at = NOW(),
+                                completed_at = NOW()
                             WHERE operation_id = $1
                             """,
                             uuid.UUID(operation_id),
+                            json.dumps(
+                                {
+                                    "operation_stage": "completed",
+                                    "stage_updated_at": datetime.now(UTC).isoformat(),
+                                }
+                            ),
                         )
                     else:
                         await conn.execute(
                             f"""
                             UPDATE {fq_table("async_operations")}
                             SET status = 'completed',
+                                result_metadata = COALESCE(result_metadata, '{{}}'::jsonb) || $2::jsonb,
                                 updated_at = NOW(),
                                 completed_at = NOW(),
-                                result_payload = $2::jsonb
+                                result_payload = $3::jsonb
                             WHERE operation_id = $1
                             """,
                             uuid.UUID(operation_id),
+                            json.dumps(
+                                {
+                                    "operation_stage": "completed",
+                                    "stage_updated_at": datetime.now(UTC).isoformat(),
+                                }
+                            ),
                             json.dumps(result_payload),
                         )
                     logger.info(f"Marked async operation as completed: {operation_id}")
@@ -5116,10 +5171,19 @@ class MemoryEngine(MemoryEngineInterface):
                     await conn.execute(
                         f"""
                         UPDATE {fq_table("async_operations")}
-                        SET status = 'completed', updated_at = NOW(), completed_at = NOW()
+                        SET status = 'completed',
+                            result_metadata = COALESCE(result_metadata, '{{}}'::jsonb) || $2::jsonb,
+                            updated_at = NOW(),
+                            completed_at = NOW()
                         WHERE operation_id = $1
                         """,
                         uuid.UUID(operation_id),
+                        json.dumps(
+                            {
+                                "operation_stage": "completed",
+                                "stage_updated_at": datetime.now(UTC).isoformat(),
+                            }
+                        ),
                     )
                     logger.info(f"Marked async operation as completed: {operation_id}")
                     await self._maybe_update_parent_operation(operation_id, conn)
@@ -5181,7 +5245,7 @@ class MemoryEngine(MemoryEngineInterface):
             # Use FOR UPDATE to ensure only one child can update the parent at a time
             parent_row = await conn.fetchrow(
                 f"""
-                SELECT operation_id
+                SELECT operation_id, result_metadata
                 FROM {fq_table("async_operations")}
                 WHERE operation_id = $1 AND bank_id = $2
                 FOR UPDATE
@@ -5211,38 +5275,68 @@ class MemoryEngine(MemoryEngineInterface):
                 return
 
             # Check if all siblings are done (completed or failed)
+            completed_count = sum(1 for sib in siblings if sib["status"] == "completed")
+            failed_count = sum(1 for sib in siblings if sib["status"] == "failed")
+            total_siblings = len(siblings)
             all_completed = all(sib["status"] == "completed" for sib in siblings)
             any_failed = any(sib["status"] == "failed" for sib in siblings)
             all_done = all(sib["status"] in ("completed", "failed") for sib in siblings)
 
+            parent_metadata = decode_jsonb(parent_row["result_metadata"], {})
+            parent_metadata.update(
+                {
+                    "completed_sub_batches": completed_count,
+                    "failed_sub_batches": failed_count,
+                    "progress_current": completed_count + failed_count,
+                    "progress_total": total_siblings,
+                    "progress_unit": "sub_batches",
+                    "progress_label": "Sub-batches finished",
+                    "operation_stage": "processing_sub_batches"
+                    if not all_done
+                    else parent_metadata.get("operation_stage"),
+                }
+            )
+
             if not all_done:
-                # Some siblings still pending/processing
+                await conn.execute(
+                    f"""
+                    UPDATE {fq_table("async_operations")}
+                    SET result_metadata = $2::jsonb, updated_at = NOW()
+                    WHERE operation_id = $1
+                    """,
+                    uuid.UUID(parent_operation_id),
+                    json.dumps(parent_metadata),
+                )
                 return
 
             # All siblings are done - update parent status
             if any_failed:
                 new_status = "failed"
+                parent_metadata["operation_stage"] = "failed"
                 # Set parent error message to indicate child failure
                 await conn.execute(
                     f"""
                     UPDATE {fq_table("async_operations")}
-                    SET status = $2, error_message = $3, updated_at = NOW()
+                    SET status = $2, error_message = $3, result_metadata = $4::jsonb, updated_at = NOW()
                     WHERE operation_id = $1
                     """,
                     uuid.UUID(parent_operation_id),
                     new_status,
                     "One or more sub-batches failed",
+                    json.dumps(parent_metadata),
                 )
             elif all_completed:
                 new_status = "completed"
+                parent_metadata["operation_stage"] = "completed"
                 await conn.execute(
                     f"""
                     UPDATE {fq_table("async_operations")}
-                    SET status = $2, updated_at = NOW(), completed_at = NOW()
+                    SET status = $2, error_message = NULL, result_metadata = $3::jsonb, updated_at = NOW(), completed_at = NOW()
                     WHERE operation_id = $1
                     """,
                     uuid.UUID(parent_operation_id),
                     new_status,
+                    json.dumps(parent_metadata),
                 )
 
             logger.info(f"Updated parent operation {parent_operation_id} to status '{new_status}' (all children done)")
@@ -5996,6 +6090,7 @@ class MemoryEngine(MemoryEngineInterface):
                     operation_id=operation_id,
                     schema=request_context.tenant_id if request_context else None,
                     outbox_callback=outbox_callback,
+                    progress_callback=self._build_operation_stage_callback(operation_id),
                 )
 
     def recall(
@@ -12124,6 +12219,83 @@ class MemoryEngine(MemoryEngineInterface):
             "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
         }
 
+    @staticmethod
+    def _map_operation_status(db_status: str) -> str:
+        """Map database task lifecycle to the stable API status enum."""
+        return "pending" if db_status in ("pending", "processing") else db_status
+
+    @staticmethod
+    def _build_operation_progress(result_metadata: dict[str, Any] | None) -> dict[str, Any] | None:
+        """Extract a compact progress payload from operation metadata when totals are known."""
+        metadata = result_metadata if isinstance(result_metadata, dict) else {}
+
+        current = metadata.get("progress_current")
+        total = metadata.get("progress_total")
+        unit = metadata.get("progress_unit")
+        label = metadata.get("progress_label")
+        failed = metadata.get("progress_failed")
+        if isinstance(current, int) and isinstance(total, int) and total >= 0:
+            progress = {"current": current, "total": total}
+            if isinstance(unit, str) and unit:
+                progress["unit"] = unit
+            if isinstance(label, str) and label:
+                progress["label"] = label
+            if isinstance(failed, int) and failed > 0:
+                progress["failed"] = failed
+            return progress
+
+        processed = metadata.get("processed")
+        if isinstance(processed, int):
+            if isinstance(metadata.get("total_items"), int):
+                return {
+                    "current": processed,
+                    "total": metadata["total_items"],
+                    "unit": "items",
+                    "label": label or "Items processed",
+                }
+            if isinstance(metadata.get("total_files"), int):
+                return {
+                    "current": processed,
+                    "total": metadata["total_files"],
+                    "unit": "files",
+                    "label": label or "Files processed",
+                }
+
+        completed_sub_batches = metadata.get("completed_sub_batches")
+        failed_sub_batches = metadata.get("failed_sub_batches")
+        num_sub_batches = metadata.get("num_sub_batches")
+        if isinstance(num_sub_batches, int) and isinstance(completed_sub_batches, int):
+            done_count = completed_sub_batches + (failed_sub_batches if isinstance(failed_sub_batches, int) else 0)
+            progress = {
+                "current": done_count,
+                "total": num_sub_batches,
+                "unit": "sub_batches",
+                "label": label or "Sub-batches finished",
+            }
+            if isinstance(failed_sub_batches, int) and failed_sub_batches > 0:
+                progress["failed"] = failed_sub_batches
+            return progress
+
+        return None
+
+    def _get_operation_queue_state(self, db_status: str, result_metadata: dict[str, Any] | None) -> str | None:
+        """Differentiate queued work from work that is actively running."""
+        if db_status == "processing":
+            return "processing"
+        if db_status != "pending":
+            return None
+
+        metadata = result_metadata if isinstance(result_metadata, dict) else {}
+        stage = metadata.get("operation_stage")
+        if stage == "queued":
+            return "queued"
+        if isinstance(stage, str) and stage and stage != "queued":
+            return "processing"
+        progress = self._build_operation_progress(metadata)
+        if progress is not None and progress.get("current", 0) > 0:
+            return "processing"
+        return "queued"
+
     async def list_operations(
         self,
         bank_id: str,
@@ -12198,9 +12370,11 @@ class MemoryEngine(MemoryEngineInterface):
             # Parent operations have their status updated when all children complete/fail
             operation_list = []
             for row in operations:
-                # Map DB status to API status (pending includes processing)
                 db_status = row["status"]
-                api_status = "pending" if db_status in ("pending", "processing") else db_status
+                result_metadata = decode_jsonb(row["result_metadata"], {})
+                api_status = self._map_operation_status(db_status)
+                queue_state = self._get_operation_queue_state(db_status, result_metadata)
+                progress = self._build_operation_progress(result_metadata)
 
                 operation_list.append(
                     {
@@ -12210,6 +12384,9 @@ class MemoryEngine(MemoryEngineInterface):
                         "document_id": None,
                         "created_at": row["created_at"].isoformat(),
                         "status": api_status,
+                        "queue_state": queue_state,
+                        "stage": result_metadata.get("operation_stage"),
+                        "progress": progress,
                         "error_message": row["error_message"],
                     }
                 )
@@ -12261,11 +12438,8 @@ class MemoryEngine(MemoryEngineInterface):
                 # Check if this is a parent operation
                 result_metadata = decode_jsonb(row["result_metadata"], {})
                 is_parent = result_metadata.get("is_parent", False)
-                stage = result_metadata.get("operation_stage")
-
-                # Use status from database (parent status is updated when all children complete/fail)
                 db_status = row["status"]
-                api_status = "pending" if db_status in ("pending", "processing") else db_status
+                api_status = self._map_operation_status(db_status)
 
                 # For parent operations, include child operations list
                 if is_parent:
@@ -12291,11 +12465,15 @@ class MemoryEngine(MemoryEngineInterface):
                     for child_row in child_rows:
                         child_metadata = decode_jsonb(child_row["result_metadata"], {})
                         child_status = child_row["status"]
+                        child_api_status = self._map_operation_status(child_status)
 
                         child_statuses.append(
                             {
                                 "operation_id": str(child_row["operation_id"]),
-                                "status": child_status,
+                                "status": child_api_status,
+                                "queue_state": self._get_operation_queue_state(child_status, child_metadata),
+                                "stage": child_metadata.get("operation_stage"),
+                                "progress": self._build_operation_progress(child_metadata),
                                 "sub_batch_index": child_metadata.get("sub_batch_index"),
                                 "items_count": child_metadata.get("items_count"),
                                 "error_message": child_row["error_message"],
@@ -12326,29 +12504,58 @@ class MemoryEngine(MemoryEngineInterface):
                         )
                         api_status = correct_status
 
+                    progress = self._build_operation_progress(result_metadata)
+                    if progress is None and child_rows:
+                        progress = {
+                            "current": sum(1 for child in child_rows if child["status"] in ("completed", "failed")),
+                            "total": len(child_rows),
+                            "unit": "sub_batches",
+                            "label": "Sub-batches finished",
+                        }
+                        failed_children = sum(1 for child in child_rows if child["status"] == "failed")
+                        if failed_children > 0:
+                            progress["failed"] = failed_children
+                    queue_state = self._get_operation_queue_state(db_status, result_metadata)
+                    progress_current = progress.get("current") if isinstance(progress, dict) else None
+                    progress_total = progress.get("total") if isinstance(progress, dict) else None
+                    if (
+                        queue_state == "queued"
+                        and isinstance(progress_current, int)
+                        and isinstance(progress_total, int)
+                        and progress_current > 0
+                        and progress_current < progress_total
+                    ):
+                        queue_state = "processing"
+
                     return {
                         "operation_id": operation_id,
                         "status": api_status,
+                        "queue_state": queue_state,
                         "operation_type": row["operation_type"],
                         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
                         "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
                         "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
                         "error_message": row["error_message"],
-                        "stage": stage,
+                        "stage": result_metadata.get("operation_stage"),
+                        "progress": progress,
                         "result_metadata": result_metadata,
                         "child_operations": child_statuses,
                     }
                 else:
+                    progress = self._build_operation_progress(result_metadata)
+                    queue_state = self._get_operation_queue_state(db_status, result_metadata)
                     # Regular operation (not a parent)
                     return {
                         "operation_id": operation_id,
                         "status": api_status,
+                        "queue_state": queue_state,
                         "operation_type": row["operation_type"],
                         "created_at": row["created_at"].isoformat() if row["created_at"] else None,
                         "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
                         "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
                         "error_message": row["error_message"],
-                        "stage": stage,
+                        "stage": result_metadata.get("operation_stage"),
+                        "progress": progress,
                         "result_metadata": result_metadata,
                     }
             else:
@@ -12356,12 +12563,14 @@ class MemoryEngine(MemoryEngineInterface):
                 return {
                     "operation_id": operation_id,
                     "status": "not_found",
+                    "queue_state": None,
                     "operation_type": None,
                     "created_at": None,
                     "updated_at": None,
                     "completed_at": None,
                     "error_message": None,
                     "stage": None,
+                    "progress": None,
                 }
 
     async def get_operation_result(
@@ -12410,17 +12619,20 @@ class MemoryEngine(MemoryEngineInterface):
             result_metadata = decode_jsonb(row["result_metadata"], {})
             result_payload = decode_jsonb(row["result_payload"], None)
             db_status = row["status"]
-            api_status = "pending" if db_status in ("pending", "processing") else db_status
+            api_status = self._map_operation_status(db_status)
 
             return {
                 "operation_id": operation_id,
                 "status": api_status,
+                "queue_state": self._get_operation_queue_state(db_status, result_metadata),
                 "operation_type": row["operation_type"],
                 "created_at": row["created_at"].isoformat() if row["created_at"] else None,
                 "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
                 "completed_at": row["completed_at"].isoformat() if row["completed_at"] else None,
                 "error_message": row["error_message"],
                 "stage": result_metadata.get("operation_stage"),
+                "progress": self._build_operation_progress(result_metadata),
+                "result_metadata": result_metadata,
                 "result": result_payload if api_status == "completed" else None,
             }
 
@@ -15140,6 +15352,8 @@ class MemoryEngine(MemoryEngineInterface):
             total_tokens=total_tokens,
             num_sub_batches=len(sub_batches),
         )
+        parent_metadata_payload = parent_metadata.to_dict()
+        parent_metadata_payload["operation_stage"] = "queued"
 
         async with acquire_with_retry(pool) as conn:
             await conn.execute(
@@ -15150,7 +15364,7 @@ class MemoryEngine(MemoryEngineInterface):
                 parent_operation_id,
                 bank_id,
                 "batch_retain",
-                json.dumps(parent_metadata.to_dict()),
+                json.dumps(parent_metadata_payload),
                 "pending",  # Will be updated by status aggregation
             )
 

@@ -222,6 +222,13 @@ async def test_parent_operation_status_aggregation_pending(memory, request_conte
 
     # Parent should aggregate as "pending" since one child is still pending
     assert parent_status["status"] == "pending"
+    assert parent_status["queue_state"] == "processing"
+    assert parent_status["progress"] == {
+        "current": 1,
+        "total": 2,
+        "unit": "sub_batches",
+        "label": "Sub-batches finished",
+    }
     assert len(parent_status["child_operations"]) == 2
 
 
@@ -297,6 +304,13 @@ async def test_parent_operation_status_aggregation_failed(memory, request_contex
 
     # Parent should aggregate as "failed" since one child failed
     assert parent_status["status"] == "failed"
+    assert parent_status["progress"] == {
+        "current": 2,
+        "total": 2,
+        "unit": "sub_batches",
+        "label": "Sub-batches finished",
+        "failed": 1,
+    }
     assert len(parent_status["child_operations"]) == 2
 
     # Verify child with error is included
@@ -375,6 +389,12 @@ async def test_parent_operation_status_aggregation_completed(memory, request_con
 
     # Parent should aggregate as "completed" since all children are completed
     assert parent_status["status"] == "completed"
+    assert parent_status["progress"] == {
+        "current": 2,
+        "total": 2,
+        "unit": "sub_batches",
+        "label": "Sub-batches finished",
+    }
     assert len(parent_status["child_operations"]) == 2
     assert all(c["status"] == "completed" for c in parent_status["child_operations"])
 

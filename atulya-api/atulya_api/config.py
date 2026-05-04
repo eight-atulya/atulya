@@ -334,6 +334,7 @@ ENV_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED = "ATULYA_API_CONSOLIDATION_DUPLIC
 ENV_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD = "ATULYA_API_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD"
 ENV_CONSOLIDATION_DUPLICATE_CE_ENABLED = "ATULYA_API_CONSOLIDATION_DUPLICATE_CE_ENABLED"
 ENV_CONSOLIDATION_DUPLICATE_CE_THRESHOLD = "ATULYA_API_CONSOLIDATION_DUPLICATE_CE_THRESHOLD"
+ENV_CONSOLIDATION_MAX_COMPLETION_TOKENS = "ATULYA_API_CONSOLIDATION_MAX_COMPLETION_TOKENS"
 ENV_MAX_OBSERVATIONS_PER_SCOPE = "ATULYA_API_MAX_OBSERVATIONS_PER_SCOPE"
 ENV_OBSERVATIONS_MISSION = "ATULYA_API_OBSERVATIONS_MISSION"
 ENV_ENABLE_OBSERVATION_HISTORY = "ATULYA_API_ENABLE_OBSERVATION_HISTORY"
@@ -582,6 +583,7 @@ DEFAULT_CONSOLIDATION_DUPLICATE_DETECTION_ENABLED = False
 DEFAULT_CONSOLIDATION_DUPLICATE_COSINE_THRESHOLD = 0.85
 DEFAULT_CONSOLIDATION_DUPLICATE_CE_ENABLED = False
 DEFAULT_CONSOLIDATION_DUPLICATE_CE_THRESHOLD = 0.5
+DEFAULT_CONSOLIDATION_MAX_COMPLETION_TOKENS = 1024  # Max tokens for consolidation LLM output
 DEFAULT_MAX_OBSERVATIONS_PER_SCOPE: int | None = (
     None  # None = unlimited; int >= 0 caps the number of observations per scope
 )
@@ -960,6 +962,7 @@ class AtulyaConfig:
     consolidation_batch_size: int
     consolidation_llm_batch_size: int
     consolidation_max_tokens: int
+    consolidation_max_completion_tokens: int
     consolidation_source_facts_max_tokens: int
     consolidation_source_facts_max_tokens_per_observation: int
     consolidation_duplicate_detection_enabled: bool
@@ -1111,6 +1114,7 @@ class AtulyaConfig:
         # Consolidation settings
         "enable_observations",
         "consolidation_llm_batch_size",
+        "consolidation_max_completion_tokens",
         "consolidation_source_facts_max_tokens",
         "consolidation_source_facts_max_tokens_per_observation",
         "max_observations_per_scope",
@@ -1263,6 +1267,8 @@ class AtulyaConfig:
             raise ValueError("entity_intelligence_max_context_tokens must be >= 1000")
         if self.entity_intelligence_max_completion_tokens < 512:
             raise ValueError("entity_intelligence_max_completion_tokens must be >= 512")
+        if self.consolidation_max_completion_tokens < 256:
+            raise ValueError("consolidation_max_completion_tokens must be >= 256")
 
     @classmethod
     def from_env(cls) -> "AtulyaConfig":
@@ -1644,6 +1650,12 @@ class AtulyaConfig:
             ),
             consolidation_max_tokens=int(
                 os.getenv(ENV_CONSOLIDATION_MAX_TOKENS, str(DEFAULT_CONSOLIDATION_MAX_TOKENS))
+            ),
+            consolidation_max_completion_tokens=int(
+                os.getenv(
+                    ENV_CONSOLIDATION_MAX_COMPLETION_TOKENS,
+                    str(DEFAULT_CONSOLIDATION_MAX_COMPLETION_TOKENS),
+                )
             ),
             consolidation_source_facts_max_tokens=int(
                 os.getenv(ENV_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS, str(DEFAULT_CONSOLIDATION_SOURCE_FACTS_MAX_TOKENS))

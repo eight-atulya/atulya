@@ -9,8 +9,9 @@ import asyncio
 import json
 import logging
 import re
+import time
 from datetime import datetime, timedelta
-from typing import Literal, cast
+from typing import Awaitable, Callable, Literal, cast
 
 from pydantic import BaseModel, ConfigDict, Field, create_model, field_validator, model_validator
 
@@ -25,6 +26,8 @@ from .entity_labels import (
     is_label_entity,
     parse_entity_labels,
 )
+
+ProgressCallback = Callable[[str, dict[str, object] | None], Awaitable[None]]
 
 
 def _infer_temporal_date(fact_text: str, event_date: datetime | None) -> str | None:
@@ -1366,17 +1369,18 @@ async def _extract_facts_with_auto_split(
 
     try:
         # Try to extract facts from the full chunk
-        return await _extract_facts_from_chunk(
-            chunk=chunk,
-            chunk_index=chunk_index,
-            total_chunks=total_chunks,
-            event_date=event_date,
-            context=context,
-            llm_config=llm_config,
-            config=config,
-            agent_name=agent_name,
-            metadata=metadata,
-        )
+        async with _get_retain_extraction_semaphore(config):
+            return await _extract_facts_from_chunk(
+                chunk=chunk,
+                chunk_index=chunk_index,
+                total_chunks=total_chunks,
+                event_date=event_date,
+                context=context,
+                llm_config=llm_config,
+                config=config,
+                agent_name=agent_name,
+                metadata=metadata,
+            )
     except OutputTooLongError:
         # Output exceeded token limits - split the chunk in half and retry
         logger.warning(
@@ -1458,6 +1462,9 @@ async def extract_facts_from_text(
     config,
     context: str = "",
     metadata: dict[str, str] | None = None,
+    *,
+    precomputed_chunks: list[str] | None = None,
+    progress_reporter: Callable[[], Awaitable[None]] | None = None,
 ) -> tuple[list[Fact], list[tuple[str, int]], TokenUsage]:
     """
     Extract semantic facts from conversational or narrative text using LLM.
@@ -1483,7 +1490,7 @@ async def extract_facts_from_text(
         - chunks: List of tuples (chunk_text, fact_count) for each chunk
         - usage: Aggregated token usage across all LLM calls
     """
-    chunks = chunk_text(text, max_chars=config.retain_chunk_size)
+    chunks = precomputed_chunks or chunk_text(text, max_chars=config.retain_chunk_size)
 
     # Log chunk count before starting LLM requests
     total_chars = sum(len(c) for c in chunks)
@@ -1493,10 +1500,10 @@ async def extract_facts_from_text(
             f"chunk_size={config.retain_chunk_size:,}) - starting parallel LLM extraction"
         )
 
-    tasks = [
-        _extract_facts_with_auto_split(
+    async def _extract_one_chunk(chunk: str, chunk_index: int) -> tuple[list[dict[str, str]], TokenUsage]:
+        result = await _extract_facts_with_auto_split(
             chunk=chunk,
-            chunk_index=i,
+            chunk_index=chunk_index,
             total_chunks=len(chunks),
             event_date=event_date,
             context=context,
@@ -1505,8 +1512,11 @@ async def extract_facts_from_text(
             agent_name=agent_name,
             metadata=metadata,
         )
-        for i, chunk in enumerate(chunks)
-    ]
+        if progress_reporter is not None:
+            await progress_reporter()
+        return result
+
+    tasks = [_extract_one_chunk(chunk, i) for i, chunk in enumerate(chunks)]
     chunk_results = await asyncio.gather(*tasks)
     all_facts = []
     chunk_metadata = []  # [(chunk_text, fact_count), ...]
@@ -1532,6 +1542,13 @@ logger = logging.getLogger(__name__)
 
 # Each fact gets 10ms offset to preserve ordering within a document
 SECONDS_PER_FACT = 0.01
+_retain_extraction_semaphores: dict[int, asyncio.Semaphore] = {}
+
+
+def _get_retain_extraction_semaphore(config) -> asyncio.Semaphore:
+    """Get a shared semaphore for retain fact-extraction fanout."""
+    limit = config.retain_llm_max_concurrent or config.llm_max_concurrent
+    return _retain_extraction_semaphores.setdefault(limit, asyncio.Semaphore(limit))
 
 
 async def extract_facts_from_contents_batch_api(
@@ -1542,6 +1559,7 @@ async def extract_facts_from_contents_batch_api(
     pool=None,
     operation_id: str | None = None,
     schema: str | None = None,
+    progress_callback: ProgressCallback | None = None,
 ) -> tuple[list[ExtractedFactType], list[ChunkMetadata], TokenUsage]:
     """
     Extract facts using LLM Batch API (OpenAI/Groq).
@@ -1573,7 +1591,16 @@ async def extract_facts_from_contents_batch_api(
     # Check if provider supports batch API
     if not await llm_config._provider_impl.supports_batch_api():
         logger.warning(f"Batch API not supported for provider {llm_config.provider}, falling back to sync mode")
-        return await extract_facts_from_contents(contents, llm_config, agent_name, config, pool, operation_id, schema)
+        return await extract_facts_from_contents(
+            contents,
+            llm_config,
+            agent_name,
+            config,
+            pool,
+            operation_id,
+            schema,
+            progress_callback=progress_callback,
+        )
 
     # Check if we're resuming an existing batch (crash recovery)
     batch_id = None
@@ -1628,6 +1655,16 @@ async def extract_facts_from_contents_batch_api(
 
     # Step 2: Submit batch (skip if resuming)
     if not batch_id:
+        if progress_callback is not None:
+            await progress_callback(
+                "submitting_batch",
+                {
+                    "progress_current": 0,
+                    "progress_total": len(batch_requests),
+                    "progress_unit": "chunks",
+                    "progress_label": "Chunks extracted",
+                },
+            )
         logger.info(f"Submitting batch with {len(batch_requests)} chunk requests")
 
         batch_metadata = await llm_config._provider_impl.submit_batch(batch_requests)
@@ -1668,13 +1705,26 @@ async def extract_facts_from_contents_batch_api(
     while True:
         status_info = await llm_config._provider_impl.get_batch_status(batch_id)
         status = status_info["status"]
+        request_counts = status_info["request_counts"]
 
         elapsed = time.time() - start_time
         logger.info(
             f"Batch {batch_id}: status={status}, "
-            f"completed={status_info['request_counts']['completed']}/{status_info['request_counts']['total']}, "
+            f"completed={request_counts['completed']}/{request_counts['total']}, "
             f"elapsed={elapsed:.0f}s"
         )
+
+        if progress_callback is not None:
+            await progress_callback(
+                "waiting_for_batch",
+                {
+                    "progress_current": request_counts["completed"] + request_counts.get("failed", 0),
+                    "progress_total": request_counts["total"],
+                    "progress_unit": "chunks",
+                    "progress_label": "Chunks extracted",
+                    "progress_failed": request_counts.get("failed", 0),
+                },
+            )
 
         if status == "completed":
             break
@@ -2018,6 +2068,7 @@ async def extract_facts_from_contents(
     pool=None,
     operation_id: str | None = None,
     schema: str | None = None,
+    progress_callback: ProgressCallback | None = None,
 ) -> tuple[list[ExtractedFactType], list[ChunkMetadata], TokenUsage]:
     """
     Extract facts from multiple content items in parallel.
@@ -2048,12 +2099,62 @@ async def extract_facts_from_contents(
     # Route to batch API if enabled
     if config.retain_batch_enabled:
         return await extract_facts_from_contents_batch_api(
-            contents, llm_config, agent_name, config, pool, operation_id, schema
+            contents,
+            llm_config,
+            agent_name,
+            config,
+            pool,
+            operation_id,
+            schema,
+            progress_callback=progress_callback,
         )
 
     # Step 1: Create parallel fact extraction tasks
+    chunk_lists = [chunk_text(item.content, max_chars=config.retain_chunk_size) for item in contents]
+    total_chunks = sum(len(chunks) for chunks in chunk_lists)
+    if progress_callback is not None:
+        await progress_callback(
+            "extracting_facts",
+            {
+                "progress_current": 0,
+                "progress_total": total_chunks,
+                "progress_unit": "chunks",
+                "progress_label": "Chunks extracted",
+            },
+        )
+
+    completed_chunks = 0
+    last_report_at = 0.0
+    progress_lock = asyncio.Lock()
+
+    async def report_chunk_complete() -> None:
+        nonlocal completed_chunks, last_report_at
+        if progress_callback is None:
+            return
+
+        payload: dict[str, object] | None = None
+        async with progress_lock:
+            completed_chunks += 1
+            now = time.monotonic()
+            should_report = (
+                completed_chunks == 1
+                or completed_chunks == total_chunks
+                or completed_chunks % 5 == 0
+                or (now - last_report_at) >= 1.0
+            )
+            if should_report:
+                last_report_at = now
+                payload = {
+                    "progress_current": completed_chunks,
+                    "progress_total": total_chunks,
+                    "progress_unit": "chunks",
+                    "progress_label": "Chunks extracted",
+                }
+        if payload is not None:
+            await progress_callback("extracting_facts", payload)
+
     fact_extraction_tasks = []
-    for item in contents:
+    for item, chunks in zip(contents, chunk_lists):
         # Call extract_facts_from_text directly (defined earlier in this file)
         # to avoid circular import with utils.extract_facts
         task = extract_facts_from_text(
@@ -2064,6 +2165,8 @@ async def extract_facts_from_contents(
             agent_name=agent_name,
             config=config,
             metadata=item.metadata or None,
+            precomputed_chunks=chunks,
+            progress_reporter=report_chunk_complete,
         )
         fact_extraction_tasks.append(task)
 
@@ -2085,9 +2188,9 @@ async def extract_facts_from_contents(
         chunk_start_idx = global_chunk_idx
 
         # Convert chunk tuples to ChunkMetadata objects
-        for chunk_index_in_content, (chunk_text, chunk_fact_count) in enumerate(chunks_from_llm):
+        for chunk_index_in_content, (chunk_value, chunk_fact_count) in enumerate(chunks_from_llm):
             chunk_metadata = ChunkMetadata(
-                chunk_text=chunk_text,
+                chunk_text=chunk_value,
                 fact_count=chunk_fact_count,
                 content_index=content_index,
                 chunk_index=global_chunk_idx,
@@ -2097,7 +2200,7 @@ async def extract_facts_from_contents(
 
         # Convert facts to ExtractedFact objects with proper indexing
         fact_idx_in_content = 0
-        for chunk_idx_in_content, (chunk_text, chunk_fact_count) in enumerate(chunks_from_llm):
+        for chunk_idx_in_content, (_chunk_value, chunk_fact_count) in enumerate(chunks_from_llm):
             chunk_global_idx = chunk_start_idx + chunk_idx_in_content
 
             for _ in range(chunk_fact_count):

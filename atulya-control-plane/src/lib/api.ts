@@ -653,12 +653,47 @@ export interface OperationStatus {
   updated_at: string | null;
   completed_at: string | null;
   error_message: string | null;
+  queue_state?: "queued" | "processing" | null;
   stage: string | null;
+  progress?: OperationProgress | null;
   result_metadata?: Record<string, any> | null;
+  child_operations?: ChildOperationStatus[] | null;
 }
 
 export interface OperationResult extends OperationStatus {
   result: ReflectResponse | Record<string, any> | null;
+}
+
+export interface OperationProgress {
+  current: number;
+  total: number;
+  unit?: string | null;
+  label?: string | null;
+  failed?: number | null;
+}
+
+export interface ChildOperationStatus {
+  operation_id: string;
+  status: "pending" | "completed" | "failed" | "not_found" | "cancelled";
+  queue_state?: "queued" | "processing" | null;
+  stage?: string | null;
+  progress?: OperationProgress | null;
+  sub_batch_index: number | null;
+  items_count: number | null;
+  error_message: string | null;
+}
+
+export interface OperationListItem {
+  id: string;
+  task_type: string;
+  items_count: number;
+  document_id: string | null;
+  created_at: string;
+  status: string;
+  queue_state?: "queued" | "processing" | null;
+  stage?: string | null;
+  progress?: OperationProgress | null;
+  error_message: string | null;
 }
 
 export interface CodebaseSourceConfig {
@@ -1469,15 +1504,7 @@ export class ControlPlaneClient {
       total: number;
       limit: number;
       offset: number;
-      operations: Array<{
-        id: string;
-        task_type: string;
-        items_count: number;
-        document_id: string | null;
-        created_at: string;
-        status: string;
-        error_message: string | null;
-      }>;
+      operations: OperationListItem[];
     }>(`/api/operations/${bankId}${query ? `?${query}` : ""}`);
   }
 

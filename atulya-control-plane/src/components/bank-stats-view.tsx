@@ -98,7 +98,7 @@ type FactKey = "world" | "experience" | "observation";
 const CHART_COLORS = {
   world: "#8b5cf6",
   experience: "#ec4899",
-  observation: "#6366f1",
+  observation: "#06b6d4",
   temporal: "#009296",
   semantic: "#0074d9",
   entity: "#f59e0b",

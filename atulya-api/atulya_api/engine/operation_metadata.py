@@ -16,11 +16,20 @@ class BatchRetainParentMetadata:
     items_count: int
     total_tokens: int
     num_sub_batches: int
+    completed_sub_batches: int = 0
+    failed_sub_batches: int = 0
+    progress_current: int = 0
+    progress_total: int | None = None
+    progress_unit: str = "sub_batches"
+    progress_label: str = "Sub-batches finished"
     is_parent: bool = True
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for JSON serialization."""
-        return asdict(self)
+        payload = asdict(self)
+        if payload["progress_total"] is None:
+            payload["progress_total"] = self.num_sub_batches
+        return payload
 
 
 @dataclass

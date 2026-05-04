@@ -1,6 +1,7 @@
 """Tests for async reflect operations."""
 
 import asyncio
+import json
 import uuid
 from datetime import datetime
 
@@ -196,6 +197,63 @@ async def test_get_operation_result_pending_returns_null(api_client, reflect_mem
     assert payload["operation_type"] == "reflect"
     assert payload["stage"] == "queued"
     assert payload["result"] is None
+
+
+@pytest.mark.asyncio
+async def test_operation_status_and_list_expose_processing_progress(reflect_memory, request_context):
+    """Processing operations should surface queue state and typed progress."""
+    pool = await reflect_memory._get_pool()
+    operation_id = uuid.uuid4()
+    bank_id = f"async_progress_{uuid.uuid4().hex[:8]}"
+
+    await pool.execute(
+        """
+        INSERT INTO async_operations
+        (operation_id, bank_id, operation_type, status, result_metadata)
+        VALUES ($1, $2, 'reflect', 'processing', $3::jsonb)
+        """,
+        operation_id,
+        bank_id,
+        json.dumps(
+            {
+                "operation_stage": "reflecting",
+                "processed": 3,
+                "total_items": 10,
+                "progress_label": "Items processed",
+            }
+        ),
+    )
+
+    status_payload = await reflect_memory.get_operation_status(
+        bank_id=bank_id,
+        operation_id=str(operation_id),
+        request_context=request_context,
+    )
+    assert status_payload["status"] == "pending"
+    assert status_payload["queue_state"] == "processing"
+    assert status_payload["stage"] == "reflecting"
+    assert status_payload["progress"] == {
+        "current": 3,
+        "total": 10,
+        "unit": "items",
+        "label": "Items processed",
+    }
+
+    list_payload = await reflect_memory.list_operations(
+        bank_id=bank_id,
+        status="pending",
+        request_context=request_context,
+    )
+    assert list_payload["total"] == 1
+    assert list_payload["operations"][0]["status"] == "pending"
+    assert list_payload["operations"][0]["queue_state"] == "processing"
+    assert list_payload["operations"][0]["stage"] == "reflecting"
+    assert list_payload["operations"][0]["progress"] == {
+        "current": 3,
+        "total": 10,
+        "unit": "items",
+        "label": "Items processed",
+    }
 
 
 @pytest.mark.asyncio

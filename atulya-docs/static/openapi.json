@@ -10586,6 +10586,42 @@
             "type": "string",
             "title": "Status"
           },
+          "queue_state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "processing"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue State"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationProgressResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "sub_batch_index": {
             "anyOf": [
               {
@@ -16648,6 +16684,58 @@
         "title": "MentalModelTrigger",
         "description": "Trigger settings for a mental model."
       },
+      "OperationProgressResponse": {
+        "properties": {
+          "current": {
+            "type": "integer",
+            "title": "Current"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "failed": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current",
+          "total"
+        ],
+        "title": "OperationProgressResponse",
+        "description": "Typed progress payload for async operations when totals are known."
+      },
       "OperationResponse": {
         "properties": {
           "id": {
@@ -16680,6 +16768,42 @@
           "status": {
             "type": "string",
             "title": "Status"
+          },
+          "queue_state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "processing"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue State"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationProgressResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "error_message": {
             "anyOf": [
@@ -16783,6 +16907,21 @@
             ],
             "title": "Error Message"
           },
+          "queue_state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "processing"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue State"
+          },
           "stage": {
             "anyOf": [
               {
@@ -16793,6 +16932,28 @@
               }
             ],
             "title": "Stage"
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationProgressResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result_metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Metadata"
           },
           "result": {
             "anyOf": [
@@ -16901,6 +17062,21 @@
             ],
             "title": "Error Message"
           },
+          "queue_state": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "queued",
+                  "processing"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Queue State"
+          },
           "stage": {
             "anyOf": [
               {
@@ -16912,6 +17088,17 @@
             ],
             "title": "Stage",
             "description": "High-level progress stage for pending async work, derived from result_metadata.operation_stage."
+          },
+          "progress": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/OperationProgressResponse"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Typed progress counters when the operation exposes known totals."
           },
           "result_metadata": {
             "anyOf": [
