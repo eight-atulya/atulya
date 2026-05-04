@@ -1154,10 +1154,10 @@ async def _execute_tool_with_timing(
             from opentelemetry.trace import Status, StatusCode
 
             span.set_status(Status(StatusCode.ERROR, str(e)))
-            span.record_exception(e)
             duration_ms = int((time.time() - start_time) * 1000)
             span.set_attribute("atulya.tool.duration_ms", duration_ms)
             end_time_ns = time.time_ns()
+            span.record_exception(e, timestamp=end_time_ns)
             span.end(end_time=end_time_ns)
             raise
 
