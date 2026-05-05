@@ -33,7 +33,11 @@ export async function POST(request: NextRequest) {
         confidence: { type: "number", description: "0 to 1 confidence for this enrichment" },
         context: { type: "string", description: "Short retain context line" },
         tags: { type: "array", items: { type: "string" }, description: "8-12 concise tags max" },
-        entities: { type: "array", items: { type: "string" }, description: "Key entities as plain strings" },
+        entities: {
+          type: "array",
+          items: { type: "string" },
+          description: "Key entities as plain strings",
+        },
         metadata: {
           type: "object",
           description: "Small metadata map with string values only",
@@ -58,17 +62,20 @@ export async function POST(request: NextRequest) {
       content.slice(0, 5000),
     ].join("\n");
 
-    const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/reflect`, {
-      method: "POST",
-      headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({
-        query: enrichQuery,
-        budget: "low",
-        max_tokens: 300,
-        include: {},
-        response_schema,
-      }),
-    });
+    const res = await fetch(
+      `${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/reflect`,
+      {
+        method: "POST",
+        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify({
+          query: enrichQuery,
+          budget: "low",
+          max_tokens: 300,
+          include: {},
+          response_schema,
+        }),
+      }
+    );
 
     const text = await res.text();
     let data: unknown;
@@ -95,4 +102,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Request failed" }, { status: 500 });
   }
 }
-

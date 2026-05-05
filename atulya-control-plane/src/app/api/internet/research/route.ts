@@ -51,7 +51,9 @@ export async function POST(request: NextRequest) {
 
     if (!res.ok) {
       const msg = extractErrorMessage(
-        data && typeof data === "object" && "detail" in data ? (data as { detail: unknown }).detail : data
+        data && typeof data === "object" && "detail" in data
+          ? (data as { detail: unknown }).detail
+          : data
       );
       return NextResponse.json({ error: msg }, { status: res.status });
     }

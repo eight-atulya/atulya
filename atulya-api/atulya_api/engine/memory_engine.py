@@ -10469,11 +10469,7 @@ class MemoryEngine(MemoryEngineInterface):
             for tc in agent_result.tool_trace:
                 out: dict = tc.output if isinstance(tc.output, dict) else {"result": tc.output}
                 if not include_tool_call_output:
-                    out = {
-                        k: out[k]
-                        for k in ("error", "n", "query", "url", "truncated", "digest")
-                        if k in out
-                    }
+                    out = {k: out[k] for k in ("error", "n", "query", "url", "truncated", "digest") if k in out}
                 tool_traces.append(
                     ToolCallTrace(
                         tool=tc.tool,

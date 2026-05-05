@@ -347,7 +347,9 @@ export function InternetResearchView() {
       return { draft: base, accepted: false, reason: "no valid tags" };
     }
 
-    const baseTokens = new Set((base.content.toLowerCase().match(/\b[a-z0-9:_-]{3,}\b/g) || []).slice(0, 1200));
+    const baseTokens = new Set(
+      (base.content.toLowerCase().match(/\b[a-z0-9:_-]{3,}\b/g) || []).slice(0, 1200)
+    );
     const overlap = tags.filter((t) => baseTokens.has(t)).length;
     if (overlap === 0 && tags.length > 2) {
       return { draft: base, accepted: false, reason: "tag grounding check failed" };
@@ -366,10 +368,18 @@ export function InternetResearchView() {
 
     const metadataCandidate = enrichment?.metadata;
     const metadata: Record<string, string> = { ...(base.metadata || {}) };
-    if (metadataCandidate && typeof metadataCandidate === "object" && !Array.isArray(metadataCandidate)) {
+    if (
+      metadataCandidate &&
+      typeof metadataCandidate === "object" &&
+      !Array.isArray(metadataCandidate)
+    ) {
       for (const [k, v] of Object.entries(metadataCandidate as Record<string, unknown>)) {
-        const key = String(k || "").trim().slice(0, 40);
-        const value = String(v ?? "").trim().slice(0, 220);
+        const key = String(k || "")
+          .trim()
+          .slice(0, 40);
+        const value = String(v ?? "")
+          .trim()
+          .slice(0, 220);
         if (key && value) metadata[key] = value;
       }
     }
@@ -442,7 +452,8 @@ export function InternetResearchView() {
         <CardHeader>
           <CardTitle>Internet backend controls</CardTitle>
           <CardDescription>
-            Independent web workflow. This does not write to memory unless you explicitly retain data later.
+            Independent web workflow. This does not write to memory unless you explicitly retain
+            data later.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -453,7 +464,9 @@ export function InternetResearchView() {
               <>
                 <span
                   className={
-                    internetHealth.searxng?.ok ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600"
+                    internetHealth.searxng?.ok
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-amber-600"
                   }
                 >
                   SearXNG {internetHealth.searxng?.ok ? "up" : "down"}
@@ -555,9 +568,16 @@ export function InternetResearchView() {
                 >
                   <p className="text-sm font-medium">{hit.title || "(untitled)"}</p>
                   <p className="mt-1 text-xs text-muted-foreground break-all">{hit.url}</p>
-                  {hit.content && <p className="mt-2 text-xs text-muted-foreground">{hit.content}</p>}
+                  {hit.content && (
+                    <p className="mt-2 text-xs text-muted-foreground">{hit.content}</p>
+                  )}
                   <div className="mt-3 flex gap-2">
-                    <Button type="button" size="sm" variant="secondary" onClick={() => runFirecrawlExtract(hit.url)}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => runFirecrawlExtract(hit.url)}
+                    >
                       Extract
                     </Button>
                     <Button type="button" size="sm" onClick={() => openContentModal(hit)}>
@@ -573,7 +593,9 @@ export function InternetResearchView() {
             <CardHeader>
               <CardTitle className="text-base">Firecrawl extraction</CardTitle>
               <CardDescription>
-                {selectedUrl ? `Selected URL: ${selectedUrl}` : "Select a SearXNG result to extract"}
+                {selectedUrl
+                  ? `Selected URL: ${selectedUrl}`
+                  : "Select a SearXNG result to extract"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -597,7 +619,8 @@ export function InternetResearchView() {
         <CardHeader>
           <CardTitle className="text-base">Research clipboard</CardTitle>
           <CardDescription>
-            Persistent in your browser for this bank. Collect multiple runs, curate notes, then copy final text for retain.
+            Persistent in your browser for this bank. Collect multiple runs, curate notes, then copy
+            final text for retain.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -610,7 +633,13 @@ export function InternetResearchView() {
                 Copy final collection
               </Button>
             )}
-            <Button type="button" variant="outline" size="sm" disabled={clips.length === 0} onClick={() => setClips([])}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={clips.length === 0}
+              onClick={() => setClips([])}
+            >
               Clear all
             </Button>
             <Button
@@ -634,7 +663,8 @@ export function InternetResearchView() {
           {aiEnrichStatus && <p className="text-xs text-muted-foreground">{aiEnrichStatus}</p>}
           {clips.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No collected content yet. Use the Content button on a result and add SearXNG/Firecrawl content.
+              No collected content yet. Use the Content button on a result and add SearXNG/Firecrawl
+              content.
             </p>
           ) : (
             <div className="space-y-3">
@@ -654,7 +684,12 @@ export function InternetResearchView() {
                   />
                   <div className="mt-2 flex gap-2">
                     <CopyButton text={clip.content} toastLabel="Clip content copied" />
-                    <Button type="button" variant="ghost" size="sm" onClick={() => removeClip(clip.id)}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeClip(clip.id)}
+                    >
                       Remove
                     </Button>
                   </div>
@@ -670,12 +705,15 @@ export function InternetResearchView() {
           <CardHeader>
             <CardTitle className="text-base">Internet agent synthesis</CardTitle>
             <CardDescription>
-              Agent-generated answer over web tools. Compare with the raw SearXNG + Firecrawl panes above.
+              Agent-generated answer over web tools. Compare with the raw SearXNG + Firecrawl panes
+              above.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{internetResearchResult.text}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {internetResearchResult.text}
+              </ReactMarkdown>
             </div>
             {Array.isArray(internetResearchResult.source_urls) &&
               internetResearchResult.source_urls.length > 0 && (
@@ -698,7 +736,8 @@ export function InternetResearchView() {
           <DialogHeader>
             <DialogTitle>Content inspector</DialogTitle>
             <DialogDescription>
-              Compare direct SearXNG snippet and Firecrawl extracted content before collecting into clipboard.
+              Compare direct SearXNG snippet and Firecrawl extracted content before collecting into
+              clipboard.
             </DialogDescription>
           </DialogHeader>
           {modalHit && (
@@ -725,11 +764,17 @@ export function InternetResearchView() {
               {modalTab === "searxng" ? (
                 <div className="space-y-3">
                   <div className="rounded-md border bg-muted/20 p-3">
-                    <p className="text-sm whitespace-pre-wrap">{modalHit.content || "(empty snippet)"}</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {modalHit.content || "(empty snippet)"}
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <CopyButton text={modalHit.content || ""} toastLabel="SearXNG snippet copied" />
-                    <Button type="button" onClick={() => addClip("searxng")} disabled={!modalHit.content?.trim()}>
+                    <Button
+                      type="button"
+                      onClick={() => addClip("searxng")}
+                      disabled={!modalHit.content?.trim()}
+                    >
                       Add to clipboard
                     </Button>
                   </div>
@@ -737,7 +782,11 @@ export function InternetResearchView() {
               ) : (
                 <div className="space-y-3">
                   {!extractByUrl[modalHit.url] ? (
-                    <Button type="button" onClick={() => runFirecrawlExtract(modalHit.url)} disabled={extractLoading}>
+                    <Button
+                      type="button"
+                      onClick={() => runFirecrawlExtract(modalHit.url)}
+                      disabled={extractLoading}
+                    >
                       {extractLoading ? "Extracting..." : "Fetch Firecrawl content"}
                     </Button>
                   ) : (
@@ -748,7 +797,10 @@ export function InternetResearchView() {
                         </ReactMarkdown>
                       </div>
                       <div className="flex gap-2">
-                        <CopyButton text={extractByUrl[modalHit.url]} toastLabel="Firecrawl content copied" />
+                        <CopyButton
+                          text={extractByUrl[modalHit.url]}
+                          toastLabel="Firecrawl content copied"
+                        />
                         <Button type="button" onClick={() => addClip("firecrawl")}>
                           Add to clipboard
                         </Button>
@@ -764,4 +816,3 @@ export function InternetResearchView() {
     </div>
   );
 }
-

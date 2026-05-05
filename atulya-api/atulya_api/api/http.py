@@ -4005,9 +4005,7 @@ def _register_routes(app: FastAPI):
                         )
                         for tc in core.tool_trace
                     ],
-                    llm_calls=[
-                        ReflectLLMCall(scope=lc.scope, duration_ms=lc.duration_ms) for lc in core.llm_trace
-                    ],
+                    llm_calls=[ReflectLLMCall(scope=lc.scope, duration_ms=lc.duration_ms) for lc in core.llm_trace],
                 )
             return InternetResearchResponse(
                 text=core.text,

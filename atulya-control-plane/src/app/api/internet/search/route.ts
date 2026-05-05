@@ -36,14 +36,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = (await res.json()) as { results?: Array<{ title?: string; url?: string; content?: string }> };
+    const data = (await res.json()) as {
+      results?: Array<{ title?: string; url?: string; content?: string }>;
+    };
     const rows = (data.results || []).slice(0, maxHits);
     const lines: string[] = [];
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i];
-      const title = String(r.title || "").replace(/\n/g, " ").slice(0, 72);
+      const title = String(r.title || "")
+        .replace(/\n/g, " ")
+        .slice(0, 72);
       const u = String(r.url || "");
-      const snip = String(r.content || "").replace(/\n/g, " ").slice(0, 140);
+      const snip = String(r.content || "")
+        .replace(/\n/g, " ")
+        .slice(0, 140);
       if (u) {
         lines.push(`${i + 1}. ${title} | ${u}`);
         if (snip) lines.push(`   ${snip}`);

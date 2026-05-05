@@ -134,9 +134,7 @@ async def run_internet_research_agent(
     for iteration in range(max_iterations):
         llm_start = time.time()
         iter_tool_choice: str | dict[str, Any] = (
-            {"type": "function", "function": {"name": "web_search"}}
-            if iteration == 0
-            else "auto"
+            {"type": "function", "function": {"name": "web_search"}} if iteration == 0 else "auto"
         )
         try:
             result = await llm_config.call_with_tools(

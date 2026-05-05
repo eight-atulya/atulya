@@ -20,7 +20,10 @@ export async function POST(request: NextRequest) {
 
     const firecrawl = base(process.env.ATULYA_CP_INTERNET_FIRECRAWL_URL || DEFAULT_FIRECRAWL);
     const apiKey = process.env.ATULYA_API_CORTEX_FIRECRAWL_API_KEY || DEFAULT_FIRECRAWL_API_KEY;
-    const maxChars = Math.min(8000, Math.max(400, parseInt(String(body.max_chars ?? 2200), 10) || 2200));
+    const maxChars = Math.min(
+      8000,
+      Math.max(400, parseInt(String(body.max_chars ?? 2200), 10) || 2200)
+    );
 
     const res = await fetch(`${firecrawl}/v0/scrape`, {
       method: "POST",
@@ -62,4 +65,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Extract failed (is Firecrawl up?)" }, { status: 503 });
   }
 }
-
