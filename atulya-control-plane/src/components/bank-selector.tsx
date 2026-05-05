@@ -107,6 +107,17 @@ function BankSelectorInner() {
   // Feature flags
   const [fileUploadEnabled, setFileUploadEnabled] = React.useState<boolean | null>(null);
 
+  type RetainDraftPayload = {
+    content: string;
+    context?: string;
+    timestamp?: string;
+    document_id?: string;
+    tags?: string[];
+    observation_scopes?: "per_tag" | "combined" | "all_combinations" | string[][];
+    metadata?: Record<string, string>;
+    entities?: Array<{ text: string; type?: string }>;
+  };
+
   // Load feature flags
   React.useEffect(() => {
     client
@@ -133,6 +144,58 @@ function BankSelectorInner() {
       window.removeEventListener("atulya:open-bank-selector", handleOpenBankSelector);
     };
   }, [loadBanks]);
+
+  React.useEffect(() => {
+    if (!currentBank || typeof window === "undefined") return;
+    const key = `retain:draft:pending:${currentBank}`;
+
+    const applyDraft = () => {
+      const raw = window.localStorage.getItem(key);
+      if (!raw) return;
+      try {
+        const draft = JSON.parse(raw) as RetainDraftPayload;
+        if (!draft?.content?.trim()) return;
+        setDocDialogOpen(true);
+        setDocTab("text");
+        setDocContent(draft.content);
+        setDocContext(draft.context || "");
+        setDocEventDate(draft.timestamp || "");
+        setDocDocumentId(draft.document_id || "");
+        setDocTags((draft.tags || []).join(", "));
+        setDocObservationScopes(
+          typeof draft.observation_scopes === "string" ? draft.observation_scopes : "combined"
+        );
+        setDocObservationScopesCustom(
+          Array.isArray(draft.observation_scopes)
+            ? draft.observation_scopes.map((scope) => scope.join(", ")).join("\n")
+            : ""
+        );
+        setDocMetadata(
+          draft.metadata
+            ? Object.entries(draft.metadata)
+                .map(([k, v]) => `${k}: ${v}`)
+                .join("\n")
+            : ""
+        );
+        setDocEntities((draft.entities || []).map((e) => e.text).join(", "));
+        setDocAdvancedTab("document");
+        window.localStorage.removeItem(key);
+      } catch {
+        window.localStorage.removeItem(key);
+      }
+    };
+
+    applyDraft();
+
+    const onRetainDraftReady = (event: Event) => {
+      const custom = event as CustomEvent<{ bank_id?: string }>;
+      if (custom.detail?.bank_id && custom.detail.bank_id !== currentBank) return;
+      applyDraft();
+    };
+    window.addEventListener("atulya:retain-draft-ready", onRetainDraftReady as EventListener);
+    return () =>
+      window.removeEventListener("atulya:retain-draft-ready", onRetainDraftReady as EventListener);
+  }, [currentBank]);
 
   const handleCreateBank = async () => {
     if (!newBankId.trim()) return;

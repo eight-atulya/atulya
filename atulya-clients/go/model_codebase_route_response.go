@@ -43,6 +43,10 @@ func NewCodebaseRouteResponse(codebaseId string, snapshotId string, updatedCount
 	this.SnapshotId = snapshotId
 	this.UpdatedCount = updatedCount
 	this.Target = target
+	var queuedForMemory bool = false
+	this.QueuedForMemory = &queuedForMemory
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -51,6 +55,10 @@ func NewCodebaseRouteResponse(codebaseId string, snapshotId string, updatedCount
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRouteResponseWithDefaults() *CodebaseRouteResponse {
 	this := CodebaseRouteResponse{}
+	var queuedForMemory bool = false
+	this.QueuedForMemory = &queuedForMemory
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 

@@ -34,6 +34,8 @@ type _EntityTrajectoryRecomputeResponse EntityTrajectoryRecomputeResponse
 func NewEntityTrajectoryRecomputeResponse(operationId string) *EntityTrajectoryRecomputeResponse {
 	this := EntityTrajectoryRecomputeResponse{}
 	this.OperationId = operationId
+	var status string = "pending"
+	this.Status = &status
 	return &this
 }
 
@@ -42,6 +44,8 @@ func NewEntityTrajectoryRecomputeResponse(operationId string) *EntityTrajectoryR
 // but it doesn't guarantee that properties required by API are set
 func NewEntityTrajectoryRecomputeResponseWithDefaults() *EntityTrajectoryRecomputeResponse {
 	this := EntityTrajectoryRecomputeResponse{}
+	var status string = "pending"
+	this.Status = &status
 	return &this
 }
 

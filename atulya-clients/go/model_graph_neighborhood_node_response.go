@@ -52,6 +52,14 @@ func NewGraphNeighborhoodNodeResponse(id string, nodeType string, title string) 
 	this.Id = id
 	this.NodeType = nodeType
 	this.Title = title
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
+	var displayPriority float32 = 0.0
+	this.DisplayPriority = &displayPriority
+	var nodeDensityHint float32 = 0.0
+	this.NodeDensityHint = &nodeDensityHint
+	var renderModeHint string = "detail"
+	this.RenderModeHint = &renderModeHint
 	return &this
 }
 
@@ -60,6 +68,14 @@ func NewGraphNeighborhoodNodeResponse(id string, nodeType string, title string) 
 // but it doesn't guarantee that properties required by API are set
 func NewGraphNeighborhoodNodeResponseWithDefaults() *GraphNeighborhoodNodeResponse {
 	this := GraphNeighborhoodNodeResponse{}
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
+	var displayPriority float32 = 0.0
+	this.DisplayPriority = &displayPriority
+	var nodeDensityHint float32 = 0.0
+	this.NodeDensityHint = &nodeDensityHint
+	var renderModeHint string = "detail"
+	this.RenderModeHint = &renderModeHint
 	return &this
 }
 

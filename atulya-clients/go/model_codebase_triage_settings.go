@@ -35,6 +35,18 @@ type CodebaseTriageSettings struct {
 // will change when the set of required properties is changed
 func NewCodebaseTriageSettings() *CodebaseTriageSettings {
 	this := CodebaseTriageSettings{}
+	var scoreThresholdHigh float32 = 0.62
+	this.ScoreThresholdHigh = &scoreThresholdHigh
+	var centralityThreshold float32 = 0.35
+	this.CentralityThreshold = &centralityThreshold
+	var safetyThreshold float32 = 0.25
+	this.SafetyThreshold = &safetyThreshold
+	var embeddingProvider string = "jina_local"
+	this.EmbeddingProvider = &embeddingProvider
+	var enableSafetyScan bool = true
+	this.EnableSafetyScan = &enableSafetyScan
+	var enableSemgrep bool = false
+	this.EnableSemgrep = &enableSemgrep
 	return &this
 }
 
@@ -43,6 +55,18 @@ func NewCodebaseTriageSettings() *CodebaseTriageSettings {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseTriageSettingsWithDefaults() *CodebaseTriageSettings {
 	this := CodebaseTriageSettings{}
+	var scoreThresholdHigh float32 = 0.62
+	this.ScoreThresholdHigh = &scoreThresholdHigh
+	var centralityThreshold float32 = 0.35
+	this.CentralityThreshold = &centralityThreshold
+	var safetyThreshold float32 = 0.25
+	this.SafetyThreshold = &safetyThreshold
+	var embeddingProvider string = "jina_local"
+	this.EmbeddingProvider = &embeddingProvider
+	var enableSafetyScan bool = true
+	this.EnableSafetyScan = &enableSafetyScan
+	var enableSemgrep bool = false
+	this.EnableSemgrep = &enableSemgrep
 	return &this
 }
 

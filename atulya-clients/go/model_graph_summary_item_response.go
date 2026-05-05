@@ -46,6 +46,8 @@ func NewGraphSummaryItemResponse(id string, kind string, title string, memberCou
 	this.Kind = kind
 	this.Title = title
 	this.MemberCount = memberCount
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
 	this.DisplayPriority = displayPriority
 	this.RenderModeHint = renderModeHint
 	return &this
@@ -56,6 +58,8 @@ func NewGraphSummaryItemResponse(id string, kind string, title string, memberCou
 // but it doesn't guarantee that properties required by API are set
 func NewGraphSummaryItemResponseWithDefaults() *GraphSummaryItemResponse {
 	this := GraphSummaryItemResponse{}
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
 	return &this
 }
 

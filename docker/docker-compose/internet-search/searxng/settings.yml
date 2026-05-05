@@ -1,0 +1,18 @@
+# Private connector stack: disable request limiter / bot gate (no reverse proxy in front).
+# https://docs.searxng.org/admin/settings/settings.html#server-limiter
+
+use_default_settings: true
+
+# Upstream default allows HTML only; machine clients need JSON.
+search:
+  formats:
+    - html
+    - json
+
+general:
+  contact_url: false
+
+server:
+  secret_key: "atulya_cortex_internet_dev_secret_change_for_production"
+  limiter: false
+  image_proxy: true

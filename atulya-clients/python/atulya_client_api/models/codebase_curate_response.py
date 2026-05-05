@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.codebase_curate_cluster_response import CodebaseCurateClusterResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseCurateResponse(BaseModel):
     """
@@ -35,12 +34,11 @@ class CodebaseCurateResponse(BaseModel):
     clusters: Optional[List[CodebaseCurateClusterResponse]] = None
     symbol_cards: Optional[List[Dict[str, Any]]] = None
     unclustered: Optional[List[Dict[str, Any]]] = None
-    total_candidates: Optional[StrictInt] = None
+    total_candidates: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["codebase_id", "snapshot_id", "intent", "scope_hint", "clusters", "symbol_cards", "unclustered", "total_candidates"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -52,7 +50,8 @@ class CodebaseCurateResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -113,7 +112,7 @@ class CodebaseCurateResponse(BaseModel):
             "clusters": [CodebaseCurateClusterResponse.from_dict(_item) for _item in obj["clusters"]] if obj.get("clusters") is not None else None,
             "symbol_cards": obj.get("symbol_cards"),
             "unclustered": obj.get("unclustered"),
-            "total_candidates": obj.get("total_candidates")
+            "total_candidates": obj.get("total_candidates") if obj.get("total_candidates") is not None else 0
         })
         return _obj
 

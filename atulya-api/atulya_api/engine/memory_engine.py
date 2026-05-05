@@ -274,6 +274,7 @@ from .response_models import (
     VALID_RECALL_FACT_TYPES,
     EntityObservation,
     EntityState,
+    InternetResearchResult,
     LLMCallTrace,
     MemoryFact,
     ObservationRef,
@@ -10404,6 +10405,98 @@ class MemoryEngine(MemoryEngineInterface):
         finally:
             if span_context:
                 span_context.__exit__(None, None, None)
+
+    async def internet_research_async(
+        self,
+        bank_id: str,
+        query: str,
+        *,
+        budget: Budget | None = None,
+        max_tokens: int = 4096,
+        include_tool_calls: bool = False,
+        include_tool_call_output: bool = True,
+        request_context: "RequestContext",
+    ) -> InternetResearchResult:
+        from atulya_api.config import get_config
+        from atulya_api.cortex.internet_connectors import InternetConnectorConfig, InternetStackClient
+        from atulya_api.engine.internet_research import run_internet_research_agent
+        from atulya_api.extensions.operation_validator import OperationValidationError
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=bank_id,
+                operation="internet_research",
+                request_context=request_context,
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        if self._reflect_llm_config is None:
+            raise OperationValidationError("Reflect LLM is not configured for this deployment.", status_code=503)
+
+        cfg = get_config()
+        base_max_iterations = cfg.reflect_max_iterations
+        budget_multipliers = {Budget.LOW: 0.5, Budget.MID: 1.0, Budget.HIGH: 2.0}
+        effective_budget = budget or Budget.MID
+        max_iterations = min(12, max(1, int(base_max_iterations * budget_multipliers.get(effective_budget, 1.0))))
+
+        resolved = await self._config_resolver.resolve_full_config(bank_id, request_context)
+        llm = self._reflect_llm_config.with_config(resolved)
+
+        connector = InternetConnectorConfig.from_env()
+        stack = InternetStackClient(connector)
+
+        async with httpx.AsyncClient() as client:
+            if not await stack.searxng_health(client):
+                raise OperationValidationError(
+                    "Internet search backend (SearXNG) is unreachable. "
+                    "Start the optional internet stack or set ATULYA_API_CORTEX_SEARXNG_BASE_URL.",
+                    status_code=503,
+                )
+            agent_result = await run_internet_research_agent(
+                llm,
+                query=query.strip(),
+                stack=stack,
+                http_client=client,
+                max_iterations=max_iterations,
+                max_completion_tokens=max_tokens,
+            )
+
+        tool_traces: list[ToolCallTrace] = []
+        if include_tool_calls:
+            for tc in agent_result.tool_trace:
+                out: dict = tc.output if isinstance(tc.output, dict) else {"result": tc.output}
+                if not include_tool_call_output:
+                    out = {k: out[k] for k in ("error", "n", "query", "url", "truncated", "digest") if k in out}
+                tool_traces.append(
+                    ToolCallTrace(
+                        tool=tc.tool,
+                        reason=tc.reason,
+                        input=tc.input,
+                        output=out,
+                        duration_ms=tc.duration_ms,
+                        iteration=tc.iteration,
+                    )
+                )
+
+        llm_traces = [LLMCallTrace(scope=lc.scope, duration_ms=lc.duration_ms) for lc in agent_result.llm_trace]
+
+        usage = TokenUsage(
+            input_tokens=agent_result.usage.input_tokens,
+            output_tokens=agent_result.usage.output_tokens,
+            total_tokens=agent_result.usage.total_tokens,
+        )
+
+        return InternetResearchResult(
+            text=agent_result.text,
+            source_urls=agent_result.source_urls,
+            writes_to_bank=False,
+            usage=usage,
+            tool_trace=tool_traces,
+            llm_trace=llm_traces,
+        )
 
     async def list_entities(
         self,

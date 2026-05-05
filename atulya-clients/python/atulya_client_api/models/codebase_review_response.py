@@ -24,7 +24,6 @@ from atulya_client_api.models.codebase_review_counts_response import CodebaseRev
 from atulya_client_api.models.codebase_review_diagnostic_response import CodebaseReviewDiagnosticResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseReviewResponse(BaseModel):
     """
@@ -36,16 +35,15 @@ class CodebaseReviewResponse(BaseModel):
     approval_status: Optional[StrictStr] = None
     memory_status: Optional[StrictStr] = None
     review_counts: Optional[CodebaseReviewCountsResponse] = None
-    cluster_count: Optional[StrictInt] = None
-    related_chunk_count: Optional[StrictInt] = None
-    parse_coverage: Optional[Union[StrictFloat, StrictInt]] = None
+    cluster_count: Optional[StrictInt] = 0
+    related_chunk_count: Optional[StrictInt] = 0
+    parse_coverage: Optional[Union[StrictFloat, StrictInt]] = 0.0
     changed_summary: Optional[CodebaseReviewChangedSummaryResponse] = None
     diagnostics: Optional[List[CodebaseReviewDiagnosticResponse]] = None
     __properties: ClassVar[List[str]] = ["codebase_id", "snapshot_id", "snapshot_status", "approval_status", "memory_status", "review_counts", "cluster_count", "related_chunk_count", "parse_coverage", "changed_summary", "diagnostics"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -57,7 +55,8 @@ class CodebaseReviewResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -133,9 +132,9 @@ class CodebaseReviewResponse(BaseModel):
             "approval_status": obj.get("approval_status"),
             "memory_status": obj.get("memory_status"),
             "review_counts": CodebaseReviewCountsResponse.from_dict(obj["review_counts"]) if obj.get("review_counts") is not None else None,
-            "cluster_count": obj.get("cluster_count"),
-            "related_chunk_count": obj.get("related_chunk_count"),
-            "parse_coverage": obj.get("parse_coverage"),
+            "cluster_count": obj.get("cluster_count") if obj.get("cluster_count") is not None else 0,
+            "related_chunk_count": obj.get("related_chunk_count") if obj.get("related_chunk_count") is not None else 0,
+            "parse_coverage": obj.get("parse_coverage") if obj.get("parse_coverage") is not None else 0.0,
             "changed_summary": CodebaseReviewChangedSummaryResponse.from_dict(obj["changed_summary"]) if obj.get("changed_summary") is not None else None,
             "diagnostics": [CodebaseReviewDiagnosticResponse.from_dict(_item) for _item in obj["diagnostics"]] if obj.get("diagnostics") is not None else None
         })

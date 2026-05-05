@@ -23,7 +23,6 @@ from typing_extensions import Annotated
 from atulya_client_api.models.mental_model_trigger import MentalModelTrigger
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CreateMentalModelRequest(BaseModel):
     """
@@ -33,13 +32,12 @@ class CreateMentalModelRequest(BaseModel):
     name: StrictStr = Field(description="Human-readable name for the mental model")
     source_query: StrictStr = Field(description="The query to run to generate content")
     tags: Optional[List[StrictStr]] = Field(default=None, description="Tags for scoped visibility")
-    max_tokens: Optional[Annotated[int, Field(le=8192, strict=True, ge=256)]] = Field(default=None, description="Maximum tokens for generated content")
+    max_tokens: Optional[Annotated[int, Field(le=8192, strict=True, ge=256)]] = Field(default=2048, description="Maximum tokens for generated content")
     trigger: Optional[MentalModelTrigger] = Field(default=None, description="Trigger settings")
     __properties: ClassVar[List[str]] = ["id", "name", "source_query", "tags", "max_tokens", "trigger"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -51,7 +49,8 @@ class CreateMentalModelRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -100,7 +99,7 @@ class CreateMentalModelRequest(BaseModel):
             "name": obj.get("name"),
             "source_query": obj.get("source_query"),
             "tags": obj.get("tags"),
-            "max_tokens": obj.get("max_tokens"),
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 2048,
             "trigger": MentalModelTrigger.from_dict(obj["trigger"]) if obj.get("trigger") is not None else None
         })
         return _obj

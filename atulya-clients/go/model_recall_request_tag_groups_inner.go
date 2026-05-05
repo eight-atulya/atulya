@@ -83,7 +83,7 @@ func (dst *RecallRequestTagGroupsInner) UnmarshalJSON(data []byte) error {
 }
 
 // Marshal data from the first non-nil pointers in the struct to JSON
-func (src RecallRequestTagGroupsInner) MarshalJSON() ([]byte, error) {
+func (src *RecallRequestTagGroupsInner) MarshalJSON() ([]byte, error) {
 	if src.TagGroupAnd != nil {
 		return json.Marshal(&src.TagGroupAnd)
 	}

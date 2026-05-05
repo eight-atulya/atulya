@@ -30,6 +30,12 @@ type SubRoutineSubmitRequest struct {
 // will change when the set of required properties is changed
 func NewSubRoutineSubmitRequest() *SubRoutineSubmitRequest {
 	this := SubRoutineSubmitRequest{}
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
+	var forceRebuild bool = false
+	this.ForceRebuild = &forceRebuild
 	return &this
 }
 
@@ -38,6 +44,12 @@ func NewSubRoutineSubmitRequest() *SubRoutineSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewSubRoutineSubmitRequestWithDefaults() *SubRoutineSubmitRequest {
 	this := SubRoutineSubmitRequest{}
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
+	var forceRebuild bool = false
+	this.ForceRebuild = &forceRebuild
 	return &this
 }
 

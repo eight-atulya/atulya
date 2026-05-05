@@ -1409,6 +1409,48 @@ class ReflectResponse(BaseModel):
     )
 
 
+class InternetResearchRequest(BaseModel):
+    """Request live-web research (optional SearXNG + Firecrawl stack). Does not use bank memory as context."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "query": "Latest stable release of Python",
+                "budget": "mid",
+                "max_tokens": 4096,
+                "include": {"tool_calls": {}},
+            }
+        }
+    )
+
+    query: str = Field(description="Question to answer using the public web only")
+    budget: Budget = Budget.MID
+    max_tokens: int = Field(default=4096, description="Max completion tokens for each LLM step where supported")
+    include: ReflectIncludeOptions = Field(
+        default_factory=ReflectIncludeOptions,
+        description="Optional tool trace (include.facts is ignored).",
+    )
+
+
+class InternetResearchResponse(BaseModel):
+    """Answer from the internet research agent. Nothing is written to the memory bank."""
+
+    text: str = Field(description="Markdown answer synthesized from web tools")
+    source_urls: list[str] = Field(
+        default_factory=list,
+        description="URLs the model relied on",
+    )
+    writes_to_bank: bool = Field(
+        default=False,
+        description="Always false; included so clients can assert no graph mutation occurred",
+    )
+    usage: TokenUsage | None = Field(default=None, description="LLM token usage for this run")
+    trace: ReflectTrace | None = Field(
+        default=None,
+        description="Tool and LLM trace when include.tool_calls was set",
+    )
+
+
 class DispositionTraits(BaseModel):
     """Disposition traits that influence how memories are formed and interpreted."""
 
@@ -3915,6 +3957,72 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks/{bank_id}/reflect: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/internet/research",
+        response_model=InternetResearchResponse,
+        summary="Internet research (live web)",
+        description="Run the internet research agent: SearXNG search and optional Firecrawl extract. "
+        "Uses the same LLM configuration as reflect for this bank. Does not read or write memories.",
+        operation_id="internet_research",
+        tags=["Memory"],
+    )
+    async def api_internet_research(
+        bank_id: str,
+        request: InternetResearchRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        metrics = get_metrics_collector()
+        try:
+            with metrics.record_operation(
+                "internet_research",
+                bank_id=bank_id,
+                source="api",
+                budget=request.budget.value,
+            ):
+                core = await app.state.memory.internet_research_async(
+                    bank_id=bank_id,
+                    query=request.query,
+                    budget=request.budget,
+                    max_tokens=request.max_tokens,
+                    include_tool_calls=request.include.tool_calls is not None,
+                    include_tool_call_output=(
+                        request.include.tool_calls.output if request.include.tool_calls is not None else True
+                    ),
+                    request_context=request_context,
+                )
+            trace: ReflectTrace | None = None
+            if request.include.tool_calls is not None:
+                trace = ReflectTrace(
+                    tool_calls=[
+                        ReflectToolCall(
+                            tool=tc.tool,
+                            input=tc.input,
+                            output=tc.output if request.include.tool_calls.output else None,
+                            duration_ms=tc.duration_ms,
+                            iteration=tc.iteration,
+                        )
+                        for tc in core.tool_trace
+                    ],
+                    llm_calls=[ReflectLLMCall(scope=lc.scope, duration_ms=lc.duration_ms) for lc in core.llm_trace],
+                )
+            return InternetResearchResponse(
+                text=core.text,
+                source_urls=core.source_urls,
+                writes_to_bank=core.writes_to_bank,
+                usage=core.usage,
+                trace=trace,
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/internet/research: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post(

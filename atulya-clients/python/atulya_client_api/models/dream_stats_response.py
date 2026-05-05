@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class DreamStatsResponse(BaseModel):
     """
@@ -35,17 +34,16 @@ class DreamStatsResponse(BaseModel):
     avg_output_tokens: Union[StrictFloat, StrictInt]
     distillation_pass_rate: Union[StrictFloat, StrictInt]
     distilled_count: StrictInt
-    validation_rate: Optional[Union[StrictFloat, StrictInt]] = None
-    avg_novelty: Optional[Union[StrictFloat, StrictInt]] = None
-    failed_run_count: Optional[StrictInt] = None
-    duplicate_suppression_count: Optional[StrictInt] = None
-    prediction_confirmation_rate: Optional[Union[StrictFloat, StrictInt]] = None
-    unresolved_prediction_backlog: Optional[StrictInt] = None
+    validation_rate: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    avg_novelty: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    failed_run_count: Optional[StrictInt] = 0
+    duplicate_suppression_count: Optional[StrictInt] = 0
+    prediction_confirmation_rate: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    unresolved_prediction_backlog: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["bank_id", "total_runs", "last_run_at", "avg_quality", "avg_tokens", "avg_output_tokens", "distillation_pass_rate", "distilled_count", "validation_rate", "avg_novelty", "failed_run_count", "duplicate_suppression_count", "prediction_confirmation_rate", "unresolved_prediction_backlog"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -57,7 +55,8 @@ class DreamStatsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -107,12 +106,12 @@ class DreamStatsResponse(BaseModel):
             "avg_output_tokens": obj.get("avg_output_tokens"),
             "distillation_pass_rate": obj.get("distillation_pass_rate"),
             "distilled_count": obj.get("distilled_count"),
-            "validation_rate": obj.get("validation_rate"),
-            "avg_novelty": obj.get("avg_novelty"),
-            "failed_run_count": obj.get("failed_run_count"),
-            "duplicate_suppression_count": obj.get("duplicate_suppression_count"),
-            "prediction_confirmation_rate": obj.get("prediction_confirmation_rate"),
-            "unresolved_prediction_backlog": obj.get("unresolved_prediction_backlog")
+            "validation_rate": obj.get("validation_rate") if obj.get("validation_rate") is not None else 0.0,
+            "avg_novelty": obj.get("avg_novelty") if obj.get("avg_novelty") is not None else 0.0,
+            "failed_run_count": obj.get("failed_run_count") if obj.get("failed_run_count") is not None else 0,
+            "duplicate_suppression_count": obj.get("duplicate_suppression_count") if obj.get("duplicate_suppression_count") is not None else 0,
+            "prediction_confirmation_rate": obj.get("prediction_confirmation_rate") if obj.get("prediction_confirmation_rate") is not None else 0.0,
+            "unresolved_prediction_backlog": obj.get("unresolved_prediction_backlog") if obj.get("unresolved_prediction_backlog") is not None else 0
         })
         return _obj
 

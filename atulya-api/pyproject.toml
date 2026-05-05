@@ -115,6 +115,7 @@ include = [
 markers = [
     "integration: full-stack or external dependency",
     "slow: intentionally slow tests (opt-in or excluded in CI)",
+    "internet_stack: docker SearXNG + Firecrawl stack (see docker/docker-compose/internet-search)",
 ]
 log_cli = true
 log_cli_level = "INFO"

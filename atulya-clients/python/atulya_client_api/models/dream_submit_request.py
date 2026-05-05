@@ -21,19 +21,17 @@ from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class DreamSubmitRequest(BaseModel):
     """
     DreamSubmitRequest
     """ # noqa: E501
-    trigger_source: Optional[StrictStr] = Field(default=None, description="manual | event | cron")
-    run_type: Optional[StrictStr] = Field(default=None, description="dream | trance")
+    trigger_source: Optional[StrictStr] = Field(default='manual', description="manual | event | cron")
+    run_type: Optional[StrictStr] = Field(default='dream', description="dream | trance")
     __properties: ClassVar[List[str]] = ["trigger_source", "run_type"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -45,7 +43,8 @@ class DreamSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -82,8 +81,8 @@ class DreamSubmitRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "trigger_source": obj.get("trigger_source"),
-            "run_type": obj.get("run_type")
+            "trigger_source": obj.get("trigger_source") if obj.get("trigger_source") is not None else 'manual',
+            "run_type": obj.get("run_type") if obj.get("run_type") is not None else 'dream'
         })
         return _obj
 

@@ -40,6 +40,10 @@ type _ApiKeyCreateRequest ApiKeyCreateRequest
 func NewApiKeyCreateRequest(name string) *ApiKeyCreateRequest {
 	this := ApiKeyCreateRequest{}
 	this.Name = name
+	var role string = "user"
+	this.Role = &role
+	var schemaName string = "public"
+	this.SchemaName = &schemaName
 	return &this
 }
 
@@ -48,6 +52,10 @@ func NewApiKeyCreateRequest(name string) *ApiKeyCreateRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewApiKeyCreateRequestWithDefaults() *ApiKeyCreateRequest {
 	this := ApiKeyCreateRequest{}
+	var role string = "user"
+	this.Role = &role
+	var schemaName string = "public"
+	this.SchemaName = &schemaName
 	return &this
 }
 

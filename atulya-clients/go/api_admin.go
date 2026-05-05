@@ -97,6 +97,9 @@ func (a *AdminAPIService) AdminCreateApiKeyExecute(r ApiAdminCreateApiKeyRequest
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
@@ -244,6 +247,9 @@ func (a *AdminAPIService) AdminCreateApiKey_1Execute(r ApiAdminCreateApiKey_0Req
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
@@ -395,6 +401,9 @@ func (a *AdminAPIService) AdminDecommissionWorkerExecute(r ApiAdminDecommissionW
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
@@ -546,6 +555,9 @@ func (a *AdminAPIService) AdminDecommissionWorker_2Execute(r ApiAdminDecommissio
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
@@ -684,6 +696,9 @@ func (a *AdminAPIService) AdminListApiKeysExecute(r ApiAdminListApiKeysRequest) 
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -820,6 +835,9 @@ func (a *AdminAPIService) AdminListApiKeys_3Execute(r ApiAdminListApiKeys_0Reque
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -968,12 +986,18 @@ func (a *AdminAPIService) AdminListOperationsExecute(r ApiAdminListOperationsReq
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	if r.status != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1122,12 +1146,18 @@ func (a *AdminAPIService) AdminListOperations_4Execute(r ApiAdminListOperations_
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	if r.status != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1781,6 +1811,9 @@ func (a *AdminAPIService) AdminListWorkersExecute(r ApiAdminListWorkersRequest) 
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1918,6 +1951,9 @@ func (a *AdminAPIService) AdminListWorkers_7Execute(r ApiAdminListWorkers_0Reque
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2058,6 +2094,9 @@ func (a *AdminAPIService) AdminRevokeApiKeyExecute(r ApiAdminRevokeApiKeyRequest
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2198,6 +2237,9 @@ func (a *AdminAPIService) AdminRevokeApiKey_8Execute(r ApiAdminRevokeApiKey_0Req
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2863,6 +2905,9 @@ func (a *AdminAPIService) AdminUpdateApiKeyExecute(r ApiAdminUpdateApiKeyRequest
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}
@@ -3014,6 +3059,9 @@ func (a *AdminAPIService) AdminUpdateApiKey_11Execute(r ApiAdminUpdateApiKey_0Re
 
 	if r.schema != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "schema", r.schema, "form", "")
+	} else {
+		var defaultValue string = "public"
+		r.schema = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{"application/json"}

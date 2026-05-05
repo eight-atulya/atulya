@@ -235,6 +235,36 @@ class RecallResult(BaseModel):
     )
 
 
+class InternetResearchResult(BaseModel):
+    """
+    Result from live-web internet research (SearXNG + optional crawl).
+
+    Does not read or write the memory graph; safe for optional stacks that may be offline.
+    """
+
+    text: str = Field(description="Synthesized answer from web tools")
+    source_urls: list[str] = Field(
+        default_factory=list,
+        description="URLs the model cited from web_search / web_extract",
+    )
+    writes_to_bank: bool = Field(
+        default=False,
+        description="Always false: this operation does not mutate bank memories",
+    )
+    usage: TokenUsage | None = Field(
+        default=None,
+        description="Token usage for LLM calls during this research run",
+    )
+    tool_trace: list[ToolCallTrace] = Field(
+        default_factory=list,
+        description="Tool calls when trace was requested",
+    )
+    llm_trace: list[LLMCallTrace] = Field(
+        default_factory=list,
+        description="LLM calls when trace was requested",
+    )
+
+
 class ReflectResult(BaseModel):
     """
     Result from a reflect operation.

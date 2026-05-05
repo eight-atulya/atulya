@@ -17,11 +17,11 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
+from atulya_client_api.models.operation_progress_response import OperationProgressResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class OperationResponse(BaseModel):
     """
@@ -33,12 +33,24 @@ class OperationResponse(BaseModel):
     document_id: Optional[StrictStr] = None
     created_at: StrictStr
     status: StrictStr
+    queue_state: Optional[StrictStr] = None
+    stage: Optional[StrictStr] = None
+    progress: Optional[OperationProgressResponse] = None
     error_message: Optional[StrictStr]
-    __properties: ClassVar[List[str]] = ["id", "task_type", "items_count", "document_id", "created_at", "status", "error_message"]
+    __properties: ClassVar[List[str]] = ["id", "task_type", "items_count", "document_id", "created_at", "status", "queue_state", "stage", "progress", "error_message"]
+
+    @field_validator('queue_state')
+    def queue_state_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['queued', 'processing']):
+            raise ValueError("must be one of enum values ('queued', 'processing')")
+        return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -50,7 +62,8 @@ class OperationResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -75,10 +88,28 @@ class OperationResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of progress
+        if self.progress:
+            _dict['progress'] = self.progress.to_dict()
         # set to None if document_id (nullable) is None
         # and model_fields_set contains the field
         if self.document_id is None and "document_id" in self.model_fields_set:
             _dict['document_id'] = None
+
+        # set to None if queue_state (nullable) is None
+        # and model_fields_set contains the field
+        if self.queue_state is None and "queue_state" in self.model_fields_set:
+            _dict['queue_state'] = None
+
+        # set to None if stage (nullable) is None
+        # and model_fields_set contains the field
+        if self.stage is None and "stage" in self.model_fields_set:
+            _dict['stage'] = None
+
+        # set to None if progress (nullable) is None
+        # and model_fields_set contains the field
+        if self.progress is None and "progress" in self.model_fields_set:
+            _dict['progress'] = None
 
         # set to None if error_message (nullable) is None
         # and model_fields_set contains the field
@@ -103,6 +134,9 @@ class OperationResponse(BaseModel):
             "document_id": obj.get("document_id"),
             "created_at": obj.get("created_at"),
             "status": obj.get("status"),
+            "queue_state": obj.get("queue_state"),
+            "stage": obj.get("stage"),
+            "progress": OperationProgressResponse.from_dict(obj["progress"]) if obj.get("progress") is not None else None,
             "error_message": obj.get("error_message")
         })
         return _obj

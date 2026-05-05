@@ -34,6 +34,8 @@ type _BrainLearnResponse BrainLearnResponse
 func NewBrainLearnResponse(operationId string) *BrainLearnResponse {
 	this := BrainLearnResponse{}
 	this.OperationId = operationId
+	var deduplicated bool = false
+	this.Deduplicated = &deduplicated
 	return &this
 }
 
@@ -42,6 +44,8 @@ func NewBrainLearnResponse(operationId string) *BrainLearnResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewBrainLearnResponseWithDefaults() *BrainLearnResponse {
 	this := BrainLearnResponse{}
+	var deduplicated bool = false
+	this.Deduplicated = &deduplicated
 	return &this
 }
 

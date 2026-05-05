@@ -36,6 +36,8 @@ type _RetainRequest RetainRequest
 func NewRetainRequest(items []MemoryItem) *RetainRequest {
 	this := RetainRequest{}
 	this.Items = items
+	var async bool = false
+	this.Async = &async
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewRetainRequest(items []MemoryItem) *RetainRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewRetainRequestWithDefaults() *RetainRequest {
 	this := RetainRequest{}
+	var async bool = false
+	this.Async = &async
 	return &this
 }
 

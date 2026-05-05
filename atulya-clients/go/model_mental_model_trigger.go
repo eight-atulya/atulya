@@ -31,6 +31,10 @@ type MentalModelTrigger struct {
 // will change when the set of required properties is changed
 func NewMentalModelTrigger() *MentalModelTrigger {
 	this := MentalModelTrigger{}
+	var mode string = "full"
+	this.Mode = &mode
+	var refreshAfterConsolidation bool = false
+	this.RefreshAfterConsolidation = &refreshAfterConsolidation
 	return &this
 }
 
@@ -39,6 +43,10 @@ func NewMentalModelTrigger() *MentalModelTrigger {
 // but it doesn't guarantee that properties required by API are set
 func NewMentalModelTriggerWithDefaults() *MentalModelTrigger {
 	this := MentalModelTrigger{}
+	var mode string = "full"
+	this.Mode = &mode
+	var refreshAfterConsolidation bool = false
+	this.RefreshAfterConsolidation = &refreshAfterConsolidation
 	return &this
 }
 

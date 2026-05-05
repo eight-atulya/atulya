@@ -44,6 +44,36 @@ type CodebaseSnapshotStatsResponse struct {
 // will change when the set of required properties is changed
 func NewCodebaseSnapshotStatsResponse() *CodebaseSnapshotStatsResponse {
 	this := CodebaseSnapshotStatsResponse{}
+	var totalFiles int32 = 0
+	this.TotalFiles = &totalFiles
+	var indexedFiles int32 = 0
+	this.IndexedFiles = &indexedFiles
+	var retainedFiles int32 = 0
+	this.RetainedFiles = &retainedFiles
+	var manifestOnlyFiles int32 = 0
+	this.ManifestOnlyFiles = &manifestOnlyFiles
+	var excludedFiles int32 = 0
+	this.ExcludedFiles = &excludedFiles
+	var symbolCount int32 = 0
+	this.SymbolCount = &symbolCount
+	var edgeCount int32 = 0
+	this.EdgeCount = &edgeCount
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var unchangedFiles int32 = 0
+	this.UnchangedFiles = &unchangedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -52,6 +82,36 @@ func NewCodebaseSnapshotStatsResponse() *CodebaseSnapshotStatsResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseSnapshotStatsResponseWithDefaults() *CodebaseSnapshotStatsResponse {
 	this := CodebaseSnapshotStatsResponse{}
+	var totalFiles int32 = 0
+	this.TotalFiles = &totalFiles
+	var indexedFiles int32 = 0
+	this.IndexedFiles = &indexedFiles
+	var retainedFiles int32 = 0
+	this.RetainedFiles = &retainedFiles
+	var manifestOnlyFiles int32 = 0
+	this.ManifestOnlyFiles = &manifestOnlyFiles
+	var excludedFiles int32 = 0
+	this.ExcludedFiles = &excludedFiles
+	var symbolCount int32 = 0
+	this.SymbolCount = &symbolCount
+	var edgeCount int32 = 0
+	this.EdgeCount = &edgeCount
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var unchangedFiles int32 = 0
+	this.UnchangedFiles = &unchangedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 

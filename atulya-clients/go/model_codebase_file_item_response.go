@@ -45,6 +45,8 @@ func NewCodebaseFileItemResponse(path string, sizeBytes int32, contentHash strin
 	this.ContentHash = contentHash
 	this.Status = status
 	this.ChangeKind = changeKind
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	return &this
 }
 
@@ -53,6 +55,8 @@ func NewCodebaseFileItemResponse(path string, sizeBytes int32, contentHash strin
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseFileItemResponseWithDefaults() *CodebaseFileItemResponse {
 	this := CodebaseFileItemResponse{}
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	return &this
 }
 

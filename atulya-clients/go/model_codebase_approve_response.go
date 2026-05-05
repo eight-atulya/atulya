@@ -40,6 +40,8 @@ func NewCodebaseApproveResponse(codebaseId string, snapshotId string, operationI
 	this.SnapshotId = snapshotId
 	this.OperationId = operationId
 	this.Status = status
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -48,6 +50,8 @@ func NewCodebaseApproveResponse(codebaseId string, snapshotId string, operationI
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseApproveResponseWithDefaults() *CodebaseApproveResponse {
 	this := CodebaseApproveResponse{}
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 

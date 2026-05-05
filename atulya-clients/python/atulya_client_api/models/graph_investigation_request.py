@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphInvestigationRequest(BaseModel):
     """
@@ -31,11 +30,11 @@ class GraphInvestigationRequest(BaseModel):
     query: StrictStr
     type: Optional[StrictStr] = None
     tags: Optional[List[StrictStr]] = None
-    tags_match: Optional[StrictStr] = None
-    confidence_min: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = None
-    node_kind: Optional[StrictStr] = None
+    tags_match: Optional[StrictStr] = 'all_strict'
+    confidence_min: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = 0.55
+    node_kind: Optional[StrictStr] = 'all'
     window_days: Optional[Annotated[int, Field(strict=True, ge=1)]] = None
-    limit: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None
+    limit: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = 18
     __properties: ClassVar[List[str]] = ["query", "type", "tags", "tags_match", "confidence_min", "node_kind", "window_days", "limit"]
 
     @field_validator('tags_match')
@@ -59,8 +58,7 @@ class GraphInvestigationRequest(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -72,7 +70,8 @@ class GraphInvestigationRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -127,11 +126,11 @@ class GraphInvestigationRequest(BaseModel):
             "query": obj.get("query"),
             "type": obj.get("type"),
             "tags": obj.get("tags"),
-            "tags_match": obj.get("tags_match"),
-            "confidence_min": obj.get("confidence_min"),
-            "node_kind": obj.get("node_kind"),
+            "tags_match": obj.get("tags_match") if obj.get("tags_match") is not None else 'all_strict',
+            "confidence_min": obj.get("confidence_min") if obj.get("confidence_min") is not None else 0.55,
+            "node_kind": obj.get("node_kind") if obj.get("node_kind") is not None else 'all',
             "window_days": obj.get("window_days"),
-            "limit": obj.get("limit")
+            "limit": obj.get("limit") if obj.get("limit") is not None else 18
         })
         return _obj
 

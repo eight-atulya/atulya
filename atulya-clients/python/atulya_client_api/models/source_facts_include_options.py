@@ -21,19 +21,17 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class SourceFactsIncludeOptions(BaseModel):
     """
     Options for including source facts for observation-type results.
     """ # noqa: E501
-    max_tokens: Optional[StrictInt] = Field(default=None, description="Maximum total tokens for source facts across all observations (-1 = unlimited)")
-    max_tokens_per_observation: Optional[StrictInt] = Field(default=None, description="Maximum tokens of source facts per observation (-1 = unlimited)")
+    max_tokens: Optional[StrictInt] = Field(default=4096, description="Maximum total tokens for source facts across all observations (-1 = unlimited)")
+    max_tokens_per_observation: Optional[StrictInt] = Field(default=-1, description="Maximum tokens of source facts per observation (-1 = unlimited)")
     __properties: ClassVar[List[str]] = ["max_tokens", "max_tokens_per_observation"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -45,7 +43,8 @@ class SourceFactsIncludeOptions(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -82,8 +81,8 @@ class SourceFactsIncludeOptions(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "max_tokens": obj.get("max_tokens"),
-            "max_tokens_per_observation": obj.get("max_tokens_per_observation")
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 4096,
+            "max_tokens_per_observation": obj.get("max_tokens_per_observation") if obj.get("max_tokens_per_observation") is not None else -1
         })
         return _obj
 

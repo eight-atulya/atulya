@@ -21,21 +21,19 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class WebhookHttpConfig(BaseModel):
     """
     HTTP delivery configuration for a webhook.
     """ # noqa: E501
-    method: Optional[StrictStr] = Field(default=None, description="HTTP method: GET or POST")
-    timeout_seconds: Optional[StrictInt] = Field(default=None, description="HTTP request timeout in seconds")
+    method: Optional[StrictStr] = Field(default='POST', description="HTTP method: GET or POST")
+    timeout_seconds: Optional[StrictInt] = Field(default=30, description="HTTP request timeout in seconds")
     headers: Optional[Dict[str, StrictStr]] = Field(default=None, description="Custom HTTP headers")
     params: Optional[Dict[str, StrictStr]] = Field(default=None, description="Custom HTTP query parameters")
     __properties: ClassVar[List[str]] = ["method", "timeout_seconds", "headers", "params"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class WebhookHttpConfig(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -84,8 +83,8 @@ class WebhookHttpConfig(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "method": obj.get("method"),
-            "timeout_seconds": obj.get("timeout_seconds"),
+            "method": obj.get("method") if obj.get("method") is not None else 'POST',
+            "timeout_seconds": obj.get("timeout_seconds") if obj.get("timeout_seconds") is not None else 30,
             "headers": obj.get("headers"),
             "params": obj.get("params")
         })

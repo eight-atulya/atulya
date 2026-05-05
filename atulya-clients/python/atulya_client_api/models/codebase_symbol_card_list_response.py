@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseSymbolCardListResponse(BaseModel):
     """
@@ -31,12 +30,11 @@ class CodebaseSymbolCardListResponse(BaseModel):
     snapshot_id: Optional[StrictStr] = None
     items: Optional[List[Dict[str, Any]]] = None
     next_cursor: Optional[StrictStr] = None
-    has_more: Optional[StrictBool] = None
+    has_more: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["codebase_id", "snapshot_id", "items", "next_cursor", "has_more"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -48,7 +46,8 @@ class CodebaseSymbolCardListResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -99,7 +98,7 @@ class CodebaseSymbolCardListResponse(BaseModel):
             "snapshot_id": obj.get("snapshot_id"),
             "items": obj.get("items"),
             "next_cursor": obj.get("next_cursor"),
-            "has_more": obj.get("has_more")
+            "has_more": obj.get("has_more") if obj.get("has_more") is not None else False
         })
         return _obj
 

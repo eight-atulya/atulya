@@ -20,9 +20,9 @@ import json
 from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.child_operation_status import ChildOperationStatus
+from atulya_client_api.models.operation_progress_response import OperationProgressResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class OperationStatusResponse(BaseModel):
     """
@@ -35,10 +35,12 @@ class OperationStatusResponse(BaseModel):
     updated_at: Optional[StrictStr] = None
     completed_at: Optional[StrictStr] = None
     error_message: Optional[StrictStr] = None
+    queue_state: Optional[StrictStr] = None
     stage: Optional[StrictStr] = None
+    progress: Optional[OperationProgressResponse] = None
     result_metadata: Optional[Dict[str, Any]] = None
     child_operations: Optional[List[ChildOperationStatus]] = None
-    __properties: ClassVar[List[str]] = ["operation_id", "status", "operation_type", "created_at", "updated_at", "completed_at", "error_message", "stage", "result_metadata", "child_operations"]
+    __properties: ClassVar[List[str]] = ["operation_id", "status", "operation_type", "created_at", "updated_at", "completed_at", "error_message", "queue_state", "stage", "progress", "result_metadata", "child_operations"]
 
     @field_validator('status')
     def status_validate_enum(cls, value):
@@ -47,9 +49,18 @@ class OperationStatusResponse(BaseModel):
             raise ValueError("must be one of enum values ('pending', 'completed', 'failed', 'not_found')")
         return value
 
+    @field_validator('queue_state')
+    def queue_state_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['queued', 'processing']):
+            raise ValueError("must be one of enum values ('queued', 'processing')")
+        return value
+
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -61,7 +72,8 @@ class OperationStatusResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -86,6 +98,9 @@ class OperationStatusResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of progress
+        if self.progress:
+            _dict['progress'] = self.progress.to_dict()
         # override the default output from pydantic by calling `to_dict()` of each item in child_operations (list)
         _items = []
         if self.child_operations:
@@ -118,10 +133,20 @@ class OperationStatusResponse(BaseModel):
         if self.error_message is None and "error_message" in self.model_fields_set:
             _dict['error_message'] = None
 
+        # set to None if queue_state (nullable) is None
+        # and model_fields_set contains the field
+        if self.queue_state is None and "queue_state" in self.model_fields_set:
+            _dict['queue_state'] = None
+
         # set to None if stage (nullable) is None
         # and model_fields_set contains the field
         if self.stage is None and "stage" in self.model_fields_set:
             _dict['stage'] = None
+
+        # set to None if progress (nullable) is None
+        # and model_fields_set contains the field
+        if self.progress is None and "progress" in self.model_fields_set:
+            _dict['progress'] = None
 
         # set to None if result_metadata (nullable) is None
         # and model_fields_set contains the field
@@ -152,7 +177,9 @@ class OperationStatusResponse(BaseModel):
             "updated_at": obj.get("updated_at"),
             "completed_at": obj.get("completed_at"),
             "error_message": obj.get("error_message"),
+            "queue_state": obj.get("queue_state"),
             "stage": obj.get("stage"),
+            "progress": OperationProgressResponse.from_dict(obj["progress"]) if obj.get("progress") is not None else None,
             "result_metadata": obj.get("result_metadata"),
             "child_operations": [ChildOperationStatus.from_dict(_item) for _item in obj["child_operations"]] if obj.get("child_operations") is not None else None
         })

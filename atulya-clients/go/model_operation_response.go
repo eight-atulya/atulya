@@ -27,6 +27,9 @@ type OperationResponse struct {
 	DocumentId NullableString `json:"document_id,omitempty"`
 	CreatedAt string `json:"created_at"`
 	Status string `json:"status"`
+	QueueState NullableString `json:"queue_state,omitempty"`
+	Stage NullableString `json:"stage,omitempty"`
+	Progress NullableOperationProgressResponse `json:"progress,omitempty"`
 	ErrorMessage NullableString `json:"error_message"`
 }
 
@@ -217,6 +220,132 @@ func (o *OperationResponse) SetStatus(v string) {
 	o.Status = v
 }
 
+// GetQueueState returns the QueueState field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OperationResponse) GetQueueState() string {
+	if o == nil || IsNil(o.QueueState.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.QueueState.Get()
+}
+
+// GetQueueStateOk returns a tuple with the QueueState field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OperationResponse) GetQueueStateOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.QueueState.Get(), o.QueueState.IsSet()
+}
+
+// HasQueueState returns a boolean if a field has been set.
+func (o *OperationResponse) HasQueueState() bool {
+	if o != nil && o.QueueState.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetQueueState gets a reference to the given NullableString and assigns it to the QueueState field.
+func (o *OperationResponse) SetQueueState(v string) {
+	o.QueueState.Set(&v)
+}
+// SetQueueStateNil sets the value for QueueState to be an explicit nil
+func (o *OperationResponse) SetQueueStateNil() {
+	o.QueueState.Set(nil)
+}
+
+// UnsetQueueState ensures that no value is present for QueueState, not even an explicit nil
+func (o *OperationResponse) UnsetQueueState() {
+	o.QueueState.Unset()
+}
+
+// GetStage returns the Stage field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OperationResponse) GetStage() string {
+	if o == nil || IsNil(o.Stage.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Stage.Get()
+}
+
+// GetStageOk returns a tuple with the Stage field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OperationResponse) GetStageOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Stage.Get(), o.Stage.IsSet()
+}
+
+// HasStage returns a boolean if a field has been set.
+func (o *OperationResponse) HasStage() bool {
+	if o != nil && o.Stage.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetStage gets a reference to the given NullableString and assigns it to the Stage field.
+func (o *OperationResponse) SetStage(v string) {
+	o.Stage.Set(&v)
+}
+// SetStageNil sets the value for Stage to be an explicit nil
+func (o *OperationResponse) SetStageNil() {
+	o.Stage.Set(nil)
+}
+
+// UnsetStage ensures that no value is present for Stage, not even an explicit nil
+func (o *OperationResponse) UnsetStage() {
+	o.Stage.Unset()
+}
+
+// GetProgress returns the Progress field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OperationResponse) GetProgress() OperationProgressResponse {
+	if o == nil || IsNil(o.Progress.Get()) {
+		var ret OperationProgressResponse
+		return ret
+	}
+	return *o.Progress.Get()
+}
+
+// GetProgressOk returns a tuple with the Progress field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OperationResponse) GetProgressOk() (*OperationProgressResponse, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Progress.Get(), o.Progress.IsSet()
+}
+
+// HasProgress returns a boolean if a field has been set.
+func (o *OperationResponse) HasProgress() bool {
+	if o != nil && o.Progress.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetProgress gets a reference to the given NullableOperationProgressResponse and assigns it to the Progress field.
+func (o *OperationResponse) SetProgress(v OperationProgressResponse) {
+	o.Progress.Set(&v)
+}
+// SetProgressNil sets the value for Progress to be an explicit nil
+func (o *OperationResponse) SetProgressNil() {
+	o.Progress.Set(nil)
+}
+
+// UnsetProgress ensures that no value is present for Progress, not even an explicit nil
+func (o *OperationResponse) UnsetProgress() {
+	o.Progress.Unset()
+}
+
 // GetErrorMessage returns the ErrorMessage field value
 // If the value is explicit nil, the zero value for string will be returned
 func (o *OperationResponse) GetErrorMessage() string {
@@ -261,6 +390,15 @@ func (o OperationResponse) ToMap() (map[string]interface{}, error) {
 	}
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["status"] = o.Status
+	if o.QueueState.IsSet() {
+		toSerialize["queue_state"] = o.QueueState.Get()
+	}
+	if o.Stage.IsSet() {
+		toSerialize["stage"] = o.Stage.Get()
+	}
+	if o.Progress.IsSet() {
+		toSerialize["progress"] = o.Progress.Get()
+	}
 	toSerialize["error_message"] = o.ErrorMessage.Get()
 	return toSerialize, nil
 }

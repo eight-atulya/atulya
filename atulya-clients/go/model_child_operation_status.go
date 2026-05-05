@@ -23,6 +23,9 @@ var _ MappedNullable = &ChildOperationStatus{}
 type ChildOperationStatus struct {
 	OperationId string `json:"operation_id"`
 	Status string `json:"status"`
+	QueueState NullableString `json:"queue_state,omitempty"`
+	Stage NullableString `json:"stage,omitempty"`
+	Progress NullableOperationProgressResponse `json:"progress,omitempty"`
 	SubBatchIndex NullableInt32 `json:"sub_batch_index,omitempty"`
 	ItemsCount NullableInt32 `json:"items_count,omitempty"`
 	ErrorMessage NullableString `json:"error_message,omitempty"`
@@ -95,6 +98,132 @@ func (o *ChildOperationStatus) GetStatusOk() (*string, bool) {
 // SetStatus sets field value
 func (o *ChildOperationStatus) SetStatus(v string) {
 	o.Status = v
+}
+
+// GetQueueState returns the QueueState field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ChildOperationStatus) GetQueueState() string {
+	if o == nil || IsNil(o.QueueState.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.QueueState.Get()
+}
+
+// GetQueueStateOk returns a tuple with the QueueState field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ChildOperationStatus) GetQueueStateOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.QueueState.Get(), o.QueueState.IsSet()
+}
+
+// HasQueueState returns a boolean if a field has been set.
+func (o *ChildOperationStatus) HasQueueState() bool {
+	if o != nil && o.QueueState.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetQueueState gets a reference to the given NullableString and assigns it to the QueueState field.
+func (o *ChildOperationStatus) SetQueueState(v string) {
+	o.QueueState.Set(&v)
+}
+// SetQueueStateNil sets the value for QueueState to be an explicit nil
+func (o *ChildOperationStatus) SetQueueStateNil() {
+	o.QueueState.Set(nil)
+}
+
+// UnsetQueueState ensures that no value is present for QueueState, not even an explicit nil
+func (o *ChildOperationStatus) UnsetQueueState() {
+	o.QueueState.Unset()
+}
+
+// GetStage returns the Stage field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ChildOperationStatus) GetStage() string {
+	if o == nil || IsNil(o.Stage.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Stage.Get()
+}
+
+// GetStageOk returns a tuple with the Stage field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ChildOperationStatus) GetStageOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Stage.Get(), o.Stage.IsSet()
+}
+
+// HasStage returns a boolean if a field has been set.
+func (o *ChildOperationStatus) HasStage() bool {
+	if o != nil && o.Stage.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetStage gets a reference to the given NullableString and assigns it to the Stage field.
+func (o *ChildOperationStatus) SetStage(v string) {
+	o.Stage.Set(&v)
+}
+// SetStageNil sets the value for Stage to be an explicit nil
+func (o *ChildOperationStatus) SetStageNil() {
+	o.Stage.Set(nil)
+}
+
+// UnsetStage ensures that no value is present for Stage, not even an explicit nil
+func (o *ChildOperationStatus) UnsetStage() {
+	o.Stage.Unset()
+}
+
+// GetProgress returns the Progress field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ChildOperationStatus) GetProgress() OperationProgressResponse {
+	if o == nil || IsNil(o.Progress.Get()) {
+		var ret OperationProgressResponse
+		return ret
+	}
+	return *o.Progress.Get()
+}
+
+// GetProgressOk returns a tuple with the Progress field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ChildOperationStatus) GetProgressOk() (*OperationProgressResponse, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Progress.Get(), o.Progress.IsSet()
+}
+
+// HasProgress returns a boolean if a field has been set.
+func (o *ChildOperationStatus) HasProgress() bool {
+	if o != nil && o.Progress.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetProgress gets a reference to the given NullableOperationProgressResponse and assigns it to the Progress field.
+func (o *ChildOperationStatus) SetProgress(v OperationProgressResponse) {
+	o.Progress.Set(&v)
+}
+// SetProgressNil sets the value for Progress to be an explicit nil
+func (o *ChildOperationStatus) SetProgressNil() {
+	o.Progress.Set(nil)
+}
+
+// UnsetProgress ensures that no value is present for Progress, not even an explicit nil
+func (o *ChildOperationStatus) UnsetProgress() {
+	o.Progress.Unset()
 }
 
 // GetSubBatchIndex returns the SubBatchIndex field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -235,6 +364,15 @@ func (o ChildOperationStatus) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["operation_id"] = o.OperationId
 	toSerialize["status"] = o.Status
+	if o.QueueState.IsSet() {
+		toSerialize["queue_state"] = o.QueueState.Get()
+	}
+	if o.Stage.IsSet() {
+		toSerialize["stage"] = o.Stage.Get()
+	}
+	if o.Progress.IsSet() {
+		toSerialize["progress"] = o.Progress.Get()
+	}
 	if o.SubBatchIndex.IsSet() {
 		toSerialize["sub_batch_index"] = o.SubBatchIndex.Get()
 	}

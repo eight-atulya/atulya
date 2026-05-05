@@ -17,29 +17,29 @@ from inspect import getfullargspec
 import json
 import pprint
 import re  # noqa: F401
-from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from typing import Optional
+from typing import Any, Dict, Optional
+from atulya_client_api.models.reflect_response import ReflectResponse
 from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-MEMORYITEMTIMESTAMP_ANY_OF_SCHEMAS = ["datetime", "str"]
+RESULT_ANY_OF_SCHEMAS = ["Dict[str, object]", "ReflectResponse"]
 
-class MemoryItemTimestamp(BaseModel):
+class Result(BaseModel):
     """
-    When the content occurred. Accepts an ISO 8601 datetime string (e.g. '2024-01-15T10:30:00Z'), null/omitted (defaults to now), or the special string 'unset' to explicitly store without any timestamp (use this for timeless content such as fictional documents or static reference material).
+    Result
     """
 
-    # data type: datetime
-    anyof_schema_1_validator: Optional[datetime] = None
-    # data type: str
-    anyof_schema_2_validator: Optional[StrictStr] = None
+    # data type: ReflectResponse
+    anyof_schema_1_validator: Optional[ReflectResponse] = None
+    # data type: Dict[str, object]
+    anyof_schema_2_validator: Optional[Dict[str, Any]] = None
     if TYPE_CHECKING:
-        actual_instance: Optional[Union[datetime, str]] = None
+        actual_instance: Optional[Union[Dict[str, object], ReflectResponse]] = None
     else:
         actual_instance: Any = None
-    any_of_schemas: Set[str] = { "datetime", "str" }
+    any_of_schemas: Set[str] = { "Dict[str, object]", "ReflectResponse" }
 
     model_config = {
         "validate_assignment": True,
@@ -61,15 +61,15 @@ class MemoryItemTimestamp(BaseModel):
         if v is None:
             return v
 
-        instance = MemoryItemTimestamp.model_construct()
+        instance = Result.model_construct()
         error_messages = []
-        # validate data type: datetime
-        try:
-            instance.anyof_schema_1_validator = v
+        # validate data type: ReflectResponse
+        if not isinstance(v, ReflectResponse):
+            error_messages.append(f"Error! Input type `{type(v)}` is not `ReflectResponse`")
+        else:
             return v
-        except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # validate data type: str
+
+        # validate data type: Dict[str, object]
         try:
             instance.anyof_schema_2_validator = v
             return v
@@ -77,7 +77,7 @@ class MemoryItemTimestamp(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in MemoryItemTimestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in Result with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -93,16 +93,13 @@ class MemoryItemTimestamp(BaseModel):
             return instance
 
         error_messages = []
-        # deserialize data into datetime
+        # anyof_schema_1_validator: Optional[ReflectResponse] = None
         try:
-            # validation
-            instance.anyof_schema_1_validator = json.loads(json_str)
-            # assign value to actual_instance
-            instance.actual_instance = instance.anyof_schema_1_validator
+            instance.actual_instance = ReflectResponse.from_json(json_str)
             return instance
         except (ValidationError, ValueError) as e:
-            error_messages.append(str(e))
-        # deserialize data into str
+             error_messages.append(str(e))
+        # deserialize data into Dict[str, object]
         try:
             # validation
             instance.anyof_schema_2_validator = json.loads(json_str)
@@ -114,7 +111,7 @@ class MemoryItemTimestamp(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into MemoryItemTimestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into Result with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -128,7 +125,7 @@ class MemoryItemTimestamp(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], datetime, str]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], Dict[str, object], ReflectResponse]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

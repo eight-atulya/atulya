@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -10,15 +12,15 @@
 """  # noqa: E501
 
 
-import base64
 import copy
 import http.client as httplib
 import logging
 from logging import FileHandler
 import sys
-from typing import Any, ClassVar, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, ClassVar, Dict, List, Literal, Optional, TypedDict
 from typing_extensions import NotRequired, Self
 
+import urllib3
 
 
 JSON_SCHEMA_VALIDATION_KEYWORDS = {
@@ -154,25 +156,9 @@ class Configuration:
       string values to replace variables in templated server configuration.
       The validation of enums is performed for variables with defined enum
       values before.
-    :param verify_ssl: bool - Set this to false to skip verifying SSL certificate
-      when calling API from https server.
     :param ssl_ca_cert: str - the path to a file of concatenated CA certificates
       in PEM format.
-    :param retries: int | aiohttp_retry.RetryOptionsBase - Retry configuration.
-    :param ca_cert_data: verify the peer using concatenated CA certificate data
-      in PEM (str) or DER (bytes) format.
-    :param cert_file: the path to a client certificate file, for mTLS.
-    :param key_file: the path to a client key file, for mTLS.
-    :param assert_hostname: Set this to True/False to enable/disable SSL hostname verification.
-    :param tls_server_name: SSL/TLS Server Name Indication (SNI). Set this to the SNI value expected by the server.
-    :param connection_pool_maxsize: Connection pool max size. None in the constructor is coerced to 100 for async and cpu_count * 5 for sync.
-    :param proxy: Proxy URL.
-    :param proxy_headers: Proxy headers.
-    :param safe_chars_for_path_param: Safe characters for path parameter encoding.
-    :param client_side_validation: Enable client-side validation. Default True.
-    :param socket_options: Options to pass down to the underlying urllib3 socket.
-    :param datetime_format: Datetime format string for serialization.
-    :param date_format: Date format string for serialization.
+    :param retries: Number of retries for API requests.
 
     """
 
@@ -186,27 +172,13 @@ class Configuration:
         username: Optional[str]=None,
         password: Optional[str]=None,
         access_token: Optional[str]=None,
-        server_index: Optional[int]=None,
+        server_index: Optional[int]=None, 
         server_variables: Optional[ServerVariablesT]=None,
         server_operation_index: Optional[Dict[int, int]]=None,
         server_operation_variables: Optional[Dict[int, ServerVariablesT]]=None,
         ignore_operation_servers: bool=False,
         ssl_ca_cert: Optional[str]=None,
-        retries: Optional[Union[int, Any]] = None,
-        ca_cert_data: Optional[Union[str, bytes]] = None,
-        cert_file: Optional[str]=None,
-        key_file: Optional[str]=None,
-        verify_ssl: bool=True,
-        assert_hostname: Optional[bool]=None,
-        tls_server_name: Optional[str]=None,
-        connection_pool_maxsize: Optional[int]=None,
-        proxy: Optional[str]=None,
-        proxy_headers: Optional[Any]=None,
-        safe_chars_for_path_param: str='',
-        client_side_validation: bool=True,
-        socket_options: Optional[Any]=None,
-        datetime_format: str="%Y-%m-%dT%H:%M:%S.%f%z",
-        date_format: str="%Y-%m-%d",
+        retries: Optional[int] = None,
         *,
         debug: Optional[bool] = None,
     ) -> None:
@@ -256,6 +228,7 @@ class Configuration:
         """Logging Settings
         """
         self.logger["package_logger"] = logging.getLogger("atulya_client_api")
+        self.logger["urllib3_logger"] = logging.getLogger("urllib3")
         self.logger_format = '%(asctime)s %(levelname)s %(message)s'
         """Log format
         """
@@ -275,7 +248,7 @@ class Configuration:
         """Debug switch
         """
 
-        self.verify_ssl = verify_ssl
+        self.verify_ssl = True
         """SSL/TLS verification
            Set this to false to skip verifying SSL certificate when calling API
            from https server.
@@ -283,53 +256,49 @@ class Configuration:
         self.ssl_ca_cert = ssl_ca_cert
         """Set this to customize the certificate file to verify the peer.
         """
-        self.ca_cert_data = ca_cert_data
-        """Set this to verify the peer using PEM (str) or DER (bytes)
-           certificate data.
-        """
-        self.cert_file = cert_file
+        self.cert_file = None
         """client certificate file
         """
-        self.key_file = key_file
+        self.key_file = None
         """client key file
         """
-        self.assert_hostname = assert_hostname
+        self.assert_hostname = None
         """Set this to True/False to enable/disable SSL hostname verification.
         """
-        self.tls_server_name = tls_server_name
+        self.tls_server_name = None
         """SSL/TLS Server Name Indication (SNI)
            Set this to the SNI value expected by the server.
         """
 
-        self.connection_pool_maxsize = connection_pool_maxsize if connection_pool_maxsize is not None else 100
+        self.connection_pool_maxsize = 100
         """This value is passed to the aiohttp to limit simultaneous connections.
-           None in the constructor is coerced to default 100.
+           Default values is 100, None means no-limit.
         """
 
-        self.proxy = proxy
+        self.proxy: Optional[str] = None
         """Proxy URL
         """
-        self.proxy_headers = proxy_headers
+        self.proxy_headers = None
         """Proxy headers
         """
-        self.safe_chars_for_path_param = safe_chars_for_path_param
+        self.safe_chars_for_path_param = ''
         """Safe chars for path_param
         """
         self.retries = retries
-        """Retry configuration
+        """Adding retries to override urllib3 default value 3
         """
         # Enable client side validation
-        self.client_side_validation = client_side_validation
+        self.client_side_validation = True
 
-        self.socket_options = socket_options
+        self.socket_options = None
         """Options to pass down to the underlying urllib3 socket
         """
 
-        self.datetime_format = datetime_format
+        self.datetime_format = "%Y-%m-%dT%H:%M:%S.%f%z"
         """datetime format
         """
 
-        self.date_format = date_format
+        self.date_format = "%Y-%m-%d"
         """date format
         """
 
@@ -500,10 +469,9 @@ class Configuration:
         password = ""
         if self.password is not None:
             password = self.password
-
-        return "Basic " + base64.b64encode(
-            (username + ":" + password).encode('utf-8')
-        ).decode('utf-8')
+        return urllib3.util.make_headers(
+            basic_auth=username + ':' + password
+        ).get('authorization')
 
     def auth_settings(self)-> AuthSettings:
         """Gets Auth Settings dict for api client.
@@ -570,7 +538,6 @@ class Configuration:
                 variable_name, variable['default_value'])
 
             if 'enum_values' in variable \
-                    and variable['enum_values'] \
                     and used_value not in variable['enum_values']:
                 raise ValueError(
                     "The variable `{0}` in the host URL has invalid value "

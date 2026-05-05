@@ -1,0 +1,159 @@
+# Atulya Cortex — internet connectors only (SearXNG + Firecrawl).
+#
+# This file does NOT run Atulya or your main application database. Use your existing
+# central PostgreSQL for Atulya; point the Atulya API at the URLs below (HTTP only).
+#
+# Why no pgvector / Atulya here?
+# - pgvector was only needed when this bundle duplicated the “full demo stack”. Your
+#   Atulya data already lives in central Postgres; keep one source of truth.
+# - Atulya runs in your normal deployment; it gains search/crawl by calling these services.
+#
+# Firecrawl’s `nuq-postgres` service is Firecrawl’s internal job DB, not Atulya’s DB.
+#
+# Wire Atulya (env on your Atulya process, same Docker host or shared network):
+#   ATULYA_API_CORTEX_SEARXNG_BASE_URL=http://searxng:8080   # host: http://127.0.0.1:${SEARXNG_HOST_PORT:-18080}
+#   ATULYA_API_CORTEX_FIRECRAWL_API_URL=http://firecrawl-api:3002
+# Self-hosted Firecrawl expects a UUID Bearer token (any valid UUID when USE_DB_AUTHENTICATION=false):
+#   ATULYA_API_CORTEX_FIRECRAWL_API_KEY=11111111-1111-4111-8111-111111111111
+# SearXNG ships HTML-only formats by default; ./searxng/settings.yml enables JSON for API clients.
+# If Atulya runs outside this compose network, publish ports and use host URLs, or:
+#   docker network connect atulya-internet <atulya-container-name>
+#
+# Usage (atulya repo root):
+#   docker compose -f docker/docker-compose/internet-search/docker-compose.yaml up -d
+#
+# Required for Firecrawl API: OPENAI_API_KEY (used by Firecrawl for some extract paths; set in .env)
+
+name: atulya-internet
+
+services:
+  searxng:
+    image: docker.io/searxng/searxng:latest
+    container_name: atulya-searxng
+    restart: unless-stopped
+    volumes:
+      # :rw so entrypoint chown succeeds; do not reuse this secret in production.
+      - ./searxng/settings.yml:/etc/searxng/settings.yml:rw
+    networks:
+      - atulya-internet
+    ports:
+      # Host e2e + local Atulya without joining this network (loopback only)
+      - "127.0.0.1:${SEARXNG_HOST_PORT:-18080}:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  redis:
+    image: redis:alpine
+    container_name: atulya-firecrawl-redis
+    restart: unless-stopped
+    command: redis-server --bind 0.0.0.0
+    networks:
+      - atulya-internet
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: atulya-firecrawl-rabbitmq
+    restart: unless-stopped
+    networks:
+      - atulya-internet
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  nuq-postgres:
+    image: ghcr.io/firecrawl/nuq-postgres:latest
+    container_name: atulya-firecrawl-nuq-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${FIRECRAWL_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${FIRECRAWL_POSTGRES_DB:-postgres}
+    networks:
+      - atulya-internet
+
+  playwright-service:
+    image: ghcr.io/firecrawl/playwright-service:latest
+    container_name: atulya-firecrawl-playwright
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      MAX_CONCURRENT_PAGES: ${CRAWL_CONCURRENT_REQUESTS:-10}
+    networks:
+      - atulya-internet
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+  firecrawl-api:
+    image: ghcr.io/firecrawl/firecrawl:latest
+    container_name: atulya-firecrawl-api
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3002/v0/health/liveness').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    depends_on:
+      searxng:
+        condition: service_started
+      redis:
+        condition: service_started
+      playwright-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      nuq-postgres:
+        condition: service_started
+    ports:
+      - "${FIRECRAWL_PORT:-3002}:3002"
+    environment:
+      HOST: "0.0.0.0"
+      PORT: "3002"
+      INTERNAL_PORT: "3002"
+      EXTRACT_WORKER_PORT: "3004"
+      WORKER_PORT: "3005"
+      ENV: local
+      REDIS_URL: redis://redis:6379
+      REDIS_RATE_LIMIT_URL: redis://redis:6379
+      NUQ_RABBITMQ_URL: amqp://rabbitmq:5672
+      PLAYWRIGHT_MICROSERVICE_URL: http://playwright-service:3000/scrape
+      POSTGRES_USER: ${FIRECRAWL_POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${FIRECRAWL_POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${FIRECRAWL_POSTGRES_DB:-postgres}
+      POSTGRES_HOST: nuq-postgres
+      POSTGRES_PORT: "5432"
+      USE_DB_AUTHENTICATION: "false"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_BASE_URL: ${OPENAI_BASE_URL:-}
+      # Use in-stack SearXNG for Firecrawl’s search integration when enabled upstream
+      SEARXNG_ENDPOINT: ${SEARXNG_ENDPOINT:-http://searxng:8080}
+      SEARXNG_ENGINES: ${SEARXNG_ENGINES:-}
+      SEARXNG_CATEGORIES: ${SEARXNG_CATEGORIES:-}
+    networks:
+      - atulya-internet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+
+networks:
+  atulya-internet:
+    name: atulya-internet
+    driver: bridge

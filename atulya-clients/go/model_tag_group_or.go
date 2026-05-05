@@ -12,7 +12,6 @@ package atulya
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &TagGroupOr{}
 // TagGroupOr Logical OR over a list of nested groups.
 type TagGroupOr struct {
 	Or []RecallRequestTagGroupsInner `json:"or"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _TagGroupOr TagGroupOr
@@ -79,6 +79,11 @@ func (o TagGroupOr) MarshalJSON() ([]byte, error) {
 func (o TagGroupOr) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["or"] = o.Or
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *TagGroupOr) UnmarshalJSON(data []byte) (err error) {
 
 	varTagGroupOr := _TagGroupOr{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTagGroupOr)
+	err = json.Unmarshal(data, &varTagGroupOr)
 
 	if err != nil {
 		return err
 	}
 
 	*o = TagGroupOr(varTagGroupOr)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "or")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

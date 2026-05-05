@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class DirectiveResponse(BaseModel):
     """
@@ -31,16 +30,15 @@ class DirectiveResponse(BaseModel):
     bank_id: StrictStr
     name: StrictStr
     content: StrictStr
-    priority: Optional[StrictInt] = None
-    is_active: Optional[StrictBool] = None
+    priority: Optional[StrictInt] = 0
+    is_active: Optional[StrictBool] = True
     tags: Optional[List[StrictStr]] = None
     created_at: Optional[StrictStr] = None
     updated_at: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["id", "bank_id", "name", "content", "priority", "is_active", "tags", "created_at", "updated_at"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -52,7 +50,8 @@ class DirectiveResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -103,8 +102,8 @@ class DirectiveResponse(BaseModel):
             "bank_id": obj.get("bank_id"),
             "name": obj.get("name"),
             "content": obj.get("content"),
-            "priority": obj.get("priority"),
-            "is_active": obj.get("is_active"),
+            "priority": obj.get("priority") if obj.get("priority") is not None else 0,
+            "is_active": obj.get("is_active") if obj.get("is_active") is not None else True,
             "tags": obj.get("tags"),
             "created_at": obj.get("created_at"),
             "updated_at": obj.get("updated_at")

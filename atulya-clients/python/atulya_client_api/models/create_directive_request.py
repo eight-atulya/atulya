@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, Strict
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CreateDirectiveRequest(BaseModel):
     """
@@ -29,14 +28,13 @@ class CreateDirectiveRequest(BaseModel):
     """ # noqa: E501
     name: StrictStr = Field(description="Human-readable name for the directive")
     content: StrictStr = Field(description="The directive text to inject into prompts")
-    priority: Optional[StrictInt] = Field(default=None, description="Higher priority directives are injected first")
-    is_active: Optional[StrictBool] = Field(default=None, description="Whether this directive is active")
+    priority: Optional[StrictInt] = Field(default=0, description="Higher priority directives are injected first")
+    is_active: Optional[StrictBool] = Field(default=True, description="Whether this directive is active")
     tags: Optional[List[StrictStr]] = Field(default=None, description="Tags for filtering")
     __properties: ClassVar[List[str]] = ["name", "content", "priority", "is_active", "tags"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -48,7 +46,8 @@ class CreateDirectiveRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -87,8 +86,8 @@ class CreateDirectiveRequest(BaseModel):
         _obj = cls.model_validate({
             "name": obj.get("name"),
             "content": obj.get("content"),
-            "priority": obj.get("priority"),
-            "is_active": obj.get("is_active"),
+            "priority": obj.get("priority") if obj.get("priority") is not None else 0,
+            "is_active": obj.get("is_active") if obj.get("is_active") is not None else True,
             "tags": obj.get("tags")
         })
         return _obj

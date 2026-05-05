@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List
 from atulya_client_api.models.tag_item import TagItem
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ListTagsResponse(BaseModel):
     """
@@ -35,8 +34,7 @@ class ListTagsResponse(BaseModel):
     __properties: ClassVar[List[str]] = ["items", "total", "limit", "offset"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -48,7 +46,8 @@ class ListTagsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:

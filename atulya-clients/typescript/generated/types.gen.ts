@@ -842,6 +842,15 @@ export type ChildOperationStatus = {
      */
     status: string;
     /**
+     * ChildOperationStatusQueueState
+     */
+    queue_state?: 'queued' | 'processing' | null;
+    /**
+     * ChildOperationStatusStage
+     */
+    stage?: string | null;
+    progress?: OperationProgressResponse | null;
+    /**
      * ChildOperationStatusSubBatchIndex
      */
     sub_batch_index?: number | null;
@@ -4470,6 +4479,34 @@ export type MentalModelTrigger = {
 };
 
 /**
+ * OperationProgressResponse
+ *
+ * Typed progress payload for async operations when totals are known.
+ */
+export type OperationProgressResponse = {
+    /**
+     * OperationProgressResponseCurrent
+     */
+    current: number;
+    /**
+     * OperationProgressResponseTotal
+     */
+    total: number;
+    /**
+     * OperationProgressResponseUnit
+     */
+    unit?: string | null;
+    /**
+     * OperationProgressResponseLabel
+     */
+    label?: string | null;
+    /**
+     * OperationProgressResponseFailed
+     */
+    failed?: number | null;
+};
+
+/**
  * OperationResponse
  *
  * Response model for a single async operation.
@@ -4499,6 +4536,15 @@ export type OperationResponse = {
      * OperationResponseStatus
      */
     status: string;
+    /**
+     * OperationResponseQueueState
+     */
+    queue_state?: 'queued' | 'processing' | null;
+    /**
+     * OperationResponseStage
+     */
+    stage?: string | null;
+    progress?: OperationProgressResponse | null;
     /**
      * OperationResponseErrorMessage
      */
@@ -4540,9 +4586,20 @@ export type OperationResultResponse = {
      */
     error_message?: string | null;
     /**
+     * OperationResultResponseQueueState
+     */
+    queue_state?: 'queued' | 'processing' | null;
+    /**
      * OperationResultResponseStage
      */
     stage?: string | null;
+    progress?: OperationProgressResponse | null;
+    /**
+     * OperationResultResponseResultMetadata
+     */
+    result_metadata?: {
+        [key: string]: unknown;
+    } | null;
     /**
      * OperationResultResponseResult
      */
@@ -4586,11 +4643,19 @@ export type OperationStatusResponse = {
      */
     error_message?: string | null;
     /**
+     * OperationStatusResponseQueueState
+     */
+    queue_state?: 'queued' | 'processing' | null;
+    /**
      * OperationStatusResponseStage
      *
      * High-level progress stage for pending async work, derived from result_metadata.operation_stage.
      */
     stage?: string | null;
+    /**
+     * Typed progress counters when the operation exposes known totals.
+     */
+    progress?: OperationProgressResponse | null;
     /**
      * OperationStatusResponseResultMetadata
      *

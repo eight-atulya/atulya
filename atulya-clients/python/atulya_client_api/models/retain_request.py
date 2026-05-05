@@ -22,20 +22,18 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.memory_item import MemoryItem
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class RetainRequest(BaseModel):
     """
     Request model for retain endpoint.
     """ # noqa: E501
     items: List[MemoryItem]
-    var_async: Optional[StrictBool] = Field(default=None, description="If true, process asynchronously in background. If false, wait for completion (default: false)", alias="async")
+    var_async: Optional[StrictBool] = Field(default=False, description="If true, process asynchronously in background. If false, wait for completion (default: false)", alias="async")
     document_tags: Optional[List[StrictStr]] = None
     __properties: ClassVar[List[str]] = ["items", "async", "document_tags"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class RetainRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -97,7 +96,7 @@ class RetainRequest(BaseModel):
 
         _obj = cls.model_validate({
             "items": [MemoryItem.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None,
-            "async": obj.get("async"),
+            "async": obj.get("async") if obj.get("async") is not None else False,
             "document_tags": obj.get("document_tags")
         })
         return _obj

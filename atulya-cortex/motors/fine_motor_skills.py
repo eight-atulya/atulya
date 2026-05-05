@@ -12,6 +12,8 @@ In v1 the toolset is small and side-effect-bounded:
 - `write_file`  — file write, sandboxed under `safe_root`.
 - `edit_file`   — atomic str-replace, sandboxed under `safe_root`.
 - `web_fetch`   — httpx GET with timeout and size cap.
+- `web_search`  — optional SearXNG metasearch (compact digest; cheap).
+- `web_extract` — optional Firecrawl markdown for one URL (trimmed; heavier).
 
 Adding a tool is one entry in `Hand._tools`. Tools that need broader access
 (databases, MCP servers, etc.) belong in `motors/movement.py`, not here.
@@ -27,11 +29,45 @@ import os
 import re
 import time
 from pathlib import Path
-from typing import Any, Awaitable, Callable
+from typing import Any, Awaitable, Callable, Mapping
+from urllib.parse import urlparse
+
+import httpx
 
 from cortex.bus import ActionResult, Intent
 
 Tool = Callable[[dict[str, Any]], Awaitable[dict[str, Any]]]
+
+def _web_fetch_is_search_engine_serp(url: str) -> bool:
+    """True for URLs whose HTML is almost always noise for an LLM (SERP / redirect soup)."""
+
+    raw = (url or "").strip()
+    if not raw:
+        return False
+    try:
+        p = urlparse(raw)
+    except ValueError:
+        return False
+    host = (p.netloc or "").lower()
+    path = (p.path or "").lower()
+    if not host:
+        return False
+    # Google web / lite / custom search URLs
+    if "google." in host:
+        if "/search" in path or path == "/search" or "q=" in (p.query or "").lower():
+            return True
+    if host in ("www.bing.com", "bing.com", "cn.bing.com", "www4.bing.com") and "/search" in path:
+        return True
+    if "search.yahoo.com" in host:
+        return True
+    if "duckduckgo.com" in host or "html.duckduckgo.com" in host:
+        return True
+    if "yandex.com" in host and "/search" in path:
+        return True
+    if "baidu.com" in host and ("/s" in path or "wd=" in (p.query or "").lower()):
+        return True
+    return False
+
 
 _FORBIDDEN_BASH = (
     re.compile(r"\brm\s+-rf?\s+/(?:\s|$)"),
@@ -51,11 +87,17 @@ class Hand:
         bash_timeout_s: float = 30.0,
         web_fetch_timeout_s: float = 30.0,
         web_fetch_max_bytes: int = 2_000_000,
+        internet_stack: Any | None = None,
+        internet_limits: Mapping[str, Any] | None = None,
+        internet_search_enabled: bool = False,
+        internet_extract_enabled: bool = False,
     ) -> None:
         self._safe_root = Path(safe_root).resolve() if safe_root is not None else None
         self._bash_timeout_s = bash_timeout_s
         self._web_fetch_timeout_s = web_fetch_timeout_s
         self._web_fetch_max_bytes = web_fetch_max_bytes
+        self._internet_stack = internet_stack
+        self._internet_limits: dict[str, Any] = dict(internet_limits or {})
         self._tools: dict[str, Tool] = {
             "bash": self._tool_bash,
             "read_file": self._tool_read_file,
@@ -63,6 +105,10 @@ class Hand:
             "edit_file": self._tool_edit_file,
             "web_fetch": self._tool_web_fetch,
         }
+        if internet_stack is not None and internet_search_enabled:
+            self._tools["web_search"] = self._tool_web_search
+        if internet_stack is not None and internet_extract_enabled:
+            self._tools["web_extract"] = self._tool_web_extract
 
     def register(self, name: str, tool: Tool) -> None:
         self._tools[name] = tool
@@ -202,10 +248,47 @@ class Hand:
 
         return await asyncio.get_running_loop().run_in_executor(None, _edit)
 
-    async def _tool_web_fetch(self, args: dict[str, Any]) -> dict[str, Any]:
-        import httpx
+    async def _tool_web_search(self, args: dict[str, Any]) -> dict[str, Any]:
+        if self._internet_stack is None:
+            raise RuntimeError("web_search is not configured")
+        q = str(args.get("query", "")).strip()
+        if not q:
+            raise ValueError("web_search: missing 'query'")
+        lim = self._internet_limits
+        max_hits = int(args.get("max_hits") or lim.get("search_max_hits", 5))
+        title_max = int(lim.get("search_title_max", 72))
+        snippet_max = int(lim.get("search_snippet_max", 140))
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            return await self._internet_stack.tool_web_search_compact(
+                client,
+                q,
+                max_hits=max_hits,
+                title_max=title_max,
+                snippet_max=snippet_max,
+            )
 
+    async def _tool_web_extract(self, args: dict[str, Any]) -> dict[str, Any]:
+        if self._internet_stack is None:
+            raise RuntimeError("web_extract is not configured")
+        url = str(args.get("url", "")).strip()
+        if not url:
+            raise ValueError("web_extract: missing 'url'")
+        max_chars = int(args.get("max_chars") or self._internet_limits.get("extract_max_chars", 1200))
+        async with httpx.AsyncClient(follow_redirects=True) as client:
+            return await self._internet_stack.tool_web_extract_compact(client, url, max_chars=max_chars)
+
+    async def _tool_web_fetch(self, args: dict[str, Any]) -> dict[str, Any]:
         url = str(args["url"])
+        if _web_fetch_is_search_engine_serp(url):
+            if "web_search" in self._tools:
+                raise ValueError(
+                    "web_fetch: search-engine pages are not machine-readable here. "
+                    'Use web_search with {"query": "your keywords"} instead.'
+                )
+            raise ValueError(
+                "web_fetch: this is a search-engine URL (HTML is noise). "
+                "Enable tools.internet_search_enabled and run SearXNG (see docker/docker-compose/internet-search)."
+            )
         timeout = float(args.get("timeout_s") or self._web_fetch_timeout_s)
         max_bytes = int(args.get("max_bytes") or self._web_fetch_max_bytes)
         async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:

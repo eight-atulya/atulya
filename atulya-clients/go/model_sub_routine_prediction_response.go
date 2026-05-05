@@ -40,6 +40,8 @@ func NewSubRoutinePredictionResponse(bankId string, horizonHours int32, predicti
 	this.BankId = bankId
 	this.HorizonHours = horizonHours
 	this.Predictions = predictions
+	var sampleCount int32 = 0
+	this.SampleCount = &sampleCount
 	return &this
 }
 
@@ -48,6 +50,8 @@ func NewSubRoutinePredictionResponse(bankId string, horizonHours int32, predicti
 // but it doesn't guarantee that properties required by API are set
 func NewSubRoutinePredictionResponseWithDefaults() *SubRoutinePredictionResponse {
 	this := SubRoutinePredictionResponse{}
+	var sampleCount int32 = 0
+	this.SampleCount = &sampleCount
 	return &this
 }
 

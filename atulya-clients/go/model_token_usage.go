@@ -33,6 +33,12 @@ type TokenUsage struct {
 // will change when the set of required properties is changed
 func NewTokenUsage() *TokenUsage {
 	this := TokenUsage{}
+	var inputTokens int32 = 0
+	this.InputTokens = &inputTokens
+	var outputTokens int32 = 0
+	this.OutputTokens = &outputTokens
+	var totalTokens int32 = 0
+	this.TotalTokens = &totalTokens
 	return &this
 }
 
@@ -41,6 +47,12 @@ func NewTokenUsage() *TokenUsage {
 // but it doesn't guarantee that properties required by API are set
 func NewTokenUsageWithDefaults() *TokenUsage {
 	this := TokenUsage{}
+	var inputTokens int32 = 0
+	this.InputTokens = &inputTokens
+	var outputTokens int32 = 0
+	this.OutputTokens = &outputTokens
+	var totalTokens int32 = 0
+	this.TotalTokens = &totalTokens
 	return &this
 }
 

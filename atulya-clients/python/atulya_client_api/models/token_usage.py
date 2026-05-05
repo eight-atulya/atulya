@@ -21,20 +21,18 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TokenUsage(BaseModel):
     """
     Token usage metrics for LLM calls.  Tracks input/output tokens for a single request to enable per-request cost tracking and monitoring.
     """ # noqa: E501
-    input_tokens: Optional[StrictInt] = Field(default=None, description="Number of input/prompt tokens consumed")
-    output_tokens: Optional[StrictInt] = Field(default=None, description="Number of output/completion tokens generated")
-    total_tokens: Optional[StrictInt] = Field(default=None, description="Total tokens (input + output)")
+    input_tokens: Optional[StrictInt] = Field(default=0, description="Number of input/prompt tokens consumed")
+    output_tokens: Optional[StrictInt] = Field(default=0, description="Number of output/completion tokens generated")
+    total_tokens: Optional[StrictInt] = Field(default=0, description="Total tokens (input + output)")
     __properties: ClassVar[List[str]] = ["input_tokens", "output_tokens", "total_tokens"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -46,7 +44,8 @@ class TokenUsage(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -83,9 +82,9 @@ class TokenUsage(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "input_tokens": obj.get("input_tokens"),
-            "output_tokens": obj.get("output_tokens"),
-            "total_tokens": obj.get("total_tokens")
+            "input_tokens": obj.get("input_tokens") if obj.get("input_tokens") is not None else 0,
+            "output_tokens": obj.get("output_tokens") if obj.get("output_tokens") is not None else 0,
+            "total_tokens": obj.get("total_tokens") if obj.get("total_tokens") is not None else 0
         })
         return _obj
 

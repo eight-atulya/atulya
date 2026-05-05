@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictFloat, StrictInt, 
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class DreamRunResponse(BaseModel):
     """
@@ -43,17 +42,16 @@ class DreamRunResponse(BaseModel):
     promotion_proposals: Optional[List[Dict[str, Any]]] = None
     validation_outcomes: Optional[List[Dict[str, Any]]] = None
     confidence: Optional[Dict[str, Any]] = None
-    novelty_score: Optional[Union[StrictFloat, StrictInt]] = None
-    maturity_tier: Optional[StrictStr] = None
+    novelty_score: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    maturity_tier: Optional[StrictStr] = 'sparse'
     failure_reason: Optional[StrictStr] = None
-    quality_score: Optional[Union[StrictFloat, StrictInt]] = None
-    legacy_run: Optional[StrictBool] = None
+    quality_score: Optional[Union[StrictFloat, StrictInt]] = 0.0
+    legacy_run: Optional[StrictBool] = False
     source_artifact_id: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["run_id", "bank_id", "status", "run_type", "trigger_source", "created_at", "updated_at", "narrative_html", "summary", "evidence_basis", "signals", "predictions", "growth_hypotheses", "promotion_proposals", "validation_outcomes", "confidence", "novelty_score", "maturity_tier", "failure_reason", "quality_score", "legacy_run", "source_artifact_id"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -65,7 +63,8 @@ class DreamRunResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -143,11 +142,11 @@ class DreamRunResponse(BaseModel):
             "promotion_proposals": obj.get("promotion_proposals"),
             "validation_outcomes": obj.get("validation_outcomes"),
             "confidence": obj.get("confidence"),
-            "novelty_score": obj.get("novelty_score"),
-            "maturity_tier": obj.get("maturity_tier"),
+            "novelty_score": obj.get("novelty_score") if obj.get("novelty_score") is not None else 0.0,
+            "maturity_tier": obj.get("maturity_tier") if obj.get("maturity_tier") is not None else 'sparse',
             "failure_reason": obj.get("failure_reason"),
-            "quality_score": obj.get("quality_score"),
-            "legacy_run": obj.get("legacy_run"),
+            "quality_score": obj.get("quality_score") if obj.get("quality_score") is not None else 0.0,
+            "legacy_run": obj.get("legacy_run") if obj.get("legacy_run") is not None else False,
             "source_artifact_id": obj.get("source_artifact_id")
         })
         return _obj

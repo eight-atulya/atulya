@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr, field_validat
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseRouteRequest(BaseModel):
     """
@@ -29,8 +28,8 @@ class CodebaseRouteRequest(BaseModel):
     """ # noqa: E501
     item_ids: List[StrictStr]
     target: StrictStr
-    queue_memory_import: Optional[StrictBool] = None
-    memory_ingest_mode: Optional[StrictStr] = None
+    queue_memory_import: Optional[StrictBool] = False
+    memory_ingest_mode: Optional[StrictStr] = 'direct'
     __properties: ClassVar[List[str]] = ["item_ids", "target", "queue_memory_import", "memory_ingest_mode"]
 
     @field_validator('target')
@@ -51,8 +50,7 @@ class CodebaseRouteRequest(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -64,7 +62,8 @@ class CodebaseRouteRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -103,8 +102,8 @@ class CodebaseRouteRequest(BaseModel):
         _obj = cls.model_validate({
             "item_ids": obj.get("item_ids"),
             "target": obj.get("target"),
-            "queue_memory_import": obj.get("queue_memory_import"),
-            "memory_ingest_mode": obj.get("memory_ingest_mode")
+            "queue_memory_import": obj.get("queue_memory_import") if obj.get("queue_memory_import") is not None else False,
+            "memory_ingest_mode": obj.get("memory_ingest_mode") if obj.get("memory_ingest_mode") is not None else 'direct'
         })
         return _obj
 

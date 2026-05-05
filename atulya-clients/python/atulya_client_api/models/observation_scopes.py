@@ -18,28 +18,27 @@ import json
 import pprint
 import re  # noqa: F401
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from typing import Any, Dict, Optional
-from atulya_client_api.models.reflect_response import ReflectResponse
+from typing import List, Optional
 from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-OPERATIONRESULTRESPONSERESULT_ANY_OF_SCHEMAS = ["Dict[str, object]", "ReflectResponse"]
+OBSERVATIONSCOPES_ANY_OF_SCHEMAS = ["List[List[str]]", "str"]
 
-class OperationResultResponseResult(BaseModel):
+class ObservationScopes(BaseModel):
     """
-    OperationResultResponseResult
+    How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
     """
 
-    # data type: ReflectResponse
-    anyof_schema_1_validator: Optional[ReflectResponse] = None
-    # data type: Dict[str, object]
-    anyof_schema_2_validator: Optional[Dict[str, Any]] = None
+    # data type: str
+    anyof_schema_1_validator: Optional[StrictStr] = None
+    # data type: List[List[str]]
+    anyof_schema_2_validator: Optional[List[List[StrictStr]]] = None
     if TYPE_CHECKING:
-        actual_instance: Optional[Union[Dict[str, object], ReflectResponse]] = None
+        actual_instance: Optional[Union[List[List[str]], str]] = None
     else:
         actual_instance: Any = None
-    any_of_schemas: Set[str] = { "Dict[str, object]", "ReflectResponse" }
+    any_of_schemas: Set[str] = { "List[List[str]]", "str" }
 
     model_config = {
         "validate_assignment": True,
@@ -61,15 +60,15 @@ class OperationResultResponseResult(BaseModel):
         if v is None:
             return v
 
-        instance = OperationResultResponseResult.model_construct()
+        instance = ObservationScopes.model_construct()
         error_messages = []
-        # validate data type: ReflectResponse
-        if not isinstance(v, ReflectResponse):
-            error_messages.append(f"Error! Input type `{type(v)}` is not `ReflectResponse`")
-        else:
+        # validate data type: str
+        try:
+            instance.anyof_schema_1_validator = v
             return v
-
-        # validate data type: Dict[str, object]
+        except (ValidationError, ValueError) as e:
+            error_messages.append(str(e))
+        # validate data type: List[List[str]]
         try:
             instance.anyof_schema_2_validator = v
             return v
@@ -77,7 +76,7 @@ class OperationResultResponseResult(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in OperationResultResponseResult with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in ObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -93,13 +92,16 @@ class OperationResultResponseResult(BaseModel):
             return instance
 
         error_messages = []
-        # anyof_schema_1_validator: Optional[ReflectResponse] = None
+        # deserialize data into str
         try:
-            instance.actual_instance = ReflectResponse.from_json(json_str)
+            # validation
+            instance.anyof_schema_1_validator = json.loads(json_str)
+            # assign value to actual_instance
+            instance.actual_instance = instance.anyof_schema_1_validator
             return instance
         except (ValidationError, ValueError) as e:
-             error_messages.append(str(e))
-        # deserialize data into Dict[str, object]
+            error_messages.append(str(e))
+        # deserialize data into List[List[str]]
         try:
             # validation
             instance.anyof_schema_2_validator = json.loads(json_str)
@@ -111,7 +113,7 @@ class OperationResultResponseResult(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into OperationResultResponseResult with anyOf schemas: Dict[str, object], ReflectResponse. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into ObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -125,7 +127,7 @@ class OperationResultResponseResult(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], Dict[str, object], ReflectResponse]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], List[List[str]], str]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

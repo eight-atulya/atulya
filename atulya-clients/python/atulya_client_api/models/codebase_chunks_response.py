@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.codebase_chunk_item_response import CodebaseChunkItemResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseChunksResponse(BaseModel):
     """
@@ -32,12 +31,11 @@ class CodebaseChunksResponse(BaseModel):
     snapshot_id: Optional[StrictStr] = None
     items: List[CodebaseChunkItemResponse]
     next_cursor: Optional[StrictStr] = None
-    has_more: Optional[StrictBool] = None
+    has_more: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["codebase_id", "snapshot_id", "items", "next_cursor", "has_more"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -49,7 +47,8 @@ class CodebaseChunksResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -107,7 +106,7 @@ class CodebaseChunksResponse(BaseModel):
             "snapshot_id": obj.get("snapshot_id"),
             "items": [CodebaseChunkItemResponse.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None,
             "next_cursor": obj.get("next_cursor"),
-            "has_more": obj.get("has_more")
+            "has_more": obj.get("has_more") if obj.get("has_more") is not None else False
         })
         return _obj
 
