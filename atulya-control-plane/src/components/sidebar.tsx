@@ -7,6 +7,7 @@ import {
   Brain,
   Search,
   Sparkles,
+  Globe,
   Database,
   FileText,
   Users,
@@ -23,6 +24,7 @@ type NavItem =
   | "brain"
   | "recall"
   | "reflect"
+  | "internet"
   | "data"
   | "documents"
   | "codebases"
@@ -49,6 +51,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
     { id: "data" as NavItem, label: "Memories", icon: Database },
     { id: "recall" as NavItem, label: "Recall", icon: Search },
     { id: "reflect" as NavItem, label: "Reflect", icon: Sparkles },
+    { id: "internet" as NavItem, label: "Internet", icon: Globe },
     { id: "documents" as NavItem, label: "Documents", icon: FileText },
     { id: "codebases" as NavItem, label: "Codebases", icon: FolderGit2 },
     { id: "entities" as NavItem, label: "Entities", icon: Users },

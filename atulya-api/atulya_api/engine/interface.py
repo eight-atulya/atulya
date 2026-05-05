@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, Literal
 
 if TYPE_CHECKING:
     from atulya_api.engine.memory_engine import Budget
-    from atulya_api.engine.response_models import RecallResult, ReflectResult
+    from atulya_api.engine.response_models import InternetResearchResult, RecallResult, ReflectResult
     from atulya_api.engine.search.tags import TagsMatch
     from atulya_api.models import RequestContext
 
@@ -135,6 +135,25 @@ class MemoryEngineInterface(ABC):
 
         Returns:
             ReflectResult with generated response and supporting facts.
+        """
+        ...
+
+    @abstractmethod
+    async def internet_research_async(
+        self,
+        bank_id: str,
+        query: str,
+        *,
+        budget: "Budget | None" = None,
+        max_tokens: int = 4096,
+        include_tool_calls: bool = False,
+        include_tool_call_output: bool = True,
+        request_context: "RequestContext",
+    ) -> "InternetResearchResult":
+        """
+        Run the internet research agent (web search + optional extract). Does not use or update bank memory.
+
+        Requires SearXNG (and Firecrawl for web_extract) per ``InternetConnectorConfig.from_env()``.
         """
         ...
 

@@ -9,6 +9,7 @@ import { DataView } from "@/components/data-view";
 import { DocumentsView } from "@/components/documents-view";
 import { EntitiesView } from "@/components/entities-view";
 import { ThinkView } from "@/components/think-view";
+import { InternetResearchView } from "@/components/internet-research-view";
 import { SearchDebugView } from "@/components/search-debug-view";
 import { CodebasesView } from "@/components/codebases-view";
 import { BankProfileView } from "@/components/bank-profile-view";
@@ -47,6 +48,7 @@ type NavItem =
   | "brain"
   | "recall"
   | "reflect"
+  | "internet"
   | "data"
   | "documents"
   | "codebases"
@@ -387,6 +389,18 @@ export default function BankPage() {
                   lens of the bank&apos;s disposition to generate contextual responses.
                 </p>
                 <ThinkView />
+              </div>
+            )}
+
+            {/* Internet Research Tab */}
+            {view === "internet" && (
+              <div>
+                <h1 className="text-3xl font-bold mb-2 text-foreground">Internet Research</h1>
+                <p className="text-muted-foreground mb-6">
+                  Run optional live-web search and extraction against the internet backend. This
+                  mode is session-only and does not write directly to the memory bank.
+                </p>
+                <InternetResearchView />
               </div>
             )}
 
