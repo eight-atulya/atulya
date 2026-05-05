@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class BrainLearnRequest(BaseModel):
     """
@@ -30,10 +29,10 @@ class BrainLearnRequest(BaseModel):
     """ # noqa: E501
     remote_endpoint: StrictStr = Field(description="URL of the remote Atulya API (e.g. http://host:8888)")
     remote_bank_id: StrictStr = Field(description="Bank ID on the remote instance to learn from")
-    remote_api_key: Optional[StrictStr] = Field(default=None, description="Optional API key for the remote instance")
-    learning_type: Optional[StrictStr] = None
-    mode: Optional[StrictStr] = None
-    horizon_hours: Optional[Annotated[int, Field(le=168, strict=True, ge=1)]] = None
+    remote_api_key: Optional[StrictStr] = Field(default='', description="Optional API key for the remote instance")
+    learning_type: Optional[StrictStr] = 'auto'
+    mode: Optional[StrictStr] = 'incremental'
+    horizon_hours: Optional[Annotated[int, Field(le=168, strict=True, ge=1)]] = 24
     __properties: ClassVar[List[str]] = ["remote_endpoint", "remote_bank_id", "remote_api_key", "learning_type", "mode", "horizon_hours"]
 
     @field_validator('learning_type')
@@ -57,8 +56,7 @@ class BrainLearnRequest(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -70,7 +68,8 @@ class BrainLearnRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -109,10 +108,10 @@ class BrainLearnRequest(BaseModel):
         _obj = cls.model_validate({
             "remote_endpoint": obj.get("remote_endpoint"),
             "remote_bank_id": obj.get("remote_bank_id"),
-            "remote_api_key": obj.get("remote_api_key"),
-            "learning_type": obj.get("learning_type"),
-            "mode": obj.get("mode"),
-            "horizon_hours": obj.get("horizon_hours")
+            "remote_api_key": obj.get("remote_api_key") if obj.get("remote_api_key") is not None else '',
+            "learning_type": obj.get("learning_type") if obj.get("learning_type") is not None else 'auto',
+            "mode": obj.get("mode") if obj.get("mode") is not None else 'incremental',
+            "horizon_hours": obj.get("horizon_hours") if obj.get("horizon_hours") is not None else 24
         })
         return _obj
 

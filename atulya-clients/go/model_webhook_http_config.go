@@ -35,6 +35,10 @@ type WebhookHttpConfig struct {
 // will change when the set of required properties is changed
 func NewWebhookHttpConfig() *WebhookHttpConfig {
 	this := WebhookHttpConfig{}
+	var method string = "POST"
+	this.Method = &method
+	var timeoutSeconds int32 = 30
+	this.TimeoutSeconds = &timeoutSeconds
 	return &this
 }
 
@@ -43,6 +47,10 @@ func NewWebhookHttpConfig() *WebhookHttpConfig {
 // but it doesn't guarantee that properties required by API are set
 func NewWebhookHttpConfigWithDefaults() *WebhookHttpConfig {
 	this := WebhookHttpConfig{}
+	var method string = "POST"
+	this.Method = &method
+	var timeoutSeconds int32 = 30
+	this.TimeoutSeconds = &timeoutSeconds
 	return &this
 }
 

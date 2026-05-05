@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -65,7 +66,7 @@ class FilesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param files: Files to upload and convert (required)
-        :type files: List[bytes]
+        :type files: List[bytearray]
         :param request: JSON string with FileRetainRequest model (required)
         :type request: str
         :param authorization:
@@ -145,7 +146,7 @@ class FilesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param files: Files to upload and convert (required)
-        :type files: List[bytes]
+        :type files: List[bytearray]
         :param request: JSON string with FileRetainRequest model (required)
         :type request: str
         :param authorization:
@@ -225,7 +226,7 @@ class FilesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param files: Files to upload and convert (required)
-        :type files: List[bytes]
+        :type files: List[bytearray]
         :param request: JSON string with FileRetainRequest model (required)
         :type request: str
         :param authorization:

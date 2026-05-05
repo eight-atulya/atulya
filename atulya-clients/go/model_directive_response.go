@@ -44,6 +44,10 @@ func NewDirectiveResponse(id string, bankId string, name string, content string)
 	this.BankId = bankId
 	this.Name = name
 	this.Content = content
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -52,6 +56,10 @@ func NewDirectiveResponse(id string, bankId string, name string, content string)
 // but it doesn't guarantee that properties required by API are set
 func NewDirectiveResponseWithDefaults() *DirectiveResponse {
 	this := DirectiveResponse{}
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 

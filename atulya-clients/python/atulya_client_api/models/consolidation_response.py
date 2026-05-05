@@ -21,19 +21,17 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ConsolidationResponse(BaseModel):
     """
     Response model for consolidation trigger endpoint.
     """ # noqa: E501
     operation_id: StrictStr = Field(description="ID of the async consolidation operation")
-    deduplicated: Optional[StrictBool] = Field(default=None, description="True if an existing pending task was reused")
+    deduplicated: Optional[StrictBool] = Field(default=False, description="True if an existing pending task was reused")
     __properties: ClassVar[List[str]] = ["operation_id", "deduplicated"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -45,7 +43,8 @@ class ConsolidationResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -83,7 +82,7 @@ class ConsolidationResponse(BaseModel):
 
         _obj = cls.model_validate({
             "operation_id": obj.get("operation_id"),
-            "deduplicated": obj.get("deduplicated")
+            "deduplicated": obj.get("deduplicated") if obj.get("deduplicated") is not None else False
         })
         return _obj
 

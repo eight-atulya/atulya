@@ -19,10 +19,10 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from atulya_client_api.models.operation_result_response_result import OperationResultResponseResult
+from atulya_client_api.models.operation_progress_response import OperationProgressResponse
+from atulya_client_api.models.result import Result
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class OperationResultResponse(BaseModel):
     """
@@ -35,9 +35,12 @@ class OperationResultResponse(BaseModel):
     updated_at: Optional[StrictStr] = None
     completed_at: Optional[StrictStr] = None
     error_message: Optional[StrictStr] = None
+    queue_state: Optional[StrictStr] = None
     stage: Optional[StrictStr] = None
-    result: Optional[OperationResultResponseResult] = None
-    __properties: ClassVar[List[str]] = ["operation_id", "status", "operation_type", "created_at", "updated_at", "completed_at", "error_message", "stage", "result"]
+    progress: Optional[OperationProgressResponse] = None
+    result_metadata: Optional[Dict[str, Any]] = None
+    result: Optional[Result] = None
+    __properties: ClassVar[List[str]] = ["operation_id", "status", "operation_type", "created_at", "updated_at", "completed_at", "error_message", "queue_state", "stage", "progress", "result_metadata", "result"]
 
     @field_validator('status')
     def status_validate_enum(cls, value):
@@ -46,9 +49,18 @@ class OperationResultResponse(BaseModel):
             raise ValueError("must be one of enum values ('pending', 'completed', 'failed', 'not_found')")
         return value
 
+    @field_validator('queue_state')
+    def queue_state_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in set(['queued', 'processing']):
+            raise ValueError("must be one of enum values ('queued', 'processing')")
+        return value
+
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -60,7 +72,8 @@ class OperationResultResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -85,6 +98,9 @@ class OperationResultResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of progress
+        if self.progress:
+            _dict['progress'] = self.progress.to_dict()
         # override the default output from pydantic by calling `to_dict()` of result
         if self.result:
             _dict['result'] = self.result.to_dict()
@@ -113,10 +129,25 @@ class OperationResultResponse(BaseModel):
         if self.error_message is None and "error_message" in self.model_fields_set:
             _dict['error_message'] = None
 
+        # set to None if queue_state (nullable) is None
+        # and model_fields_set contains the field
+        if self.queue_state is None and "queue_state" in self.model_fields_set:
+            _dict['queue_state'] = None
+
         # set to None if stage (nullable) is None
         # and model_fields_set contains the field
         if self.stage is None and "stage" in self.model_fields_set:
             _dict['stage'] = None
+
+        # set to None if progress (nullable) is None
+        # and model_fields_set contains the field
+        if self.progress is None and "progress" in self.model_fields_set:
+            _dict['progress'] = None
+
+        # set to None if result_metadata (nullable) is None
+        # and model_fields_set contains the field
+        if self.result_metadata is None and "result_metadata" in self.model_fields_set:
+            _dict['result_metadata'] = None
 
         # set to None if result (nullable) is None
         # and model_fields_set contains the field
@@ -142,8 +173,11 @@ class OperationResultResponse(BaseModel):
             "updated_at": obj.get("updated_at"),
             "completed_at": obj.get("completed_at"),
             "error_message": obj.get("error_message"),
+            "queue_state": obj.get("queue_state"),
             "stage": obj.get("stage"),
-            "result": OperationResultResponseResult.from_dict(obj["result"]) if obj.get("result") is not None else None
+            "progress": OperationProgressResponse.from_dict(obj["progress"]) if obj.get("progress") is not None else None,
+            "result_metadata": obj.get("result_metadata"),
+            "result": Result.from_dict(obj["result"]) if obj.get("result") is not None else None
         })
         return _obj
 

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -4132,7 +4133,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -4208,7 +4209,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -4284,7 +4285,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -7715,7 +7716,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -7791,7 +7792,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -7867,7 +7868,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one

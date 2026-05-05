@@ -1234,12 +1234,21 @@ func (a *BanksAPIService) GetBrainInfluenceExecute(r ApiGetBrainInfluenceRequest
 
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
+	} else {
+		var defaultValue int32 = 14
+		r.windowDays = &defaultValue
 	}
 	if r.topK != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "top_k", r.topK, "form", "")
+	} else {
+		var defaultValue int32 = 12
+		r.topK = &defaultValue
 	}
 	if r.entityType != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "entity_type", r.entityType, "form", "")
+	} else {
+		var defaultValue string = "all"
+		r.entityType = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1735,6 +1744,9 @@ func (a *BanksAPIService) GetSubRoutinePredictionsExecute(r ApiGetSubRoutinePred
 
 	if r.horizonHours != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "horizon_hours", r.horizonHours, "form", "")
+	} else {
+		var defaultValue int32 = 24
+		r.horizonHours = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2129,6 +2141,9 @@ func (a *BanksAPIService) ListDreamArtifactsExecute(r ApiListDreamArtifactsReque
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 20
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

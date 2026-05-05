@@ -29,6 +29,8 @@ type ChunkIncludeOptions struct {
 // will change when the set of required properties is changed
 func NewChunkIncludeOptions() *ChunkIncludeOptions {
 	this := ChunkIncludeOptions{}
+	var maxTokens int32 = 8192
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewChunkIncludeOptions() *ChunkIncludeOptions {
 // but it doesn't guarantee that properties required by API are set
 func NewChunkIncludeOptionsWithDefaults() *ChunkIncludeOptions {
 	this := ChunkIncludeOptions{}
+	var maxTokens int32 = 8192
+	this.MaxTokens = &maxTokens
 	return &this
 }
 

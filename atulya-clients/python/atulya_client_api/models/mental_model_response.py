@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.mental_model_trigger import MentalModelTrigger
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class MentalModelResponse(BaseModel):
     """
@@ -34,7 +33,7 @@ class MentalModelResponse(BaseModel):
     source_query: StrictStr
     content: StrictStr = Field(description="The mental model content as well-formatted markdown (auto-generated from reflect endpoint)")
     tags: Optional[List[StrictStr]] = None
-    max_tokens: Optional[StrictInt] = None
+    max_tokens: Optional[StrictInt] = 2048
     trigger: Optional[MentalModelTrigger] = None
     last_refreshed_at: Optional[StrictStr] = None
     created_at: Optional[StrictStr] = None
@@ -42,8 +41,7 @@ class MentalModelResponse(BaseModel):
     __properties: ClassVar[List[str]] = ["id", "bank_id", "name", "source_query", "content", "tags", "max_tokens", "trigger", "last_refreshed_at", "created_at", "reflect_response"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -55,7 +53,8 @@ class MentalModelResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -116,7 +115,7 @@ class MentalModelResponse(BaseModel):
             "source_query": obj.get("source_query"),
             "content": obj.get("content"),
             "tags": obj.get("tags"),
-            "max_tokens": obj.get("max_tokens"),
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 2048,
             "trigger": MentalModelTrigger.from_dict(obj["trigger"]) if obj.get("trigger") is not None else None,
             "last_refreshed_at": obj.get("last_refreshed_at"),
             "created_at": obj.get("created_at"),

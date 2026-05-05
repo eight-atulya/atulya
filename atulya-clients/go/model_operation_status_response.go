@@ -28,7 +28,9 @@ type OperationStatusResponse struct {
 	UpdatedAt NullableString `json:"updated_at,omitempty"`
 	CompletedAt NullableString `json:"completed_at,omitempty"`
 	ErrorMessage NullableString `json:"error_message,omitempty"`
+	QueueState NullableString `json:"queue_state,omitempty"`
 	Stage NullableString `json:"stage,omitempty"`
+	Progress NullableOperationProgressResponse `json:"progress,omitempty"`
 	ResultMetadata map[string]interface{} `json:"result_metadata,omitempty"`
 	ChildOperations []ChildOperationStatus `json:"child_operations,omitempty"`
 }
@@ -312,6 +314,48 @@ func (o *OperationStatusResponse) UnsetErrorMessage() {
 	o.ErrorMessage.Unset()
 }
 
+// GetQueueState returns the QueueState field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OperationStatusResponse) GetQueueState() string {
+	if o == nil || IsNil(o.QueueState.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.QueueState.Get()
+}
+
+// GetQueueStateOk returns a tuple with the QueueState field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OperationStatusResponse) GetQueueStateOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.QueueState.Get(), o.QueueState.IsSet()
+}
+
+// HasQueueState returns a boolean if a field has been set.
+func (o *OperationStatusResponse) HasQueueState() bool {
+	if o != nil && o.QueueState.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetQueueState gets a reference to the given NullableString and assigns it to the QueueState field.
+func (o *OperationStatusResponse) SetQueueState(v string) {
+	o.QueueState.Set(&v)
+}
+// SetQueueStateNil sets the value for QueueState to be an explicit nil
+func (o *OperationStatusResponse) SetQueueStateNil() {
+	o.QueueState.Set(nil)
+}
+
+// UnsetQueueState ensures that no value is present for QueueState, not even an explicit nil
+func (o *OperationStatusResponse) UnsetQueueState() {
+	o.QueueState.Unset()
+}
+
 // GetStage returns the Stage field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *OperationStatusResponse) GetStage() string {
 	if o == nil || IsNil(o.Stage.Get()) {
@@ -352,6 +396,48 @@ func (o *OperationStatusResponse) SetStageNil() {
 // UnsetStage ensures that no value is present for Stage, not even an explicit nil
 func (o *OperationStatusResponse) UnsetStage() {
 	o.Stage.Unset()
+}
+
+// GetProgress returns the Progress field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *OperationStatusResponse) GetProgress() OperationProgressResponse {
+	if o == nil || IsNil(o.Progress.Get()) {
+		var ret OperationProgressResponse
+		return ret
+	}
+	return *o.Progress.Get()
+}
+
+// GetProgressOk returns a tuple with the Progress field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *OperationStatusResponse) GetProgressOk() (*OperationProgressResponse, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Progress.Get(), o.Progress.IsSet()
+}
+
+// HasProgress returns a boolean if a field has been set.
+func (o *OperationStatusResponse) HasProgress() bool {
+	if o != nil && o.Progress.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetProgress gets a reference to the given NullableOperationProgressResponse and assigns it to the Progress field.
+func (o *OperationStatusResponse) SetProgress(v OperationProgressResponse) {
+	o.Progress.Set(&v)
+}
+// SetProgressNil sets the value for Progress to be an explicit nil
+func (o *OperationStatusResponse) SetProgressNil() {
+	o.Progress.Set(nil)
+}
+
+// UnsetProgress ensures that no value is present for Progress, not even an explicit nil
+func (o *OperationStatusResponse) UnsetProgress() {
+	o.Progress.Unset()
 }
 
 // GetResultMetadata returns the ResultMetadata field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -447,8 +533,14 @@ func (o OperationStatusResponse) ToMap() (map[string]interface{}, error) {
 	if o.ErrorMessage.IsSet() {
 		toSerialize["error_message"] = o.ErrorMessage.Get()
 	}
+	if o.QueueState.IsSet() {
+		toSerialize["queue_state"] = o.QueueState.Get()
+	}
 	if o.Stage.IsSet() {
 		toSerialize["stage"] = o.Stage.Get()
+	}
+	if o.Progress.IsSet() {
+		toSerialize["progress"] = o.Progress.Get()
 	}
 	if o.ResultMetadata != nil {
 		toSerialize["result_metadata"] = o.ResultMetadata

@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.codebase_review_counts_response import CodebaseReviewCountsResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseRouteResponse(BaseModel):
     """
@@ -33,8 +32,8 @@ class CodebaseRouteResponse(BaseModel):
     updated_count: StrictInt
     target: StrictStr
     operation_id: Optional[StrictStr] = None
-    queued_for_memory: Optional[StrictBool] = None
-    memory_ingest_mode: Optional[StrictStr] = None
+    queued_for_memory: Optional[StrictBool] = False
+    memory_ingest_mode: Optional[StrictStr] = 'direct'
     review_counts: Optional[CodebaseReviewCountsResponse] = None
     __properties: ClassVar[List[str]] = ["codebase_id", "snapshot_id", "updated_count", "target", "operation_id", "queued_for_memory", "memory_ingest_mode", "review_counts"]
 
@@ -49,8 +48,7 @@ class CodebaseRouteResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -62,7 +60,8 @@ class CodebaseRouteResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -112,8 +111,8 @@ class CodebaseRouteResponse(BaseModel):
             "updated_count": obj.get("updated_count"),
             "target": obj.get("target"),
             "operation_id": obj.get("operation_id"),
-            "queued_for_memory": obj.get("queued_for_memory"),
-            "memory_ingest_mode": obj.get("memory_ingest_mode"),
+            "queued_for_memory": obj.get("queued_for_memory") if obj.get("queued_for_memory") is not None else False,
+            "memory_ingest_mode": obj.get("memory_ingest_mode") if obj.get("memory_ingest_mode") is not None else 'direct',
             "review_counts": CodebaseReviewCountsResponse.from_dict(obj["review_counts"]) if obj.get("review_counts") is not None else None
         })
         return _obj

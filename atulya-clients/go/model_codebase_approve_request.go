@@ -29,6 +29,8 @@ type CodebaseApproveRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseApproveRequest() *CodebaseApproveRequest {
 	this := CodebaseApproveRequest{}
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewCodebaseApproveRequest() *CodebaseApproveRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseApproveRequestWithDefaults() *CodebaseApproveRequest {
 	this := CodebaseApproveRequest{}
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 

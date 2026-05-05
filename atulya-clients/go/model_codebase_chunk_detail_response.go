@@ -73,8 +73,16 @@ func NewCodebaseChunkDetailResponse(id string, chunkKey string, path string, kin
 	this.PreviewText = previewText
 	this.StartLine = startLine
 	this.EndLine = endLine
+	var parseConfidence float32 = 0.0
+	this.ParseConfidence = &parseConfidence
 	this.RouteTarget = routeTarget
 	this.ChangeKind = changeKind
+	var relatedCount int32 = 0
+	this.RelatedCount = &relatedCount
+	var significanceScore float32 = 0.0
+	this.SignificanceScore = &significanceScore
+	var faninCount int32 = 0
+	this.FaninCount = &faninCount
 	this.SnapshotId = snapshotId
 	this.ContentText = contentText
 	return &this
@@ -85,6 +93,14 @@ func NewCodebaseChunkDetailResponse(id string, chunkKey string, path string, kin
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunkDetailResponseWithDefaults() *CodebaseChunkDetailResponse {
 	this := CodebaseChunkDetailResponse{}
+	var parseConfidence float32 = 0.0
+	this.ParseConfidence = &parseConfidence
+	var relatedCount int32 = 0
+	this.RelatedCount = &relatedCount
+	var significanceScore float32 = 0.0
+	this.SignificanceScore = &significanceScore
+	var faninCount int32 = 0
+	this.FaninCount = &faninCount
 	return &this
 }
 

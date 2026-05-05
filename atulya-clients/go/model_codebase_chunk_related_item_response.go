@@ -45,6 +45,8 @@ func NewCodebaseChunkRelatedItemResponse(id string, label string, path string, k
 	this.Kind = kind
 	this.StartLine = startLine
 	this.EndLine = endLine
+	var score float32 = 0.0
+	this.Score = &score
 	return &this
 }
 
@@ -53,6 +55,8 @@ func NewCodebaseChunkRelatedItemResponse(id string, label string, path string, k
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunkRelatedItemResponseWithDefaults() *CodebaseChunkRelatedItemResponse {
 	this := CodebaseChunkRelatedItemResponse{}
+	var score float32 = 0.0
+	this.Score = &score
 	return &this
 }
 

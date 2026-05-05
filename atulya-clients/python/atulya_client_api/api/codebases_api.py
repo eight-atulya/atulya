@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -2876,7 +2877,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Source file to import (required)
-        :type file: bytes
+        :type file: bytearray
         :param request: JSON string with CodebaseImportFileRequest model (required)
         :type request: str
         :param authorization:
@@ -2956,7 +2957,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Source file to import (required)
-        :type file: bytes
+        :type file: bytearray
         :param request: JSON string with CodebaseImportFileRequest model (required)
         :type request: str
         :param authorization:
@@ -3036,7 +3037,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Source file to import (required)
-        :type file: bytes
+        :type file: bytearray
         :param request: JSON string with CodebaseImportFileRequest model (required)
         :type request: str
         :param authorization:
@@ -3503,7 +3504,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param archive: Repository ZIP archive (required)
-        :type archive: bytes
+        :type archive: bytearray
         :param request: JSON string with CodebaseImportZipRequest model (required)
         :type request: str
         :param authorization:
@@ -3583,7 +3584,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param archive: Repository ZIP archive (required)
-        :type archive: bytes
+        :type archive: bytearray
         :param request: JSON string with CodebaseImportZipRequest model (required)
         :type request: str
         :param authorization:
@@ -3663,7 +3664,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param archive: Repository ZIP archive (required)
-        :type archive: bytes
+        :type archive: bytearray
         :param request: JSON string with CodebaseImportZipRequest model (required)
         :type request: str
         :param authorization:

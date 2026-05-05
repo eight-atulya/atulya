@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class BrainRuntimeStatusResponse(BaseModel):
     """
@@ -45,8 +44,7 @@ class BrainRuntimeStatusResponse(BaseModel):
     __properties: ClassVar[List[str]] = ["enabled", "circuit_open", "failure_count", "bank_id", "file_path", "exists", "size_bytes", "last_modified_at", "source_snapshot_id", "generated_at", "native_library_loaded", "format_version", "model_signature", "compatibility_reason", "metrics"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -58,7 +56,8 @@ class BrainRuntimeStatusResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:

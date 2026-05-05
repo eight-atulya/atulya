@@ -22,15 +22,14 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class SubRoutineSubmitRequest(BaseModel):
     """
     SubRoutineSubmitRequest
     """ # noqa: E501
-    mode: Optional[StrictStr] = None
-    horizon_hours: Optional[Annotated[int, Field(le=168, strict=True, ge=1)]] = None
-    force_rebuild: Optional[StrictBool] = None
+    mode: Optional[StrictStr] = 'incremental'
+    horizon_hours: Optional[Annotated[int, Field(le=168, strict=True, ge=1)]] = 24
+    force_rebuild: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["mode", "horizon_hours", "force_rebuild"]
 
     @field_validator('mode')
@@ -44,8 +43,7 @@ class SubRoutineSubmitRequest(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -57,7 +55,8 @@ class SubRoutineSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -94,9 +93,9 @@ class SubRoutineSubmitRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "mode": obj.get("mode"),
-            "horizon_hours": obj.get("horizon_hours"),
-            "force_rebuild": obj.get("force_rebuild")
+            "mode": obj.get("mode") if obj.get("mode") is not None else 'incremental',
+            "horizon_hours": obj.get("horizon_hours") if obj.get("horizon_hours") is not None else 24,
+            "force_rebuild": obj.get("force_rebuild") if obj.get("force_rebuild") is not None else False
         })
         return _obj
 

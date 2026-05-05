@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr, f
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphSummaryItemResponse(BaseModel):
     """
@@ -33,7 +32,7 @@ class GraphSummaryItemResponse(BaseModel):
     subtitle: Optional[StrictStr] = None
     preview_labels: Optional[List[StrictStr]] = None
     member_count: StrictInt
-    status_tone: Optional[StrictStr] = None
+    status_tone: Optional[StrictStr] = 'neutral'
     display_priority: Union[StrictFloat, StrictInt]
     render_mode_hint: StrictStr
     cluster_membership: Optional[List[StrictStr]] = None
@@ -65,8 +64,7 @@ class GraphSummaryItemResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -78,7 +76,8 @@ class GraphSummaryItemResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -131,7 +130,7 @@ class GraphSummaryItemResponse(BaseModel):
             "subtitle": obj.get("subtitle"),
             "preview_labels": obj.get("preview_labels"),
             "member_count": obj.get("member_count"),
-            "status_tone": obj.get("status_tone"),
+            "status_tone": obj.get("status_tone") if obj.get("status_tone") is not None else 'neutral',
             "display_priority": obj.get("display_priority"),
             "render_mode_hint": obj.get("render_mode_hint"),
             "cluster_membership": obj.get("cluster_membership"),

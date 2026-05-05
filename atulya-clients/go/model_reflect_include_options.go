@@ -41,9 +41,9 @@ func NewReflectIncludeOptionsWithDefaults() *ReflectIncludeOptions {
 	return &this
 }
 
-// GetFacts returns the Facts field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetFacts returns the Facts field value if set, zero value otherwise.
 func (o *ReflectIncludeOptions) GetFacts() map[string]interface{} {
-	if o == nil {
+	if o == nil || IsNil(o.Facts) {
 		var ret map[string]interface{}
 		return ret
 	}
@@ -52,7 +52,6 @@ func (o *ReflectIncludeOptions) GetFacts() map[string]interface{} {
 
 // GetFactsOk returns a tuple with the Facts field value if set, nil otherwise
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ReflectIncludeOptions) GetFactsOk() (map[string]interface{}, bool) {
 	if o == nil || IsNil(o.Facts) {
 		return map[string]interface{}{}, false
@@ -126,7 +125,7 @@ func (o ReflectIncludeOptions) MarshalJSON() ([]byte, error) {
 
 func (o ReflectIncludeOptions) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Facts != nil {
+	if !IsNil(o.Facts) {
 		toSerialize["facts"] = o.Facts
 	}
 	if o.ToolCalls.IsSet() {

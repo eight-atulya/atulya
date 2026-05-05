@@ -22,20 +22,16 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-class CodebaseFileItemResponse(BaseModel):
+class OperationProgressResponse(BaseModel):
     """
-    Single file entry in a codebase snapshot.
+    Typed progress payload for async operations when totals are known.
     """ # noqa: E501
-    path: StrictStr
-    language: Optional[StrictStr] = None
-    size_bytes: StrictInt
-    content_hash: StrictStr
-    document_id: Optional[StrictStr] = None
-    status: StrictStr
-    change_kind: StrictStr
-    reason: Optional[StrictStr] = None
-    chunk_count: Optional[StrictInt] = 0
-    __properties: ClassVar[List[str]] = ["path", "language", "size_bytes", "content_hash", "document_id", "status", "change_kind", "reason", "chunk_count"]
+    current: StrictInt
+    total: StrictInt
+    unit: Optional[StrictStr] = None
+    label: Optional[StrictStr] = None
+    failed: Optional[StrictInt] = None
+    __properties: ClassVar[List[str]] = ["current", "total", "unit", "label", "failed"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -55,7 +51,7 @@ class CodebaseFileItemResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of CodebaseFileItemResponse from a JSON string"""
+        """Create an instance of OperationProgressResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,26 +72,26 @@ class CodebaseFileItemResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if language (nullable) is None
+        # set to None if unit (nullable) is None
         # and model_fields_set contains the field
-        if self.language is None and "language" in self.model_fields_set:
-            _dict['language'] = None
+        if self.unit is None and "unit" in self.model_fields_set:
+            _dict['unit'] = None
 
-        # set to None if document_id (nullable) is None
+        # set to None if label (nullable) is None
         # and model_fields_set contains the field
-        if self.document_id is None and "document_id" in self.model_fields_set:
-            _dict['document_id'] = None
+        if self.label is None and "label" in self.model_fields_set:
+            _dict['label'] = None
 
-        # set to None if reason (nullable) is None
+        # set to None if failed (nullable) is None
         # and model_fields_set contains the field
-        if self.reason is None and "reason" in self.model_fields_set:
-            _dict['reason'] = None
+        if self.failed is None and "failed" in self.model_fields_set:
+            _dict['failed'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of CodebaseFileItemResponse from a dict"""
+        """Create an instance of OperationProgressResponse from a dict"""
         if obj is None:
             return None
 
@@ -103,15 +99,11 @@ class CodebaseFileItemResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "path": obj.get("path"),
-            "language": obj.get("language"),
-            "size_bytes": obj.get("size_bytes"),
-            "content_hash": obj.get("content_hash"),
-            "document_id": obj.get("document_id"),
-            "status": obj.get("status"),
-            "change_kind": obj.get("change_kind"),
-            "reason": obj.get("reason"),
-            "chunk_count": obj.get("chunk_count") if obj.get("chunk_count") is not None else 0
+            "current": obj.get("current"),
+            "total": obj.get("total"),
+            "unit": obj.get("unit"),
+            "label": obj.get("label"),
+            "failed": obj.get("failed")
         })
         return _obj
 

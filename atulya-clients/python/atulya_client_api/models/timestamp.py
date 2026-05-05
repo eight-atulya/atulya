@@ -17,28 +17,29 @@ from inspect import getfullargspec
 import json
 import pprint
 import re  # noqa: F401
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictStr, ValidationError, field_validator
-from typing import List, Optional
+from typing import Optional
 from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-MEMORYITEMOBSERVATIONSCOPES_ANY_OF_SCHEMAS = ["List[List[str]]", "str"]
+TIMESTAMP_ANY_OF_SCHEMAS = ["datetime", "str"]
 
-class MemoryItemObservationScopes(BaseModel):
+class Timestamp(BaseModel):
     """
-    How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
+    When the content occurred. Accepts an ISO 8601 datetime string (e.g. '2024-01-15T10:30:00Z'), null/omitted (defaults to now), or the special string 'unset' to explicitly store without any timestamp (use this for timeless content such as fictional documents or static reference material).
     """
 
+    # data type: datetime
+    anyof_schema_1_validator: Optional[datetime] = None
     # data type: str
-    anyof_schema_1_validator: Optional[StrictStr] = None
-    # data type: List[List[str]]
-    anyof_schema_2_validator: Optional[List[List[StrictStr]]] = None
+    anyof_schema_2_validator: Optional[StrictStr] = None
     if TYPE_CHECKING:
-        actual_instance: Optional[Union[List[List[str]], str]] = None
+        actual_instance: Optional[Union[datetime, str]] = None
     else:
         actual_instance: Any = None
-    any_of_schemas: Set[str] = { "List[List[str]]", "str" }
+    any_of_schemas: Set[str] = { "datetime", "str" }
 
     model_config = {
         "validate_assignment": True,
@@ -60,15 +61,15 @@ class MemoryItemObservationScopes(BaseModel):
         if v is None:
             return v
 
-        instance = MemoryItemObservationScopes.model_construct()
+        instance = Timestamp.model_construct()
         error_messages = []
-        # validate data type: str
+        # validate data type: datetime
         try:
             instance.anyof_schema_1_validator = v
             return v
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # validate data type: List[List[str]]
+        # validate data type: str
         try:
             instance.anyof_schema_2_validator = v
             return v
@@ -76,7 +77,7 @@ class MemoryItemObservationScopes(BaseModel):
             error_messages.append(str(e))
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in MemoryItemObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in Timestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -92,7 +93,7 @@ class MemoryItemObservationScopes(BaseModel):
             return instance
 
         error_messages = []
-        # deserialize data into str
+        # deserialize data into datetime
         try:
             # validation
             instance.anyof_schema_1_validator = json.loads(json_str)
@@ -101,7 +102,7 @@ class MemoryItemObservationScopes(BaseModel):
             return instance
         except (ValidationError, ValueError) as e:
             error_messages.append(str(e))
-        # deserialize data into List[List[str]]
+        # deserialize data into str
         try:
             # validation
             instance.anyof_schema_2_validator = json.loads(json_str)
@@ -113,7 +114,7 @@ class MemoryItemObservationScopes(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into MemoryItemObservationScopes with anyOf schemas: List[List[str]], str. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into Timestamp with anyOf schemas: datetime, str. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -127,7 +128,7 @@ class MemoryItemObservationScopes(BaseModel):
         else:
             return json.dumps(self.actual_instance)
 
-    def to_dict(self) -> Optional[Union[Dict[str, Any], List[List[str]], str]]:
+    def to_dict(self) -> Optional[Union[Dict[str, Any], datetime, str]]:
         """Returns the dict representation of the actual instance"""
         if self.actual_instance is None:
             return None

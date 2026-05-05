@@ -21,21 +21,19 @@ from pydantic import BaseModel, ConfigDict, StrictInt
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseReviewCountsResponse(BaseModel):
     """
     Counts of routed review items in the current snapshot.
     """ # noqa: E501
-    unrouted: Optional[StrictInt] = None
-    memory: Optional[StrictInt] = None
-    research: Optional[StrictInt] = None
-    dismissed: Optional[StrictInt] = None
+    unrouted: Optional[StrictInt] = 0
+    memory: Optional[StrictInt] = 0
+    research: Optional[StrictInt] = 0
+    dismissed: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["unrouted", "memory", "research", "dismissed"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class CodebaseReviewCountsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -84,10 +83,10 @@ class CodebaseReviewCountsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "unrouted": obj.get("unrouted"),
-            "memory": obj.get("memory"),
-            "research": obj.get("research"),
-            "dismissed": obj.get("dismissed")
+            "unrouted": obj.get("unrouted") if obj.get("unrouted") is not None else 0,
+            "memory": obj.get("memory") if obj.get("memory") is not None else 0,
+            "research": obj.get("research") if obj.get("research") is not None else 0,
+            "dismissed": obj.get("dismissed") if obj.get("dismissed") is not None else 0
         })
         return _obj
 

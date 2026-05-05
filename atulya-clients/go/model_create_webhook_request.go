@@ -41,6 +41,8 @@ type _CreateWebhookRequest CreateWebhookRequest
 func NewCreateWebhookRequest(url string) *CreateWebhookRequest {
 	this := CreateWebhookRequest{}
 	this.Url = url
+	var enabled bool = true
+	this.Enabled = &enabled
 	return &this
 }
 
@@ -49,6 +51,8 @@ func NewCreateWebhookRequest(url string) *CreateWebhookRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCreateWebhookRequestWithDefaults() *CreateWebhookRequest {
 	this := CreateWebhookRequest{}
+	var enabled bool = true
+	this.Enabled = &enabled
 	return &this
 }
 

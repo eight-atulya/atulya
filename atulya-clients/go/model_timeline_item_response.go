@@ -57,6 +57,8 @@ func NewTimelineItemResponse(id string, kind string, factType string, text strin
 	this.AnchorKind = anchorKind
 	this.TemporalDirection = temporalDirection
 	this.Temporal = temporal
+	var proofCount int32 = 0
+	this.ProofCount = &proofCount
 	return &this
 }
 
@@ -65,6 +67,8 @@ func NewTimelineItemResponse(id string, kind string, factType string, text strin
 // but it doesn't guarantee that properties required by API are set
 func NewTimelineItemResponseWithDefaults() *TimelineItemResponse {
 	this := TimelineItemResponse{}
+	var proofCount int32 = 0
+	this.ProofCount = &proofCount
 	return &this
 }
 

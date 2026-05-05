@@ -16,14 +16,14 @@ import (
 )
 
 
-// MemoryItemObservationScopes How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
-type MemoryItemObservationScopes struct {
+// ObservationScopes How to scope observations during consolidation. 'per_tag' runs one consolidation pass per individual tag, creating separate observations for each tag. 'combined' (default) runs a single pass with all tags together. A list of tag lists runs one pass per inner list, giving full control over which combinations to use.
+type ObservationScopes struct {
 	ArrayOfArrayOfString *[][]string
 	String *string
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
-func (dst *MemoryItemObservationScopes) UnmarshalJSON(data []byte) error {
+func (dst *ObservationScopes) UnmarshalJSON(data []byte) error {
 	var err error
 	// this object is nullable so check if the payload is null or empty string
 	if string(data) == "" || string(data) == "{}" {
@@ -56,11 +56,11 @@ func (dst *MemoryItemObservationScopes) UnmarshalJSON(data []byte) error {
 		dst.String = nil
 	}
 
-	return fmt.Errorf("data failed to match schemas in anyOf(MemoryItemObservationScopes)")
+	return fmt.Errorf("data failed to match schemas in anyOf(ObservationScopes)")
 }
 
 // Marshal data from the first non-nil pointers in the struct to JSON
-func (src MemoryItemObservationScopes) MarshalJSON() ([]byte, error) {
+func (src *ObservationScopes) MarshalJSON() ([]byte, error) {
 	if src.ArrayOfArrayOfString != nil {
 		return json.Marshal(&src.ArrayOfArrayOfString)
 	}
@@ -73,38 +73,38 @@ func (src MemoryItemObservationScopes) MarshalJSON() ([]byte, error) {
 }
 
 
-type NullableMemoryItemObservationScopes struct {
-	value *MemoryItemObservationScopes
+type NullableObservationScopes struct {
+	value *ObservationScopes
 	isSet bool
 }
 
-func (v NullableMemoryItemObservationScopes) Get() *MemoryItemObservationScopes {
+func (v NullableObservationScopes) Get() *ObservationScopes {
 	return v.value
 }
 
-func (v *NullableMemoryItemObservationScopes) Set(val *MemoryItemObservationScopes) {
+func (v *NullableObservationScopes) Set(val *ObservationScopes) {
 	v.value = val
 	v.isSet = true
 }
 
-func (v NullableMemoryItemObservationScopes) IsSet() bool {
+func (v NullableObservationScopes) IsSet() bool {
 	return v.isSet
 }
 
-func (v *NullableMemoryItemObservationScopes) Unset() {
+func (v *NullableObservationScopes) Unset() {
 	v.value = nil
 	v.isSet = false
 }
 
-func NewNullableMemoryItemObservationScopes(val *MemoryItemObservationScopes) *NullableMemoryItemObservationScopes {
-	return &NullableMemoryItemObservationScopes{value: val, isSet: true}
+func NewNullableObservationScopes(val *ObservationScopes) *NullableObservationScopes {
+	return &NullableObservationScopes{value: val, isSet: true}
 }
 
-func (v NullableMemoryItemObservationScopes) MarshalJSON() ([]byte, error) {
+func (v NullableObservationScopes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(v.value)
 }
 
-func (v *NullableMemoryItemObservationScopes) UnmarshalJSON(src []byte) error {
+func (v *NullableObservationScopes) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }

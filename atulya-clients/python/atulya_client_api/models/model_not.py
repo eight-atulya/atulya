@@ -24,11 +24,11 @@ from typing import Union, Any, List, Set, TYPE_CHECKING, Optional, Dict
 from typing_extensions import Literal, Self
 from pydantic import Field
 
-TAGGROUPNOTNOT_ANY_OF_SCHEMAS = ["TagGroupAnd", "TagGroupLeaf", "TagGroupNot", "TagGroupOr"]
+MODELNOT_ANY_OF_SCHEMAS = ["TagGroupAnd", "TagGroupLeaf", "TagGroupNot", "TagGroupOr"]
 
-class TagGroupNotNot(BaseModel):
+class ModelNot(BaseModel):
     """
-    TagGroupNotNot
+    ModelNot
     """
 
     # data type: TagGroupLeaf
@@ -62,7 +62,7 @@ class TagGroupNotNot(BaseModel):
 
     @field_validator('actual_instance')
     def actual_instance_must_validate_anyof(cls, v):
-        instance = TagGroupNotNot.model_construct()
+        instance = ModelNot.model_construct()
         error_messages = []
         # validate data type: TagGroupLeaf
         if not isinstance(v, TagGroupLeaf):
@@ -90,7 +90,7 @@ class TagGroupNotNot(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when setting the actual_instance in TagGroupNotNot with anyOf schemas: TagGroupAnd, TagGroupLeaf, TagGroupNot, TagGroupOr. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when setting the actual_instance in ModelNot with anyOf schemas: TagGroupAnd, TagGroupLeaf, TagGroupNot, TagGroupOr. Details: " + ", ".join(error_messages))
         else:
             return v
 
@@ -130,7 +130,7 @@ class TagGroupNotNot(BaseModel):
 
         if error_messages:
             # no match
-            raise ValueError("No match found when deserializing the JSON string into TagGroupNotNot with anyOf schemas: TagGroupAnd, TagGroupLeaf, TagGroupNot, TagGroupOr. Details: " + ", ".join(error_messages))
+            raise ValueError("No match found when deserializing the JSON string into ModelNot with anyOf schemas: TagGroupAnd, TagGroupLeaf, TagGroupNot, TagGroupOr. Details: " + ", ".join(error_messages))
         else:
             return instance
 
@@ -162,5 +162,5 @@ from atulya_client_api.models.tag_group_and import TagGroupAnd
 from atulya_client_api.models.tag_group_not import TagGroupNot
 from atulya_client_api.models.tag_group_or import TagGroupOr
 # TODO: Rewrite to not use raise_errors
-TagGroupNotNot.model_rebuild(raise_errors=False)
+ModelNot.model_rebuild(raise_errors=False)
 

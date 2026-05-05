@@ -44,6 +44,10 @@ type _ReflectRequest ReflectRequest
 func NewReflectRequest(query string) *ReflectRequest {
 	this := ReflectRequest{}
 	this.Query = query
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
+	var tagsMatch string = "any"
+	this.TagsMatch = &tagsMatch
 	return &this
 }
 
@@ -52,6 +56,10 @@ func NewReflectRequest(query string) *ReflectRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewReflectRequestWithDefaults() *ReflectRequest {
 	this := ReflectRequest{}
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
+	var tagsMatch string = "any"
+	this.TagsMatch = &tagsMatch
 	return &this
 }
 

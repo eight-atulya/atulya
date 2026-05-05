@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseRefreshResponse(BaseModel):
     """
@@ -30,15 +29,14 @@ class CodebaseRefreshResponse(BaseModel):
     snapshot_id: Optional[StrictStr] = None
     operation_id: Optional[StrictStr] = None
     status: StrictStr
-    changed_files: Optional[StrictInt] = None
-    added_files: Optional[StrictInt] = None
-    deleted_files: Optional[StrictInt] = None
-    noop: Optional[StrictBool] = None
+    changed_files: Optional[StrictInt] = 0
+    added_files: Optional[StrictInt] = 0
+    deleted_files: Optional[StrictInt] = 0
+    noop: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["snapshot_id", "operation_id", "status", "changed_files", "added_files", "deleted_files", "noop"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -50,7 +48,8 @@ class CodebaseRefreshResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -100,10 +99,10 @@ class CodebaseRefreshResponse(BaseModel):
             "snapshot_id": obj.get("snapshot_id"),
             "operation_id": obj.get("operation_id"),
             "status": obj.get("status"),
-            "changed_files": obj.get("changed_files"),
-            "added_files": obj.get("added_files"),
-            "deleted_files": obj.get("deleted_files"),
-            "noop": obj.get("noop")
+            "changed_files": obj.get("changed_files") if obj.get("changed_files") is not None else 0,
+            "added_files": obj.get("added_files") if obj.get("added_files") is not None else 0,
+            "deleted_files": obj.get("deleted_files") if obj.get("deleted_files") is not None else 0,
+            "noop": obj.get("noop") if obj.get("noop") is not None else False
         })
         return _obj
 

@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictFloat, StrictInt, 
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphNeighborhoodEdgeResponse(BaseModel):
     """
@@ -30,13 +29,13 @@ class GraphNeighborhoodEdgeResponse(BaseModel):
     id: StrictStr
     source: StrictStr
     target: StrictStr
-    kind: Optional[StrictStr] = None
+    kind: Optional[StrictStr] = 'relation'
     label: Optional[StrictStr] = None
     stroke: Optional[StrictStr] = None
-    dashed: Optional[StrictBool] = None
-    width: Optional[Union[StrictFloat, StrictInt]] = None
-    animated: Optional[StrictBool] = None
-    priority: Optional[Union[StrictFloat, StrictInt]] = None
+    dashed: Optional[StrictBool] = False
+    width: Optional[Union[StrictFloat, StrictInt]] = 1.6
+    animated: Optional[StrictBool] = True
+    priority: Optional[Union[StrictFloat, StrictInt]] = 0.0
     __properties: ClassVar[List[str]] = ["id", "source", "target", "kind", "label", "stroke", "dashed", "width", "animated", "priority"]
 
     @field_validator('kind')
@@ -50,8 +49,7 @@ class GraphNeighborhoodEdgeResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -63,7 +61,8 @@ class GraphNeighborhoodEdgeResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -113,13 +112,13 @@ class GraphNeighborhoodEdgeResponse(BaseModel):
             "id": obj.get("id"),
             "source": obj.get("source"),
             "target": obj.get("target"),
-            "kind": obj.get("kind"),
+            "kind": obj.get("kind") if obj.get("kind") is not None else 'relation',
             "label": obj.get("label"),
             "stroke": obj.get("stroke"),
-            "dashed": obj.get("dashed"),
-            "width": obj.get("width"),
-            "animated": obj.get("animated"),
-            "priority": obj.get("priority")
+            "dashed": obj.get("dashed") if obj.get("dashed") is not None else False,
+            "width": obj.get("width") if obj.get("width") is not None else 1.6,
+            "animated": obj.get("animated") if obj.get("animated") is not None else True,
+            "priority": obj.get("priority") if obj.get("priority") is not None else 0.0
         })
         return _obj
 

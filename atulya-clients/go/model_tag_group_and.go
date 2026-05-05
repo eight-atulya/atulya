@@ -12,7 +12,6 @@ package atulya
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -22,6 +21,7 @@ var _ MappedNullable = &TagGroupAnd{}
 // TagGroupAnd Logical AND over a list of nested groups.
 type TagGroupAnd struct {
 	And []RecallRequestTagGroupsInner `json:"and"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _TagGroupAnd TagGroupAnd
@@ -79,6 +79,11 @@ func (o TagGroupAnd) MarshalJSON() ([]byte, error) {
 func (o TagGroupAnd) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["and"] = o.And
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *TagGroupAnd) UnmarshalJSON(data []byte) (err error) {
 
 	varTagGroupAnd := _TagGroupAnd{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTagGroupAnd)
+	err = json.Unmarshal(data, &varTagGroupAnd)
 
 	if err != nil {
 		return err
 	}
 
 	*o = TagGroupAnd(varTagGroupAnd)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "and")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

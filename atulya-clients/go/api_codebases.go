@@ -1842,6 +1842,9 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.changedOnly = &defaultValue
 	}
 	if r.kind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "kind", r.kind, "form", "")
@@ -1851,6 +1854,9 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 25
+		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
@@ -2041,6 +2047,9 @@ func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesReq
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.changedOnly = &defaultValue
 	}
 	if r.snapshotId != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
@@ -2188,6 +2197,9 @@ func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModule
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2332,6 +2344,9 @@ func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebase
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 25
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2482,6 +2497,9 @@ func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
@@ -3061,6 +3079,9 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}

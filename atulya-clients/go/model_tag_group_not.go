@@ -12,7 +12,6 @@ package atulya
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -21,7 +20,8 @@ var _ MappedNullable = &TagGroupNot{}
 
 // TagGroupNot Logical NOT around a single nested group.
 type TagGroupNot struct {
-	Not TagGroupNotNot `json:"not"`
+	Not Not `json:"not"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _TagGroupNot TagGroupNot
@@ -30,7 +30,7 @@ type _TagGroupNot TagGroupNot
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewTagGroupNot(not TagGroupNotNot) *TagGroupNot {
+func NewTagGroupNot(not Not) *TagGroupNot {
 	this := TagGroupNot{}
 	this.Not = not
 	return &this
@@ -45,9 +45,9 @@ func NewTagGroupNotWithDefaults() *TagGroupNot {
 }
 
 // GetNot returns the Not field value
-func (o *TagGroupNot) GetNot() TagGroupNotNot {
+func (o *TagGroupNot) GetNot() Not {
 	if o == nil {
-		var ret TagGroupNotNot
+		var ret Not
 		return ret
 	}
 
@@ -56,7 +56,7 @@ func (o *TagGroupNot) GetNot() TagGroupNotNot {
 
 // GetNotOk returns a tuple with the Not field value
 // and a boolean to check if the value has been set.
-func (o *TagGroupNot) GetNotOk() (*TagGroupNotNot, bool) {
+func (o *TagGroupNot) GetNotOk() (*Not, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -64,7 +64,7 @@ func (o *TagGroupNot) GetNotOk() (*TagGroupNotNot, bool) {
 }
 
 // SetNot sets field value
-func (o *TagGroupNot) SetNot(v TagGroupNotNot) {
+func (o *TagGroupNot) SetNot(v Not) {
 	o.Not = v
 }
 
@@ -79,6 +79,11 @@ func (o TagGroupNot) MarshalJSON() ([]byte, error) {
 func (o TagGroupNot) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["not"] = o.Not
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -106,15 +111,20 @@ func (o *TagGroupNot) UnmarshalJSON(data []byte) (err error) {
 
 	varTagGroupNot := _TagGroupNot{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTagGroupNot)
+	err = json.Unmarshal(data, &varTagGroupNot)
 
 	if err != nil {
 		return err
 	}
 
 	*o = TagGroupNot(varTagGroupNot)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "not")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }

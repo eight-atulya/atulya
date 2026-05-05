@@ -21,22 +21,20 @@ from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ApiKeyCreateRequest(BaseModel):
     """
     ApiKeyCreateRequest
     """ # noqa: E501
     name: StrictStr = Field(description="Human-readable label for this key")
-    role: Optional[StrictStr] = Field(default=None, description="Role: superuser | admin | user")
-    schema_name: Optional[StrictStr] = Field(default=None, description="PostgreSQL schema this key operates in")
+    role: Optional[StrictStr] = Field(default='user', description="Role: superuser | admin | user")
+    schema_name: Optional[StrictStr] = Field(default='public', description="PostgreSQL schema this key operates in")
     allowed_bank_ids: Optional[List[StrictStr]] = None
     expires_days: Optional[StrictInt] = None
     __properties: ClassVar[List[str]] = ["name", "role", "schema_name", "allowed_bank_ids", "expires_days"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -48,7 +46,8 @@ class ApiKeyCreateRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -96,8 +95,8 @@ class ApiKeyCreateRequest(BaseModel):
 
         _obj = cls.model_validate({
             "name": obj.get("name"),
-            "role": obj.get("role"),
-            "schema_name": obj.get("schema_name"),
+            "role": obj.get("role") if obj.get("role") is not None else 'user',
+            "schema_name": obj.get("schema_name") if obj.get("schema_name") is not None else 'public',
             "allowed_bank_ids": obj.get("allowed_bank_ids"),
             "expires_days": obj.get("expires_days")
         })

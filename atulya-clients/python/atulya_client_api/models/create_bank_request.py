@@ -23,7 +23,6 @@ from typing_extensions import Annotated
 from atulya_client_api.models.disposition_traits import DispositionTraits
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CreateBankRequest(BaseModel):
     """
@@ -47,8 +46,7 @@ class CreateBankRequest(BaseModel):
     __properties: ClassVar[List[str]] = ["name", "disposition", "disposition_skepticism", "disposition_literalism", "disposition_empathy", "mission", "background", "reflect_mission", "retain_mission", "retain_extraction_mode", "retain_custom_instructions", "retain_chunk_size", "bank_preset", "enable_observations", "observations_mission"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -60,7 +58,8 @@ class CreateBankRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:

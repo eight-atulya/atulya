@@ -45,6 +45,8 @@ func NewCodebaseImpactFileResponse(path string, sizeBytes int32, contentHash str
 	this.ContentHash = contentHash
 	this.Status = status
 	this.ChangeKind = changeKind
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	this.Depth = depth
 	return &this
 }
@@ -54,6 +56,8 @@ func NewCodebaseImpactFileResponse(path string, sizeBytes int32, contentHash str
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseImpactFileResponseWithDefaults() *CodebaseImpactFileResponse {
 	this := CodebaseImpactFileResponse{}
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	return &this
 }
 

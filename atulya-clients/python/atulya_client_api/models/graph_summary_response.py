@@ -23,7 +23,6 @@ from atulya_client_api.models.graph_summary_edge_response import GraphSummaryEdg
 from atulya_client_api.models.graph_summary_item_response import GraphSummaryItemResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphSummaryResponse(BaseModel):
     """
@@ -38,7 +37,7 @@ class GraphSummaryResponse(BaseModel):
     bundled_edges: Optional[List[GraphSummaryEdgeResponse]] = None
     initial_focus_ids: Optional[List[StrictStr]] = None
     generated_at: StrictStr
-    cached: Optional[StrictBool] = None
+    cached: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["surface", "mode_hint", "total_nodes", "total_edges", "clusters", "top_nodes", "bundled_edges", "initial_focus_ids", "generated_at", "cached"]
 
     @field_validator('surface')
@@ -56,8 +55,7 @@ class GraphSummaryResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -69,7 +67,8 @@ class GraphSummaryResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -136,7 +135,7 @@ class GraphSummaryResponse(BaseModel):
             "bundled_edges": [GraphSummaryEdgeResponse.from_dict(_item) for _item in obj["bundled_edges"]] if obj.get("bundled_edges") is not None else None,
             "initial_focus_ids": obj.get("initial_focus_ids"),
             "generated_at": obj.get("generated_at"),
-            "cached": obj.get("cached")
+            "cached": obj.get("cached") if obj.get("cached") is not None else False
         })
         return _obj
 

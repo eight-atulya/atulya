@@ -39,6 +39,8 @@ func NewChunkData(id string, text string, chunkIndex int32) *ChunkData {
 	this.Id = id
 	this.Text = text
 	this.ChunkIndex = chunkIndex
+	var truncated bool = false
+	this.Truncated = &truncated
 	return &this
 }
 
@@ -47,6 +49,8 @@ func NewChunkData(id string, text string, chunkIndex int32) *ChunkData {
 // but it doesn't guarantee that properties required by API are set
 func NewChunkDataWithDefaults() *ChunkData {
 	this := ChunkData{}
+	var truncated bool = false
+	this.Truncated = &truncated
 	return &this
 }
 

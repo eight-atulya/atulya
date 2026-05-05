@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from atulya_client_api.models.timeline_temporal_response import TimelineTemporalResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TimelineItemResponse(BaseModel):
     """
@@ -46,7 +45,7 @@ class TimelineItemResponse(BaseModel):
     entities: Optional[List[StrictStr]] = None
     tags: Optional[List[StrictStr]] = None
     source_memory_ids: Optional[List[StrictStr]] = None
-    proof_count: Optional[StrictInt] = None
+    proof_count: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["id", "kind", "fact_type", "text", "context", "title", "anchor_at", "anchor_kind", "recorded_at", "occurred_start", "occurred_end", "temporal_direction", "temporal_confidence", "temporal_reference_text", "temporal", "entities", "tags", "source_memory_ids", "proof_count"]
 
     @field_validator('kind')
@@ -57,8 +56,7 @@ class TimelineItemResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -70,7 +68,8 @@ class TimelineItemResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -168,7 +167,7 @@ class TimelineItemResponse(BaseModel):
             "entities": obj.get("entities"),
             "tags": obj.get("tags"),
             "source_memory_ids": obj.get("source_memory_ids"),
-            "proof_count": obj.get("proof_count")
+            "proof_count": obj.get("proof_count") if obj.get("proof_count") is not None else 0
         })
         return _obj
 

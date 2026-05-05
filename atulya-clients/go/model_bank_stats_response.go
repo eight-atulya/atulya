@@ -56,6 +56,10 @@ func NewBankStatsResponse(bankId string, totalNodes int32, totalLinks int32, tot
 	this.LinksBreakdown = linksBreakdown
 	this.PendingOperations = pendingOperations
 	this.FailedOperations = failedOperations
+	var pendingConsolidation int32 = 0
+	this.PendingConsolidation = &pendingConsolidation
+	var totalObservations int32 = 0
+	this.TotalObservations = &totalObservations
 	return &this
 }
 
@@ -64,6 +68,10 @@ func NewBankStatsResponse(bankId string, totalNodes int32, totalLinks int32, tot
 // but it doesn't guarantee that properties required by API are set
 func NewBankStatsResponseWithDefaults() *BankStatsResponse {
 	this := BankStatsResponse{}
+	var pendingConsolidation int32 = 0
+	this.PendingConsolidation = &pendingConsolidation
+	var totalObservations int32 = 0
+	this.TotalObservations = &totalObservations
 	return &this
 }
 

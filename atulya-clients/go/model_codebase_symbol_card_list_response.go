@@ -37,6 +37,8 @@ type _CodebaseSymbolCardListResponse CodebaseSymbolCardListResponse
 func NewCodebaseSymbolCardListResponse(codebaseId string) *CodebaseSymbolCardListResponse {
 	this := CodebaseSymbolCardListResponse{}
 	this.CodebaseId = codebaseId
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 
@@ -45,6 +47,8 @@ func NewCodebaseSymbolCardListResponse(codebaseId string) *CodebaseSymbolCardLis
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseSymbolCardListResponseWithDefaults() *CodebaseSymbolCardListResponse {
 	this := CodebaseSymbolCardListResponse{}
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 

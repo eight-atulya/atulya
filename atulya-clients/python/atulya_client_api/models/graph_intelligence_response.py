@@ -24,7 +24,6 @@ from atulya_client_api.models.graph_relation_edge_response import GraphRelationE
 from atulya_client_api.models.graph_state_node_response import GraphStateNodeResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class GraphIntelligenceResponse(BaseModel):
     """
@@ -35,12 +34,11 @@ class GraphIntelligenceResponse(BaseModel):
     change_events: List[GraphChangeEventResponse]
     total_nodes: StrictInt
     generated_at: StrictStr
-    cached: Optional[StrictBool] = None
+    cached: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["nodes", "edges", "change_events", "total_nodes", "generated_at", "cached"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -52,7 +50,8 @@ class GraphIntelligenceResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -115,7 +114,7 @@ class GraphIntelligenceResponse(BaseModel):
             "change_events": [GraphChangeEventResponse.from_dict(_item) for _item in obj["change_events"]] if obj.get("change_events") is not None else None,
             "total_nodes": obj.get("total_nodes"),
             "generated_at": obj.get("generated_at"),
-            "cached": obj.get("cached")
+            "cached": obj.get("cached") if obj.get("cached") is not None else False
         })
         return _obj
 
