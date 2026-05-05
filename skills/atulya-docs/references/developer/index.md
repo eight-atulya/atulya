@@ -39,7 +39,7 @@ The brain keeps growing. The intelligence compounds.
 ## Why Atulya?
 
 :::tip[Deep reference]
-Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 113 endpoints, 186 schemas, all design patterns in one page.
+Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 114 endpoints, 189 schemas, all design patterns in one page.
 It all started with a simple observation: 
 > Why do same mistakes again and again? I'm not talking about the ai-agent but the human behind it. I have to keep reminding myself to tell the agent what it should know, and it keeps forgetting. I wish there was a way to just tell it once and have it remember forever.
 > **A intelligent system that can match the learning efficiency of humans.**
@@ -73,14 +73,15 @@ Atulya solves these problems with a strong foundation with a memory system desig
 
 ## Start Here If You Build Coding Agents
 
-The developer docs now have two high-leverage workbenches:
+The developer docs now have three high-leverage workbenches:
 
 | Surface | When to open it first | What you get |
 |------|------------------------|--------------|
 | **Codebases** | You need deterministic understanding of a repo before memory changes | ASD parsing, repo map, symbol search, impact analysis, review routing, and approved memory publish |
 | **Graph Intelligence** | You need to inspect what changed inside a memory bank and why Atulya believes it | state-aware graph review, evidence tracing, and scalable investigation views |
+| **Internet Research** | You need live public-web evidence without mutating memory first | SearXNG search, Firecrawl extraction, curated clipboard review, and safe retain-draft handoff |
 
-If your workflow starts from source code, begin with **Codebases**. If your workflow starts from memory state or evidence review, begin with **Graph Intelligence**.
+If your workflow starts from source code, begin with **Codebases**. If your workflow starts from memory state or evidence review, begin with **Graph Intelligence**. If your workflow starts from fresh public-web evidence that may or may not deserve retention, begin with **Internet Research**.
 
 ```mermaid
 flowchart LR
@@ -133,6 +134,20 @@ Use it when you want to:
 - move from a short answer to the exact proof path
 
 See [Control Plane Graph Intelligence](/developer/control-plane-graph-intelligence) for the full walkthrough.
+
+## Featured: Internet Research
+
+Atulya now includes an **Internet Research** workbench for operators who need live-web evidence without silently writing that material into bank memory.
+
+It gives you three layers of control:
+
+- **Quick search** for compact SearXNG result digests
+- **Deep read** through Firecrawl markdown extraction on selected URLs
+- **Safe handoff** into a retain draft only after you curate and review the collected research
+
+This keeps public-web research separate from memory mutation by default, while still making it easy to promote high-signal findings into Retain when they are worth preserving.
+
+Start with [Internet Research](/developer/internet-research) for stack setup, API usage, and the control-plane workflow.
 
 ## Why This Matters For Enterprise
 

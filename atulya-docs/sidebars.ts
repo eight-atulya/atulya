@@ -91,6 +91,12 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'developer/internet-research',
+          label: 'Internet Research',
+          customProps: { icon: 'lu-globe' },
+        },
+        {
+          type: 'doc',
           id: 'developer/observations',
           label: 'Observations',
           customProps: { icon: 'lu-activity' },

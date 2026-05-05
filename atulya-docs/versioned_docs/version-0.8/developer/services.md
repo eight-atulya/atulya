@@ -67,3 +67,18 @@ The Control Plane connects to the API service and provides a visual interface fo
 For a deeper walkthrough of the new graph workflow, see [Control Plane Graph Intelligence](./control-plane-graph-intelligence).
 
 For bare metal deployments, you can run the Control Plane standalone using npx. See [Installation - Bare Metal](./installation#control-plane) for details.
+
+## Optional Internet Stack
+
+Internet Research uses an optional connector stack instead of expanding the core API/worker responsibilities:
+
+- **SearXNG** for compact public-web metasearch
+- **Firecrawl** for URL-to-markdown extraction
+
+These connectors are optional on purpose:
+
+- the core Atulya memory system still runs without them
+- internet research can be enabled per deployment when operators need live-web evidence
+- the research flow stays explicitly separate from Retain until a human chooses to promote curated material
+
+For the end-to-end workflow, see [Internet Research](./internet-research). For the exact environment variables, see [Configuration - Internet Research Stack](./configuration#internet-research-stack).

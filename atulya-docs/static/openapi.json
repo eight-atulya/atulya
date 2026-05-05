@@ -10,7 +10,7 @@
       "name": "Apache 2.0",
       "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
     },
-    "version": "0.8.5"
+    "version": "0.8.6"
   },
   "paths": {
     "/health": {
@@ -1448,6 +1448,75 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReflectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/internet/research": {
+      "post": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Internet research (live web)",
+        "description": "Run the internet research agent: SearXNG search and optional Firecrawl extract. Uses the same LLM configuration as reflect for this bank. Does not read or write memories.",
+        "operationId": "internet_research",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InternetResearchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InternetResearchResponse"
                 }
               }
             }
@@ -16242,6 +16311,94 @@
           "upper"
         ],
         "title": "InfluenceTrendPoint"
+      },
+      "InternetResearchRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "description": "Question to answer using the public web only"
+          },
+          "budget": {
+            "$ref": "#/components/schemas/Budget",
+            "default": "mid"
+          },
+          "max_tokens": {
+            "type": "integer",
+            "title": "Max Tokens",
+            "description": "Max completion tokens for each LLM step where supported",
+            "default": 4096
+          },
+          "include": {
+            "$ref": "#/components/schemas/ReflectIncludeOptions",
+            "description": "Optional tool trace (include.facts is ignored)."
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "InternetResearchRequest",
+        "description": "Request live-web research (optional SearXNG + Firecrawl stack). Does not use bank memory as context.",
+        "example": {
+          "budget": "mid",
+          "include": {
+            "tool_calls": {}
+          },
+          "max_tokens": 4096,
+          "query": "Latest stable release of Python"
+        }
+      },
+      "InternetResearchResponse": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text",
+            "description": "Markdown answer synthesized from web tools"
+          },
+          "source_urls": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Urls",
+            "description": "URLs the model relied on"
+          },
+          "writes_to_bank": {
+            "type": "boolean",
+            "title": "Writes To Bank",
+            "description": "Always false; included so clients can assert no graph mutation occurred",
+            "default": false
+          },
+          "usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TokenUsage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "LLM token usage for this run"
+          },
+          "trace": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReflectTrace"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tool and LLM trace when include.tool_calls was set"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "InternetResearchResponse",
+        "description": "Answer from the internet research agent. Nothing is written to the memory bank."
       },
       "ListDocumentsResponse": {
         "properties": {

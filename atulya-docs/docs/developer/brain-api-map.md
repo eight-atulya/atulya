@@ -6,10 +6,10 @@ sidebar_label: Brain API Map
 
 # Atulya Brain API — Complete Semantic Map
 
-> Source of truth: `atulya-brain-openapi.json` (741KB, 113 endpoints, 186 schemas)
-> API Version: 0.8.5 | License: Apache 2.0
+> Source of truth: `atulya-brain-openapi.json` (521KB, 114 endpoints, 189 schemas)
+> API Version: 0.8.6 | License: Apache 2.0
 > Local: `http://localhost:8888` | Auth: Bearer token
-> Generated: 2026-04-28 | Multi-pass verified: 0 gaps
+> Generated: 2026-05-05 | Multi-pass verified: 0 gaps
 
 ---
 
@@ -161,6 +161,38 @@ POST /v1/default/banks/{bank_id}/reflect/submit
 - `trace: ReflectTrace|null`:
   - `tool_calls: array<ReflectToolCall>` — `{tool: string, input: object, output: object|null, duration_ms: integer, iteration: integer}`
   - `llm_calls: array<ReflectLLMCall>` — `{scope: string, duration_ms: integer}`
+
+### Internet Research (Live Web, No Memory Mutation)
+
+```
+POST /v1/default/banks/{bank_id}/internet/research
+  Body: InternetResearchRequest
+  Response: InternetResearchResponse
+```
+
+Runs a live-web research agent backed by SearXNG search and optional Firecrawl extraction.
+
+Important contract:
+
+- uses the bank's reflect LLM configuration
+- authenticates and validates against the bank like other read operations
+- **does not read bank memories**
+- **does not write bank memories**
+
+**InternetResearchRequest**:
+
+- `query: string` (required) — question to answer from the public web only
+- `budget: Budget` (default: `mid`) — controls agent iteration depth
+- `max_tokens: integer` (default: `4096`) — per-LLM-step completion cap
+- `include: ReflectIncludeOptions` — only `tool_calls` applies here; `facts` is ignored
+
+**InternetResearchResponse**:
+
+- `text: string` — markdown answer synthesized from web tools
+- `source_urls: array<string>` — URLs relied on by the agent
+- `writes_to_bank: boolean` — always `false`
+- `usage: TokenUsage|null`
+- `trace: ReflectTrace|null` — tool and LLM traces when `include.tool_calls` is enabled
 
 ### Memory CRUD
 

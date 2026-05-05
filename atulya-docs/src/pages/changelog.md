@@ -8,6 +8,17 @@ This changelog highlights user-facing changes only. Internal maintenance, CI/CD,
 
 For full release details, see [GitHub Releases](https://github.com/eight-atulya/atulya/releases).
 
+## [0.8.6](https://github.com/eight-atulya/atulya/releases/tag/v0.8.6)
+
+**Features**
+
+- Added an independent Internet Research workflow across the API, Control Plane, and Cortex tooling, including optional SearXNG metasearch, Firecrawl extraction, and a dedicated `/internet/research` live-web reasoning endpoint that does not read or write bank memory. ([`5fd11ec`](https://github.com/eight-atulya/atulya/commit/5fd11ec))
+- Added a guarded retain-draft handoff for curated web findings so operators can move researched material into Retain only after review, with optional low-budget AI enrichment behind deterministic acceptance checks. ([`5fd11ec`](https://github.com/eight-atulya/atulya/commit/5fd11ec))
+
+**Docs And SDKs**
+
+- Regenerated the OpenAPI and SDK contracts for the new internet research surface and expanded the developer docs with stack setup, configuration, and workflow guidance for the live-web research feature set. ([`5fd11ec`](https://github.com/eight-atulya/atulya/commit/5fd11ec))
+
 ## [0.8.5](https://github.com/eight-atulya/atulya/releases/tag/v0.8.5)
 
 **Release Reliability**

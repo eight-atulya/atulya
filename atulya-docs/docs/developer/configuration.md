@@ -249,6 +249,45 @@ export ATULYA_API_LLM_PROVIDER=llamacpp
 For detailed setup instructions for **OpenAI Codex** (ChatGPT Plus/Pro), **Claude Code** (Claude Pro/Max), **Vertex AI** (Google Cloud), and the **built-in GGUF provider** (fully offline), see the [Models documentation](./models#openai-codex-setup-chatgpt-pluspro) and the [Local LLM guide](./local-llm.md).
 :::
 
+### Internet Research Stack
+
+The Internet Research feature uses an optional live-web connector stack. It is off by architecture unless you provide reachable SearXNG and Firecrawl endpoints.
+
+#### API-side connector settings
+
+These variables are read by the API service for the `/v1/default/banks/{bank_id}/internet/research` endpoint and for Cortex internet tools when enabled.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ATULYA_API_CORTEX_SEARXNG_BASE_URL` | Base URL for the SearXNG instance used for metasearch | `http://127.0.0.1:18080` |
+| `ATULYA_API_CORTEX_FIRECRAWL_API_URL` | Base URL for the Firecrawl instance used for extraction | `http://127.0.0.1:3002` |
+| `ATULYA_API_CORTEX_FIRECRAWL_API_KEY` | Bearer token sent to Firecrawl | UUID-shaped local default for self-hosted dev |
+
+#### Control-plane connector settings
+
+These variables are read by the control plane for the Internet tab's direct search, extraction preview, and backend health checks.
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ATULYA_CP_INTERNET_SEARXNG_URL` | SearXNG base URL used by the control-plane search proxy | `http://127.0.0.1:18080` |
+| `ATULYA_CP_INTERNET_FIRECRAWL_URL` | Firecrawl base URL used by the control-plane extraction proxy | `http://127.0.0.1:3002` |
+| `ATULYA_API_CORTEX_FIRECRAWL_API_KEY` | Firecrawl bearer token reused by the control-plane extraction proxy | UUID-shaped local default for self-hosted dev |
+
+#### Example
+
+```bash
+# API host
+export ATULYA_API_CORTEX_SEARXNG_BASE_URL=http://127.0.0.1:18080
+export ATULYA_API_CORTEX_FIRECRAWL_API_URL=http://127.0.0.1:3002
+export ATULYA_API_CORTEX_FIRECRAWL_API_KEY=11111111-1111-4111-8111-111111111111
+
+# Control-plane host
+export ATULYA_CP_INTERNET_SEARXNG_URL=http://127.0.0.1:18080
+export ATULYA_CP_INTERNET_FIRECRAWL_URL=http://127.0.0.1:3002
+```
+
+Use the bundled compose stack at `docker/docker-compose/internet-search/` for local setup, or point these variables at your own managed SearXNG and Firecrawl services.
+
 ### Per-Operation LLM Configuration
 
 Different memory operations have different requirements. **Retain** (fact extraction) benefits from models with strong structured output capabilities, while **Reflect** (reasoning/response generation) can use lighter, faster models. Configure separate LLM models for each operation to optimize for cost and performance.

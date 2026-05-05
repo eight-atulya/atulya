@@ -5,6 +5,10 @@ Generate a grounded, disposition-aware response using an agentic reasoning loop.
 
 When you call **reflect**, Atulya runs an agentic loop that autonomously searches the memory bank using multiple retrieval tools, applies the bank's disposition traits to shape the reasoning style, and produces a final answer grounded in what it found. Unlike recall — which returns raw facts — reflect returns a synthesized response written by the LLM.
 
+:::info Live Web vs Memory
+Use **reflect** when you want reasoning over the bank's retained memory.
+
+If you need fresh public-web evidence that should stay outside the bank until reviewed, use the dedicated [Internet Research](/developer/internet-research) workflow instead.
 {/* Import raw source files */}
 
 :::info How Reflect Works

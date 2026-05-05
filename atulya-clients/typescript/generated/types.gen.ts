@@ -4258,6 +4258,65 @@ export type InfluenceTrendPoint = {
 };
 
 /**
+ * InternetResearchRequest
+ *
+ * Request live-web research (optional SearXNG + Firecrawl stack). Does not use bank memory as context.
+ */
+export type InternetResearchRequest = {
+    /**
+     * InternetResearchRequestQuery
+     *
+     * Question to answer using the public web only
+     */
+    query: string;
+    budget?: Budget;
+    /**
+     * InternetResearchRequestMaxTokens
+     *
+     * Max completion tokens for each LLM step where supported
+     */
+    max_tokens?: number;
+    /**
+     * Optional tool trace (include.facts is ignored).
+     */
+    include?: ReflectIncludeOptions;
+};
+
+/**
+ * InternetResearchResponse
+ *
+ * Answer from the internet research agent. Nothing is written to the memory bank.
+ */
+export type InternetResearchResponse = {
+    /**
+     * InternetResearchResponseText
+     *
+     * Markdown answer synthesized from web tools
+     */
+    text: string;
+    /**
+     * InternetResearchResponseSourceUrls
+     *
+     * URLs the model relied on
+     */
+    source_urls?: Array<string>;
+    /**
+     * InternetResearchResponseWritesToBank
+     *
+     * Always false; included so clients can assert no graph mutation occurred
+     */
+    writes_to_bank?: boolean;
+    /**
+     * LLM token usage for this run
+     */
+    usage?: TokenUsage | null;
+    /**
+     * Tool and LLM trace when include.tool_calls was set
+     */
+    trace?: ReflectTrace | null;
+};
+
+/**
  * ListDocumentsResponse
  *
  * Response model for list documents endpoint.
@@ -6757,6 +6816,42 @@ export type ReflectResponses = {
 };
 
 export type ReflectResponse2 = ReflectResponses[keyof ReflectResponses];
+
+export type InternetResearchData = {
+    body: InternetResearchRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/internet/research';
+};
+
+export type InternetResearchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type InternetResearchError = InternetResearchErrors[keyof InternetResearchErrors];
+
+export type InternetResearchResponses = {
+    /**
+     * Successful Response
+     */
+    200: InternetResearchResponse;
+};
+
+export type InternetResearchResponse2 = InternetResearchResponses[keyof InternetResearchResponses];
 
 export type SubmitAsyncReflectData = {
     body: ReflectRequest;
