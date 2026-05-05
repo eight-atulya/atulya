@@ -7,28 +7,60 @@
 
 [Read the Atulya product principles](./ATULYA_PRINCIPLES.md)
 
->One time setup ~> [scripts/dev/SETUP.md](./scripts/dev/SETUP.md).
+For builders: [one-time setup](./scripts/dev/SETUP.md).
 
-**There may never be a perfect way to manage the balance between AI and human intelligence—but this is my attempt to nurture and evolve my own.** ~ Anurag 
+Atulya is the memory and reasoning layer for organizations and AI agents.
+It is a brain built on the strongest foundation intelligence can have: memory.
+Atulya stands for **Algorithm That Understands, Learns, Yields, & Adapts**.
 
-**A living algorithm for machine intelligence (MI).**
+Like human intelligence, Atulya starts by remembering, connecting, and learning from experience over time.
+It helps teams keep context, explain decisions, and compound intelligence instead of losing it between people, tools, and workflows.
 
->Let’s bring mathematics back into everyday life.
+Built for teams where lost context is expensive, especially small teams where every missed insight costs speed, focus, or revenue.
 
-Atulya is built on one simple idea:  
->machines should not only store information, they should learn and grow over time. What if life itself reads like a well-written class ~ clear state, honest functions, traceable links. That same instinct of mapping meaning is what code-intel brings to every repo.
+## Your organization is hemorrhaging intelligence. Every day.
 
-Most systems try to remove all mistakes. Atulya takes a different path.  
-It treats gaps, change, and feedback as useful signals for learning.
+- Someone leaves. Their context goes with them.
+- A decision gets made. Nobody remembers why.
+- An agent solves a problem. The next agent starts from zero.
+- A new engineer joins. Six months to get up to speed. Again.
 
-## The Meaning Of Atulya
+This is not a people problem. It is an infrastructure problem.
 
-Atulya should feel like a thinking partner, not a search box.
+Most companies have systems for chat, tickets, code, and documents. Very few have a system for durable organizational understanding.
 
-- It should explain why it believes something, not just answer.
-- It should remember what matters and compress what repeats.
-- It should notice contradictions and drift before users do.
-- It should help teams move from confusion to action.
+Atulya fills that gap.
+
+## Why teams adopt Atulya
+
+- Preserve decision context, not just final outputs.
+- Give AI agents memory that compounds instead of resetting every run.
+- Reduce onboarding drag by making important history legible.
+- Lower execution risk with evidence-backed recall, reflect, graph, and entity intelligence.
+
+## Why startups care
+
+For a startup, Atulya can become the organization's brain.
+
+- Save the context behind customer calls, product decisions, incidents, and experiments before it disappears.
+- Protect the team from key-person risk when one founder, engineer, or operator carries too much in their head.
+- Help every new hire and every new agent become useful faster.
+- Turn hard-won lessons into reusable advantage for future deals, product bets, hiring, and execution.
+- Create more surface area for opportunity by making what the team already knows searchable, explainable, and usable.
+
+Small teams rarely lose because they lack effort. They lose because the learning does not stay alive long enough to compound.
+
+Atulya helps that learning stay alive.
+
+## What Atulya is
+
+Atulya is a living intelligence layer for teams, built on memory first:
+
+- **Memory banks** that retain what matters and compress what repeats
+- **Recall and reflect** flows that retrieve evidence and reason over it
+- **Code intelligence** that turns large repos into ranked symbols, module briefs, and curated memory
+- **Entity and graph intelligence** that show who matters, what changed, and where risk is building
+- **Internet research** that keeps live-web investigation separate from durable memory until reviewed
 
 If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](./ATULYA_PRINCIPLES.md).
 
@@ -67,14 +99,13 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
   <strong>Start with one memory bank, run your first workflow, and build from there.</strong>
 </p>
 
-## What Atulya does
+## What teams get
 
-- Helps machines remember important things over time
-- Improves responses using past context
-- Learns from new inputs instead of starting from zero
-- Supports sharing distilled memory between systems through `.brain` files
-- Builds entity intelligence: a bank-level, plain-language map of people, tools,
-  companies, projects, concepts, and how they connect
+- Durable memory instead of fragmented context
+- Better answers backed by retained evidence
+- Faster onboarding for engineers, operators, and agents
+- Reusable knowledge that can move between systems through `.brain` files
+- A bank-level plain-language map of people, tools, companies, projects, concepts, and how they connect
 
 ## Entity Intelligence
 
@@ -112,23 +143,3 @@ flowchart LR
 | Filter Anomalies | Show only nodes linked to anomaly events |
 | Severity Overlay | Color nodes by anomaly severity |
 | Link filters | Show/hide semantic, temporal, entity, and causal links |
-
-## Why this matters
-
-People do not grow by being perfect.  
-People grow by observing, adjusting, and moving forward.
-
-Atulya applies this same principle to machine intelligence:  
-keep learning, keep adapting, and keep improving.
-
-## Vision
-
-Atulya is designed as a long-term foundation for machine intelligence that is:
-
-- useful in real-world systems
-- understandable by humans
-- collaborative instead of isolated
-- always learning
-
-The goal is not just smarter software.  
-The goal is a better machine partner for human decisions.
