@@ -67,7 +67,7 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
 ## See it in action
 
 <p align="center">
-  <img src="./atulya-docs/static/img/atulya_landing_surface_light.png" alt="Atulya landing view" width="920" />
+  <img src="./atulya-docs/static/img/atulya_landing_surface_dark.png" alt="Atulya landing view" width="920" />
 </p>
 
 <p align="center">
