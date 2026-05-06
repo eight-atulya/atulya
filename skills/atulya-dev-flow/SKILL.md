@@ -48,7 +48,7 @@ Copy this checklist at the start of any non-trivial task:
 - [ ] 1. Understand the change
 - [ ] 2. Plan (TodoWrite if 3+ steps)
 - [ ] 3. Edit (StrReplace, follow code-intel standards)
-- [ ] 4. Run targeted tests sequentially
+- [ ] 4. Retest first, then widen to sanity/regression only if needed
 - [ ] 5. Lint touched files
 - [ ] 6. If API surface changed: regenerate clients
 - [ ] 7. If clients regenerated: rebuild dependents (cargo, tsc)
@@ -97,7 +97,16 @@ For trivial 1–2 step tasks, skip TodoWrite — it's noise.
 - **Never** use shell commands (`sed`, `awk`, `cat > file`, `echo >>`) to
   modify files. Even when the target is a config file or a markdown doc.
 
-### 4. Run targeted tests sequentially
+### 4. Retest first, then widen carefully
+
+Use [TESTING.md](../../TESTING.md) as the repo test taxonomy:
+
+- `retest`: prove the exact bug fix or feature path
+- `sanity`: check the nearby module, route, workflow, or client
+- `regression`: broaden only when the contract change or blast radius justifies it
+
+ASD can help you find impacted symbols and neighboring files, but it is not
+proof. A green test is proof.
 
 After editing a file, run the most specific test that exercises it:
 
@@ -184,7 +193,7 @@ idempotent.
 
 ```bash
 grep -ric 'hindsight' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
-  /home/atulya-agent/atulya-agent/atulya 2>/dev/null | grep -v ':0$'
+  . 2>/dev/null | grep -v ':0$'
 ```
 
 Must return empty. If you ported logic from `hindsight`, scrub every

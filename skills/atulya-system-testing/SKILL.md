@@ -9,6 +9,22 @@ Drive the Atulya monorepo through a full-system green build deterministically.
 Every gate has a known failure mode, a known fix, and a sequential rerun
 strategy that survives the slow local LLM at `ATULYA_API_BASE_URL`.
 
+This skill is for broad **regression** confidence. For test taxonomy and
+change-sized scope selection, read [TESTING.md](../../TESTING.md) first.
+
+## Which lane are you running?
+
+| Lane | Question | Normal scope |
+| --- | --- | --- |
+| Smoke | Is the repo alive enough to continue? | Toolchain, lint, one happy-path proof |
+| Retest | Did the exact fix work? | Single test or smallest focused command |
+| Sanity | Did the nearby area still work? | Same module, route, workflow, or client |
+| Regression | Did anything else break? | Full affected surface, and this skill before release |
+
+Use ASD or plain code search to choose impacted files and adjacent tests, but do
+not treat ASD output as proof. This skill starts after you have already decided
+that the change needs broad regression coverage.
+
 ## Mental model
 
 The repo has **five testable surfaces**, each with its own toolchain:
@@ -57,7 +73,7 @@ Copy this checklist and tick items as you go:
 - [ ] 10. Report findings to user
 ```
 
-Run from the repo root: `/home/atulya-agent/atulya-agent/atulya`.
+Run from the repo root.
 
 ### 0. Toolchain check
 
@@ -214,7 +230,7 @@ Atulya was forked from `hindsight`. There must be **zero** mentions of
 
 ```bash
 grep -ric 'hindsight' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
-  /home/atulya-agent/atulya-agent/atulya 2>/dev/null \
+  . 2>/dev/null \
   | grep -v ':0$'
 # (empty output above = clean)
 ```

@@ -123,6 +123,20 @@ The sections below stay focused on implementation mechanics that are easy to exe
 
 ## Key Conventions
 
+### Testing Source Of Truth
+Use [TESTING.md](./TESTING.md) to decide which test scope fits the change.
+
+- `smoke` asks whether the build is alive enough to continue
+- `retest` proves the exact fix or feature path
+- `sanity` checks the nearby area after the fix
+- `regression` checks whether anything else broke
+
+Default order: retest first, then sanity, then broader regression only when the
+impact radius justifies it.
+
+ASD can help identify affected files and neighbors, but it does not replace
+green tests as proof of system sanity.
+
 ### Code Quality
 **Always run the lint script after making Python or TypeScript/Node changes:**
 ```bash
