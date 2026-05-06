@@ -377,3 +377,109 @@ class Bank(Base):
     updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
 
     __table_args__ = (Index("idx_banks_bank_id", "bank_id"),)
+
+
+class MemoryRepo(Base):
+    """Git-like memory repo rooted at a durable bank."""
+
+    __tablename__ = "memory_repos"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=sql_text("gen_random_uuid()")
+    )
+    root_bank_id: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+    name: Mapped[str] = mapped_column(Text, nullable=False)
+    active_branch: Mapped[str] = mapped_column(Text, nullable=False, server_default="main")
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    __table_args__ = (Index("idx_memory_repos_root_bank", "root_bank_id"),)
+
+
+class MemoryObject(Base):
+    """Content-addressed repo object payload."""
+
+    __tablename__ = "memory_objects"
+
+    object_hash: Mapped[str] = mapped_column(Text, primary_key=True)
+    object_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+
+class MemoryCommit(Base):
+    """Immutable commit snapshot for a memory repo branch."""
+
+    __tablename__ = "memory_commits"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=sql_text("gen_random_uuid()")
+    )
+    repo_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memory_repos.id", ondelete="CASCADE"), nullable=False
+    )
+    parent_commit_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memory_commits.id", ondelete="SET NULL")
+    )
+    branch_name: Mapped[str] = mapped_column(Text, nullable=False)
+    message: Mapped[str] = mapped_column(Text, nullable=False)
+    actor: Mapped[str | None] = mapped_column(Text)
+    root_manifest_hash: Mapped[str] = mapped_column(
+        Text, ForeignKey("memory_objects.object_hash", ondelete="RESTRICT"), nullable=False
+    )
+    stats: Mapped[dict] = mapped_column(JSONB, nullable=False, server_default=sql_text("'{}'::jsonb"))
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    __table_args__ = (Index("idx_memory_commits_repo_branch_created", "repo_id", "branch_name", "created_at"),)
+
+
+class MemoryRef(Base):
+    """Branch head pointer for a memory repo."""
+
+    __tablename__ = "memory_refs"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=sql_text("gen_random_uuid()")
+    )
+    repo_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memory_repos.id", ondelete="CASCADE"), nullable=False
+    )
+    ref_type: Mapped[str] = mapped_column(Text, nullable=False, server_default="branch")
+    ref_name: Mapped[str] = mapped_column(Text, nullable=False)
+    head_commit_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memory_commits.id", ondelete="SET NULL")
+    )
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("repo_id", "ref_type", "ref_name", name="uq_memory_refs_repo_type_name"),
+        Index("idx_memory_refs_repo_type", "repo_id", "ref_type"),
+    )
+
+
+class MemoryWorkspace(Base):
+    """Workspace bank backing one memory repo branch."""
+
+    __tablename__ = "memory_workspaces"
+
+    id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=sql_text("gen_random_uuid()")
+    )
+    repo_id: Mapped[PyUUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memory_repos.id", ondelete="CASCADE"), nullable=False
+    )
+    branch_name: Mapped[str] = mapped_column(Text, nullable=False)
+    workspace_bank_id: Mapped[str] = mapped_column(Text, nullable=False)
+    head_commit_id: Mapped[PyUUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memory_commits.id", ondelete="SET NULL")
+    )
+    is_active: Mapped[bool] = mapped_column(nullable=False, server_default=sql_text("false"))
+    created_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), server_default=func.now())
+
+    __table_args__ = (
+        UniqueConstraint("repo_id", "branch_name", name="uq_memory_workspaces_repo_branch"),
+        Index("idx_memory_workspaces_repo_active", "repo_id", "is_active"),
+    )

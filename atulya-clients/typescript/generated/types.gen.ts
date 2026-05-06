@@ -4451,6 +4451,269 @@ export type MemoryItem = {
 };
 
 /**
+ * MemoryRepoBranchCreateRequest
+ */
+export type MemoryRepoBranchCreateRequest = {
+    /**
+     * MemoryRepoBranchCreateRequestBranchName
+     *
+     * Branch name to create
+     */
+    branch_name: string;
+    /**
+     * MemoryRepoBranchCreateRequestFromCommitId
+     *
+     * Optional commit to branch from
+     */
+    from_commit_id?: string | null;
+};
+
+/**
+ * MemoryRepoBranchesResponse
+ */
+export type MemoryRepoBranchesResponse = {
+    /**
+     * MemoryRepoBranchesResponseBranches
+     */
+    branches: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * MemoryRepoCheckoutRequest
+ */
+export type MemoryRepoCheckoutRequest = {
+    /**
+     * MemoryRepoCheckoutRequestBranchName
+     *
+     * Branch to checkout
+     */
+    branch_name: string;
+};
+
+/**
+ * MemoryRepoCommitRequest
+ */
+export type MemoryRepoCommitRequest = {
+    /**
+     * MemoryRepoCommitRequestMessage
+     *
+     * Commit message
+     */
+    message: string;
+    /**
+     * MemoryRepoCommitRequestActor
+     *
+     * Optional actor label
+     */
+    actor?: string | null;
+};
+
+/**
+ * MemoryRepoCreateRequest
+ */
+export type MemoryRepoCreateRequest = {
+    /**
+     * MemoryRepoCreateRequestBankId
+     *
+     * Root bank ID that will become the repo working tree
+     */
+    bank_id: string;
+    /**
+     * MemoryRepoCreateRequestRepoName
+     *
+     * Optional display name for the repo
+     */
+    repo_name?: string | null;
+    /**
+     * MemoryRepoCreateRequestSourceBankId
+     *
+     * Optional source bank to clone into the root bank
+     */
+    source_bank_id?: string | null;
+};
+
+/**
+ * MemoryRepoDiffResponse
+ */
+export type MemoryRepoDiffResponse = {
+    /**
+     * MemoryRepoDiffResponseRepoId
+     */
+    repo_id: string;
+    /**
+     * MemoryRepoDiffResponseFromRef
+     */
+    from_ref: string;
+    /**
+     * MemoryRepoDiffResponseToRef
+     */
+    to_ref: string;
+    /**
+     * MemoryRepoDiffResponseDirty
+     */
+    dirty: boolean;
+    /**
+     * MemoryRepoDiffResponseChangedComponents
+     */
+    changed_components: Array<string>;
+    /**
+     * MemoryRepoDiffResponseTableDeltas
+     */
+    table_deltas: {
+        [key: string]: {
+            [key: string]: number;
+        };
+    };
+};
+
+/**
+ * MemoryRepoEnableRequest
+ */
+export type MemoryRepoEnableRequest = {
+    /**
+     * MemoryRepoEnableRequestRepoName
+     *
+     * Optional display name for the repo
+     */
+    repo_name?: string | null;
+};
+
+/**
+ * MemoryRepoListResponse
+ */
+export type MemoryRepoListResponse = {
+    /**
+     * MemoryRepoListResponseRepos
+     */
+    repos: Array<MemoryRepoSummaryResponse>;
+};
+
+/**
+ * MemoryRepoLogResponse
+ */
+export type MemoryRepoLogResponse = {
+    /**
+     * MemoryRepoLogResponseCommits
+     */
+    commits: Array<{
+        [key: string]: unknown;
+    }>;
+};
+
+/**
+ * MemoryRepoLookupResponse
+ */
+export type MemoryRepoLookupResponse = {
+    repo?: MemoryRepoSummaryResponse | null;
+};
+
+/**
+ * MemoryRepoResetHardRequest
+ */
+export type MemoryRepoResetHardRequest = {
+    /**
+     * MemoryRepoResetHardRequestCommitId
+     *
+     * Commit to reset the active branch to
+     */
+    commit_id: string;
+    /**
+     * MemoryRepoResetHardRequestForce
+     *
+     * Allow reset even when the workspace is dirty
+     */
+    force?: boolean;
+};
+
+/**
+ * MemoryRepoStatusResponse
+ */
+export type MemoryRepoStatusResponse = {
+    /**
+     * MemoryRepoStatusResponseRepoId
+     */
+    repo_id: string;
+    /**
+     * MemoryRepoStatusResponseBranchName
+     */
+    branch_name: string;
+    /**
+     * MemoryRepoStatusResponseWorkspaceBankId
+     */
+    workspace_bank_id: string;
+    /**
+     * MemoryRepoStatusResponseHeadCommitId
+     */
+    head_commit_id?: string | null;
+    /**
+     * MemoryRepoStatusResponseDirty
+     */
+    dirty: boolean;
+    /**
+     * MemoryRepoStatusResponseChangedComponents
+     */
+    changed_components: Array<string>;
+    /**
+     * MemoryRepoStatusResponseTableDeltas
+     */
+    table_deltas: {
+        [key: string]: {
+            [key: string]: number;
+        };
+    };
+};
+
+/**
+ * MemoryRepoSummaryResponse
+ */
+export type MemoryRepoSummaryResponse = {
+    /**
+     * MemoryRepoSummaryResponseRepoId
+     */
+    repo_id: string;
+    /**
+     * MemoryRepoSummaryResponseRootBankId
+     */
+    root_bank_id: string;
+    /**
+     * MemoryRepoSummaryResponseName
+     */
+    name: string;
+    /**
+     * MemoryRepoSummaryResponseActiveBranch
+     */
+    active_branch: string;
+    /**
+     * MemoryRepoSummaryResponseHeadCommitId
+     */
+    head_commit_id?: string | null;
+    /**
+     * MemoryRepoSummaryResponseHeadMessage
+     */
+    head_message?: string | null;
+    /**
+     * MemoryRepoSummaryResponseHeadCreatedAt
+     */
+    head_created_at?: string | null;
+    /**
+     * MemoryRepoSummaryResponseCreatedAt
+     */
+    created_at?: string | null;
+    /**
+     * MemoryRepoSummaryResponseUpdatedAt
+     */
+    updated_at?: string | null;
+    /**
+     * MemoryRepoSummaryResponseBranches
+     */
+    branches?: Array<{
+        [key: string]: unknown;
+    }> | null;
+};
+
+/**
  * MentalModelListResponse
  *
  * Response model for listing mental models.
@@ -6919,6 +7182,543 @@ export type ListBanksResponses = {
 };
 
 export type ListBanksResponse = ListBanksResponses[keyof ListBanksResponses];
+
+export type ListMemoryReposData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/default/repos';
+};
+
+export type ListMemoryReposErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListMemoryReposError = ListMemoryReposErrors[keyof ListMemoryReposErrors];
+
+export type ListMemoryReposResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoListResponse;
+};
+
+export type ListMemoryReposResponse = ListMemoryReposResponses[keyof ListMemoryReposResponses];
+
+export type CreateMemoryRepoData = {
+    body: MemoryRepoCreateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/default/repos';
+};
+
+export type CreateMemoryRepoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMemoryRepoError = CreateMemoryRepoErrors[keyof CreateMemoryRepoErrors];
+
+export type CreateMemoryRepoResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoSummaryResponse;
+};
+
+export type CreateMemoryRepoResponse = CreateMemoryRepoResponses[keyof CreateMemoryRepoResponses];
+
+export type GetMemoryRepoForBankData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/repo';
+};
+
+export type GetMemoryRepoForBankErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMemoryRepoForBankError = GetMemoryRepoForBankErrors[keyof GetMemoryRepoForBankErrors];
+
+export type GetMemoryRepoForBankResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoLookupResponse;
+};
+
+export type GetMemoryRepoForBankResponse = GetMemoryRepoForBankResponses[keyof GetMemoryRepoForBankResponses];
+
+export type GetMemoryRepoData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}';
+};
+
+export type GetMemoryRepoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMemoryRepoError = GetMemoryRepoErrors[keyof GetMemoryRepoErrors];
+
+export type GetMemoryRepoResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoSummaryResponse;
+};
+
+export type GetMemoryRepoResponse = GetMemoryRepoResponses[keyof GetMemoryRepoResponses];
+
+export type EnableMemoryRepoData = {
+    body: MemoryRepoEnableRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/repos/enable';
+};
+
+export type EnableMemoryRepoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type EnableMemoryRepoError = EnableMemoryRepoErrors[keyof EnableMemoryRepoErrors];
+
+export type EnableMemoryRepoResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoSummaryResponse;
+};
+
+export type EnableMemoryRepoResponse = EnableMemoryRepoResponses[keyof EnableMemoryRepoResponses];
+
+export type ListMemoryRepoBranchesForBankData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/repo/branches';
+};
+
+export type ListMemoryRepoBranchesForBankErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListMemoryRepoBranchesForBankError = ListMemoryRepoBranchesForBankErrors[keyof ListMemoryRepoBranchesForBankErrors];
+
+export type ListMemoryRepoBranchesForBankResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoBranchesResponse;
+};
+
+export type ListMemoryRepoBranchesForBankResponse = ListMemoryRepoBranchesForBankResponses[keyof ListMemoryRepoBranchesForBankResponses];
+
+export type ListMemoryRepoBranchesData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}/branches';
+};
+
+export type ListMemoryRepoBranchesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListMemoryRepoBranchesError = ListMemoryRepoBranchesErrors[keyof ListMemoryRepoBranchesErrors];
+
+export type ListMemoryRepoBranchesResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoBranchesResponse;
+};
+
+export type ListMemoryRepoBranchesResponse = ListMemoryRepoBranchesResponses[keyof ListMemoryRepoBranchesResponses];
+
+export type CreateMemoryRepoBranchData = {
+    body: MemoryRepoBranchCreateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}/branches';
+};
+
+export type CreateMemoryRepoBranchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateMemoryRepoBranchError = CreateMemoryRepoBranchErrors[keyof CreateMemoryRepoBranchErrors];
+
+export type CreateMemoryRepoBranchResponses = {
+    /**
+     * Response Create Memory Repo Branch
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type CreateMemoryRepoBranchResponse = CreateMemoryRepoBranchResponses[keyof CreateMemoryRepoBranchResponses];
+
+export type CheckoutMemoryRepoBranchData = {
+    body: MemoryRepoCheckoutRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}/checkout';
+};
+
+export type CheckoutMemoryRepoBranchErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CheckoutMemoryRepoBranchError = CheckoutMemoryRepoBranchErrors[keyof CheckoutMemoryRepoBranchErrors];
+
+export type CheckoutMemoryRepoBranchResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoSummaryResponse;
+};
+
+export type CheckoutMemoryRepoBranchResponse = CheckoutMemoryRepoBranchResponses[keyof CheckoutMemoryRepoBranchResponses];
+
+export type CommitMemoryRepoData = {
+    body: MemoryRepoCommitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}/commit';
+};
+
+export type CommitMemoryRepoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CommitMemoryRepoError = CommitMemoryRepoErrors[keyof CommitMemoryRepoErrors];
+
+export type CommitMemoryRepoResponses = {
+    /**
+     * Response Commit Memory Repo
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: unknown;
+    };
+};
+
+export type CommitMemoryRepoResponse = CommitMemoryRepoResponses[keyof CommitMemoryRepoResponses];
+
+export type GetMemoryRepoStatusData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: {
+        /**
+         * Branch Name
+         */
+        branch_name?: string | null;
+    };
+    url: '/v1/default/repos/{repo_id}/status';
+};
+
+export type GetMemoryRepoStatusErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMemoryRepoStatusError = GetMemoryRepoStatusErrors[keyof GetMemoryRepoStatusErrors];
+
+export type GetMemoryRepoStatusResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoStatusResponse;
+};
+
+export type GetMemoryRepoStatusResponse = GetMemoryRepoStatusResponses[keyof GetMemoryRepoStatusResponses];
+
+export type GetMemoryRepoLogData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: {
+        /**
+         * Branch Name
+         */
+        branch_name?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/default/repos/{repo_id}/log';
+};
+
+export type GetMemoryRepoLogErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetMemoryRepoLogError = GetMemoryRepoLogErrors[keyof GetMemoryRepoLogErrors];
+
+export type GetMemoryRepoLogResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoLogResponse;
+};
+
+export type GetMemoryRepoLogResponse = GetMemoryRepoLogResponses[keyof GetMemoryRepoLogResponses];
+
+export type DiffMemoryRepoData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: {
+        /**
+         * From Commit Id
+         */
+        from_commit_id?: string | null;
+        /**
+         * To Commit Id
+         */
+        to_commit_id?: string | null;
+        /**
+         * From Branch
+         */
+        from_branch?: string | null;
+        /**
+         * To Branch
+         */
+        to_branch?: string | null;
+        /**
+         * Include Workspace
+         */
+        include_workspace?: boolean;
+    };
+    url: '/v1/default/repos/{repo_id}/diff';
+};
+
+export type DiffMemoryRepoErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DiffMemoryRepoError = DiffMemoryRepoErrors[keyof DiffMemoryRepoErrors];
+
+export type DiffMemoryRepoResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoDiffResponse;
+};
+
+export type DiffMemoryRepoResponse = DiffMemoryRepoResponses[keyof DiffMemoryRepoResponses];
+
+export type ResetMemoryRepoHardData = {
+    body: MemoryRepoResetHardRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}/reset-hard';
+};
+
+export type ResetMemoryRepoHardErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ResetMemoryRepoHardError = ResetMemoryRepoHardErrors[keyof ResetMemoryRepoHardErrors];
+
+export type ResetMemoryRepoHardResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoStatusResponse;
+};
+
+export type ResetMemoryRepoHardResponse = ResetMemoryRepoHardResponses[keyof ResetMemoryRepoHardResponses];
 
 export type GetAgentStatsData = {
     body?: never;

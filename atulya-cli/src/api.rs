@@ -370,6 +370,7 @@ impl ApiClient {
         self.runtime.block_on(async {
             let response = self.client.list_documents(
                 agent_id,
+                None,
                 limit.map(|l| l as i64),
                 offset.map(|o| o as i64),
                 q,
@@ -383,7 +384,7 @@ impl ApiClient {
 
     pub fn get_document(&self, agent_id: &str, document_id: &str, _verbose: bool) -> Result<types::DocumentResponse> {
         self.runtime.block_on(async {
-            let response = self.client.get_document(agent_id, document_id, None).await?;
+            let response = self.client.get_document(agent_id, document_id, None, None).await?;
             Ok(response.into_inner())
         })
     }
@@ -427,7 +428,7 @@ impl ApiClient {
 
     pub fn list_memories(&self, bank_id: &str, type_filter: Option<&str>, q: Option<&str>, limit: Option<i64>, offset: Option<i64>, _verbose: bool) -> Result<types::ListMemoryUnitsResponse> {
         self.runtime.block_on(async {
-            let response = self.client.list_memories(bank_id, limit, offset, q, type_filter, None).await?;
+            let response = self.client.list_memories(bank_id, None, limit, offset, q, type_filter, None).await?;
             Ok(response.into_inner())
         })
     }
@@ -470,7 +471,7 @@ impl ApiClient {
 
     pub fn get_memory(&self, bank_id: &str, memory_id: &str, _verbose: bool) -> Result<serde_json::Value> {
         self.runtime.block_on(async {
-            let response = self.client.get_memory(bank_id, memory_id, None).await?;
+            let response = self.client.get_memory(bank_id, memory_id, None, None).await?;
             Ok(response.into_inner())
         })
     }

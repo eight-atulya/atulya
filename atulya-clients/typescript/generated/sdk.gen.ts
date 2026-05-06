@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddBankBackgroundData, AddBankBackgroundErrors, AddBankBackgroundResponses, AdminCreateApiKeyData, AdminCreateApiKeyErrors, AdminCreateApiKeyResponses, AdminDecommissionWorkerData, AdminDecommissionWorkerErrors, AdminDecommissionWorkerResponses, AdminListApiKeysData, AdminListApiKeysErrors, AdminListApiKeysResponses, AdminListOperationsData, AdminListOperationsErrors, AdminListOperationsResponses, AdminListTenantBanksData, AdminListTenantBanksErrors, AdminListTenantBanksResponses, AdminListTenantsData, AdminListTenantsErrors, AdminListTenantsResponses, AdminListWorkersData, AdminListWorkersErrors, AdminListWorkersResponses, AdminRevokeApiKeyData, AdminRevokeApiKeyErrors, AdminRevokeApiKeyResponses, AdminSystemHealthData, AdminSystemHealthErrors, AdminSystemHealthResponses, AdminTriggerConsolidationData, AdminTriggerConsolidationErrors, AdminTriggerConsolidationResponses, AdminUpdateApiKeyData, AdminUpdateApiKeyErrors, AdminUpdateApiKeyResponses, AnalyzeCodebaseImpactData, AnalyzeCodebaseImpactErrors, AnalyzeCodebaseImpactResponses, ApproveCodebaseData, ApproveCodebaseErrors, ApproveCodebaseResponses, BrainLearnFromRemoteData, BrainLearnFromRemoteErrors, BrainLearnFromRemoteResponses, CancelOperationData, CancelOperationErrors, CancelOperationResponses, ClearBankMemoriesData, ClearBankMemoriesErrors, ClearBankMemoriesResponses, ClearMemoryObservationsData, ClearMemoryObservationsErrors, ClearMemoryObservationsResponses, ClearObservationsData, ClearObservationsErrors, ClearObservationsResponses, CreateDirectiveData, CreateDirectiveErrors, CreateDirectiveResponses, CreateMentalModelData, CreateMentalModelErrors, CreateMentalModelResponses, CreateOrUpdateBankData, CreateOrUpdateBankErrors, CreateOrUpdateBankResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CurateCodebaseByIntentData, CurateCodebaseByIntentErrors, CurateCodebaseByIntentResponses, DeleteBankData, DeleteBankErrors, DeleteBankResponses, DeleteDirectiveData, DeleteDirectiveErrors, DeleteDirectiveResponses, DeleteDocumentData, DeleteDocumentErrors, DeleteDocumentResponses, DeleteMentalModelData, DeleteMentalModelErrors, DeleteMentalModelResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, ExportBrainSnapshotData, ExportBrainSnapshotErrors, ExportBrainSnapshotResponses, FileRetainData, FileRetainErrors, FileRetainResponses, GetAgentStatsData, GetAgentStatsErrors, GetAgentStatsResponses, GetAnomalyIntelligenceData, GetAnomalyIntelligenceErrors, GetAnomalyIntelligenceResponses, GetBankConfigData, GetBankConfigErrors, GetBankConfigResponses, GetBankProfileData, GetBankProfileErrors, GetBankProfileResponses, GetBrainInfluenceData, GetBrainInfluenceErrors, GetBrainInfluenceResponses, GetBrainRuntimeStatusData, GetBrainRuntimeStatusErrors, GetBrainRuntimeStatusResponses, GetChunkData, GetChunkErrors, GetChunkResponses, GetCodebaseChunkDetailData, GetCodebaseChunkDetailErrors, GetCodebaseChunkDetailResponses, GetCodebaseData, GetCodebaseErrors, GetCodebaseRepoMapData, GetCodebaseRepoMapErrors, GetCodebaseRepoMapResponses, GetCodebaseResponses, GetCodebaseReviewData, GetCodebaseReviewErrors, GetCodebaseReviewResponses, GetCodebaseSymbolCardData, GetCodebaseSymbolCardErrors, GetCodebaseSymbolCardResponses, GetCodebaseTriageSettingsData, GetCodebaseTriageSettingsErrors, GetCodebaseTriageSettingsResponses, GetDirectiveData, GetDirectiveErrors, GetDirectiveResponses, GetDocumentData, GetDocumentErrors, GetDocumentResponses, GetDreamStatsData, GetDreamStatsErrors, GetDreamStatsResponses, GetEntityData, GetEntityErrors, GetEntityIntelligenceData, GetEntityIntelligenceErrors, GetEntityIntelligenceResponses, GetEntityResponses, GetEntityTrajectoryData, GetEntityTrajectoryErrors, GetEntityTrajectoryResponses, GetGraphData, GetGraphErrors, GetGraphIntelligenceData, GetGraphIntelligenceErrors, GetGraphIntelligenceResponses, GetGraphNeighborhoodData, GetGraphNeighborhoodErrors, GetGraphNeighborhoodResponses, GetGraphResponses, GetGraphSummaryData, GetGraphSummaryErrors, GetGraphSummaryResponses, GetMemoryData, GetMemoryErrors, GetMemoryResponses, GetMentalModelData, GetMentalModelErrors, GetMentalModelHistoryData, GetMentalModelHistoryErrors, GetMentalModelHistoryResponses, GetMentalModelResponses, GetObservationHistoryData, GetObservationHistoryErrors, GetObservationHistoryResponses, GetOperationResultData, GetOperationResultErrors, GetOperationResultResponses, GetOperationStatusData, GetOperationStatusErrors, GetOperationStatusResponses, GetSubRoutineHistogramData, GetSubRoutineHistogramErrors, GetSubRoutineHistogramResponses, GetSubRoutinePredictionsData, GetSubRoutinePredictionsErrors, GetSubRoutinePredictionsResponses, GetTimelineData, GetTimelineErrors, GetTimelineResponses, GetVersionData, GetVersionResponses, HealthEndpointHealthGetData, HealthEndpointHealthGetResponses, ImportBrainSnapshotData, ImportBrainSnapshotErrors, ImportBrainSnapshotResponses, ImportCodebaseFileData, ImportCodebaseFileErrors, ImportCodebaseFileResponses, ImportCodebaseGithubData, ImportCodebaseGithubErrors, ImportCodebaseGithubResponses, ImportCodebaseZipData, ImportCodebaseZipErrors, ImportCodebaseZipResponses, InternetResearchData, InternetResearchErrors, InternetResearchResponses, InvestigateGraphData, InvestigateGraphErrors, InvestigateGraphResponses, ListBanksData, ListBanksErrors, ListBanksResponses, ListCodebaseChunksData, ListCodebaseChunksErrors, ListCodebaseChunksResponses, ListCodebaseFilesData, ListCodebaseFilesErrors, ListCodebaseFilesResponses, ListCodebaseModulesData, ListCodebaseModulesErrors, ListCodebaseModulesResponses, ListCodebaseResearchQueueData, ListCodebaseResearchQueueErrors, ListCodebaseResearchQueueResponses, ListCodebasesData, ListCodebasesErrors, ListCodebasesResponses, ListCodebaseSymbolCardsData, ListCodebaseSymbolCardsErrors, ListCodebaseSymbolCardsResponses, ListDirectivesData, ListDirectivesErrors, ListDirectivesResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListDreamArtifactsData, ListDreamArtifactsErrors, ListDreamArtifactsResponses, ListEntitiesData, ListEntitiesErrors, ListEntitiesResponses, ListMemoriesData, ListMemoriesErrors, ListMemoriesResponses, ListMentalModelsData, ListMentalModelsErrors, ListMentalModelsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTagsData, ListTagsErrors, ListTagsResponses, ListWebhookDeliveriesData, ListWebhookDeliveriesErrors, ListWebhookDeliveriesResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, MetricsEndpointMetricsGetData, MetricsEndpointMetricsGetResponses, PostEntityIntelligenceRecomputeData, PostEntityIntelligenceRecomputeErrors, PostEntityIntelligenceRecomputeResponses, PostEntityTrajectoryRecomputeData, PostEntityTrajectoryRecomputeErrors, PostEntityTrajectoryRecomputeResponses, RecallMemoriesData, RecallMemoriesErrors, RecallMemoriesResponses, ReflectData, ReflectErrors, ReflectResponses, RefreshCodebaseData, RefreshCodebaseErrors, RefreshCodebaseResponses, RefreshMentalModelData, RefreshMentalModelErrors, RefreshMentalModelResponses, RegenerateEntityObservationsData, RegenerateEntityObservationsErrors, RegenerateEntityObservationsResponses, ResetBankConfigData, ResetBankConfigErrors, ResetBankConfigResponses, RetainMemoriesData, RetainMemoriesErrors, RetainMemoriesResponses, RetryOperationData, RetryOperationErrors, RetryOperationResponses, ReviewDreamProposalData, ReviewDreamProposalErrors, ReviewDreamProposalResponses, RouteCodebaseReviewItemsData, RouteCodebaseReviewItemsErrors, RouteCodebaseReviewItemsResponses, SearchCodebaseSymbolsData, SearchCodebaseSymbolsErrors, SearchCodebaseSymbolsResponses, SubmitAsyncReflectData, SubmitAsyncReflectErrors, SubmitAsyncReflectResponses, TriggerConsolidationData, TriggerConsolidationErrors, TriggerConsolidationResponses, TriggerDreamGenerationData, TriggerDreamGenerationErrors, TriggerDreamGenerationResponses, TriggerSubRoutineData, TriggerSubRoutineErrors, TriggerSubRoutineResponses, UpdateBankConfigData, UpdateBankConfigErrors, UpdateBankConfigResponses, UpdateBankData, UpdateBankDispositionData, UpdateBankDispositionErrors, UpdateBankDispositionResponses, UpdateBankErrors, UpdateBankResponses, UpdateCodebaseTriageSettingsData, UpdateCodebaseTriageSettingsErrors, UpdateCodebaseTriageSettingsResponses, UpdateDirectiveData, UpdateDirectiveErrors, UpdateDirectiveResponses, UpdateDreamPredictionOutcomeData, UpdateDreamPredictionOutcomeErrors, UpdateDreamPredictionOutcomeResponses, UpdateMentalModelData, UpdateMentalModelErrors, UpdateMentalModelResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, ValidateBrainImportData, ValidateBrainImportErrors, ValidateBrainImportResponses } from './types.gen';
+import type { AddBankBackgroundData, AddBankBackgroundErrors, AddBankBackgroundResponses, AdminCreateApiKeyData, AdminCreateApiKeyErrors, AdminCreateApiKeyResponses, AdminDecommissionWorkerData, AdminDecommissionWorkerErrors, AdminDecommissionWorkerResponses, AdminListApiKeysData, AdminListApiKeysErrors, AdminListApiKeysResponses, AdminListOperationsData, AdminListOperationsErrors, AdminListOperationsResponses, AdminListTenantBanksData, AdminListTenantBanksErrors, AdminListTenantBanksResponses, AdminListTenantsData, AdminListTenantsErrors, AdminListTenantsResponses, AdminListWorkersData, AdminListWorkersErrors, AdminListWorkersResponses, AdminRevokeApiKeyData, AdminRevokeApiKeyErrors, AdminRevokeApiKeyResponses, AdminSystemHealthData, AdminSystemHealthErrors, AdminSystemHealthResponses, AdminTriggerConsolidationData, AdminTriggerConsolidationErrors, AdminTriggerConsolidationResponses, AdminUpdateApiKeyData, AdminUpdateApiKeyErrors, AdminUpdateApiKeyResponses, AnalyzeCodebaseImpactData, AnalyzeCodebaseImpactErrors, AnalyzeCodebaseImpactResponses, ApproveCodebaseData, ApproveCodebaseErrors, ApproveCodebaseResponses, BrainLearnFromRemoteData, BrainLearnFromRemoteErrors, BrainLearnFromRemoteResponses, CancelOperationData, CancelOperationErrors, CancelOperationResponses, CheckoutMemoryRepoBranchData, CheckoutMemoryRepoBranchErrors, CheckoutMemoryRepoBranchResponses, ClearBankMemoriesData, ClearBankMemoriesErrors, ClearBankMemoriesResponses, ClearMemoryObservationsData, ClearMemoryObservationsErrors, ClearMemoryObservationsResponses, ClearObservationsData, ClearObservationsErrors, ClearObservationsResponses, CommitMemoryRepoData, CommitMemoryRepoErrors, CommitMemoryRepoResponses, CreateDirectiveData, CreateDirectiveErrors, CreateDirectiveResponses, CreateMemoryRepoBranchData, CreateMemoryRepoBranchErrors, CreateMemoryRepoBranchResponses, CreateMemoryRepoData, CreateMemoryRepoErrors, CreateMemoryRepoResponses, CreateMentalModelData, CreateMentalModelErrors, CreateMentalModelResponses, CreateOrUpdateBankData, CreateOrUpdateBankErrors, CreateOrUpdateBankResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CurateCodebaseByIntentData, CurateCodebaseByIntentErrors, CurateCodebaseByIntentResponses, DeleteBankData, DeleteBankErrors, DeleteBankResponses, DeleteDirectiveData, DeleteDirectiveErrors, DeleteDirectiveResponses, DeleteDocumentData, DeleteDocumentErrors, DeleteDocumentResponses, DeleteMentalModelData, DeleteMentalModelErrors, DeleteMentalModelResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DiffMemoryRepoData, DiffMemoryRepoErrors, DiffMemoryRepoResponses, EnableMemoryRepoData, EnableMemoryRepoErrors, EnableMemoryRepoResponses, ExportBrainSnapshotData, ExportBrainSnapshotErrors, ExportBrainSnapshotResponses, FileRetainData, FileRetainErrors, FileRetainResponses, GetAgentStatsData, GetAgentStatsErrors, GetAgentStatsResponses, GetAnomalyIntelligenceData, GetAnomalyIntelligenceErrors, GetAnomalyIntelligenceResponses, GetBankConfigData, GetBankConfigErrors, GetBankConfigResponses, GetBankProfileData, GetBankProfileErrors, GetBankProfileResponses, GetBrainInfluenceData, GetBrainInfluenceErrors, GetBrainInfluenceResponses, GetBrainRuntimeStatusData, GetBrainRuntimeStatusErrors, GetBrainRuntimeStatusResponses, GetChunkData, GetChunkErrors, GetChunkResponses, GetCodebaseChunkDetailData, GetCodebaseChunkDetailErrors, GetCodebaseChunkDetailResponses, GetCodebaseData, GetCodebaseErrors, GetCodebaseRepoMapData, GetCodebaseRepoMapErrors, GetCodebaseRepoMapResponses, GetCodebaseResponses, GetCodebaseReviewData, GetCodebaseReviewErrors, GetCodebaseReviewResponses, GetCodebaseSymbolCardData, GetCodebaseSymbolCardErrors, GetCodebaseSymbolCardResponses, GetCodebaseTriageSettingsData, GetCodebaseTriageSettingsErrors, GetCodebaseTriageSettingsResponses, GetDirectiveData, GetDirectiveErrors, GetDirectiveResponses, GetDocumentData, GetDocumentErrors, GetDocumentResponses, GetDreamStatsData, GetDreamStatsErrors, GetDreamStatsResponses, GetEntityData, GetEntityErrors, GetEntityIntelligenceData, GetEntityIntelligenceErrors, GetEntityIntelligenceResponses, GetEntityResponses, GetEntityTrajectoryData, GetEntityTrajectoryErrors, GetEntityTrajectoryResponses, GetGraphData, GetGraphErrors, GetGraphIntelligenceData, GetGraphIntelligenceErrors, GetGraphIntelligenceResponses, GetGraphNeighborhoodData, GetGraphNeighborhoodErrors, GetGraphNeighborhoodResponses, GetGraphResponses, GetGraphSummaryData, GetGraphSummaryErrors, GetGraphSummaryResponses, GetMemoryData, GetMemoryErrors, GetMemoryRepoData, GetMemoryRepoErrors, GetMemoryRepoForBankData, GetMemoryRepoForBankErrors, GetMemoryRepoForBankResponses, GetMemoryRepoLogData, GetMemoryRepoLogErrors, GetMemoryRepoLogResponses, GetMemoryRepoResponses, GetMemoryRepoStatusData, GetMemoryRepoStatusErrors, GetMemoryRepoStatusResponses, GetMemoryResponses, GetMentalModelData, GetMentalModelErrors, GetMentalModelHistoryData, GetMentalModelHistoryErrors, GetMentalModelHistoryResponses, GetMentalModelResponses, GetObservationHistoryData, GetObservationHistoryErrors, GetObservationHistoryResponses, GetOperationResultData, GetOperationResultErrors, GetOperationResultResponses, GetOperationStatusData, GetOperationStatusErrors, GetOperationStatusResponses, GetSubRoutineHistogramData, GetSubRoutineHistogramErrors, GetSubRoutineHistogramResponses, GetSubRoutinePredictionsData, GetSubRoutinePredictionsErrors, GetSubRoutinePredictionsResponses, GetTimelineData, GetTimelineErrors, GetTimelineResponses, GetVersionData, GetVersionResponses, HealthEndpointHealthGetData, HealthEndpointHealthGetResponses, ImportBrainSnapshotData, ImportBrainSnapshotErrors, ImportBrainSnapshotResponses, ImportCodebaseFileData, ImportCodebaseFileErrors, ImportCodebaseFileResponses, ImportCodebaseGithubData, ImportCodebaseGithubErrors, ImportCodebaseGithubResponses, ImportCodebaseZipData, ImportCodebaseZipErrors, ImportCodebaseZipResponses, InternetResearchData, InternetResearchErrors, InternetResearchResponses, InvestigateGraphData, InvestigateGraphErrors, InvestigateGraphResponses, ListBanksData, ListBanksErrors, ListBanksResponses, ListCodebaseChunksData, ListCodebaseChunksErrors, ListCodebaseChunksResponses, ListCodebaseFilesData, ListCodebaseFilesErrors, ListCodebaseFilesResponses, ListCodebaseModulesData, ListCodebaseModulesErrors, ListCodebaseModulesResponses, ListCodebaseResearchQueueData, ListCodebaseResearchQueueErrors, ListCodebaseResearchQueueResponses, ListCodebasesData, ListCodebasesErrors, ListCodebasesResponses, ListCodebaseSymbolCardsData, ListCodebaseSymbolCardsErrors, ListCodebaseSymbolCardsResponses, ListDirectivesData, ListDirectivesErrors, ListDirectivesResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListDreamArtifactsData, ListDreamArtifactsErrors, ListDreamArtifactsResponses, ListEntitiesData, ListEntitiesErrors, ListEntitiesResponses, ListMemoriesData, ListMemoriesErrors, ListMemoriesResponses, ListMemoryRepoBranchesData, ListMemoryRepoBranchesErrors, ListMemoryRepoBranchesForBankData, ListMemoryRepoBranchesForBankErrors, ListMemoryRepoBranchesForBankResponses, ListMemoryRepoBranchesResponses, ListMemoryReposData, ListMemoryReposErrors, ListMemoryReposResponses, ListMentalModelsData, ListMentalModelsErrors, ListMentalModelsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTagsData, ListTagsErrors, ListTagsResponses, ListWebhookDeliveriesData, ListWebhookDeliveriesErrors, ListWebhookDeliveriesResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, MetricsEndpointMetricsGetData, MetricsEndpointMetricsGetResponses, PostEntityIntelligenceRecomputeData, PostEntityIntelligenceRecomputeErrors, PostEntityIntelligenceRecomputeResponses, PostEntityTrajectoryRecomputeData, PostEntityTrajectoryRecomputeErrors, PostEntityTrajectoryRecomputeResponses, RecallMemoriesData, RecallMemoriesErrors, RecallMemoriesResponses, ReflectData, ReflectErrors, ReflectResponses, RefreshCodebaseData, RefreshCodebaseErrors, RefreshCodebaseResponses, RefreshMentalModelData, RefreshMentalModelErrors, RefreshMentalModelResponses, RegenerateEntityObservationsData, RegenerateEntityObservationsErrors, RegenerateEntityObservationsResponses, ResetBankConfigData, ResetBankConfigErrors, ResetBankConfigResponses, ResetMemoryRepoHardData, ResetMemoryRepoHardErrors, ResetMemoryRepoHardResponses, RetainMemoriesData, RetainMemoriesErrors, RetainMemoriesResponses, RetryOperationData, RetryOperationErrors, RetryOperationResponses, ReviewDreamProposalData, ReviewDreamProposalErrors, ReviewDreamProposalResponses, RouteCodebaseReviewItemsData, RouteCodebaseReviewItemsErrors, RouteCodebaseReviewItemsResponses, SearchCodebaseSymbolsData, SearchCodebaseSymbolsErrors, SearchCodebaseSymbolsResponses, SubmitAsyncReflectData, SubmitAsyncReflectErrors, SubmitAsyncReflectResponses, TriggerConsolidationData, TriggerConsolidationErrors, TriggerConsolidationResponses, TriggerDreamGenerationData, TriggerDreamGenerationErrors, TriggerDreamGenerationResponses, TriggerSubRoutineData, TriggerSubRoutineErrors, TriggerSubRoutineResponses, UpdateBankConfigData, UpdateBankConfigErrors, UpdateBankConfigResponses, UpdateBankData, UpdateBankDispositionData, UpdateBankDispositionErrors, UpdateBankDispositionResponses, UpdateBankErrors, UpdateBankResponses, UpdateCodebaseTriageSettingsData, UpdateCodebaseTriageSettingsErrors, UpdateCodebaseTriageSettingsResponses, UpdateDirectiveData, UpdateDirectiveErrors, UpdateDirectiveResponses, UpdateDreamPredictionOutcomeData, UpdateDreamPredictionOutcomeErrors, UpdateDreamPredictionOutcomeResponses, UpdateMentalModelData, UpdateMentalModelErrors, UpdateMentalModelResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, ValidateBrainImportData, ValidateBrainImportErrors, ValidateBrainImportResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -194,6 +194,120 @@ export const submitAsyncReflect = <ThrowOnError extends boolean = false>(options
  * Get a list of all agents with their profiles
  */
 export const listBanks = <ThrowOnError extends boolean = false>(options?: Options<ListBanksData, ThrowOnError>) => (options?.client ?? client).get<ListBanksResponses, ListBanksErrors, ThrowOnError>({ url: '/v1/default/banks', ...options });
+
+/**
+ * List memory repos
+ */
+export const listMemoryRepos = <ThrowOnError extends boolean = false>(options?: Options<ListMemoryReposData, ThrowOnError>) => (options?.client ?? client).get<ListMemoryReposResponses, ListMemoryReposErrors, ThrowOnError>({ url: '/v1/default/repos', ...options });
+
+/**
+ * Create a memory repo
+ *
+ * Create an opt-in git-like memory repo rooted at a bank, optionally cloning from another bank first.
+ */
+export const createMemoryRepo = <ThrowOnError extends boolean = false>(options: Options<CreateMemoryRepoData, ThrowOnError>) => (options.client ?? client).post<CreateMemoryRepoResponses, CreateMemoryRepoErrors, ThrowOnError>({
+    url: '/v1/default/repos',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get memory repo for a bank
+ */
+export const getMemoryRepoForBank = <ThrowOnError extends boolean = false>(options: Options<GetMemoryRepoForBankData, ThrowOnError>) => (options.client ?? client).get<GetMemoryRepoForBankResponses, GetMemoryRepoForBankErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/repo', ...options });
+
+/**
+ * Get memory repo summary
+ */
+export const getMemoryRepo = <ThrowOnError extends boolean = false>(options: Options<GetMemoryRepoData, ThrowOnError>) => (options.client ?? client).get<GetMemoryRepoResponses, GetMemoryRepoErrors, ThrowOnError>({ url: '/v1/default/repos/{repo_id}', ...options });
+
+/**
+ * Enable repo mode on a bank
+ */
+export const enableMemoryRepo = <ThrowOnError extends boolean = false>(options: Options<EnableMemoryRepoData, ThrowOnError>) => (options.client ?? client).post<EnableMemoryRepoResponses, EnableMemoryRepoErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/repos/enable',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List memory repo branches for a bank
+ */
+export const listMemoryRepoBranchesForBank = <ThrowOnError extends boolean = false>(options: Options<ListMemoryRepoBranchesForBankData, ThrowOnError>) => (options.client ?? client).get<ListMemoryRepoBranchesForBankResponses, ListMemoryRepoBranchesForBankErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/repo/branches', ...options });
+
+/**
+ * List memory repo branches
+ */
+export const listMemoryRepoBranches = <ThrowOnError extends boolean = false>(options: Options<ListMemoryRepoBranchesData, ThrowOnError>) => (options.client ?? client).get<ListMemoryRepoBranchesResponses, ListMemoryRepoBranchesErrors, ThrowOnError>({ url: '/v1/default/repos/{repo_id}/branches', ...options });
+
+/**
+ * Create memory repo branch
+ */
+export const createMemoryRepoBranch = <ThrowOnError extends boolean = false>(options: Options<CreateMemoryRepoBranchData, ThrowOnError>) => (options.client ?? client).post<CreateMemoryRepoBranchResponses, CreateMemoryRepoBranchErrors, ThrowOnError>({
+    url: '/v1/default/repos/{repo_id}/branches',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Checkout memory repo branch
+ */
+export const checkoutMemoryRepoBranch = <ThrowOnError extends boolean = false>(options: Options<CheckoutMemoryRepoBranchData, ThrowOnError>) => (options.client ?? client).post<CheckoutMemoryRepoBranchResponses, CheckoutMemoryRepoBranchErrors, ThrowOnError>({
+    url: '/v1/default/repos/{repo_id}/checkout',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Commit active memory repo workspace
+ */
+export const commitMemoryRepo = <ThrowOnError extends boolean = false>(options: Options<CommitMemoryRepoData, ThrowOnError>) => (options.client ?? client).post<CommitMemoryRepoResponses, CommitMemoryRepoErrors, ThrowOnError>({
+    url: '/v1/default/repos/{repo_id}/commit',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get memory repo status
+ */
+export const getMemoryRepoStatus = <ThrowOnError extends boolean = false>(options: Options<GetMemoryRepoStatusData, ThrowOnError>) => (options.client ?? client).get<GetMemoryRepoStatusResponses, GetMemoryRepoStatusErrors, ThrowOnError>({ url: '/v1/default/repos/{repo_id}/status', ...options });
+
+/**
+ * Get memory repo commit log
+ */
+export const getMemoryRepoLog = <ThrowOnError extends boolean = false>(options: Options<GetMemoryRepoLogData, ThrowOnError>) => (options.client ?? client).get<GetMemoryRepoLogResponses, GetMemoryRepoLogErrors, ThrowOnError>({ url: '/v1/default/repos/{repo_id}/log', ...options });
+
+/**
+ * Diff memory repo commits, branches, or workspace
+ */
+export const diffMemoryRepo = <ThrowOnError extends boolean = false>(options: Options<DiffMemoryRepoData, ThrowOnError>) => (options.client ?? client).get<DiffMemoryRepoResponses, DiffMemoryRepoErrors, ThrowOnError>({ url: '/v1/default/repos/{repo_id}/diff', ...options });
+
+/**
+ * Reset active memory repo branch hard
+ */
+export const resetMemoryRepoHard = <ThrowOnError extends boolean = false>(options: Options<ResetMemoryRepoHardData, ThrowOnError>) => (options.client ?? client).post<ResetMemoryRepoHardResponses, ResetMemoryRepoHardErrors, ThrowOnError>({
+    url: '/v1/default/repos/{repo_id}/reset-hard',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Get statistics for memory bank

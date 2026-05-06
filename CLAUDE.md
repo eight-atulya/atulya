@@ -38,6 +38,9 @@ cd atulya-api && uv run ty check atulya_api/
 ./scripts/dev/start-control-plane.sh
 # Or manually:
 cd atulya-control-plane && npm run dev
+
+# Type check UI and route changes
+cd atulya-control-plane && npm run typecheck
 ```
 
 ### Documentation Site (Docusaurus)
@@ -134,6 +137,14 @@ Use [TESTING.md](./TESTING.md) to decide which test scope fits the change.
 Default order: retest first, then sanity, then broader regression only when the
 impact radius justifies it.
 
+### Memory Repo / Versioning Changes
+When changing memory repo flows, branch-aware reads, or snapshot materialization:
+
+- start with `cd atulya-api && uv run pytest tests/test_memory_repos.py -n 0 -q`
+- regenerate public API docs after route or request-shape changes: `./scripts/generate-openapi.sh`
+- regenerate client SDKs when generated surfaces changed: `./scripts/generate-clients.sh`
+- finish with `cd atulya-control-plane && npm run typecheck` and `./scripts/hooks/lint.sh`
+
 ASD can help identify affected files and neighbors, but it does not replace
 green tests as proof of system sanity.
 
@@ -142,7 +153,13 @@ green tests as proof of system sanity.
 ```bash
 ./scripts/hooks/lint.sh
 ```
-This runs the same checks as the pre-commit hook (Ruff for Python, ESLint/Prettier for TypeScript).
+This runs the same checks as the pre-commit hook (Ruff and `ty` for Python, ESLint/Prettier plus `tsc --noEmit` for the control plane).
+
+For large full-stack features, the default closeout should also include:
+- one targeted backend retest for the new contract
+- downstream control-plane route/client validation
+- `cd atulya-control-plane && npm run typecheck`
+- the repo lint hook `./scripts/hooks/lint.sh`
 
 ### Memory Banks
 - Each bank is an isolated memory store (like a "brain" for one user/agent)

@@ -56,6 +56,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { MemoryRepoControls } from "@/components/memory-repo-controls";
 
 function BankSelectorInner() {
   const router = useRouter();
@@ -572,6 +573,8 @@ function BankSelectorInner() {
             <span>Add Document</span>
           </Button>
         )}
+
+        {currentBank && <MemoryRepoControls variant="compact" />}
 
         {/* Spacer */}
         <div className="flex-1" />

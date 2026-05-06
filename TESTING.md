@@ -57,6 +57,18 @@ Each kind of change has a minimum proof:
 | Storage/provider/backend adapter | Adapter test or explicit documented rationale for why an existing integration test already proves it |
 | Migration | Proof that migration path is safe, or explicit note that existing migration/thread-safety tests cover it |
 
+For storage-heavy features such as backup/restore, repo branching, cloning, snapshotting,
+or any "materialize state into a new bank/workspace" behavior, minimum proof is stricter:
+
+- one incident-shaped regression that matches the real failure mode
+- one typed round-trip fidelity test for the touched tables
+- one workflow isolation test that proves source and target banks stay independent
+- one branch-aware read proof when users or agents can inspect non-active state without checkout
+
+Typed round-trip means asserting the restored row values themselves, not only the API
+status code. For example: `uuid`, `timestamp`, `json/jsonb`, `vector`, arrays, and any
+rewritten foreign keys that must still point at the right rows after restore.
+
 ### 3. Escalate only when the blast radius grows
 
 Broaden from retest to sanity to regression when:
@@ -67,6 +79,38 @@ Broaden from retest to sanity to regression when:
 - a migration changed data shape
 - the fix touched scheduling, background work, or concurrency
 - the change affects code generation, clients, or deployment wiring
+
+## Full-Stack Feature Loop
+
+Big features should close the loop across every contract they introduce, not only the
+first backend proof.
+
+For a feature that touches API, proxy routes, UI state, migrations, generated clients,
+or deployment wiring, the default rollout loop is:
+
+1. backend retest
+2. nearby backend sanity
+3. control-plane route or client proof
+4. control-plane typecheck
+5. repo lint flow
+6. docs or workflow updates if the feature changes how future developers should validate
+
+Minimum expectations by layer:
+
+| Layer | Minimum proof |
+| --- | --- |
+| Dataplane behavior | Targeted test that proves the new branch, commit, config, or workflow contract |
+| Control-plane proxy routes | Direct route/client proof, or a clear explanation of why an existing stable contract already covers it |
+| UI state refresh | Proof that branch, tab, dialog, or mutation state reconnects correctly after writes; if no dedicated harness exists, document the manual smoke path and the nearest automated contract |
+| Types/tooling | `cd atulya-control-plane && npm run typecheck` for TS surfaces, plus the repo lint hook before closeout |
+| Public surface drift | Regenerate or explicitly audit downstream clients/docs when API shape changes |
+
+If a layer has no harness yet, do not hand-wave it away. Prove the nearest stable
+contract, call out the gap, and leave a tighter workflow behind.
+
+For feature tests that do not exercise live provider behavior, prefer deterministic
+fixtures over real provider verification. Core feature regressions should not depend on
+networked LLM/provider health unless the provider contract is the thing being tested.
 
 ## Repo Surface Map
 
@@ -124,6 +168,10 @@ safe.
 6. Do not add broad E2E coverage when a smaller stable contract test proves the same thing.
 7. If a change ships without a new or updated test, the summary must explain why.
 8. When tests and docs disagree, treat the mismatch as unfinished work.
+9. Large features must update the validation workflow if they expose a repeatable new failure mode or rollout pattern.
+10. Every production incident that escapes the suite should become a named retest lane before the fix is considered complete.
+11. Snapshot/restore/versioning features must prove data fidelity at the row/type level, not just successful orchestration.
+12. Non-provider feature tests should use deterministic fixtures so signal is not hidden by unrelated external verification failures.
 
 ## Practical Commands
 

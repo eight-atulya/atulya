@@ -215,6 +215,16 @@ def register_mcp_tools(
         "delete_bank",
         "clear_memories",
         "get_anomaly_intelligence",
+        "memory_repo_list",
+        "memory_repo_get",
+        "memory_repo_branch_list",
+        "memory_repo_status",
+        "memory_repo_log",
+        "memory_repo_diff",
+        "memory_repo_branch_create",
+        "memory_repo_checkout",
+        "memory_repo_commit",
+        "memory_repo_reset_hard",
     }
 
     if "retain" in tools_to_register:
@@ -306,6 +316,36 @@ def register_mcp_tools(
 
     if "delete_bank" in tools_to_register:
         _register_delete_bank(mcp, memory, config)
+
+    if "memory_repo_list" in tools_to_register:
+        _register_memory_repo_list(mcp, memory, config)
+
+    if "memory_repo_get" in tools_to_register:
+        _register_memory_repo_get(mcp, memory, config)
+
+    if "memory_repo_branch_list" in tools_to_register:
+        _register_memory_repo_branch_list(mcp, memory, config)
+
+    if "memory_repo_status" in tools_to_register:
+        _register_memory_repo_status(mcp, memory, config)
+
+    if "memory_repo_log" in tools_to_register:
+        _register_memory_repo_log(mcp, memory, config)
+
+    if "memory_repo_diff" in tools_to_register:
+        _register_memory_repo_diff(mcp, memory, config)
+
+    if "memory_repo_branch_create" in tools_to_register:
+        _register_memory_repo_branch_create(mcp, memory, config)
+
+    if "memory_repo_checkout" in tools_to_register:
+        _register_memory_repo_checkout(mcp, memory, config)
+
+    if "memory_repo_commit" in tools_to_register:
+        _register_memory_repo_commit(mcp, memory, config)
+
+    if "memory_repo_reset_hard" in tools_to_register:
+        _register_memory_repo_reset_hard(mcp, memory, config)
 
     if "clear_memories" in tools_to_register:
         _register_clear_memories(mcp, memory, config)
@@ -517,6 +557,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             tags_match: str = "any",
             tag_groups: list[dict] | None = None,
             query_timestamp: str | None = None,
+            branch_name: str | None = None,
             bank_id: str | None = None,
         ) -> str | dict:
             """
@@ -547,6 +588,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
 
                 recall_kwargs: dict[str, Any] = {
                     "bank_id": target_bank,
+                    "branch_name": branch_name,
                     "query": query,
                     "fact_type": fact_types,
                     "budget": budget_enum,
@@ -585,6 +627,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
             tags_match: str = "any",
             tag_groups: list[dict] | None = None,
             query_timestamp: str | None = None,
+            branch_name: str | None = None,
         ) -> dict:
             """
             Args:
@@ -613,6 +656,7 @@ def _register_recall(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig)
 
                 recall_kwargs: dict[str, Any] = {
                     "bank_id": target_bank,
+                    "branch_name": branch_name,
                     "query": query,
                     "fact_type": fact_types,
                     "budget": budget_enum,
@@ -655,6 +699,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
             tags: list[str] | None = None,
             tags_match: str = "any",
             tag_groups: list[dict] | None = None,
+            branch_name: str | None = None,
             bank_id: str | None = None,
         ) -> str:
             """
@@ -701,6 +746,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
 
                 reflect_kwargs: dict[str, Any] = {
                     "bank_id": target_bank,
+                    "branch_name": branch_name,
                     "query": query,
                     "budget": budget_enum,
                     "context": context,
@@ -740,6 +786,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
             tags: list[str] | None = None,
             tags_match: str = "any",
             tag_groups: list[dict] | None = None,
+            branch_name: str | None = None,
         ) -> dict:
             """
             Generate thoughtful analysis by synthesizing stored memories with the bank's personality.
@@ -784,6 +831,7 @@ def _register_reflect(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig
 
                 reflect_kwargs: dict[str, Any] = {
                     "bank_id": target_bank,
+                    "branch_name": branch_name,
                     "query": query,
                     "budget": budget_enum,
                     "context": context,
@@ -1768,6 +1816,7 @@ def _register_list_memories(mcp: FastMCP, memory: MemoryEngine, config: MCPTools
             q: str | None = None,
             limit: int = 100,
             offset: int = 0,
+            branch_name: str | None = None,
             bank_id: str | None = None,
         ) -> str:
             """
@@ -1790,6 +1839,7 @@ def _register_list_memories(mcp: FastMCP, memory: MemoryEngine, config: MCPTools
 
                 result = await memory.list_memory_units(
                     target_bank,
+                    branch_name=branch_name,
                     fact_type=type,
                     search_query=q,
                     limit=limit,
@@ -1812,6 +1862,7 @@ def _register_list_memories(mcp: FastMCP, memory: MemoryEngine, config: MCPTools
             q: str | None = None,
             limit: int = 100,
             offset: int = 0,
+            branch_name: str | None = None,
         ) -> dict:
             """
             Browse stored memories with optional filtering.
@@ -1832,6 +1883,7 @@ def _register_list_memories(mcp: FastMCP, memory: MemoryEngine, config: MCPTools
 
                 result = await memory.list_memory_units(
                     target_bank,
+                    branch_name=branch_name,
                     fact_type=type,
                     search_query=q,
                     limit=limit,
@@ -1855,6 +1907,7 @@ def _register_get_memory(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsCon
         @mcp.tool()
         async def get_memory(
             memory_id: str,
+            branch_name: str | None = None,
             bank_id: str | None = None,
         ) -> str:
             """
@@ -1874,6 +1927,7 @@ def _register_get_memory(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsCon
                 result = await memory.get_memory_unit(
                     target_bank,
                     memory_id,
+                    branch_name=branch_name,
                     request_context=_get_request_context(config),
                 )
                 if result is None:
@@ -1891,6 +1945,7 @@ def _register_get_memory(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsCon
         @mcp.tool()
         async def get_memory(
             memory_id: str,
+            branch_name: str | None = None,
         ) -> dict:
             """
             Get a specific memory by ID.
@@ -1908,6 +1963,7 @@ def _register_get_memory(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsCon
                 result = await memory.get_memory_unit(
                     target_bank,
                     memory_id,
+                    branch_name=branch_name,
                     request_context=_get_request_context(config),
                 )
                 if result is None:
@@ -2003,6 +2059,7 @@ def _register_list_documents(mcp: FastMCP, memory: MemoryEngine, config: MCPTool
         async def list_documents(
             q: str | None = None,
             limit: int = 100,
+            branch_name: str | None = None,
             bank_id: str | None = None,
         ) -> str:
             """
@@ -2023,6 +2080,7 @@ def _register_list_documents(mcp: FastMCP, memory: MemoryEngine, config: MCPTool
 
                 result = await memory.list_documents(
                     target_bank,
+                    branch_name=branch_name,
                     search_query=q,
                     limit=limit,
                     request_context=_get_request_context(config),
@@ -2041,6 +2099,7 @@ def _register_list_documents(mcp: FastMCP, memory: MemoryEngine, config: MCPTool
         async def list_documents(
             q: str | None = None,
             limit: int = 100,
+            branch_name: str | None = None,
         ) -> dict:
             """
             List documents in this memory bank.
@@ -2059,6 +2118,7 @@ def _register_list_documents(mcp: FastMCP, memory: MemoryEngine, config: MCPTool
 
                 result = await memory.list_documents(
                     target_bank,
+                    branch_name=branch_name,
                     search_query=q,
                     limit=limit,
                     request_context=_get_request_context(config),
@@ -2080,6 +2140,7 @@ def _register_get_document(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsC
         @mcp.tool()
         async def get_document(
             document_id: str,
+            branch_name: str | None = None,
             bank_id: str | None = None,
         ) -> str:
             """
@@ -2099,6 +2160,7 @@ def _register_get_document(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsC
                 result = await memory.get_document(
                     document_id,
                     target_bank,
+                    branch_name=branch_name,
                     request_context=_get_request_context(config),
                 )
                 if result is None:
@@ -2116,6 +2178,7 @@ def _register_get_document(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsC
         @mcp.tool()
         async def get_document(
             document_id: str,
+            branch_name: str | None = None,
         ) -> dict:
             """
             Get a specific document by ID.
@@ -2133,6 +2196,7 @@ def _register_get_document(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsC
                 result = await memory.get_document(
                     document_id,
                     target_bank,
+                    branch_name=branch_name,
                     request_context=_get_request_context(config),
                 )
                 if result is None:
@@ -2749,6 +2813,248 @@ def _register_delete_bank(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsCo
             except Exception as e:
                 logger.error(f"Error deleting bank: {e}", exc_info=True)
                 return {"error": str(e)}
+
+
+def _register_memory_repo_list(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_list() -> str:
+        """List git-like memory repos available to this session."""
+        try:
+            repos = await memory.list_memory_repos(request_context=_get_request_context(config))
+            return json.dumps({"repos": repos}, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error listing memory repos: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_get(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_get(
+        repo_id: str | None = None,
+        bank_id: str | None = None,
+    ) -> str:
+        """Get the memory repo summary for a repo ID or bank ID."""
+        try:
+            resolved_bank_id = bank_id or config.bank_id_resolver()
+            if repo_id:
+                repo = await memory.get_memory_repo(repo_id, request_context=_get_request_context(config))
+                return json.dumps(repo, indent=2, default=str)
+            if resolved_bank_id is None:
+                return json.dumps({"error": "Provide repo_id or bank_id, or configure a default bank_id"})
+            repo = await memory.get_memory_repo_for_bank(
+                resolved_bank_id,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps({"repo": repo}, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error getting memory repo: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_branch_list(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_branch_list(
+        repo_id: str | None = None,
+        bank_id: str | None = None,
+    ) -> str:
+        """List branches for a memory repo by repo ID or bank ID."""
+        try:
+            resolved_bank_id = bank_id or config.bank_id_resolver()
+            if repo_id:
+                branches = await memory.list_memory_repo_branches(
+                    repo_id,
+                    request_context=_get_request_context(config),
+                )
+                return json.dumps({"branches": branches}, indent=2, default=str)
+            if resolved_bank_id is None:
+                return json.dumps({"error": "Provide repo_id or bank_id, or configure a default bank_id"})
+            branches = await memory.list_memory_repo_branches_for_bank(
+                resolved_bank_id,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps({"branches": branches}, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error listing memory repo branches: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_status(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_status(
+        repo_id: str,
+        branch_name: str | None = None,
+    ) -> str:
+        """Show branch workspace status against HEAD for a memory repo."""
+        try:
+            result = await memory.get_memory_repo_status(
+                repo_id,
+                branch_name=branch_name,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error getting memory repo status: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_log(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_log(
+        repo_id: str,
+        branch_name: str | None = None,
+        limit: int = 20,
+    ) -> str:
+        """Show commit history for a memory repo branch."""
+        try:
+            commits = await memory.get_memory_repo_log(
+                repo_id,
+                branch_name=branch_name,
+                limit=limit,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps({"commits": commits}, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error getting memory repo log: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_diff(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_diff(
+        repo_id: str,
+        from_commit_id: str | None = None,
+        to_commit_id: str | None = None,
+        from_branch: str | None = None,
+        to_branch: str | None = None,
+        include_workspace: bool = False,
+    ) -> str:
+        """Diff two commits, branch heads, or a branch head against the live workspace."""
+        try:
+            result = await memory.diff_memory_repo(
+                repo_id,
+                from_commit_id=from_commit_id,
+                to_commit_id=to_commit_id,
+                from_branch=from_branch,
+                to_branch=to_branch,
+                include_workspace=include_workspace,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error diffing memory repo: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_branch_create(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_branch_create(
+        repo_id: str,
+        branch_name: str,
+        from_commit_id: str | None = None,
+    ) -> str:
+        """Create a new branch in a memory repo."""
+        try:
+            result = await memory.create_memory_repo_branch(
+                repo_id,
+                branch_name=branch_name,
+                from_commit_id=from_commit_id,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error creating memory repo branch: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_checkout(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_checkout(
+        repo_id: str,
+        branch_name: str,
+    ) -> str:
+        """Checkout a branch into the active bank workspace."""
+        try:
+            result = await memory.checkout_memory_repo_branch(
+                repo_id,
+                branch_name=branch_name,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error checking out memory repo branch: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_commit(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_commit(
+        repo_id: str,
+        message: str,
+        actor: str | None = None,
+    ) -> str:
+        """Commit the active memory repo workspace."""
+        try:
+            result = await memory.commit_memory_repo(
+                repo_id,
+                message=message,
+                actor=actor,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error committing memory repo: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_reset_hard(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_reset_hard(
+        repo_id: str,
+        commit_id: str,
+        force: bool = False,
+    ) -> str:
+        """Reset the active branch workspace to a specific commit."""
+        try:
+            result = await memory.reset_memory_repo_hard(
+                repo_id,
+                commit_id=commit_id,
+                force=force,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error resetting memory repo: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
 
 
 def _register_clear_memories(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:

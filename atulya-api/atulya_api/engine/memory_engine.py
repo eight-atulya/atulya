@@ -164,6 +164,11 @@ _PROTECTED_TABLES = frozenset(
         "pattern_library",
         "entity_trajectories",
         "entity_intelligence",
+        "memory_repos",
+        "memory_refs",
+        "memory_commits",
+        "memory_objects",
+        "memory_workspaces",
     ]
 )
 
@@ -890,6 +895,9 @@ class MemoryEngine(MemoryEngineInterface):
         self._graph_intelligence_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._graph_summary_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
         self._graph_neighborhood_cache: dict[str, tuple[datetime, dict[str, Any]]] = {}
+        from .memory_repos import MemoryRepoService
+
+        self._memory_repo_service = MemoryRepoService(self)
 
     @property
     def tenant_extension(self) -> "TenantExtension | None":
@@ -3941,6 +3949,7 @@ class MemoryEngine(MemoryEngineInterface):
         reflect_result = await self.reflect_async(
             bank_id=bank_id,
             query=query,
+            branch_name=task_dict.get("branch_name"),
             budget=budget,
             max_tokens=int(task_dict.get("max_tokens", 4096)),
             response_schema=task_dict.get("response_schema"),
@@ -6140,6 +6149,7 @@ class MemoryEngine(MemoryEngineInterface):
         bank_id: str,
         query: str,
         *,
+        branch_name: str | None = None,
         budget: Budget | None = None,
         max_tokens: int = 4096,
         enable_trace: bool = False,
@@ -6241,6 +6251,8 @@ class MemoryEngine(MemoryEngineInterface):
             )
             await self._validate_operation(self._operation_validator.validate_recall(ctx))
 
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
+
         # Map budget enum to thinking_budget number (default to MID if None)
         budget_mapping = {Budget.LOW: 100, Budget.MID: 300, Budget.HIGH: 1000}
         effective_budget = budget if budget is not None else Budget.MID
@@ -6259,6 +6271,8 @@ class MemoryEngine(MemoryEngineInterface):
         recall_span_context = tracer.start_as_current_span("atulya.recall")
         recall_span = recall_span_context.__enter__()
         recall_span.set_attribute("atulya.bank_id", bank_id)
+        if branch_name:
+            recall_span.set_attribute("atulya.branch_name", branch_name)
         recall_span.set_attribute("atulya.query", query[:100])
         recall_span.set_attribute("atulya.fact_types", ",".join(fact_type))
         recall_span.set_attribute("atulya.thinking_budget", thinking_budget)
@@ -6276,7 +6290,7 @@ class MemoryEngine(MemoryEngineInterface):
                 for attempt in range(max_retries + 1):
                     try:
                         result = await self._search_with_retries(
-                            bank_id,
+                            read_bank_id,
                             query,
                             fact_type,
                             thinking_budget,
@@ -6399,7 +6413,7 @@ class MemoryEngine(MemoryEngineInterface):
                     logger.warning(f"Post-recall hook error (non-fatal): {e}")
 
             if _record_access_telemetry:
-                await self._record_access_telemetry(bank_id=bank_id, result=result)
+                await self._record_access_telemetry(bank_id=read_bank_id, result=result)
             return result
         finally:
             recall_span_context.__exit__(None, None, None)
@@ -7471,6 +7485,7 @@ class MemoryEngine(MemoryEngineInterface):
         document_id: str,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any] | None:
         """
@@ -7490,6 +7505,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="get_document", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
             doc = await conn.fetchrow(
@@ -7502,7 +7518,7 @@ class MemoryEngine(MemoryEngineInterface):
                 GROUP BY d.id, d.bank_id, d.original_text, d.content_hash, d.created_at, d.updated_at, d.tags
                 """,
                 document_id,
-                bank_id,
+                read_bank_id,
             )
 
             if not doc:
@@ -7725,6 +7741,9 @@ class MemoryEngine(MemoryEngineInterface):
                         result = {"memory_units_deleted": units_count, "entities_deleted": 0}
                     else:
                         # Delete all data for the bank — observations are included, no invalidation needed
+                        hidden_workspace_banks = await self._memory_repo_service.cleanup_repo_for_bank(conn, bank_id)
+                        for hidden_bank_id in hidden_workspace_banks:
+                            await self._memory_repo_service._delete_bank_contents(conn, hidden_bank_id)
                         units_count = await conn.fetchval(
                             f"SELECT COUNT(*) FROM {fq_table('memory_units')} WHERE bank_id = $1", bank_id
                         )
@@ -9265,6 +9284,7 @@ class MemoryEngine(MemoryEngineInterface):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         fact_type: str | None = None,
         search_query: str | None = None,
         limit: int = 100,
@@ -9291,6 +9311,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="list_memory_units", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
             # Build query conditions
@@ -9301,7 +9322,7 @@ class MemoryEngine(MemoryEngineInterface):
             if bank_id:
                 param_count += 1
                 query_conditions.append(f"bank_id = ${param_count}")
-                query_params.append(bank_id)
+                query_params.append(read_bank_id)
 
             if fact_type:
                 param_count += 1
@@ -9418,6 +9439,8 @@ class MemoryEngine(MemoryEngineInterface):
         self,
         bank_id: str,
         memory_id: str,
+        *,
+        branch_name: str | None = None,
         request_context: "RequestContext",
     ):
         """
@@ -9437,6 +9460,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="get_memory_unit", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
             # Get the memory unit (include source_memory_ids for mental models)
@@ -9451,7 +9475,7 @@ class MemoryEngine(MemoryEngineInterface):
                 WHERE id = $1 AND bank_id = $2
                 """,
                 memory_id,
-                bank_id,
+                read_bank_id,
             )
 
             if not row:
@@ -9651,6 +9675,7 @@ class MemoryEngine(MemoryEngineInterface):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         search_query: str | None = None,
         tags: list[str] | None = None,
         tags_match: "TagsMatch" = "any_strict",
@@ -9679,6 +9704,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="list_documents", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
             # Build query conditions
@@ -9688,7 +9714,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             param_count += 1
             query_conditions.append(f"bank_id = ${param_count}")
-            query_params.append(bank_id)
+            query_params.append(read_bank_id)
 
             if search_query:
                 # Search in document ID
@@ -9855,6 +9881,7 @@ class MemoryEngine(MemoryEngineInterface):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """
@@ -9874,11 +9901,12 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="get_bank_profile", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
-        profile = await bank_utils.get_bank_profile(pool, bank_id)
+        profile = await bank_utils.get_bank_profile(pool, read_bank_id)
 
         # reflect_mission and disposition in config take precedence over the legacy DB columns
-        config_dict = await self._config_resolver.get_bank_config(bank_id, request_context)
+        config_dict = await self._config_resolver.get_bank_config(read_bank_id, request_context)
         mission = config_dict.get("reflect_mission") or profile["mission"]
 
         # Overlay disposition from config if explicitly set; fall back to DB values
@@ -10008,6 +10036,281 @@ class MemoryEngine(MemoryEngineInterface):
             banks = result.banks
         return banks
 
+    async def _get_memory_repo_root_bank_id(self, repo_id: str) -> str:
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            row = await conn.fetchrow(
+                f"SELECT root_bank_id FROM {fq_table('memory_repos')} WHERE id = $1",
+                uuid.UUID(repo_id),
+            )
+            if not row:
+                raise ValueError(f"Repo not found: {repo_id}")
+            return str(row["root_bank_id"])
+
+    async def _resolve_repo_read_bank_id(self, bank_id: str, branch_name: str | None) -> str:
+        if not branch_name:
+            return bank_id
+        return await self._memory_repo_service.resolve_workspace_bank_id_for_bank_branch(bank_id, branch_name)
+
+    async def list_memory_repos(
+        self,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        await self._authenticate_tenant(request_context)
+        return await self._memory_repo_service.list_repos()
+
+    async def get_memory_repo(
+        self,
+        repo_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=root_bank_id, operation="get_memory_repo", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.get_repo(repo_id)
+
+    async def get_memory_repo_for_bank(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any] | None:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=bank_id,
+                operation="get_memory_repo_for_bank",
+                request_context=request_context,
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.get_repo_for_bank(bank_id)
+
+    async def create_memory_repo(
+        self,
+        *,
+        bank_id: str,
+        repo_name: str | None = None,
+        source_bank_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(bank_id=bank_id, operation="create_memory_repo", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        return await self._memory_repo_service.create_repo(
+            bank_id=bank_id,
+            repo_name=repo_name,
+            source_bank_id=source_bank_id,
+            request_context=request_context,
+        )
+
+    async def enable_memory_repo(
+        self,
+        bank_id: str,
+        *,
+        repo_name: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(bank_id=bank_id, operation="enable_memory_repo", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        return await self._memory_repo_service.enable_repo(
+            bank_id=bank_id,
+            repo_name=repo_name,
+            request_context=request_context,
+        )
+
+    async def list_memory_repo_branches(
+        self,
+        repo_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=root_bank_id, operation="list_memory_repo_branches", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.list_branches(repo_id)
+
+    async def list_memory_repo_branches_for_bank(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=bank_id,
+                operation="list_memory_repo_branches_for_bank",
+                request_context=request_context,
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.list_branches_for_bank(bank_id)
+
+    async def create_memory_repo_branch(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str,
+        from_commit_id: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(
+                bank_id=root_bank_id, operation="create_memory_repo_branch", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        return await self._memory_repo_service.create_branch(
+            repo_id,
+            branch_name=branch_name,
+            from_commit_id=from_commit_id,
+        )
+
+    async def checkout_memory_repo_branch(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(
+                bank_id=root_bank_id, operation="checkout_memory_repo_branch", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        return await self._memory_repo_service.checkout(repo_id, branch_name=branch_name)
+
+    async def commit_memory_repo(
+        self,
+        repo_id: str,
+        *,
+        message: str,
+        actor: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(
+                bank_id=root_bank_id, operation="commit_memory_repo", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        return await self._memory_repo_service.commit(repo_id, message=message, actor=actor)
+
+    async def get_memory_repo_status(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=root_bank_id, operation="get_memory_repo_status", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.get_status(repo_id, branch_name=branch_name)
+
+    async def get_memory_repo_log(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str | None = None,
+        limit: int = 50,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(
+                bank_id=root_bank_id, operation="get_memory_repo_log", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.get_log(repo_id, branch_name=branch_name, limit=limit)
+
+    async def diff_memory_repo(
+        self,
+        repo_id: str,
+        *,
+        from_commit_id: str | None = None,
+        to_commit_id: str | None = None,
+        from_branch: str | None = None,
+        to_branch: str | None = None,
+        include_workspace: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=root_bank_id, operation="diff_memory_repo", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        return await self._memory_repo_service.diff(
+            repo_id,
+            from_commit_id=from_commit_id,
+            to_commit_id=to_commit_id,
+            from_branch=from_branch,
+            to_branch=to_branch,
+            include_workspace=include_workspace,
+        )
+
+    async def reset_memory_repo_hard(
+        self,
+        repo_id: str,
+        *,
+        commit_id: str,
+        force: bool = False,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankWriteContext
+
+            ctx = BankWriteContext(
+                bank_id=root_bank_id, operation="reset_memory_repo_hard", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
+        return await self._memory_repo_service.reset_hard(repo_id, commit_id=commit_id, force=force)
+
     # ==================== Reflect Methods ====================
 
     async def reflect_async(
@@ -10015,6 +10318,7 @@ class MemoryEngine(MemoryEngineInterface):
         bank_id: str,
         query: str,
         *,
+        branch_name: str | None = None,
         budget: Budget | None = None,
         context: str | None = None,
         max_tokens: int = 4096,
@@ -10077,19 +10381,21 @@ class MemoryEngine(MemoryEngineInterface):
             )
             await self._validate_operation(self._operation_validator.validate_reflect(ctx))
 
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
+
         reflect_start = time.time()
         reflect_id = f"{bank_id[:8]}-{int(time.time() * 1000) % 100000}"
         tags_info = f", tags={tags} ({tags_match})" if tags else ""
         logger.info(f"[REFLECT {reflect_id}] Starting agentic reflect for query: {query[:50]}...{tags_info}")
 
         # Get bank profile for agent identity
-        profile = await self.get_bank_profile(bank_id, request_context=request_context)
+        profile = await self.get_bank_profile(bank_id, branch_name=branch_name, request_context=request_context)
 
         # NOTE: Mental models are NOT pre-loaded to keep the initial prompt small.
         # The agent can call lookup() to list available models if needed.
         # This is critical for banks with many mental models to avoid huge prompts.
 
-        resolved_reflect_config = await self._config_resolver.resolve_full_config(bank_id, request_context)
+        resolved_reflect_config = await self._config_resolver.resolve_full_config(read_bank_id, request_context)
 
         # Compute max iterations based on budget
         config = get_config()
@@ -10105,7 +10411,7 @@ class MemoryEngine(MemoryEngineInterface):
         pool = await self._get_pool()
 
         # Get bank stats for freshness info
-        bank_stats = await self.get_bank_stats(bank_id, request_context=request_context)
+        bank_stats = await self.get_bank_stats(bank_id, branch_name=branch_name, request_context=request_context)
         last_consolidated_at = bank_stats.last_consolidated_at if hasattr(bank_stats, "last_consolidated_at") else None
         pending_consolidation = bank_stats.pending_consolidation if hasattr(bank_stats, "pending_consolidation") else 0
 
@@ -10119,7 +10425,7 @@ class MemoryEngine(MemoryEngineInterface):
             async with pool.acquire() as conn:
                 return await tool_search_mental_models(
                     conn,
-                    bank_id,
+                    read_bank_id,
                     q,
                     query_embedding,
                     max_results=max_results,
@@ -10136,6 +10442,7 @@ class MemoryEngine(MemoryEngineInterface):
                 bank_id,
                 q,
                 request_context,
+                branch_name=branch_name,
                 max_tokens=max_tokens,
                 tags=tags,
                 tags_match=tags_match,
@@ -10150,6 +10457,7 @@ class MemoryEngine(MemoryEngineInterface):
                 bank_id,
                 q,
                 request_context,
+                branch_name=branch_name,
                 max_tokens=max_tokens,
                 tags=tags,
                 tags_match=tags_match,
@@ -10159,7 +10467,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         async def expand_fn(memory_ids: list[str], depth: str) -> dict[str, Any]:
             async with pool.acquire() as conn:
-                return await tool_expand(conn, bank_id, memory_ids, depth)
+                return await tool_expand(conn, read_bank_id, memory_ids, depth)
 
         # Load directives from the dedicated directives table
         # Directives are hard rules that must be followed in all responses
@@ -10167,6 +10475,7 @@ class MemoryEngine(MemoryEngineInterface):
         # Use the same tags_match as the reflect request so directives respect the same scoping rules
         directives_raw = await self.list_directives(
             bank_id=bank_id,
+            branch_name=branch_name,
             tags=tags,
             tags_match=tags_match,
             active_only=True,
@@ -10181,7 +10490,7 @@ class MemoryEngine(MemoryEngineInterface):
         async with pool.acquire() as conn:
             mental_model_count = await conn.fetchval(
                 f"SELECT COUNT(*) FROM {fq_table('mental_models')} WHERE bank_id = $1",
-                bank_id,
+                read_bank_id,
             )
         has_mental_models = mental_model_count > 0
         if has_mental_models:
@@ -10707,6 +11016,7 @@ class MemoryEngine(MemoryEngineInterface):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """Get statistics about memory nodes and links for a bank."""
@@ -10716,6 +11026,7 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="get_bank_stats", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
 
         async with acquire_with_retry(pool) as conn:
@@ -10727,7 +11038,7 @@ class MemoryEngine(MemoryEngineInterface):
                 WHERE bank_id = $1
                 GROUP BY fact_type
                 """,
-                bank_id,
+                read_bank_id,
             )
 
             # Single query for all link stats — avoids triple join on memory_links (can be 21M+ rows).
@@ -10740,7 +11051,7 @@ class MemoryEngine(MemoryEngineInterface):
                 WHERE mu.bank_id = $1
                 GROUP BY mu.fact_type, ml.link_type
                 """,
-                bank_id,
+                read_bank_id,
             )
 
             link_counts: dict[str, int] = {}
@@ -10758,11 +11069,11 @@ class MemoryEngine(MemoryEngineInterface):
                 WHERE bank_id = $1
                 GROUP BY status
                 """,
-                bank_id,
+                read_bank_id,
             )
             doc_count_row = await conn.fetchrow(
                 f"SELECT COUNT(*) as count FROM {fq_table('documents')} WHERE bank_id = $1",
-                bank_id,
+                read_bank_id,
             )
             consolidation_row = await conn.fetchrow(
                 f"""
@@ -10772,7 +11083,7 @@ class MemoryEngine(MemoryEngineInterface):
                 FROM {fq_table("memory_units")}
                 WHERE bank_id = $1
                 """,
-                bank_id,
+                read_bank_id,
             )
 
             node_counts = {row["fact_type"]: row["count"] for row in node_stats}
@@ -12018,6 +12329,7 @@ class MemoryEngine(MemoryEngineInterface):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         tags: list[str] | None = None,
         tags_match: str = "any",
         active_only: bool = True,
@@ -12049,12 +12361,13 @@ class MemoryEngine(MemoryEngineInterface):
 
             ctx = BankReadContext(bank_id=bank_id, operation="list_directives", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+        read_bank_id = await self._resolve_repo_read_bank_id(bank_id, branch_name)
         pool = await self._get_pool()
 
         async with acquire_with_retry(pool) as conn:
             # Build filters
             filters = ["bank_id = $1"]
-            params: list[Any] = [bank_id]
+            params: list[Any] = [read_bank_id]
             param_idx = 2
 
             if active_only:
@@ -15662,6 +15975,7 @@ class MemoryEngine(MemoryEngineInterface):
         bank_id: str,
         *,
         query: str,
+        branch_name: str | None = None,
         budget: Budget | None = None,
         max_tokens: int = 4096,
         include_facts: bool = False,
@@ -15689,6 +16003,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         task_payload: dict[str, Any] = {
             "query": query,
+            "branch_name": branch_name,
             "budget": budget.value if budget else None,
             "max_tokens": max_tokens,
             "include_facts": include_facts,
@@ -15713,6 +16028,7 @@ class MemoryEngine(MemoryEngineInterface):
             task_payload=task_payload,
             result_metadata={
                 "query_preview": f"{query[:117]}..." if len(query) > 120 else query,
+                "branch_name": branch_name,
                 "budget": budget.value if budget else None,
                 "max_tokens": max_tokens,
                 "include_facts": include_facts,

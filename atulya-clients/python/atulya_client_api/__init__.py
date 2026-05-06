@@ -26,6 +26,7 @@ __all__ = [
     "EntitiesApi",
     "FilesApi",
     "MemoryApi",
+    "MemoryReposApi",
     "MentalModelsApi",
     "MonitoringApi",
     "OperationsApi",
@@ -170,6 +171,19 @@ __all__ = [
     "MemoryItem",
     "MemoryItemObservationScopes",
     "MemoryItemTimestamp",
+    "MemoryRepoBranchCreateRequest",
+    "MemoryRepoBranchesResponse",
+    "MemoryRepoCheckoutRequest",
+    "MemoryRepoCommitRequest",
+    "MemoryRepoCreateRequest",
+    "MemoryRepoDiffResponse",
+    "MemoryRepoEnableRequest",
+    "MemoryRepoListResponse",
+    "MemoryRepoLogResponse",
+    "MemoryRepoLookupResponse",
+    "MemoryRepoResetHardRequest",
+    "MemoryRepoStatusResponse",
+    "MemoryRepoSummaryResponse",
     "MentalModelListResponse",
     "MentalModelResponse",
     "MentalModelTrigger",
@@ -241,6 +255,7 @@ from atulya_client_api.api.documents_api import DocumentsApi as DocumentsApi
 from atulya_client_api.api.entities_api import EntitiesApi as EntitiesApi
 from atulya_client_api.api.files_api import FilesApi as FilesApi
 from atulya_client_api.api.memory_api import MemoryApi as MemoryApi
+from atulya_client_api.api.memory_repos_api import MemoryReposApi as MemoryReposApi
 from atulya_client_api.api.mental_models_api import MentalModelsApi as MentalModelsApi
 from atulya_client_api.api.monitoring_api import MonitoringApi as MonitoringApi
 from atulya_client_api.api.operations_api import OperationsApi as OperationsApi
@@ -389,6 +404,19 @@ from atulya_client_api.models.list_tags_response import ListTagsResponse as List
 from atulya_client_api.models.memory_item import MemoryItem as MemoryItem
 from atulya_client_api.models.memory_item_observation_scopes import MemoryItemObservationScopes as MemoryItemObservationScopes
 from atulya_client_api.models.memory_item_timestamp import MemoryItemTimestamp as MemoryItemTimestamp
+from atulya_client_api.models.memory_repo_branch_create_request import MemoryRepoBranchCreateRequest as MemoryRepoBranchCreateRequest
+from atulya_client_api.models.memory_repo_branches_response import MemoryRepoBranchesResponse as MemoryRepoBranchesResponse
+from atulya_client_api.models.memory_repo_checkout_request import MemoryRepoCheckoutRequest as MemoryRepoCheckoutRequest
+from atulya_client_api.models.memory_repo_commit_request import MemoryRepoCommitRequest as MemoryRepoCommitRequest
+from atulya_client_api.models.memory_repo_create_request import MemoryRepoCreateRequest as MemoryRepoCreateRequest
+from atulya_client_api.models.memory_repo_diff_response import MemoryRepoDiffResponse as MemoryRepoDiffResponse
+from atulya_client_api.models.memory_repo_enable_request import MemoryRepoEnableRequest as MemoryRepoEnableRequest
+from atulya_client_api.models.memory_repo_list_response import MemoryRepoListResponse as MemoryRepoListResponse
+from atulya_client_api.models.memory_repo_log_response import MemoryRepoLogResponse as MemoryRepoLogResponse
+from atulya_client_api.models.memory_repo_lookup_response import MemoryRepoLookupResponse as MemoryRepoLookupResponse
+from atulya_client_api.models.memory_repo_reset_hard_request import MemoryRepoResetHardRequest as MemoryRepoResetHardRequest
+from atulya_client_api.models.memory_repo_status_response import MemoryRepoStatusResponse as MemoryRepoStatusResponse
+from atulya_client_api.models.memory_repo_summary_response import MemoryRepoSummaryResponse as MemoryRepoSummaryResponse
 from atulya_client_api.models.mental_model_list_response import MentalModelListResponse as MentalModelListResponse
 from atulya_client_api.models.mental_model_response import MentalModelResponse as MentalModelResponse
 from atulya_client_api.models.mental_model_trigger import MentalModelTrigger as MentalModelTrigger
@@ -449,3 +477,4 @@ from atulya_client_api.models.webhook_http_config import WebhookHttpConfig as We
 from atulya_client_api.models.webhook_list_response import WebhookListResponse as WebhookListResponse
 from atulya_client_api.models.webhook_response import WebhookResponse as WebhookResponse
 from atulya_client_api.models.worker_status_response import WorkerStatusResponse as WorkerStatusResponse
+

@@ -146,6 +146,10 @@ class RecallRequest(BaseModel):
     )
 
     query: str
+    branch_name: str | None = Field(
+        default=None,
+        description="Optional memory repo branch to query without checking it out.",
+    )
     types: list[str] | None = Field(
         default=None,
         description="List of fact types to recall: 'world', 'experience', 'observation'. Defaults to world and experience if not specified.",
@@ -1234,6 +1238,10 @@ class ReflectRequest(BaseModel):
     )
 
     query: str
+    branch_name: str | None = Field(
+        default=None,
+        description="Optional memory repo branch to query without checking it out.",
+    )
     budget: Budget = Budget.LOW
     context: str | None = Field(
         default=None,
@@ -1738,6 +1746,83 @@ class BankConfigResponse(BaseModel):
         description="Fully resolved configuration with all hierarchical overrides applied (Python field names)"
     )
     overrides: dict[str, Any] = Field(description="Bank-specific configuration overrides only (Python field names)")
+
+
+class MemoryRepoCreateRequest(BaseModel):
+    bank_id: str = Field(description="Root bank ID that will become the repo working tree")
+    repo_name: str | None = Field(default=None, description="Optional display name for the repo")
+    source_bank_id: str | None = Field(default=None, description="Optional source bank to clone into the root bank")
+
+
+class MemoryRepoEnableRequest(BaseModel):
+    repo_name: str | None = Field(default=None, description="Optional display name for the repo")
+
+
+class MemoryRepoBranchCreateRequest(BaseModel):
+    branch_name: str = Field(description="Branch name to create")
+    from_commit_id: str | None = Field(default=None, description="Optional commit to branch from")
+
+
+class MemoryRepoCheckoutRequest(BaseModel):
+    branch_name: str = Field(description="Branch to checkout")
+
+
+class MemoryRepoCommitRequest(BaseModel):
+    message: str = Field(description="Commit message")
+    actor: str | None = Field(default=None, description="Optional actor label")
+
+
+class MemoryRepoResetHardRequest(BaseModel):
+    commit_id: str = Field(description="Commit to reset the active branch to")
+    force: bool = Field(default=False, description="Allow reset even when the workspace is dirty")
+
+
+class MemoryRepoSummaryResponse(BaseModel):
+    repo_id: str
+    root_bank_id: str
+    name: str
+    active_branch: str
+    head_commit_id: str | None = None
+    head_message: str | None = None
+    head_created_at: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    branches: list[dict[str, Any]] | None = None
+
+
+class MemoryRepoListResponse(BaseModel):
+    repos: list[MemoryRepoSummaryResponse]
+
+
+class MemoryRepoLookupResponse(BaseModel):
+    repo: MemoryRepoSummaryResponse | None = None
+
+
+class MemoryRepoBranchesResponse(BaseModel):
+    branches: list[dict[str, Any]]
+
+
+class MemoryRepoStatusResponse(BaseModel):
+    repo_id: str
+    branch_name: str
+    workspace_bank_id: str
+    head_commit_id: str | None = None
+    dirty: bool
+    changed_components: list[str]
+    table_deltas: dict[str, dict[str, int]]
+
+
+class MemoryRepoDiffResponse(BaseModel):
+    repo_id: str
+    from_ref: str
+    to_ref: str
+    dirty: bool
+    changed_components: list[str]
+    table_deltas: dict[str, dict[str, int]]
+
+
+class MemoryRepoLogResponse(BaseModel):
+    commits: list[dict[str, Any]]
 
 
 class DreamSubmitRequest(BaseModel):
@@ -3616,6 +3701,7 @@ def _register_routes(app: FastAPI):
         bank_id: str,
         type: str | None = None,
         q: str | None = None,
+        branch_name: str | None = None,
         limit: int = 100,
         offset: int = 0,
         request_context: RequestContext = Depends(get_request_context),
@@ -3636,6 +3722,7 @@ def _register_routes(app: FastAPI):
         try:
             data = await app.state.memory.list_memory_units(
                 bank_id=bank_id,
+                branch_name=branch_name,
                 fact_type=type,
                 search_query=q,
                 limit=limit,
@@ -3664,6 +3751,7 @@ def _register_routes(app: FastAPI):
     async def api_get_memory(
         bank_id: str,
         memory_id: str,
+        branch_name: str | None = None,
         request_context: RequestContext = Depends(get_request_context),
     ):
         """Get a single memory unit by ID."""
@@ -3671,6 +3759,7 @@ def _register_routes(app: FastAPI):
             data = await app.state.memory.get_memory_unit(
                 bank_id=bank_id,
                 memory_id=memory_id,
+                branch_name=branch_name,
                 request_context=request_context,
             )
             if data is None:
@@ -3787,6 +3876,7 @@ def _register_routes(app: FastAPI):
                 recall_start = time.time()
                 core_result = await app.state.memory.recall_async(
                     bank_id=bank_id,
+                    branch_name=request.branch_name,
                     query=request.query,
                     budget=request.budget,
                     max_tokens=request.max_tokens,
@@ -3928,6 +4018,7 @@ def _register_routes(app: FastAPI):
             with metrics.record_operation("reflect", bank_id=bank_id, source="api", budget=request.budget.value):
                 core_result = await app.state.memory.reflect_async(
                     bank_id=bank_id,
+                    branch_name=request.branch_name,
                     query=query,
                     budget=request.budget,
                     context=None,  # Deprecated, now concatenated with query
@@ -4047,6 +4138,7 @@ def _register_routes(app: FastAPI):
             result = await app.state.memory.submit_async_reflect(
                 bank_id=bank_id,
                 query=query,
+                branch_name=request.branch_name,
                 budget=request.budget,
                 max_tokens=request.max_tokens,
                 include_facts=request.include.facts is not None,
@@ -4092,6 +4184,434 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in /v1/default/banks: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/repos",
+        response_model=MemoryRepoSummaryResponse,
+        summary="Create a memory repo",
+        description="Create an opt-in git-like memory repo rooted at a bank, optionally cloning from another bank first.",
+        operation_id="create_memory_repo",
+        tags=["Memory Repos"],
+    )
+    async def api_create_memory_repo(
+        request: MemoryRepoCreateRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            repo = await app.state.memory.create_memory_repo(
+                bank_id=request.bank_id,
+                repo_name=request.repo_name,
+                source_bank_id=request.source_bank_id,
+                request_context=request_context,
+            )
+            return MemoryRepoSummaryResponse.model_validate(repo)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/repos: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/repos",
+        response_model=MemoryRepoListResponse,
+        summary="List memory repos",
+        operation_id="list_memory_repos",
+        tags=["Memory Repos"],
+    )
+    async def api_list_memory_repos(request_context: RequestContext = Depends(get_request_context)):
+        try:
+            repos = await app.state.memory.list_memory_repos(request_context=request_context)
+            return MemoryRepoListResponse(repos=[MemoryRepoSummaryResponse.model_validate(repo) for repo in repos])
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/repos: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/repo",
+        response_model=MemoryRepoLookupResponse,
+        summary="Get memory repo for a bank",
+        operation_id="get_memory_repo_for_bank",
+        tags=["Memory Repos"],
+    )
+    async def api_get_memory_repo_for_bank(
+        bank_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            repo = await app.state.memory.get_memory_repo_for_bank(bank_id, request_context=request_context)
+            return MemoryRepoLookupResponse(
+                repo=MemoryRepoSummaryResponse.model_validate(repo) if repo is not None else None
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/banks/{bank_id}/repo: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/repos/{repo_id}",
+        response_model=MemoryRepoSummaryResponse,
+        summary="Get memory repo summary",
+        operation_id="get_memory_repo",
+        tags=["Memory Repos"],
+    )
+    async def api_get_memory_repo(repo_id: str, request_context: RequestContext = Depends(get_request_context)):
+        try:
+            repo = await app.state.memory.get_memory_repo(repo_id, request_context=request_context)
+            return MemoryRepoSummaryResponse.model_validate(repo)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/repos/{repo_id}: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/repos/enable",
+        response_model=MemoryRepoSummaryResponse,
+        summary="Enable repo mode on a bank",
+        operation_id="enable_memory_repo",
+        tags=["Memory Repos"],
+    )
+    async def api_enable_memory_repo(
+        bank_id: str,
+        request: MemoryRepoEnableRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            repo = await app.state.memory.enable_memory_repo(
+                bank_id,
+                repo_name=request.repo_name,
+                request_context=request_context,
+            )
+            return MemoryRepoSummaryResponse.model_validate(repo)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/banks/{bank_id}/repos/enable: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/repo/branches",
+        response_model=MemoryRepoBranchesResponse,
+        summary="List memory repo branches for a bank",
+        operation_id="list_memory_repo_branches_for_bank",
+        tags=["Memory Repos"],
+    )
+    async def api_list_memory_repo_branches_for_bank(
+        bank_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            branches = await app.state.memory.list_memory_repo_branches_for_bank(
+                bank_id,
+                request_context=request_context,
+            )
+            return MemoryRepoBranchesResponse(branches=branches)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/banks/{bank_id}/repo/branches: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/repos/{repo_id}/branches",
+        response_model=MemoryRepoBranchesResponse,
+        summary="List memory repo branches",
+        operation_id="list_memory_repo_branches",
+        tags=["Memory Repos"],
+    )
+    async def api_list_memory_repo_branches(
+        repo_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            branches = await app.state.memory.list_memory_repo_branches(repo_id, request_context=request_context)
+            return MemoryRepoBranchesResponse(branches=branches)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/repos/{repo_id}/branches: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/repos/{repo_id}/branches",
+        response_model=dict,
+        summary="Create memory repo branch",
+        operation_id="create_memory_repo_branch",
+        tags=["Memory Repos"],
+    )
+    async def api_create_memory_repo_branch(
+        repo_id: str,
+        request: MemoryRepoBranchCreateRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            return await app.state.memory.create_memory_repo_branch(
+                repo_id,
+                branch_name=request.branch_name,
+                from_commit_id=request.from_commit_id,
+                request_context=request_context,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/repos/{repo_id}/branches: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/repos/{repo_id}/checkout",
+        response_model=MemoryRepoSummaryResponse,
+        summary="Checkout memory repo branch",
+        operation_id="checkout_memory_repo_branch",
+        tags=["Memory Repos"],
+    )
+    async def api_checkout_memory_repo_branch(
+        repo_id: str,
+        request: MemoryRepoCheckoutRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            repo = await app.state.memory.checkout_memory_repo_branch(
+                repo_id,
+                branch_name=request.branch_name,
+                request_context=request_context,
+            )
+            return MemoryRepoSummaryResponse.model_validate(repo)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/repos/{repo_id}/checkout: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/repos/{repo_id}/commit",
+        response_model=dict,
+        summary="Commit active memory repo workspace",
+        operation_id="commit_memory_repo",
+        tags=["Memory Repos"],
+    )
+    async def api_commit_memory_repo(
+        repo_id: str,
+        request: MemoryRepoCommitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            return await app.state.memory.commit_memory_repo(
+                repo_id,
+                message=request.message,
+                actor=request.actor,
+                request_context=request_context,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/repos/{repo_id}/commit: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/repos/{repo_id}/status",
+        response_model=MemoryRepoStatusResponse,
+        summary="Get memory repo status",
+        operation_id="get_memory_repo_status",
+        tags=["Memory Repos"],
+    )
+    async def api_get_memory_repo_status(
+        repo_id: str,
+        branch_name: str | None = None,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            status = await app.state.memory.get_memory_repo_status(
+                repo_id,
+                branch_name=branch_name,
+                request_context=request_context,
+            )
+            return MemoryRepoStatusResponse.model_validate(status)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/repos/{repo_id}/status: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/repos/{repo_id}/log",
+        response_model=MemoryRepoLogResponse,
+        summary="Get memory repo commit log",
+        operation_id="get_memory_repo_log",
+        tags=["Memory Repos"],
+    )
+    async def api_get_memory_repo_log(
+        repo_id: str,
+        branch_name: str | None = None,
+        limit: int = 50,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            commits = await app.state.memory.get_memory_repo_log(
+                repo_id,
+                branch_name=branch_name,
+                limit=limit,
+                request_context=request_context,
+            )
+            return MemoryRepoLogResponse(commits=commits)
+        except ValueError as e:
+            raise HTTPException(status_code=404, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/repos/{repo_id}/log: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/repos/{repo_id}/diff",
+        response_model=MemoryRepoDiffResponse,
+        summary="Diff memory repo commits, branches, or workspace",
+        operation_id="diff_memory_repo",
+        tags=["Memory Repos"],
+    )
+    async def api_diff_memory_repo(
+        repo_id: str,
+        from_commit_id: str | None = None,
+        to_commit_id: str | None = None,
+        from_branch: str | None = None,
+        to_branch: str | None = None,
+        include_workspace: bool = False,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            diff = await app.state.memory.diff_memory_repo(
+                repo_id,
+                from_commit_id=from_commit_id,
+                to_commit_id=to_commit_id,
+                from_branch=from_branch,
+                to_branch=to_branch,
+                include_workspace=include_workspace,
+                request_context=request_context,
+            )
+            return MemoryRepoDiffResponse.model_validate(diff)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in GET /v1/default/repos/{repo_id}/diff: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/repos/{repo_id}/reset-hard",
+        response_model=MemoryRepoStatusResponse,
+        summary="Reset active memory repo branch hard",
+        operation_id="reset_memory_repo_hard",
+        tags=["Memory Repos"],
+    )
+    async def api_reset_memory_repo_hard(
+        repo_id: str,
+        request: MemoryRepoResetHardRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            status = await app.state.memory.reset_memory_repo_hard(
+                repo_id,
+                commit_id=request.commit_id,
+                force=request.force,
+                request_context=request_context,
+            )
+            return MemoryRepoStatusResponse.model_validate(status)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/repos/{repo_id}/reset-hard: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.get(
@@ -4859,6 +5379,9 @@ def _register_routes(app: FastAPI):
         q: str | None = Query(
             None, description="Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')"
         ),
+        branch_name: str | None = Query(
+            None, description="Optional memory repo branch to inspect without checking it out."
+        ),
         tags: list[str] | None = Query(None, description="Filter documents by tags"),
         tags_match: str = Query(
             "any_strict", description="How to match tags: 'any', 'all', 'any_strict', 'all_strict'"
@@ -4881,6 +5404,7 @@ def _register_routes(app: FastAPI):
         try:
             data = await app.state.memory.list_documents(
                 bank_id=bank_id,
+                branch_name=branch_name,
                 search_query=q,
                 tags=tags,
                 tags_match=tags_match,
@@ -4909,7 +5433,10 @@ def _register_routes(app: FastAPI):
         tags=["Documents"],
     )
     async def api_get_document(
-        bank_id: str, document_id: str, request_context: RequestContext = Depends(get_request_context)
+        bank_id: str,
+        document_id: str,
+        branch_name: str | None = None,
+        request_context: RequestContext = Depends(get_request_context),
     ):
         """
         Get a specific document with its original text.
@@ -4919,7 +5446,12 @@ def _register_routes(app: FastAPI):
             document_id: Document ID (from path)
         """
         try:
-            document = await app.state.memory.get_document(document_id, bank_id, request_context=request_context)
+            document = await app.state.memory.get_document(
+                document_id,
+                bank_id,
+                branch_name=branch_name,
+                request_context=request_context,
+            )
             if not document:
                 raise HTTPException(status_code=404, detail="Document not found")
             return document

@@ -1077,6 +1077,596 @@ paths:
       summary: List all memory banks
       tags:
       - Banks
+  /v1/default/repos:
+    get:
+      operationId: list_memory_repos
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoListResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List memory repos
+      tags:
+      - Memory Repos
+    post:
+      description: "Create an opt-in git-like memory repo rooted at a bank, optionally\
+        \ cloning from another bank first."
+      operationId: create_memory_repo
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoCreateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Create a memory repo
+      tags:
+      - Memory Repos
+  /v1/default/banks/{bank_id}/repo:
+    get:
+      operationId: get_memory_repo_for_bank
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoLookupResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get memory repo for a bank
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}:
+    get:
+      operationId: get_memory_repo
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get memory repo summary
+      tags:
+      - Memory Repos
+  /v1/default/banks/{bank_id}/repos/enable:
+    post:
+      operationId: enable_memory_repo
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoEnableRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Enable repo mode on a bank
+      tags:
+      - Memory Repos
+  /v1/default/banks/{bank_id}/repo/branches:
+    get:
+      operationId: list_memory_repo_branches_for_bank
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoBranchesResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List memory repo branches for a bank
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/branches:
+    get:
+      operationId: list_memory_repo_branches
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoBranchesResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List memory repo branches
+      tags:
+      - Memory Repos
+    post:
+      operationId: create_memory_repo_branch
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoBranchCreateRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties: {}
+                title: Response Create Memory Repo Branch
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Create memory repo branch
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/checkout:
+    post:
+      operationId: checkout_memory_repo_branch
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoCheckoutRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Checkout memory repo branch
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/commit:
+    post:
+      operationId: commit_memory_repo
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoCommitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties: {}
+                title: Response Commit Memory Repo
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Commit active memory repo workspace
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/status:
+    get:
+      operationId: get_memory_repo_status
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: branch_name
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoStatusResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get memory repo status
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/log:
+    get:
+      operationId: get_memory_repo_log
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: branch_name
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          title: Limit
+          type: integer
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoLogResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get memory repo commit log
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/diff:
+    get:
+      operationId: diff_memory_repo
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: from_commit_id
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: to_commit_id
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: from_branch
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: to_branch
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: include_workspace
+        required: false
+        schema:
+          title: Include Workspace
+          type: boolean
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoDiffResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: "Diff memory repo commits, branches, or workspace"
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/reset-hard:
+    post:
+      operationId: reset_memory_repo_hard
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoResetHardRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoStatusResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Reset active memory repo branch hard
+      tags:
+      - Memory Repos
   /v1/default/banks/{bank_id}/stats:
     get:
       description: Get statistics about nodes and links for a specific agent
@@ -5615,8 +6205,7 @@ paths:
             application/json:
               schema:
                 items:
-                  additionalProperties: true
-                  type: object
+                  additionalProperties: {}
                 title: Response Admin List Tenant Banks
                 type: array
           description: Successful Response
@@ -11950,6 +12539,309 @@ components:
       required:
       - content
       title: MemoryItem
+    MemoryRepoBranchCreateRequest:
+      example:
+        from_commit_id: from_commit_id
+        branch_name: branch_name
+      properties:
+        branch_name:
+          description: Branch name to create
+          title: MemoryRepoBranchCreateRequestBranchName
+          type: string
+        from_commit_id:
+          nullable: true
+          type: string
+      required:
+      - branch_name
+      title: MemoryRepoBranchCreateRequest
+    MemoryRepoBranchesResponse:
+      example:
+        branches:
+        - key: ""
+        - key: ""
+      properties:
+        branches:
+          items:
+            additionalProperties: true
+            type: object
+          title: MemoryRepoBranchesResponseBranches
+          type: array
+      required:
+      - branches
+      title: MemoryRepoBranchesResponse
+    MemoryRepoCheckoutRequest:
+      example:
+        branch_name: branch_name
+      properties:
+        branch_name:
+          description: Branch to checkout
+          title: MemoryRepoCheckoutRequestBranchName
+          type: string
+      required:
+      - branch_name
+      title: MemoryRepoCheckoutRequest
+    MemoryRepoCommitRequest:
+      example:
+        actor: actor
+        message: message
+      properties:
+        message:
+          description: Commit message
+          title: MemoryRepoCommitRequestMessage
+          type: string
+        actor:
+          nullable: true
+          type: string
+      required:
+      - message
+      title: MemoryRepoCommitRequest
+    MemoryRepoCreateRequest:
+      example:
+        source_bank_id: source_bank_id
+        bank_id: bank_id
+        repo_name: repo_name
+      properties:
+        bank_id:
+          description: Root bank ID that will become the repo working tree
+          title: MemoryRepoCreateRequestBankId
+          type: string
+        repo_name:
+          nullable: true
+          type: string
+        source_bank_id:
+          nullable: true
+          type: string
+      required:
+      - bank_id
+      title: MemoryRepoCreateRequest
+    MemoryRepoDiffResponse:
+      example:
+        dirty: true
+        to_ref: to_ref
+        repo_id: repo_id
+        from_ref: from_ref
+        table_deltas:
+          key:
+            key: 0
+        changed_components:
+        - changed_components
+        - changed_components
+      properties:
+        repo_id:
+          title: MemoryRepoDiffResponseRepoId
+          type: string
+        from_ref:
+          title: MemoryRepoDiffResponseFromRef
+          type: string
+        to_ref:
+          title: MemoryRepoDiffResponseToRef
+          type: string
+        dirty:
+          title: MemoryRepoDiffResponseDirty
+          type: boolean
+        changed_components:
+          items:
+            type: string
+          title: MemoryRepoDiffResponseChangedComponents
+          type: array
+        table_deltas:
+          additionalProperties:
+            additionalProperties:
+              type: integer
+          title: MemoryRepoDiffResponseTableDeltas
+      required:
+      - changed_components
+      - dirty
+      - from_ref
+      - repo_id
+      - table_deltas
+      - to_ref
+      title: MemoryRepoDiffResponse
+    MemoryRepoEnableRequest:
+      example:
+        repo_name: repo_name
+      properties:
+        repo_name:
+          nullable: true
+          type: string
+      title: MemoryRepoEnableRequest
+    MemoryRepoListResponse:
+      example:
+        repos:
+        - active_branch: active_branch
+          head_commit_id: head_commit_id
+          updated_at: updated_at
+          repo_id: repo_id
+          head_created_at: head_created_at
+          head_message: head_message
+          name: name
+          root_bank_id: root_bank_id
+          created_at: created_at
+          branches:
+          - key: ""
+          - key: ""
+        - active_branch: active_branch
+          head_commit_id: head_commit_id
+          updated_at: updated_at
+          repo_id: repo_id
+          head_created_at: head_created_at
+          head_message: head_message
+          name: name
+          root_bank_id: root_bank_id
+          created_at: created_at
+          branches:
+          - key: ""
+          - key: ""
+      properties:
+        repos:
+          items:
+            $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          title: MemoryRepoListResponseRepos
+          type: array
+      required:
+      - repos
+      title: MemoryRepoListResponse
+    MemoryRepoLogResponse:
+      example:
+        commits:
+        - key: ""
+        - key: ""
+      properties:
+        commits:
+          items:
+            additionalProperties: true
+            type: object
+          title: MemoryRepoLogResponseCommits
+          type: array
+      required:
+      - commits
+      title: MemoryRepoLogResponse
+    MemoryRepoLookupResponse:
+      example:
+        repo: ""
+      properties:
+        repo:
+          allOf:
+          - $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          nullable: true
+      title: MemoryRepoLookupResponse
+    MemoryRepoResetHardRequest:
+      example:
+        force: true
+        commit_id: commit_id
+      properties:
+        commit_id:
+          description: Commit to reset the active branch to
+          title: MemoryRepoResetHardRequestCommitId
+          type: string
+        force:
+          description: Allow reset even when the workspace is dirty
+          title: MemoryRepoResetHardRequestForce
+          type: boolean
+      required:
+      - commit_id
+      title: MemoryRepoResetHardRequest
+    MemoryRepoStatusResponse:
+      example:
+        dirty: true
+        head_commit_id: head_commit_id
+        repo_id: repo_id
+        branch_name: branch_name
+        table_deltas:
+          key:
+            key: 0
+        workspace_bank_id: workspace_bank_id
+        changed_components:
+        - changed_components
+        - changed_components
+      properties:
+        repo_id:
+          title: MemoryRepoStatusResponseRepoId
+          type: string
+        branch_name:
+          title: MemoryRepoStatusResponseBranchName
+          type: string
+        workspace_bank_id:
+          title: MemoryRepoStatusResponseWorkspaceBankId
+          type: string
+        head_commit_id:
+          nullable: true
+          type: string
+        dirty:
+          title: MemoryRepoStatusResponseDirty
+          type: boolean
+        changed_components:
+          items:
+            type: string
+          title: MemoryRepoStatusResponseChangedComponents
+          type: array
+        table_deltas:
+          additionalProperties:
+            additionalProperties:
+              type: integer
+          title: MemoryRepoStatusResponseTableDeltas
+      required:
+      - branch_name
+      - changed_components
+      - dirty
+      - repo_id
+      - table_deltas
+      - workspace_bank_id
+      title: MemoryRepoStatusResponse
+    MemoryRepoSummaryResponse:
+      example:
+        active_branch: active_branch
+        head_commit_id: head_commit_id
+        updated_at: updated_at
+        repo_id: repo_id
+        head_created_at: head_created_at
+        head_message: head_message
+        name: name
+        root_bank_id: root_bank_id
+        created_at: created_at
+        branches:
+        - key: ""
+        - key: ""
+      properties:
+        repo_id:
+          title: MemoryRepoSummaryResponseRepoId
+          type: string
+        root_bank_id:
+          title: MemoryRepoSummaryResponseRootBankId
+          type: string
+        name:
+          title: MemoryRepoSummaryResponseName
+          type: string
+        active_branch:
+          title: MemoryRepoSummaryResponseActiveBranch
+          type: string
+        head_commit_id:
+          nullable: true
+          type: string
+        head_message:
+          nullable: true
+          type: string
+        head_created_at:
+          nullable: true
+          type: string
+        created_at:
+          nullable: true
+          type: string
+        updated_at:
+          nullable: true
+          type: string
+        branches:
+          items:
+            additionalProperties: true
+            type: object
+          nullable: true
+          type: array
+      required:
+      - active_branch
+      - name
+      - repo_id
+      - root_bank_id
+      title: MemoryRepoSummaryResponse
     MentalModelListResponse:
       description: Response model for listing mental models.
       example:

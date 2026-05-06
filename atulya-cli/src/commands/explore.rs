@@ -338,6 +338,7 @@ impl App {
                     QueryMode::Recall => {
                         let request = RecallRequest {
                             query: query_text,
+                            branch_name: None,
                             types: None,
                             budget: Some(query_budget),
                             max_tokens: Some(query_max_tokens),
@@ -358,6 +359,7 @@ impl App {
                     QueryMode::Reflect => {
                         let request = ReflectRequest {
                             query: query_text,
+                            branch_name: None,
                             budget: Some(query_budget),
                             context: None,
                             max_tokens: Some(4096),

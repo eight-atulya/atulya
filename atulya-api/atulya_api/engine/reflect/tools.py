@@ -130,6 +130,7 @@ async def tool_search_observations(
     bank_id: str,
     query: str,
     request_context: "RequestContext",
+    branch_name: str | None = None,
     max_tokens: int = 5000,
     tags: list[str] | None = None,
     tags_match: str = "any",
@@ -159,6 +160,7 @@ async def tool_search_observations(
     """
     result = await memory_engine.recall_async(
         bank_id=bank_id,
+        branch_name=branch_name,
         query=query,
         fact_type=["observation"],
         max_tokens=max_tokens,
@@ -197,6 +199,7 @@ async def tool_recall(
     bank_id: str,
     query: str,
     request_context: "RequestContext",
+    branch_name: str | None = None,
     max_tokens: int = 2048,
     tags: list[str] | None = None,
     tags_match: str = "any",
@@ -227,6 +230,7 @@ async def tool_recall(
     include_chunks = True
     result = await memory_engine.recall_async(
         bank_id=bank_id,
+        branch_name=branch_name,
         query=query,
         fact_type=["experience", "world"],
         max_tokens=max_tokens,

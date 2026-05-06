@@ -184,6 +184,60 @@ export interface DreamStats {
   unresolved_prediction_backlog: number;
 }
 
+export interface MemoryRepoBranchSummary {
+  branch_name: string;
+  workspace_bank_id: string;
+  is_active: boolean;
+  head_commit_id: string | null;
+  head_message: string | null;
+  head_created_at: string | null;
+  dirty: boolean;
+}
+
+export interface MemoryRepoSummary {
+  repo_id: string;
+  root_bank_id: string;
+  name: string;
+  active_branch: string;
+  head_commit_id: string | null;
+  head_message: string | null;
+  head_created_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
+  branches?: MemoryRepoBranchSummary[] | null;
+}
+
+export interface MemoryRepoStatus {
+  repo_id: string;
+  branch_name: string;
+  workspace_bank_id: string;
+  head_commit_id: string | null;
+  dirty: boolean;
+  changed_components: string[];
+  table_deltas: Record<string, { before: number; after: number; delta: number }>;
+}
+
+export interface MemoryRepoDiff {
+  repo_id: string;
+  from_ref: string;
+  to_ref: string;
+  dirty: boolean;
+  changed_components: string[];
+  table_deltas: Record<string, { before: number; after: number; delta: number }>;
+}
+
+export interface MemoryRepoCommitLogItem {
+  commit_id: string;
+  repo_id: string;
+  parent_commit_id: string | null;
+  branch_name: string;
+  message: string;
+  actor: string | null;
+  root_manifest_hash: string;
+  stats: Record<string, number>;
+  created_at: string | null;
+}
+
 function asNumber(value: unknown, fallback = 0): number {
   const numeric = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
@@ -1174,6 +1228,136 @@ export class ControlPlaneClient {
       body: JSON.stringify({
         bank_id: bankId,
         ...(options?.bankPreset ? { bank_preset: options.bankPreset } : {}),
+      }),
+    });
+  }
+
+  async getMemoryRepoForBank(bankId: string) {
+    return this.fetchApi<{ repo: MemoryRepoSummary | null }>(`/api/banks/${bankId}/repo`, {
+      cache: "no-store" as RequestCache,
+    });
+  }
+
+  async listMemoryRepoBranchesForBank(bankId: string) {
+    return this.fetchApi<{ branches: MemoryRepoBranchSummary[] }>(
+      `/api/banks/${bankId}/repo/branches`,
+      {
+        cache: "no-store" as RequestCache,
+      }
+    );
+  }
+
+  async enableMemoryRepo(bankId: string, repoName?: string) {
+    return this.fetchApi<MemoryRepoSummary>(`/api/banks/${bankId}/repo/enable`, {
+      method: "POST",
+      body: JSON.stringify(repoName ? { repo_name: repoName } : {}),
+    });
+  }
+
+  async listMemoryRepoBranches(repoId: string) {
+    return this.fetchApi<{ branches: MemoryRepoBranchSummary[] }>(`/api/repos/${repoId}/branches`, {
+      cache: "no-store" as RequestCache,
+    });
+  }
+
+  async createMemoryRepoBranch(
+    repoId: string,
+    params: {
+      branchName: string;
+      fromCommitId?: string;
+    }
+  ) {
+    return this.fetchApi<{
+      repo_id: string;
+      branch_name: string;
+      workspace_bank_id: string;
+      head_commit_id: string | null;
+    }>(`/api/repos/${repoId}/branches`, {
+      method: "POST",
+      body: JSON.stringify({
+        branch_name: params.branchName,
+        ...(params.fromCommitId ? { from_commit_id: params.fromCommitId } : {}),
+      }),
+    });
+  }
+
+  async checkoutMemoryRepo(repoId: string, branchName: string) {
+    return this.fetchApi<MemoryRepoSummary>(`/api/repos/${repoId}/checkout`, {
+      method: "POST",
+      body: JSON.stringify({ branch_name: branchName }),
+    });
+  }
+
+  async commitMemoryRepo(repoId: string, params: { message: string; actor?: string }) {
+    return this.fetchApi<MemoryRepoCommitLogItem>(`/api/repos/${repoId}/commit`, {
+      method: "POST",
+      body: JSON.stringify({
+        message: params.message,
+        ...(params.actor ? { actor: params.actor } : {}),
+      }),
+    });
+  }
+
+  async getMemoryRepoStatus(repoId: string, branchName?: string) {
+    const query = branchName
+      ? `?${new URLSearchParams({ branch_name: branchName }).toString()}`
+      : "";
+    return this.fetchApi<MemoryRepoStatus>(`/api/repos/${repoId}/status${query}`, {
+      cache: "no-store" as RequestCache,
+    });
+  }
+
+  async getMemoryRepoLog(
+    repoId: string,
+    options?: {
+      branchName?: string;
+      limit?: number;
+    }
+  ) {
+    const params = new URLSearchParams();
+    if (options?.branchName) {
+      params.set("branch_name", options.branchName);
+    }
+    if (typeof options?.limit === "number") {
+      params.set("limit", String(options.limit));
+    }
+    const query = params.toString();
+    return this.fetchApi<{ commits: MemoryRepoCommitLogItem[] }>(
+      `/api/repos/${repoId}/log${query ? `?${query}` : ""}`,
+      {
+        cache: "no-store" as RequestCache,
+      }
+    );
+  }
+
+  async getMemoryRepoDiff(
+    repoId: string,
+    options?: {
+      fromCommitId?: string;
+      toCommitId?: string;
+      fromBranch?: string;
+      toBranch?: string;
+      includeWorkspace?: boolean;
+    }
+  ) {
+    const params = new URLSearchParams();
+    if (options?.fromCommitId) params.set("from_commit_id", options.fromCommitId);
+    if (options?.toCommitId) params.set("to_commit_id", options.toCommitId);
+    if (options?.fromBranch) params.set("from_branch", options.fromBranch);
+    if (options?.toBranch) params.set("to_branch", options.toBranch);
+    if (options?.includeWorkspace) params.set("include_workspace", "true");
+    const query = params.toString();
+    return this.fetchApi<MemoryRepoDiff>(`/api/repos/${repoId}/diff${query ? `?${query}` : ""}`, {
+      cache: "no-store" as RequestCache,
+    });
+  }
+
+  async resetMemoryRepoHard(repoId: string, params: { commitId: string; force?: boolean }) {
+    return this.fetchApi<MemoryRepoStatus>(`/api/repos/${repoId}/reset-hard`, {
+      method: "POST",
+      body: JSON.stringify({
+        commit_id: params.commitId,
+        force: params.force ?? false,
       }),
     });
   }

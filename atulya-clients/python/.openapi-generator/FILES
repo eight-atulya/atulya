@@ -8,6 +8,7 @@ atulya_client_api/api/documents_api.py
 atulya_client_api/api/entities_api.py
 atulya_client_api/api/files_api.py
 atulya_client_api/api/memory_api.py
+atulya_client_api/api/memory_repos_api.py
 atulya_client_api/api/mental_models_api.py
 atulya_client_api/api/monitoring_api.py
 atulya_client_api/api/operations_api.py
@@ -148,6 +149,19 @@ atulya_client_api/models/list_tags_response.py
 atulya_client_api/models/memory_item.py
 atulya_client_api/models/memory_item_observation_scopes.py
 atulya_client_api/models/memory_item_timestamp.py
+atulya_client_api/models/memory_repo_branch_create_request.py
+atulya_client_api/models/memory_repo_branches_response.py
+atulya_client_api/models/memory_repo_checkout_request.py
+atulya_client_api/models/memory_repo_commit_request.py
+atulya_client_api/models/memory_repo_create_request.py
+atulya_client_api/models/memory_repo_diff_response.py
+atulya_client_api/models/memory_repo_enable_request.py
+atulya_client_api/models/memory_repo_list_response.py
+atulya_client_api/models/memory_repo_log_response.py
+atulya_client_api/models/memory_repo_lookup_response.py
+atulya_client_api/models/memory_repo_reset_hard_request.py
+atulya_client_api/models/memory_repo_status_response.py
+atulya_client_api/models/memory_repo_summary_response.py
 atulya_client_api/models/mental_model_list_response.py
 atulya_client_api/models/mental_model_response.py
 atulya_client_api/models/mental_model_trigger.py

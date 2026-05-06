@@ -72,6 +72,7 @@ class MemoryEngineInterface(ABC):
         bank_id: str,
         query: str,
         *,
+        branch_name: str | None = None,
         budget: "Budget | None" = None,
         max_tokens: int = 4096,
         enable_trace: bool = False,
@@ -89,6 +90,7 @@ class MemoryEngineInterface(ABC):
         Args:
             bank_id: The memory bank ID.
             query: The search query.
+            branch_name: Optional repo branch to query without checking it out.
             budget: Search budget (LOW, MID, HIGH).
             max_tokens: Maximum tokens in response.
             enable_trace: Include trace information.
@@ -111,6 +113,7 @@ class MemoryEngineInterface(ABC):
         bank_id: str,
         query: str,
         *,
+        branch_name: str | None = None,
         budget: "Budget | None" = None,
         context: str | None = None,
         max_tokens: int = 4096,
@@ -125,6 +128,7 @@ class MemoryEngineInterface(ABC):
         Args:
             bank_id: The memory bank ID.
             query: The question to reflect on.
+            branch_name: Optional repo branch to reflect against without checking it out.
             budget: Search budget for retrieving context.
             context: Additional context for the reflection.
             max_tokens: Maximum tokens for the response.
@@ -163,6 +167,7 @@ class MemoryEngineInterface(ABC):
         bank_id: str,
         *,
         query: str,
+        branch_name: str | None = None,
         budget: "Budget | None" = None,
         max_tokens: int = 4096,
         include_facts: bool = False,
@@ -171,6 +176,7 @@ class MemoryEngineInterface(ABC):
         response_schema: dict | None = None,
         tags: list[str] | None = None,
         tags_match: "TagsMatch" = "any",
+        tag_groups: list["Any"] | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any]:
         """
@@ -281,6 +287,158 @@ class MemoryEngineInterface(ABC):
         """
         ...
 
+    # =========================================================================
+    # Memory Repo Operations
+    # =========================================================================
+
+    @abstractmethod
+    async def list_memory_repos(self, *, request_context: "RequestContext") -> list[dict[str, Any]]:
+        """List git-like memory repos."""
+        ...
+
+    @abstractmethod
+    async def get_memory_repo(self, repo_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
+        """Get memory repo summary."""
+        ...
+
+    @abstractmethod
+    async def get_memory_repo_for_bank(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any] | None:
+        """Get the memory repo rooted at a bank, or ``None`` if repo mode is not enabled."""
+        ...
+
+    @abstractmethod
+    async def create_memory_repo(
+        self,
+        *,
+        bank_id: str,
+        repo_name: str | None,
+        source_bank_id: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Create a memory repo rooted at a bank."""
+        ...
+
+    @abstractmethod
+    async def enable_memory_repo(
+        self,
+        bank_id: str,
+        *,
+        repo_name: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Enable repo mode on an existing bank."""
+        ...
+
+    @abstractmethod
+    async def list_memory_repo_branches(
+        self,
+        repo_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        """List branches for a memory repo."""
+        ...
+
+    @abstractmethod
+    async def list_memory_repo_branches_for_bank(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        """List branches for the repo rooted at a bank. Returns an empty list when repo mode is disabled."""
+        ...
+
+    @abstractmethod
+    async def create_memory_repo_branch(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str,
+        from_commit_id: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Create a branch for a memory repo."""
+        ...
+
+    @abstractmethod
+    async def checkout_memory_repo_branch(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Checkout a branch into the active root bank workspace."""
+        ...
+
+    @abstractmethod
+    async def commit_memory_repo(
+        self,
+        repo_id: str,
+        *,
+        message: str,
+        actor: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Commit the active repo workspace."""
+        ...
+
+    @abstractmethod
+    async def get_memory_repo_status(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Compute workspace vs HEAD status for a repo branch."""
+        ...
+
+    @abstractmethod
+    async def get_memory_repo_log(
+        self,
+        repo_id: str,
+        *,
+        branch_name: str | None,
+        limit: int,
+        request_context: "RequestContext",
+    ) -> list[dict[str, Any]]:
+        """Get linear commit history for a repo branch."""
+        ...
+
+    @abstractmethod
+    async def diff_memory_repo(
+        self,
+        repo_id: str,
+        *,
+        from_commit_id: str | None,
+        to_commit_id: str | None,
+        from_branch: str | None,
+        to_branch: str | None,
+        include_workspace: bool,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Diff commits, branches, or workspaces inside a repo."""
+        ...
+
+    @abstractmethod
+    async def reset_memory_repo_hard(
+        self,
+        repo_id: str,
+        *,
+        commit_id: str,
+        force: bool,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Reset the active branch workspace to a commit."""
+        ...
+
     @abstractmethod
     async def delete_bank(
         self,
@@ -311,6 +469,7 @@ class MemoryEngineInterface(ABC):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         fact_type: str | None = None,
         search_query: str | None = None,
         limit: int = 100,
@@ -322,6 +481,7 @@ class MemoryEngineInterface(ABC):
 
         Args:
             bank_id: The memory bank ID.
+            branch_name: Optional repo branch to inspect without checking it out.
             fact_type: Filter by fact type.
             search_query: Full-text search query.
             limit: Maximum results.
@@ -454,6 +614,7 @@ class MemoryEngineInterface(ABC):
         self,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         search_query: str | None = None,
         tags: list[str] | None = None,
         tags_match: "TagsMatch" = "any_strict",
@@ -466,6 +627,7 @@ class MemoryEngineInterface(ABC):
 
         Args:
             bank_id: The memory bank ID.
+            branch_name: Optional repo branch to inspect without checking it out.
             search_query: Case-insensitive substring filter on document ID.
             tags: Filter by tags.
             tags_match: How to match tags (any, all, any_strict, all_strict).
@@ -484,6 +646,7 @@ class MemoryEngineInterface(ABC):
         document_id: str,
         bank_id: str,
         *,
+        branch_name: str | None = None,
         request_context: "RequestContext",
     ) -> dict[str, Any] | None:
         """
@@ -492,6 +655,7 @@ class MemoryEngineInterface(ABC):
         Args:
             document_id: The document ID.
             bank_id: The memory bank ID.
+            branch_name: Optional repo branch to inspect without checking it out.
             request_context: Request context for authentication.
 
         Returns:

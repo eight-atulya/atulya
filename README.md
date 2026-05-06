@@ -57,6 +57,7 @@ Atulya helps that learning stay alive.
 Atulya is a living intelligence layer for teams, built on memory first:
 
 - **Memory banks** that retain what matters and compress what repeats
+- **Versioned memory repos** with branches, snapshots, rollback, and branch-aware reads when you want to inspect a branch without checking it out
 - **Recall and reflect** flows that retrieve evidence and reason over it
 - **Code intelligence** that turns large repos into ranked symbols, module briefs, and curated memory
 - **Entity and graph intelligence** that show who matters, what changed, and where risk is building
@@ -102,6 +103,7 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
 ## What teams get
 
 - Durable memory instead of fragmented context
+- Safe experimentation with branchable banks and rollback-ready snapshots
 - Better answers backed by retained evidence
 - Faster onboarding for engineers, operators, and agents
 - Reusable knowledge that can move between systems through `.brain` files

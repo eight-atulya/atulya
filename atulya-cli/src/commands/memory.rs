@@ -276,6 +276,7 @@ pub fn recall(
 
     let request = RecallRequest {
         query,
+        branch_name: None,
         types: if fact_type.is_empty() { None } else { Some(fact_type) },
         budget: Some(parse_budget(&budget)),
         max_tokens: Some(max_tokens),
@@ -336,6 +337,7 @@ pub fn reflect(
 
     let request = ReflectRequest {
         query,
+        branch_name: None,
         budget: Some(parse_budget(&budget)),
         context,
         max_tokens: Some(max_tokens.unwrap_or(4096)),

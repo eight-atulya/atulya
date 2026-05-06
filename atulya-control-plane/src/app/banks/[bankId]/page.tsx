@@ -21,6 +21,7 @@ import { MentalModelsView } from "@/components/mental-models-view";
 import { WebhooksView } from "@/components/webhooks-view";
 import { DreamTranceView } from "@/components/dream-trance-view";
 import { EntityTrajectoriesView } from "@/components/entity-trajectories-view";
+import { MemoryRepoControls } from "@/components/memory-repo-controls";
 import { useFeatures } from "@/lib/features-context";
 import { useBank } from "@/lib/bank-context";
 import { client } from "@/lib/api";
@@ -62,7 +63,8 @@ export default function BankPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { features } = useFeatures();
-  const { currentBank: bankId, setCurrentBank, loadBanks } = useBank();
+  const { currentBank: bankId, setCurrentBank, loadBanks, bankRevision } = useBank();
+  const bankViewKey = `${bankId ?? "none"}:${bankRevision}`;
 
   const view = (searchParams.get("view") ||
     (features?.brain_runtime ? "brain" : "profile")) as NavItem;
@@ -176,7 +178,7 @@ export default function BankPage() {
         <main className="min-h-0 flex-1 overflow-y-auto">
           <div className="p-6">
             {/* Brain View Tab */}
-            {view === "brain" && <BrainView />}
+            {view === "brain" && <BrainView key={`brain:${bankViewKey}`} />}
 
             {/* Brain Configuration Tab */}
             {view === "profile" && (
@@ -337,15 +339,16 @@ export default function BankPage() {
                         Overview statistics and background operations for this memory bank.
                       </p>
                       <div className="space-y-6">
-                        <BankStatsView />
-                        <BankOperationsView />
-                        <BankProfileView hideReflectFields />
+                        <MemoryRepoControls key={`repo:${bankViewKey}`} />
+                        <BankStatsView key={`stats:${bankViewKey}`} />
+                        <BankOperationsView key={`ops:${bankViewKey}`} />
+                        <BankProfileView key={`profile:${bankViewKey}`} hideReflectFields />
                       </div>
                     </div>
                   )}
                   {bankConfigTab === "configuration" && bankConfigEnabled && (
                     <div className="space-y-6">
-                      <BankConfigView />
+                      <BankConfigView key={`config:${bankViewKey}`} />
                     </div>
                   )}
                   {bankConfigTab === "webhooks" && (
@@ -354,7 +357,7 @@ export default function BankPage() {
                         Manage webhook endpoints to receive event notifications from this memory
                         bank.
                       </p>
-                      <WebhooksView />
+                      <WebhooksView key={`webhooks:${bankViewKey}`} />
                     </div>
                   )}
                   {bankConfigTab === "dreams" && (
@@ -362,7 +365,7 @@ export default function BankPage() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Configure dream/trance synthesis and monitor generated HTML insights.
                       </p>
-                      <DreamTranceView />
+                      <DreamTranceView key={`dreams:${bankViewKey}`} />
                     </div>
                   )}
                 </div>
@@ -376,7 +379,7 @@ export default function BankPage() {
                 <p className="text-muted-foreground mb-6">
                   Analyze memory recall with detailed trace information and retrieval methods.
                 </p>
-                <SearchDebugView />
+                <SearchDebugView key={`recall:${bankViewKey}`} />
               </div>
             )}
 
@@ -388,7 +391,7 @@ export default function BankPage() {
                   Run an agentic loop that autonomously gathers evidence and reasons through the
                   lens of the bank&apos;s disposition to generate contextual responses.
                 </p>
-                <ThinkView />
+                <ThinkView key={`reflect:${bankViewKey}`} />
               </div>
             )}
 
@@ -400,12 +403,12 @@ export default function BankPage() {
                   Run optional live-web search and extraction against the internet backend. This
                   mode is session-only and does not write directly to the memory bank.
                 </p>
-                <InternetResearchView />
+                <InternetResearchView key={`internet:${bankViewKey}`} />
               </div>
             )}
 
             {/* Codebases Tab */}
-            {view === "codebases" && <CodebasesView />}
+            {view === "codebases" && <CodebasesView key={`codebases:${bankViewKey}`} />}
 
             {/* Data/Memories Tab */}
             {view === "data" && (
@@ -486,7 +489,7 @@ export default function BankPage() {
                       <p className="text-sm text-muted-foreground mb-4">
                         Objective facts about the world received from external sources.
                       </p>
-                      <DataView key="world" factType="world" />
+                      <DataView key={`world:${bankViewKey}`} factType="world" />
                     </div>
                   )}
                   {subTab === "experience" && (
@@ -494,7 +497,7 @@ export default function BankPage() {
                       <p className="text-sm text-muted-foreground mb-4">
                         The bank&apos;s own actions, interactions, and first-person experiences.
                       </p>
-                      <DataView key="experience" factType="experience" />
+                      <DataView key={`experience:${bankViewKey}`} factType="experience" />
                     </div>
                   )}
                   {subTab === "observations" &&
@@ -504,7 +507,7 @@ export default function BankPage() {
                           Consolidated knowledge synthesized from facts — patterns, preferences, and
                           learnings that emerge from accumulated evidence.
                         </p>
-                        <DataView key="observations" factType="observation" />
+                        <DataView key={`observations:${bankViewKey}`} factType="observation" />
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -543,7 +546,7 @@ export default function BankPage() {
                         User-curated summaries generated from queries — reusable knowledge snapshots
                         that can be refreshed as memories evolve.
                       </p>
-                      <MentalModelsView key="mental-models" />
+                      <MentalModelsView key={`mental-models:${bankViewKey}`} />
                     </div>
                   )}
                 </div>
@@ -557,7 +560,7 @@ export default function BankPage() {
                 <p className="text-muted-foreground mb-6">
                   Manage documents and retain new memories.
                 </p>
-                <DocumentsView />
+                <DocumentsView key={`documents:${bankViewKey}`} />
               </div>
             )}
 
@@ -568,7 +571,7 @@ export default function BankPage() {
                 <p className="text-muted-foreground mb-6">
                   Explore entities (people, organizations, places) mentioned in memories.
                 </p>
-                <EntitiesView />
+                <EntitiesView key={`entities:${bankViewKey}`} />
               </div>
             )}
 
@@ -592,7 +595,7 @@ export default function BankPage() {
                   <span className="font-medium text-foreground">Recompute</span> after changing
                   settings or memories.
                 </p>
-                <EntityTrajectoriesView />
+                <EntityTrajectoriesView key={`trajectories:${bankViewKey}`} />
               </div>
             )}
           </div>

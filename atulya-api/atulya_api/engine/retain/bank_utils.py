@@ -243,6 +243,7 @@ async def list_banks(pool) -> list:
             f"""
             SELECT bank_id, name, disposition, mission, created_at, updated_at
             FROM {fq_table("banks")}
+            WHERE COALESCE((config->>'memory_repo_internal_workspace')::boolean, false) = false
             ORDER BY updated_at DESC
             """
         )
