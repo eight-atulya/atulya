@@ -115,15 +115,25 @@ export default function DashboardPage() {
           {bankCount > 0 && (
             <span className="mb-6 inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 px-3 py-1 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              {bankCount} memory bank{bankCount === 1 ? "" : "s"} available
+              {bankCount} space{bankCount === 1 ? "" : "s"} ready
             </span>
           )}
 
-          <h1 className="max-w-lg text-3xl font-bold tracking-tight text-foreground sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
-            Which memory bank would you like to open?
+          <h1 className="max-w-none whitespace-normal text-3xl font-bold tracking-[-0.03em] text-foreground sm:whitespace-nowrap sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]">
+            {bankCount > 0 ? (
+              <>
+                Choose a <span className="text-red-500">memory</span> space
+              </>
+            ) : (
+              <>
+                Create your first <span className="text-red-500">memory</span> space
+              </>
+            )}
           </h1>
           <p className="mt-3 text-sm text-muted-foreground sm:text-[15px]">
-            Create a new bank or jump into an existing one.
+            {bankCount > 0
+              ? "Open an existing space or create one for a brain, team, or workflow."
+              : "Create a space for a brain, team, or workflow."}
           </p>
 
           {/* Quick-create row */}
@@ -131,7 +141,7 @@ export default function DashboardPage() {
             <Input
               value={quickBankId}
               onChange={(e) => setQuickBankId(e.target.value)}
-              placeholder="e.g. my-org, sales-intel"
+              placeholder="e.g. founder-brain, sales-team"
               className="h-11 flex-1"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !isCreatingQuickBank) void handleQuickCreate();
@@ -147,7 +157,7 @@ export default function DashboardPage() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              {isCreatingQuickBank ? "Creating..." : "Create and Start"}
+              {isCreatingQuickBank ? "Creating..." : "Create space"}
             </Button>
           </div>
 
