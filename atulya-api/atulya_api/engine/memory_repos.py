@@ -46,6 +46,8 @@ class RestoreIdMaps:
     codebase_intel_artifact_ids: dict[str, str] = field(default_factory=dict)
     codebase_auto_triage_override_ids: dict[str, str] = field(default_factory=dict)
     codebase_saved_intent_ids: dict[str, str] = field(default_factory=dict)
+    document_file_storage_keys: dict[str, str] = field(default_factory=dict)
+    codebase_archive_storage_keys: dict[str, str] = field(default_factory=dict)
 
 
 _ORIGIN_ID_MAP_FIELDS = (
@@ -67,6 +69,8 @@ _ORIGIN_ID_MAP_FIELDS = (
     "codebase_intel_artifact_ids",
     "codebase_auto_triage_override_ids",
     "codebase_saved_intent_ids",
+    "document_file_storage_keys",
+    "codebase_archive_storage_keys",
 )
 
 _COMPONENT_TABLES: dict[str, list[str]] = {
@@ -745,9 +749,17 @@ class MemoryRepoService:
             f"SELECT workspace_bank_id, branch_name FROM {_fq_table('memory_workspaces')} WHERE repo_id = $1",
             repo["id"],
         )
-        hidden_banks = [row["workspace_bank_id"] for row in workspace_rows if row["workspace_bank_id"] != bank_id]
+        hidden_banks: set[str] = set()
+        for row in workspace_rows:
+            workspace_bank_id = str(row["workspace_bank_id"])
+            branch_name = str(row["branch_name"])
+            if workspace_bank_id != bank_id:
+                hidden_banks.add(workspace_bank_id)
+            reserved_hidden_bank = self._hidden_workspace_bank_id(str(repo["id"]), branch_name)
+            if reserved_hidden_bank != bank_id:
+                hidden_banks.add(reserved_hidden_bank)
         await conn.execute(f"DELETE FROM {_fq_table('memory_repos')} WHERE id = $1", repo["id"])
-        return hidden_banks
+        return sorted(hidden_banks)
 
     async def capture_bank_snapshot(self, bank_id: str) -> dict[str, Any]:
         pool = await self._engine._get_pool()
@@ -1086,6 +1098,7 @@ class MemoryRepoService:
             target_bank_id=target_bank_id,
             source_bank_id=str(snapshot.get("source_bank_id") or ""),
         )
+        self._remap_snapshot_storage_files(snapshot, restore_id_maps)
         for table in _RESTORE_ORDER:
             for row in table_payloads.get(table, []):
                 transformed = self._remap_row(
@@ -1161,6 +1174,26 @@ class MemoryRepoService:
                     exc,
                 )
 
+    async def _collect_bank_storage_keys(self, conn: "asyncpg.Connection", bank_id: str) -> list[str]:
+        keys: set[str] = set()
+        document_rows = await conn.fetch(
+            f"SELECT file_storage_key FROM {_fq_table('documents')} WHERE bank_id = $1 AND file_storage_key IS NOT NULL",
+            bank_id,
+        )
+        for row in document_rows:
+            keys.add(row["file_storage_key"])
+        snapshot_rows = await conn.fetch(
+            f"""
+            SELECT source_archive_storage_key
+            FROM {_fq_table("codebase_snapshots")}
+            WHERE bank_id = $1 AND source_archive_storage_key IS NOT NULL
+            """,
+            bank_id,
+        )
+        for row in snapshot_rows:
+            keys.add(row["source_archive_storage_key"])
+        return sorted(keys)
+
     async def _get_columns(self, conn: "asyncpg.Connection", table: str) -> list[dict[str, str]]:
         from .memory_engine import get_current_schema
 
@@ -1220,7 +1253,11 @@ class MemoryRepoService:
         if "bank_id" in transformed:
             transformed["bank_id"] = target_bank_id
         if restore_id_maps.remap_enabled:
-            if table == "chunks":
+            if table == "documents":
+                transformed["file_storage_key"] = self._remap_value(
+                    restore_id_maps.document_file_storage_keys, row.get("file_storage_key")
+                )
+            elif table == "chunks":
                 transformed["chunk_id"] = self._remap_value(restore_id_maps.chunk_ids, row.get("chunk_id"))
             elif table == "entities":
                 transformed["id"] = self._remap_value(restore_id_maps.entity_ids, row.get("id"))
@@ -1265,6 +1302,10 @@ class MemoryRepoService:
             elif table == "codebase_snapshots":
                 transformed["id"] = self._remap_value(restore_id_maps.codebase_snapshot_ids, row.get("id"))
                 transformed["codebase_id"] = self._remap_value(restore_id_maps.codebase_ids, row.get("codebase_id"))
+                transformed["source_archive_storage_key"] = self._remap_value(
+                    restore_id_maps.codebase_archive_storage_keys,
+                    row.get("source_archive_storage_key"),
+                )
             elif table == "codebase_files":
                 transformed["id"] = self._remap_value(restore_id_maps.codebase_file_ids, row.get("id"))
                 transformed["codebase_id"] = self._remap_value(restore_id_maps.codebase_ids, row.get("codebase_id"))
@@ -1356,6 +1397,11 @@ class MemoryRepoService:
         if not source_bank_id or source_bank_id == target_bank_id:
             return RestoreIdMaps(remap_enabled=False)
 
+        codebase_ids = self._build_uuid_id_map(table_payloads.get("codebases", []), "codebases", target_bank_id)
+        codebase_snapshot_ids = self._build_uuid_id_map(
+            table_payloads.get("codebase_snapshots", []), "codebase_snapshots", target_bank_id
+        )
+
         return RestoreIdMaps(
             remap_enabled=True,
             chunk_ids={
@@ -1373,10 +1419,8 @@ class MemoryRepoService:
             ),
             directive_ids=self._build_uuid_id_map(table_payloads.get("directives", []), "directives", target_bank_id),
             webhook_ids=self._build_uuid_id_map(table_payloads.get("webhooks", []), "webhooks", target_bank_id),
-            codebase_ids=self._build_uuid_id_map(table_payloads.get("codebases", []), "codebases", target_bank_id),
-            codebase_snapshot_ids=self._build_uuid_id_map(
-                table_payloads.get("codebase_snapshots", []), "codebase_snapshots", target_bank_id
-            ),
+            codebase_ids=codebase_ids,
+            codebase_snapshot_ids=codebase_snapshot_ids,
             codebase_file_ids=self._build_uuid_id_map(
                 table_payloads.get("codebase_files", []), "codebase_files", target_bank_id
             ),
@@ -1406,6 +1450,16 @@ class MemoryRepoService:
             codebase_saved_intent_ids=self._build_uuid_id_map(
                 table_payloads.get("codebase_saved_intents", []), "codebase_saved_intents", target_bank_id
             ),
+            document_file_storage_keys=self._build_document_storage_key_map(
+                table_payloads.get("documents", []),
+                target_bank_id,
+            ),
+            codebase_archive_storage_keys=self._build_codebase_storage_key_map(
+                table_payloads.get("codebase_snapshots", []),
+                target_bank_id,
+                codebase_ids=codebase_ids,
+                snapshot_ids=codebase_snapshot_ids,
+            ),
         )
 
     def _invert_restore_id_maps(self, restore_id_maps: RestoreIdMaps) -> dict[str, dict[str, str]]:
@@ -1425,6 +1479,51 @@ class MemoryRepoService:
         config = bank_rows[0].get("config")
         return config if isinstance(config, dict) else {}
 
+    def _build_document_storage_key_map(
+        self,
+        rows: list[dict[str, Any]],
+        target_bank_id: str,
+    ) -> dict[str, str]:
+        mapping: dict[str, str] = {}
+        for row in rows:
+            storage_key = row.get("file_storage_key")
+            document_id = row.get("id")
+            if not storage_key or not document_id:
+                continue
+            filename = self._storage_key_basename(storage_key, default="source.bin")
+            mapping[str(storage_key)] = f"banks/{target_bank_id}/files/{document_id}/{filename}"
+        return mapping
+
+    def _build_codebase_storage_key_map(
+        self,
+        rows: list[dict[str, Any]],
+        target_bank_id: str,
+        *,
+        codebase_ids: dict[str, str],
+        snapshot_ids: dict[str, str],
+    ) -> dict[str, str]:
+        mapping: dict[str, str] = {}
+        for row in rows:
+            storage_key = row.get("source_archive_storage_key")
+            snapshot_id = row.get("id")
+            codebase_id = row.get("codebase_id")
+            if not storage_key or not snapshot_id or not codebase_id:
+                continue
+            mapped_snapshot_id = snapshot_ids.get(str(snapshot_id), str(snapshot_id))
+            mapped_codebase_id = codebase_ids.get(str(codebase_id), str(codebase_id))
+            filename = self._storage_key_basename(storage_key, default="archive.bin")
+            mapping[str(storage_key)] = (
+                f"banks/{target_bank_id}/codebases/{mapped_codebase_id}/snapshots/{mapped_snapshot_id}/{filename}"
+            )
+        return mapping
+
+    def _storage_key_basename(self, storage_key: str, *, default: str) -> str:
+        stripped = str(storage_key).rstrip("/")
+        if not stripped:
+            return default
+        basename = stripped.rsplit("/", 1)[-1]
+        return basename or default
+
     def _snapshot_bank_name(self, snapshot: dict[str, Any]) -> str | None:
         bank_rows = snapshot.get("components", {}).get("profile_config", {}).get("tables", {}).get("banks", [])
         if not bank_rows:
@@ -1438,6 +1537,15 @@ class MemoryRepoService:
             for item in snapshot.get("components", {}).get("stored_files", {}).get("files", [])
             if item.get("storage_key")
         ]
+
+    def _remap_snapshot_storage_files(self, snapshot: dict[str, Any], restore_id_maps: RestoreIdMaps) -> None:
+        files = snapshot.get("components", {}).get("stored_files", {}).get("files", [])
+        for item in files:
+            storage_key = item.get("storage_key")
+            if storage_key in restore_id_maps.document_file_storage_keys:
+                item["storage_key"] = restore_id_maps.document_file_storage_keys[storage_key]
+            elif storage_key in restore_id_maps.codebase_archive_storage_keys:
+                item["storage_key"] = restore_id_maps.codebase_archive_storage_keys[storage_key]
 
     def _normalize_snapshot_for_diff(self, snapshot: dict[str, Any]) -> dict[str, Any]:
         components = snapshot.get("components") or {}
@@ -1469,6 +1577,14 @@ class MemoryRepoService:
 
         normalized_components: dict[str, Any] = {}
         for component_name, component in components.items():
+            if component_name == "stored_files":
+                normalized_component = json.loads(json.dumps(component))
+                self._remap_snapshot_storage_files(
+                    {"components": {"stored_files": normalized_component}},
+                    restore_id_maps,
+                )
+                normalized_components[component_name] = normalized_component
+                continue
             if "tables" not in component:
                 normalized_components[component_name] = component
                 continue

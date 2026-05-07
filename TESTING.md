@@ -33,6 +33,24 @@ Use them in that order when practical:
 3. run sanity checks around the touched area
 4. run broader regression only when the impact radius justifies it
 
+## Decision Algorithm
+
+Use this as the fast path before choosing commands:
+
+1. If the branch or toolchain feels unstable, run one smoke check first.
+2. Else, start with the smallest retest for the exact bug or feature path.
+3. If the change adds or edits a public API contract, add a route or contract proof.
+Then regenerate or validate downstream docs, clients, and proxy surfaces.
+4. If the change materializes durable state into another bank or workspace, prove:
+row fidelity, source/target isolation, non-active-state reads if supported, rollback,
+delete behavior, and external artifact ownership for any pointer outside the database.
+5. If the change touches concurrency, retries, scheduling, or idempotency, add a deterministic proof.
+6. If the feature under test is not provider behavior itself, prefer deterministic fixtures over live provider verification.
+7. After the retest is green, widen only as needed:
+if the blast radius is local, run nearby sanity checks;
+if the blast radius reaches shared contracts, generated clients, migrations, deployment wiring, or multiple packages, run broader regression.
+8. If a production incident escaped the suite, add a named retest lane before calling the fix complete.
+
 ## Default Change Workflow
 
 ### 1. Start small
@@ -65,10 +83,17 @@ or any "materialize state into a new bank/workspace" behavior, minimum proof is 
 - one workflow isolation test that proves source and target banks stay independent
 - one branch-aware read proof when users or agents can inspect non-active state without checkout
 - one rollback proof when failure can happen after materialization starts but before the workflow is complete
+- one external-artifact ownership proof for any restored field that points outside the database
+- one delete-path proof when the feature introduces new durable artifacts or hidden workspaces
 
 Typed round-trip means asserting the restored row values themselves, not only the API
 status code. For example: `uuid`, `timestamp`, `json/jsonb`, `vector`, arrays, and any
 rewritten foreign keys that must still point at the right rows after restore.
+
+External-artifact ownership means proving what happens to things like storage keys,
+archives, caches, or background-work references after clone, fork, checkout, delete,
+and rollback. If ownership changes, the test should prove remap or safe sharing
+explicitly.
 
 ### 3. Escalate only when the blast radius grows
 
@@ -173,6 +198,8 @@ safe.
 10. Every production incident that escapes the suite should become a named retest lane before the fix is considered complete.
 11. Snapshot/restore/versioning features must prove data fidelity at the row/type level, not just successful orchestration.
 12. Non-provider feature tests should use deterministic fixtures so signal is not hidden by unrelated external verification failures.
+13. If a restored row contains a pointer to external state such as `*_storage_key`, the suite must prove who owns that artifact after restore and after delete.
+14. Delete and rollback are part of the contract for materialization features; do not call clone/fork/branch features production-safe until those paths are tested too.
 
 ## Practical Commands
 

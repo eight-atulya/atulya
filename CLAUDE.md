@@ -148,6 +148,23 @@ When changing memory repo flows, branch-aware reads, or snapshot materialization
 ASD can help identify affected files and neighbors, but it does not replace
 green tests as proof of system sanity.
 
+For clone, fork, restore, checkout, or any other materialization feature, treat
+every field that points outside the database as part of the core contract:
+
+- if ownership stays shared, document and test that explicitly
+- if ownership becomes independent, remap the external reference during restore
+- do not stop at create-path success; also prove delete and rollback behavior
+
+Common examples:
+
+- `file_storage_key`
+- `source_archive_storage_key`
+- derived caches or other persisted artifact references
+
+The working rule for agents and developers is simple: if a function copies
+durable state across bank or workspace boundaries, inspect every external
+pointer with the same care as primary keys and foreign keys.
+
 ### Code Quality
 **Always run the lint script after making Python or TypeScript/Node changes:**
 ```bash

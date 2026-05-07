@@ -7561,9 +7561,15 @@ class MemoryEngine(MemoryEngineInterface):
             await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
         pool = await self._get_pool()
         invalidated_obs = 0
+        document_storage_key: str | None = None
         async with acquire_with_retry(pool) as conn:
             async with conn.transaction():
                 # Get memory unit IDs before deletion (for observation cleanup)
+                document_storage_key = await conn.fetchval(
+                    f"SELECT file_storage_key FROM {fq_table('documents')} WHERE id = $1 AND bank_id = $2",
+                    document_id,
+                    bank_id,
+                )
                 unit_rows = await conn.fetch(
                     f"SELECT id FROM {fq_table('memory_units')} WHERE document_id = $1 AND fact_type IN ('experience', 'world')",
                     document_id,
@@ -7596,6 +7602,18 @@ class MemoryEngine(MemoryEngineInterface):
 
         if invalidated_obs > 0:
             await self.submit_async_consolidation(bank_id=bank_id, request_context=request_context)
+
+        if document_storage_key and result["document_deleted"]:
+            try:
+                await self._file_storage.delete(document_storage_key)
+            except Exception as exc:
+                logger.warning(
+                    "[DELETE_DOCUMENT] Failed to delete storage key %s for bank=%s document=%s: %s",
+                    document_storage_key,
+                    bank_id,
+                    document_id,
+                    exc,
+                )
 
         return result
 
@@ -7698,7 +7716,7 @@ class MemoryEngine(MemoryEngineInterface):
         pool = await self._get_pool()
         invalidated_obs = 0
         result: dict[str, int] = {}
-        archive_storage_keys: list[str] = []
+        storage_keys_to_delete: list[str] = []
         async with acquire_with_retry(pool) as conn:
             # Ensure connection is not in read-only mode (can happen with connection poolers)
             await conn.execute("SET SESSION CHARACTERISTICS AS TRANSACTION READ WRITE")
@@ -7743,6 +7761,9 @@ class MemoryEngine(MemoryEngineInterface):
                         # Delete all data for the bank — observations are included, no invalidation needed
                         hidden_workspace_banks = await self._memory_repo_service.cleanup_repo_for_bank(conn, bank_id)
                         for hidden_bank_id in hidden_workspace_banks:
+                            storage_keys_to_delete.extend(
+                                await self._memory_repo_service._collect_bank_storage_keys(conn, hidden_bank_id)
+                            )
                             await self._memory_repo_service._delete_bank_contents(conn, hidden_bank_id)
                         units_count = await conn.fetchval(
                             f"SELECT COUNT(*) FROM {fq_table('memory_units')} WHERE bank_id = $1", bank_id
@@ -7759,15 +7780,9 @@ class MemoryEngine(MemoryEngineInterface):
                         codebases_count = await conn.fetchval(
                             f"SELECT COUNT(*) FROM {fq_table('codebases')} WHERE bank_id = $1", bank_id
                         )
-                        archive_storage_rows = await conn.fetch(
-                            f"""
-                            SELECT source_archive_storage_key
-                            FROM {fq_table("codebase_snapshots")}
-                            WHERE bank_id = $1 AND source_archive_storage_key IS NOT NULL
-                            """,
-                            bank_id,
+                        storage_keys_to_delete.extend(
+                            await self._memory_repo_service._collect_bank_storage_keys(conn, bank_id)
                         )
-                        archive_storage_keys = [row["source_archive_storage_key"] for row in archive_storage_rows]
 
                         # Delete documents (cascades to chunks)
                         await conn.execute(f"DELETE FROM {fq_table('documents')} WHERE bank_id = $1", bank_id)
@@ -7804,12 +7819,12 @@ class MemoryEngine(MemoryEngineInterface):
             await self.submit_async_consolidation(bank_id=bank_id, request_context=request_context)
 
         if not fact_type:
-            for storage_key in archive_storage_keys:
+            for storage_key in sorted(set(storage_keys_to_delete)):
                 try:
                     await self._file_storage.delete(storage_key)
                 except Exception as exc:
                     logger.warning(
-                        "[DELETE_BANK] Failed to delete codebase archive %s for bank=%s: %s", storage_key, bank_id, exc
+                        "[DELETE_BANK] Failed to delete storage key %s for bank=%s: %s", storage_key, bank_id, exc
                     )
 
             # Remove derived local brain cache file for this bank.

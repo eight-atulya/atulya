@@ -37,6 +37,16 @@ async def _first_embedding_text(memory, bank_id: str) -> str | None:
     return row["embedding_text"] if row else None
 
 
+async def _document_storage_key(memory, bank_id: str, document_id: str) -> str | None:
+    pool = await memory._get_pool()
+    async with acquire_with_retry(pool) as conn:
+        return await conn.fetchval(
+            f"SELECT file_storage_key FROM {fq_table('documents')} WHERE bank_id = $1 AND id = $2",
+            bank_id,
+            document_id,
+        )
+
+
 async def _bank_exists(memory, bank_id: str) -> bool:
     pool = await memory._get_pool()
     async with acquire_with_retry(pool) as conn:
@@ -46,6 +56,32 @@ async def _bank_exists(memory, bank_id: str) -> bool:
                 bank_id,
             )
         )
+
+
+async def _seed_repo_file_fixture(memory, bank_id: str, document_id: str = "file-doc") -> tuple[str, bytes]:
+    file_bytes = b"source file bytes for repo restore tests"
+    storage_key = f"banks/{bank_id}/files/{document_id}/notes.txt"
+    await memory._file_storage.store(
+        file_data=file_bytes,
+        key=storage_key,
+        metadata={"bank_id": bank_id, "document_id": document_id, "original_filename": "notes.txt"},
+    )
+    pool = await memory._get_pool()
+    async with acquire_with_retry(pool) as conn:
+        await conn.execute(
+            f"""
+            INSERT INTO {fq_table('documents')}
+                (id, bank_id, original_text, file_storage_key, file_original_name, file_content_type)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            """,
+            document_id,
+            bank_id,
+            "Document with stored source file",
+            storage_key,
+            "notes.txt",
+            "text/plain",
+        )
+    return storage_key, file_bytes
 
 
 async def _seed_repo_vector_fixture(memory, embeddings, bank_id: str) -> str:
@@ -333,6 +369,82 @@ async def test_memory_repo_fork_branch_to_new_bank(memory_no_llm_verify, embeddi
 
 
 @pytest.mark.asyncio
+async def test_memory_repo_forked_bank_owns_independent_document_storage(
+    memory_no_llm_verify, request_context
+):
+    memory = memory_no_llm_verify
+    source_bank_id = _bank_id("repo_fork_files_source")
+    target_bank_id = _bank_id("repo_fork_files_target")
+    await memory.get_bank_profile(source_bank_id, request_context=request_context)
+    source_storage_key, file_bytes = await _seed_repo_file_fixture(memory, source_bank_id)
+
+    repo = await memory.enable_memory_repo(source_bank_id, request_context=request_context)
+    await memory.fork_memory_repo_bank(
+        repo["repo_id"],
+        target_bank_id=target_bank_id,
+        source_branch="main",
+        include_workspace=True,
+        request_context=request_context,
+    )
+
+    target_storage_key = await _document_storage_key(memory, target_bank_id, "file-doc")
+    assert target_storage_key is not None
+    assert target_storage_key != source_storage_key
+    assert target_bank_id in target_storage_key
+    assert await memory._file_storage.retrieve(target_storage_key) == file_bytes
+
+    await memory.delete_bank(target_bank_id, request_context=request_context)
+
+    assert await memory._file_storage.retrieve(source_storage_key) == file_bytes
+    with pytest.raises(FileNotFoundError):
+        await memory._file_storage.retrieve(target_storage_key)
+
+
+@pytest.mark.asyncio
+async def test_memory_repo_hidden_workspace_storage_is_isolated_and_cleaned_on_delete(
+    memory_no_llm_verify, request_context
+):
+    memory = memory_no_llm_verify
+    bank_id = _bank_id("repo_branch_files")
+    await memory.get_bank_profile(bank_id, request_context=request_context)
+    source_storage_key, file_bytes = await _seed_repo_file_fixture(memory, bank_id)
+
+    repo = await memory.enable_memory_repo(bank_id, request_context=request_context)
+    branch = await memory.create_memory_repo_branch(repo["repo_id"], branch_name="draft", request_context=request_context)
+
+    workspace_storage_key = await _document_storage_key(memory, branch["workspace_bank_id"], "file-doc")
+    assert workspace_storage_key is not None
+    assert workspace_storage_key != source_storage_key
+    assert branch["workspace_bank_id"] in workspace_storage_key
+    assert await memory._file_storage.retrieve(workspace_storage_key) == file_bytes
+
+    await memory.checkout_memory_repo_branch(repo["repo_id"], branch_name="draft", request_context=request_context)
+    status = await memory.get_memory_repo_status(repo["repo_id"], request_context=request_context)
+    assert status["dirty"] is False
+
+    await memory.delete_bank(bank_id, request_context=request_context)
+
+    with pytest.raises(FileNotFoundError):
+        await memory._file_storage.retrieve(source_storage_key)
+    with pytest.raises(FileNotFoundError):
+        await memory._file_storage.retrieve(workspace_storage_key)
+
+
+@pytest.mark.asyncio
+async def test_delete_document_removes_owned_file_storage(memory_no_llm_verify, request_context):
+    memory = memory_no_llm_verify
+    bank_id = _bank_id("repo_delete_doc_file")
+    await memory.get_bank_profile(bank_id, request_context=request_context)
+    storage_key, _file_bytes = await _seed_repo_file_fixture(memory, bank_id, document_id="delete-doc")
+
+    result = await memory.delete_document("delete-doc", bank_id, request_context=request_context)
+    assert result["document_deleted"] == 1
+
+    with pytest.raises(FileNotFoundError):
+        await memory._file_storage.retrieve(storage_key)
+
+
+@pytest.mark.asyncio
 async def test_memory_repo_fork_workspace_to_new_bank_and_reject_existing_target(
     memory_no_llm_verify, request_context
 ):
@@ -429,6 +541,7 @@ async def test_memory_repo_fork_rolls_back_target_bank_when_enable_repo_fails(
     source_bank_id = _bank_id("repo_fork_rollback_source")
     target_bank_id = _bank_id("repo_fork_rollback_target")
     await memory.get_bank_profile(source_bank_id, request_context=request_context)
+    source_storage_key, file_bytes = await _seed_repo_file_fixture(memory, source_bank_id)
     repo = await memory.enable_memory_repo(source_bank_id, request_context=request_context)
 
     async def fail_enable_repo(*args, **kwargs):
@@ -445,6 +558,7 @@ async def test_memory_repo_fork_rolls_back_target_bank_when_enable_repo_fails(
         )
 
     assert await _bank_exists(memory, target_bank_id) is False
+    assert await memory._file_storage.retrieve(source_storage_key) == file_bytes
 
 
 @pytest.mark.asyncio
