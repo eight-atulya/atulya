@@ -22,6 +22,7 @@ var _ MappedNullable = &RecallRequest{}
 // RecallRequest Request model for recall endpoint.
 type RecallRequest struct {
 	Query string `json:"query"`
+	BranchName NullableString `json:"branch_name,omitempty"`
 	Types []string `json:"types,omitempty"`
 	Budget *Budget `json:"budget,omitempty"`
 	MaxTokens *int32 `json:"max_tokens,omitempty"`
@@ -77,6 +78,48 @@ func (o *RecallRequest) GetQueryOk() (*string, bool) {
 // SetQuery sets field value
 func (o *RecallRequest) SetQuery(v string) {
 	o.Query = v
+}
+
+// GetBranchName returns the BranchName field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *RecallRequest) GetBranchName() string {
+	if o == nil || IsNil(o.BranchName.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.BranchName.Get()
+}
+
+// GetBranchNameOk returns a tuple with the BranchName field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *RecallRequest) GetBranchNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BranchName.Get(), o.BranchName.IsSet()
+}
+
+// HasBranchName returns a boolean if a field has been set.
+func (o *RecallRequest) HasBranchName() bool {
+	if o != nil && o.BranchName.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBranchName gets a reference to the given NullableString and assigns it to the BranchName field.
+func (o *RecallRequest) SetBranchName(v string) {
+	o.BranchName.Set(&v)
+}
+// SetBranchNameNil sets the value for BranchName to be an explicit nil
+func (o *RecallRequest) SetBranchNameNil() {
+	o.BranchName.Set(nil)
+}
+
+// UnsetBranchName ensures that no value is present for BranchName, not even an explicit nil
+func (o *RecallRequest) UnsetBranchName() {
+	o.BranchName.Unset()
 }
 
 // GetTypes returns the Types field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -391,6 +434,9 @@ func (o RecallRequest) MarshalJSON() ([]byte, error) {
 func (o RecallRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["query"] = o.Query
+	if o.BranchName.IsSet() {
+		toSerialize["branch_name"] = o.BranchName.Get()
+	}
 	if o.Types != nil {
 		toSerialize["types"] = o.Types
 	}

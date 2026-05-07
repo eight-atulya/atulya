@@ -22,6 +22,7 @@ var _ MappedNullable = &ReflectRequest{}
 // ReflectRequest Request model for reflect endpoint.
 type ReflectRequest struct {
 	Query string `json:"query"`
+	BranchName NullableString `json:"branch_name,omitempty"`
 	Budget *Budget `json:"budget,omitempty"`
 	Context NullableString `json:"context,omitempty"`
 	// Maximum tokens for the response
@@ -77,6 +78,48 @@ func (o *ReflectRequest) GetQueryOk() (*string, bool) {
 // SetQuery sets field value
 func (o *ReflectRequest) SetQuery(v string) {
 	o.Query = v
+}
+
+// GetBranchName returns the BranchName field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ReflectRequest) GetBranchName() string {
+	if o == nil || IsNil(o.BranchName.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.BranchName.Get()
+}
+
+// GetBranchNameOk returns a tuple with the BranchName field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ReflectRequest) GetBranchNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.BranchName.Get(), o.BranchName.IsSet()
+}
+
+// HasBranchName returns a boolean if a field has been set.
+func (o *ReflectRequest) HasBranchName() bool {
+	if o != nil && o.BranchName.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetBranchName gets a reference to the given NullableString and assigns it to the BranchName field.
+func (o *ReflectRequest) SetBranchName(v string) {
+	o.BranchName.Set(&v)
+}
+// SetBranchNameNil sets the value for BranchName to be an explicit nil
+func (o *ReflectRequest) SetBranchNameNil() {
+	o.BranchName.Set(nil)
+}
+
+// UnsetBranchName ensures that no value is present for BranchName, not even an explicit nil
+func (o *ReflectRequest) UnsetBranchName() {
+	o.BranchName.Unset()
 }
 
 // GetBudget returns the Budget field value if set, zero value otherwise.
@@ -359,6 +402,9 @@ func (o ReflectRequest) MarshalJSON() ([]byte, error) {
 func (o ReflectRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["query"] = o.Query
+	if o.BranchName.IsSet() {
+		toSerialize["branch_name"] = o.BranchName.Get()
+	}
 	if !IsNil(o.Budget) {
 		toSerialize["budget"] = o.Budget
 	}

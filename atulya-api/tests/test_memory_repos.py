@@ -37,6 +37,17 @@ async def _first_embedding_text(memory, bank_id: str) -> str | None:
     return row["embedding_text"] if row else None
 
 
+async def _bank_exists(memory, bank_id: str) -> bool:
+    pool = await memory._get_pool()
+    async with acquire_with_retry(pool) as conn:
+        return bool(
+            await conn.fetchval(
+                f"SELECT 1 FROM {fq_table('banks')} WHERE bank_id = $1",
+                bank_id,
+            )
+        )
+
+
 async def _seed_repo_vector_fixture(memory, embeddings, bank_id: str) -> str:
     embedding = embeddings.encode(["Alpha launch plan beta rollout checklist"])[0]
     embedding_text = "[" + ",".join(str(value) for value in embedding) + "]"
@@ -277,6 +288,166 @@ async def test_memory_repo_branch_reads_work_without_checkout(memory_no_llm_veri
 
 
 @pytest.mark.asyncio
+async def test_memory_repo_fork_branch_to_new_bank(memory_no_llm_verify, embeddings, request_context):
+    memory = memory_no_llm_verify
+    source_bank_id = _bank_id("repo_fork_source")
+    target_bank_id = _bank_id("repo_fork_target")
+    await memory.get_bank_profile(source_bank_id, request_context=request_context)
+    await memory.update_bank(source_bank_id, name="Source Main", request_context=request_context)
+
+    repo = await memory.enable_memory_repo(source_bank_id, request_context=request_context)
+    repo_id = repo["repo_id"]
+    await memory.create_memory_repo_branch(repo_id, branch_name="research", request_context=request_context)
+    await memory.checkout_memory_repo_branch(repo_id, branch_name="research", request_context=request_context)
+    await memory.update_bank(source_bank_id, name="Research Branch", request_context=request_context)
+    await _seed_repo_vector_fixture(memory, embeddings, source_bank_id)
+    await memory.commit_memory_repo(repo_id, message="Prepare research branch", request_context=request_context)
+    await memory.checkout_memory_repo_branch(repo_id, branch_name="main", request_context=request_context)
+
+    fork = await memory.fork_memory_repo_bank(
+        repo_id,
+        target_bank_id=target_bank_id,
+        target_bank_name="Forked Research Bank",
+        source_branch="research",
+        enable_repo=True,
+        repo_name="forked-research",
+        request_context=request_context,
+    )
+
+    assert fork["bank_id"] == target_bank_id
+    assert fork["source_ref"] == "branch:research"
+    assert fork["repo_enabled"] is True
+    assert fork["repo"] is not None
+    assert fork["repo"]["root_bank_id"] == target_bank_id
+
+    target_profile = await memory.get_bank_profile(target_bank_id, request_context=request_context)
+    assert target_profile["name"] == "Forked Research Bank"
+
+    target_documents = await memory.list_documents(target_bank_id, request_context=request_context)
+    assert target_documents["total"] == 1
+    assert target_documents["items"][0]["id"] == "launch-notes"
+
+    await memory.update_bank(target_bank_id, name="Fork Changed", request_context=request_context)
+    source_main_profile = await memory.get_bank_profile(source_bank_id, request_context=request_context)
+    assert source_main_profile["name"] == "Source Main"
+
+
+@pytest.mark.asyncio
+async def test_memory_repo_fork_workspace_to_new_bank_and_reject_existing_target(
+    memory_no_llm_verify, request_context
+):
+    memory = memory_no_llm_verify
+    source_bank_id = _bank_id("repo_fork_workspace")
+    target_bank_id = _bank_id("repo_fork_workspace_target")
+    await memory.get_bank_profile(source_bank_id, request_context=request_context)
+
+    repo = await memory.enable_memory_repo(source_bank_id, request_context=request_context)
+    repo_id = repo["repo_id"]
+    await memory.create_memory_repo_branch(repo_id, branch_name="draft", request_context=request_context)
+    await memory.checkout_memory_repo_branch(repo_id, branch_name="draft", request_context=request_context)
+    await memory.update_bank(source_bank_id, name="Draft Workspace Name", request_context=request_context)
+
+    fork = await memory.fork_memory_repo_bank(
+        repo_id,
+        target_bank_id=target_bank_id,
+        source_branch="draft",
+        include_workspace=True,
+        request_context=request_context,
+    )
+    assert fork["source_ref"] == "workspace:draft"
+
+    target_profile = await memory.get_bank_profile(target_bank_id, request_context=request_context)
+    assert target_profile["name"] == "Draft Workspace Name"
+
+    with pytest.raises(ValueError, match="Target bank already exists"):
+        await memory.fork_memory_repo_bank(
+            repo_id,
+            target_bank_id=target_bank_id,
+            source_branch="draft",
+            include_workspace=True,
+            request_context=request_context,
+        )
+
+
+@pytest.mark.asyncio
+async def test_memory_repo_fork_commit_to_new_bank_uses_committed_state(memory_no_llm_verify, request_context):
+    memory = memory_no_llm_verify
+    source_bank_id = _bank_id("repo_fork_commit_source")
+    target_bank_id = _bank_id("repo_fork_commit_target")
+    await memory.get_bank_profile(source_bank_id, request_context=request_context)
+    await memory.update_bank(source_bank_id, name="Committed Source Name", request_context=request_context)
+
+    repo = await memory.enable_memory_repo(source_bank_id, request_context=request_context)
+    repo_id = repo["repo_id"]
+    commit = await memory.commit_memory_repo(repo_id, message="Commit source bank", request_context=request_context)
+
+    await memory.update_bank(source_bank_id, name="Dirty Source Name", request_context=request_context)
+
+    fork = await memory.fork_memory_repo_bank(
+        repo_id,
+        target_bank_id=target_bank_id,
+        source_commit_id=commit["commit_id"],
+        request_context=request_context,
+    )
+
+    assert fork["source_ref"] == f"commit:{commit['commit_id']}"
+    assert fork["source_branch"] is None
+    assert fork["bank_name"] == "Committed Source Name"
+
+    target_profile = await memory.get_bank_profile(target_bank_id, request_context=request_context)
+    assert target_profile["name"] == "Committed Source Name"
+
+
+@pytest.mark.asyncio
+async def test_memory_repo_fork_rejects_commit_from_another_repo(memory_no_llm_verify, request_context):
+    memory = memory_no_llm_verify
+    first_bank_id = _bank_id("repo_fork_commit_a")
+    second_bank_id = _bank_id("repo_fork_commit_b")
+    await memory.get_bank_profile(first_bank_id, request_context=request_context)
+    await memory.get_bank_profile(second_bank_id, request_context=request_context)
+
+    first_repo = await memory.enable_memory_repo(first_bank_id, request_context=request_context)
+    second_repo = await memory.enable_memory_repo(second_bank_id, request_context=request_context)
+    foreign_commit = await memory.commit_memory_repo(
+        second_repo["repo_id"], message="Foreign commit", request_context=request_context
+    )
+
+    with pytest.raises(ValueError, match="does not belong to repo"):
+        await memory.fork_memory_repo_bank(
+            first_repo["repo_id"],
+            target_bank_id=_bank_id("repo_fork_commit_reject"),
+            source_commit_id=foreign_commit["commit_id"],
+            request_context=request_context,
+        )
+
+
+@pytest.mark.asyncio
+async def test_memory_repo_fork_rolls_back_target_bank_when_enable_repo_fails(
+    memory_no_llm_verify, request_context, monkeypatch
+):
+    memory = memory_no_llm_verify
+    source_bank_id = _bank_id("repo_fork_rollback_source")
+    target_bank_id = _bank_id("repo_fork_rollback_target")
+    await memory.get_bank_profile(source_bank_id, request_context=request_context)
+    repo = await memory.enable_memory_repo(source_bank_id, request_context=request_context)
+
+    async def fail_enable_repo(*args, **kwargs):
+        raise RuntimeError("enable_repo exploded")
+
+    monkeypatch.setattr(memory._memory_repo_service, "enable_repo", fail_enable_repo)
+
+    with pytest.raises(RuntimeError, match="enable_repo exploded"):
+        await memory.fork_memory_repo_bank(
+            repo["repo_id"],
+            target_bank_id=target_bank_id,
+            enable_repo=True,
+            request_context=request_context,
+        )
+
+    assert await _bank_exists(memory, target_bank_id) is False
+
+
+@pytest.mark.asyncio
 async def test_submit_async_reflect_preserves_branch_name(memory_no_llm_verify, request_context, monkeypatch):
     memory = memory_no_llm_verify
     bank_id = _bank_id("repo_async_reflect")
@@ -414,6 +585,51 @@ async def test_memory_repo_http_branch_query_endpoints(api_client, embeddings):
 
 
 @pytest.mark.asyncio
+async def test_memory_repo_http_fork_bank_endpoint(api_client, embeddings):
+    memory = api_client._transport.app.state.memory
+    source_bank_id = _bank_id("repo_http_fork_source")
+    target_bank_id = _bank_id("repo_http_fork_target")
+
+    response = await api_client.put(f"/v1/default/banks/{source_bank_id}", json={"name": "HTTP Fork Source"})
+    assert response.status_code == 200
+
+    response = await api_client.post(f"/v1/default/banks/{source_bank_id}/repos/enable", json={"repo_name": "HTTP Fork Repo"})
+    assert response.status_code == 200
+    repo_id = response.json()["repo_id"]
+
+    response = await api_client.post(f"/v1/default/repos/{repo_id}/branches", json={"branch_name": "research"})
+    assert response.status_code == 200
+    response = await api_client.post(f"/v1/default/repos/{repo_id}/checkout", json={"branch_name": "research"})
+    assert response.status_code == 200
+
+    await _seed_repo_vector_fixture(memory, embeddings, source_bank_id)
+    response = await api_client.post(
+        f"/v1/default/repos/{repo_id}/commit",
+        json={"message": "Commit fork source"},
+    )
+    assert response.status_code == 200
+
+    response = await api_client.post(
+        f"/v1/default/repos/{repo_id}/fork-bank",
+        json={
+            "target_bank_id": target_bank_id,
+            "target_bank_name": "HTTP Forked Bank",
+            "source_branch": "research",
+            "enable_repo": True,
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["bank_id"] == target_bank_id
+    assert body["repo_enabled"] is True
+    assert body["repo"]["root_bank_id"] == target_bank_id
+
+    response = await api_client.get(f"/v1/default/banks/{target_bank_id}/documents")
+    assert response.status_code == 200
+    assert response.json()["total"] == 1
+
+
+@pytest.mark.asyncio
 async def test_memory_repo_mcp_tools_are_registered_and_callable(memory_no_llm_verify, embeddings, request_context):
     from atulya_api.api.mcp import create_mcp_server
 
@@ -435,6 +651,7 @@ async def test_memory_repo_mcp_tools_are_registered_and_callable(memory_no_llm_v
         "memory_repo_log",
         "memory_repo_diff",
         "memory_repo_branch_create",
+        "memory_repo_fork_bank",
         "memory_repo_checkout",
         "memory_repo_commit",
         "memory_repo_reset_hard",
@@ -449,6 +666,14 @@ async def test_memory_repo_mcp_tools_are_registered_and_callable(memory_no_llm_v
 
     branch_create = await tools["memory_repo_branch_create"].fn(repo_id=repo_id, branch_name="mcp-v2")
     assert "mcp-v2" in branch_create
+
+    fork_bank = await tools["memory_repo_fork_bank"].fn(
+        repo_id=repo_id,
+        target_bank_id=_bank_id("repo_mcp_fork"),
+        target_bank_name="MCP Fork Bank",
+        enable_repo=True,
+    )
+    assert "MCP Fork Bank" in fork_bank
 
     checkout = await tools["memory_repo_checkout"].fn(repo_id=repo_id, branch_name="mcp-v2")
     assert "mcp-v2" in checkout

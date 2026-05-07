@@ -617,6 +617,7 @@ class DocumentsApi:
         self,
         bank_id: StrictStr,
         document_id: StrictStr,
+        branch_name: Optional[StrictStr] = None,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -639,6 +640,8 @@ class DocumentsApi:
         :type bank_id: str
         :param document_id: (required)
         :type document_id: str
+        :param branch_name:
+        :type branch_name: str
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -666,6 +669,7 @@ class DocumentsApi:
         _param = self._get_document_serialize(
             bank_id=bank_id,
             document_id=document_id,
+            branch_name=branch_name,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -693,6 +697,7 @@ class DocumentsApi:
         self,
         bank_id: StrictStr,
         document_id: StrictStr,
+        branch_name: Optional[StrictStr] = None,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -715,6 +720,8 @@ class DocumentsApi:
         :type bank_id: str
         :param document_id: (required)
         :type document_id: str
+        :param branch_name:
+        :type branch_name: str
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -742,6 +749,7 @@ class DocumentsApi:
         _param = self._get_document_serialize(
             bank_id=bank_id,
             document_id=document_id,
+            branch_name=branch_name,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -769,6 +777,7 @@ class DocumentsApi:
         self,
         bank_id: StrictStr,
         document_id: StrictStr,
+        branch_name: Optional[StrictStr] = None,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -791,6 +800,8 @@ class DocumentsApi:
         :type bank_id: str
         :param document_id: (required)
         :type document_id: str
+        :param branch_name:
+        :type branch_name: str
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -818,6 +829,7 @@ class DocumentsApi:
         _param = self._get_document_serialize(
             bank_id=bank_id,
             document_id=document_id,
+            branch_name=branch_name,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -840,6 +852,7 @@ class DocumentsApi:
         self,
         bank_id,
         document_id,
+        branch_name,
         authorization,
         _request_auth,
         _content_type,
@@ -867,6 +880,10 @@ class DocumentsApi:
         if document_id is not None:
             _path_params['document_id'] = document_id
         # process the query parameters
+        if branch_name is not None:
+            
+            _query_params.append(('branch_name', branch_name))
+            
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -910,6 +927,7 @@ class DocumentsApi:
         self,
         bank_id: StrictStr,
         q: Annotated[Optional[StrictStr], Field(description="Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')")] = None,
+        branch_name: Annotated[Optional[StrictStr], Field(description="Optional memory repo branch to inspect without checking it out.")] = None,
         tags: Annotated[Optional[List[StrictStr]], Field(description="Filter documents by tags")] = None,
         tags_match: Annotated[Optional[StrictStr], Field(description="How to match tags: 'any', 'all', 'any_strict', 'all_strict'")] = None,
         limit: Optional[StrictInt] = None,
@@ -936,6 +954,8 @@ class DocumentsApi:
         :type bank_id: str
         :param q: Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')
         :type q: str
+        :param branch_name: Optional memory repo branch to inspect without checking it out.
+        :type branch_name: str
         :param tags: Filter documents by tags
         :type tags: List[str]
         :param tags_match: How to match tags: 'any', 'all', 'any_strict', 'all_strict'
@@ -971,6 +991,7 @@ class DocumentsApi:
         _param = self._list_documents_serialize(
             bank_id=bank_id,
             q=q,
+            branch_name=branch_name,
             tags=tags,
             tags_match=tags_match,
             limit=limit,
@@ -1002,6 +1023,7 @@ class DocumentsApi:
         self,
         bank_id: StrictStr,
         q: Annotated[Optional[StrictStr], Field(description="Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')")] = None,
+        branch_name: Annotated[Optional[StrictStr], Field(description="Optional memory repo branch to inspect without checking it out.")] = None,
         tags: Annotated[Optional[List[StrictStr]], Field(description="Filter documents by tags")] = None,
         tags_match: Annotated[Optional[StrictStr], Field(description="How to match tags: 'any', 'all', 'any_strict', 'all_strict'")] = None,
         limit: Optional[StrictInt] = None,
@@ -1028,6 +1050,8 @@ class DocumentsApi:
         :type bank_id: str
         :param q: Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')
         :type q: str
+        :param branch_name: Optional memory repo branch to inspect without checking it out.
+        :type branch_name: str
         :param tags: Filter documents by tags
         :type tags: List[str]
         :param tags_match: How to match tags: 'any', 'all', 'any_strict', 'all_strict'
@@ -1063,6 +1087,7 @@ class DocumentsApi:
         _param = self._list_documents_serialize(
             bank_id=bank_id,
             q=q,
+            branch_name=branch_name,
             tags=tags,
             tags_match=tags_match,
             limit=limit,
@@ -1094,6 +1119,7 @@ class DocumentsApi:
         self,
         bank_id: StrictStr,
         q: Annotated[Optional[StrictStr], Field(description="Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')")] = None,
+        branch_name: Annotated[Optional[StrictStr], Field(description="Optional memory repo branch to inspect without checking it out.")] = None,
         tags: Annotated[Optional[List[StrictStr]], Field(description="Filter documents by tags")] = None,
         tags_match: Annotated[Optional[StrictStr], Field(description="How to match tags: 'any', 'all', 'any_strict', 'all_strict'")] = None,
         limit: Optional[StrictInt] = None,
@@ -1120,6 +1146,8 @@ class DocumentsApi:
         :type bank_id: str
         :param q: Case-insensitive substring filter on document ID (e.g. 'report' matches 'report-2024')
         :type q: str
+        :param branch_name: Optional memory repo branch to inspect without checking it out.
+        :type branch_name: str
         :param tags: Filter documents by tags
         :type tags: List[str]
         :param tags_match: How to match tags: 'any', 'all', 'any_strict', 'all_strict'
@@ -1155,6 +1183,7 @@ class DocumentsApi:
         _param = self._list_documents_serialize(
             bank_id=bank_id,
             q=q,
+            branch_name=branch_name,
             tags=tags,
             tags_match=tags_match,
             limit=limit,
@@ -1181,6 +1210,7 @@ class DocumentsApi:
         self,
         bank_id,
         q,
+        branch_name,
         tags,
         tags_match,
         limit,
@@ -1214,6 +1244,10 @@ class DocumentsApi:
         if q is not None:
             
             _query_params.append(('q', q))
+            
+        if branch_name is not None:
+            
+            _query_params.append(('branch_name', branch_name))
             
         if tags is not None:
             

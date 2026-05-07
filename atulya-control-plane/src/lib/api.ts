@@ -238,6 +238,18 @@ export interface MemoryRepoCommitLogItem {
   created_at: string | null;
 }
 
+export interface MemoryRepoForkBankResponse {
+  bank_id: string;
+  bank_name: string | null;
+  source_repo_id: string;
+  source_ref: string;
+  source_branch: string | null;
+  source_commit_id: string | null;
+  include_workspace: boolean;
+  repo_enabled: boolean;
+  repo: MemoryRepoSummary | null;
+}
+
 function asNumber(value: unknown, fallback = 0): number {
   const numeric = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
@@ -1294,6 +1306,32 @@ export class ControlPlaneClient {
       body: JSON.stringify({
         message: params.message,
         ...(params.actor ? { actor: params.actor } : {}),
+      }),
+    });
+  }
+
+  async forkMemoryRepoBank(
+    repoId: string,
+    params: {
+      targetBankId: string;
+      targetBankName?: string;
+      sourceBranch?: string;
+      sourceCommitId?: string;
+      includeWorkspace?: boolean;
+      enableRepo?: boolean;
+      repoName?: string;
+    }
+  ) {
+    return this.fetchApi<MemoryRepoForkBankResponse>(`/api/repos/${repoId}/fork-bank`, {
+      method: "POST",
+      body: JSON.stringify({
+        target_bank_id: params.targetBankId,
+        ...(params.targetBankName ? { target_bank_name: params.targetBankName } : {}),
+        ...(params.sourceBranch ? { source_branch: params.sourceBranch } : {}),
+        ...(params.sourceCommitId ? { source_commit_id: params.sourceCommitId } : {}),
+        ...(params.includeWorkspace ? { include_workspace: true } : {}),
+        ...(params.enableRepo ? { enable_repo: true } : {}),
+        ...(params.repoName ? { repo_name: params.repoName } : {}),
       }),
     });
   }

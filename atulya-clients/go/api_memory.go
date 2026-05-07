@@ -1243,7 +1243,13 @@ type ApiGetMemoryRequest struct {
 	ApiService *MemoryAPIService
 	bankId string
 	memoryId string
+	branchName *string
 	authorization *string
+}
+
+func (r ApiGetMemoryRequest) BranchName(branchName string) ApiGetMemoryRequest {
+	r.branchName = &branchName
+	return r
 }
 
 func (r ApiGetMemoryRequest) Authorization(authorization string) ApiGetMemoryRequest {
@@ -1297,6 +1303,9 @@ func (a *MemoryAPIService) GetMemoryExecute(r ApiGetMemoryRequest) (interface{},
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.branchName != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "branch_name", r.branchName, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -1937,6 +1946,7 @@ type ApiListMemoriesRequest struct {
 	bankId string
 	type_ *string
 	q *string
+	branchName *string
 	limit *int32
 	offset *int32
 	authorization *string
@@ -1949,6 +1959,11 @@ func (r ApiListMemoriesRequest) Type_(type_ string) ApiListMemoriesRequest {
 
 func (r ApiListMemoriesRequest) Q(q string) ApiListMemoriesRequest {
 	r.q = &q
+	return r
+}
+
+func (r ApiListMemoriesRequest) BranchName(branchName string) ApiListMemoriesRequest {
+	r.branchName = &branchName
 	return r
 }
 
@@ -2015,6 +2030,9 @@ func (a *MemoryAPIService) ListMemoriesExecute(r ApiListMemoriesRequest) (*ListM
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
+	}
+	if r.branchName != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "branch_name", r.branchName, "form", "")
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")

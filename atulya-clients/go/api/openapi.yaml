@@ -731,6 +731,14 @@ paths:
         style: form
       - explode: true
         in: query
+        name: branch_name
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
         name: limit
         required: false
         schema:
@@ -792,6 +800,14 @@ paths:
           title: Memory Id
           type: string
         style: simple
+      - explode: true
+        in: query
+        name: branch_name
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
       - explode: false
         in: header
         name: authorization
@@ -1408,6 +1424,48 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
       summary: Checkout memory repo branch
+      tags:
+      - Memory Repos
+  /v1/default/repos/{repo_id}/fork-bank:
+    post:
+      operationId: fork_memory_repo_bank
+      parameters:
+      - explode: false
+        in: path
+        name: repo_id
+        required: true
+        schema:
+          title: Repo Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MemoryRepoForkBankRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MemoryRepoForkBankResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Fork a memory repo version into a new bank
       tags:
       - Memory Repos
   /v1/default/repos/{repo_id}/commit:
@@ -2671,6 +2729,15 @@ paths:
           nullable: true
           type: string
         style: form
+      - description: Optional memory repo branch to inspect without checking it out.
+        explode: true
+        in: query
+        name: branch_name
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
       - description: Filter documents by tags
         explode: true
         in: query
@@ -2805,6 +2872,14 @@ paths:
           title: Document Id
           type: string
         style: simple
+      - explode: true
+        in: query
+        name: branch_name
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
       - explode: false
         in: header
         name: authorization
@@ -12665,6 +12740,92 @@ components:
           nullable: true
           type: string
       title: MemoryRepoEnableRequest
+    MemoryRepoForkBankRequest:
+      example:
+        include_workspace: true
+        source_commit_id: source_commit_id
+        target_bank_name: target_bank_name
+        target_bank_id: target_bank_id
+        enable_repo: true
+        repo_name: repo_name
+        source_branch: source_branch
+      properties:
+        target_bank_id:
+          description: Brand-new bank ID that will receive the forked snapshot
+          title: MemoryRepoForkBankRequestTargetBankId
+          type: string
+        target_bank_name:
+          nullable: true
+          type: string
+        source_branch:
+          nullable: true
+          type: string
+        source_commit_id:
+          nullable: true
+          type: string
+        include_workspace:
+          description: "When true, fork the live branch workspace instead of the branch\
+            \ HEAD commit."
+          title: MemoryRepoForkBankRequestIncludeWorkspace
+          type: boolean
+        enable_repo:
+          description: Enable repo mode on the forked bank after materializing the
+            snapshot.
+          title: MemoryRepoForkBankRequestEnableRepo
+          type: boolean
+        repo_name:
+          nullable: true
+          type: string
+      required:
+      - target_bank_id
+      title: MemoryRepoForkBankRequest
+    MemoryRepoForkBankResponse:
+      example:
+        include_workspace: true
+        source_commit_id: source_commit_id
+        bank_id: bank_id
+        repo_enabled: true
+        repo: ""
+        bank_name: bank_name
+        source_repo_id: source_repo_id
+        source_ref: source_ref
+        source_branch: source_branch
+      properties:
+        bank_id:
+          title: MemoryRepoForkBankResponseBankId
+          type: string
+        bank_name:
+          nullable: true
+          type: string
+        source_repo_id:
+          title: MemoryRepoForkBankResponseSourceRepoId
+          type: string
+        source_ref:
+          title: MemoryRepoForkBankResponseSourceRef
+          type: string
+        source_branch:
+          nullable: true
+          type: string
+        source_commit_id:
+          nullable: true
+          type: string
+        include_workspace:
+          title: MemoryRepoForkBankResponseIncludeWorkspace
+          type: boolean
+        repo_enabled:
+          title: MemoryRepoForkBankResponseRepoEnabled
+          type: boolean
+        repo:
+          allOf:
+          - $ref: "#/components/schemas/MemoryRepoSummaryResponse"
+          nullable: true
+      required:
+      - bank_id
+      - include_workspace
+      - repo_enabled
+      - source_ref
+      - source_repo_id
+      title: MemoryRepoForkBankResponse
     MemoryRepoListResponse:
       example:
         repos:
@@ -13296,6 +13457,9 @@ components:
         query:
           title: RecallRequestQuery
           type: string
+        branch_name:
+          nullable: true
+          type: string
         types:
           items:
             type: string
@@ -13614,6 +13778,9 @@ components:
       properties:
         query:
           title: ReflectRequestQuery
+          type: string
+        branch_name:
+          nullable: true
           type: string
         budget:
           $ref: "#/components/schemas/Budget"

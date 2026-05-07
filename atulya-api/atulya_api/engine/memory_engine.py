@@ -10228,6 +10228,45 @@ class MemoryEngine(MemoryEngineInterface):
             await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
         return await self._memory_repo_service.commit(repo_id, message=message, actor=actor)
 
+    async def fork_memory_repo_bank(
+        self,
+        repo_id: str,
+        *,
+        target_bank_id: str,
+        target_bank_name: str | None = None,
+        source_branch: str | None = None,
+        source_commit_id: str | None = None,
+        include_workspace: bool = False,
+        enable_repo: bool = False,
+        repo_name: str | None = None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        await self._authenticate_tenant(request_context)
+        root_bank_id = await self._get_memory_repo_root_bank_id(repo_id)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext, BankWriteContext
+
+            read_ctx = BankReadContext(
+                bank_id=root_bank_id, operation="fork_memory_repo_bank", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_read(read_ctx))
+
+            write_ctx = BankWriteContext(
+                bank_id=target_bank_id, operation="fork_memory_repo_bank", request_context=request_context
+            )
+            await self._validate_operation(self._operation_validator.validate_bank_write(write_ctx))
+        return await self._memory_repo_service.fork_bank(
+            repo_id,
+            target_bank_id=target_bank_id,
+            target_bank_name=target_bank_name,
+            source_branch=source_branch,
+            source_commit_id=source_commit_id,
+            include_workspace=include_workspace,
+            enable_repo=enable_repo,
+            repo_name=repo_name,
+            request_context=request_context,
+        )
+
     async def get_memory_repo_status(
         self,
         repo_id: str,

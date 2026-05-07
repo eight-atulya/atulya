@@ -378,6 +378,23 @@ class MemoryEngineInterface(ABC):
         ...
 
     @abstractmethod
+    async def fork_memory_repo_bank(
+        self,
+        repo_id: str,
+        *,
+        target_bank_id: str,
+        target_bank_name: str | None,
+        source_branch: str | None,
+        source_commit_id: str | None,
+        include_workspace: bool,
+        enable_repo: bool,
+        repo_name: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        """Fork a repo branch, commit, or live workspace into a brand-new bank."""
+        ...
+
+    @abstractmethod
     async def commit_memory_repo(
         self,
         repo_id: str,

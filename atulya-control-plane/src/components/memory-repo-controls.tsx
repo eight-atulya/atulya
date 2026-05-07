@@ -91,6 +91,13 @@ export function MemoryRepoControls({ variant = "full" }: MemoryRepoControlsProps
   const [commitMessage, setCommitMessage] = useState("");
   const [committing, setCommitting] = useState(false);
 
+  const [forkDialogOpen, setForkDialogOpen] = useState(false);
+  const [forkTargetBankId, setForkTargetBankId] = useState("");
+  const [forkTargetBankName, setForkTargetBankName] = useState("");
+  const [forkIncludeWorkspace, setForkIncludeWorkspace] = useState(false);
+  const [forkEnableRepo, setForkEnableRepo] = useState(true);
+  const [forkingBank, setForkingBank] = useState(false);
+
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
   const [resetCommitId, setResetCommitId] = useState("");
   const [resetForce, setResetForce] = useState(false);
@@ -244,6 +251,30 @@ export function MemoryRepoControls({ variant = "full" }: MemoryRepoControlsProps
       });
     } finally {
       setCommitting(false);
+    }
+  };
+
+  const handleForkBank = async () => {
+    if (!currentRepo || !forkTargetBankId.trim()) return;
+    setForkingBank(true);
+    try {
+      const result = await client.forkMemoryRepoBank(currentRepo.repo_id, {
+        targetBankId: forkTargetBankId.trim(),
+        targetBankName: forkTargetBankName.trim() || undefined,
+        sourceBranch: activeBranch,
+        includeWorkspace: forkIncludeWorkspace,
+        enableRepo: forkEnableRepo,
+      });
+      setForkDialogOpen(false);
+      setForkTargetBankId("");
+      setForkTargetBankName("");
+      setForkIncludeWorkspace(false);
+      setForkEnableRepo(true);
+      toast.success("Bank fork created", {
+        description: `Forked ${result.source_ref} into ${result.bank_id}.`,
+      });
+    } finally {
+      setForkingBank(false);
     }
   };
 
@@ -454,6 +485,10 @@ export function MemoryRepoControls({ variant = "full" }: MemoryRepoControlsProps
                   <Button variant="outline" onClick={() => setBranchDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Create Branch
+                  </Button>
+                  <Button variant="outline" onClick={() => setForkDialogOpen(true)}>
+                    <GitBranch className="mr-2 h-4 w-4" />
+                    Fork to Bank
                   </Button>
                   <Button
                     variant="outline"
@@ -709,6 +744,82 @@ export function MemoryRepoControls({ variant = "full" }: MemoryRepoControlsProps
                 <RotateCcw className="mr-2 h-4 w-4" />
               )}
               Restore Snapshot
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={forkDialogOpen} onOpenChange={setForkDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Fork branch into a new bank</DialogTitle>
+            <DialogDescription>
+              Create a brand-new bank from {activeBranch}. Choose whether to fork the latest saved
+              snapshot or the live workspace state.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">New bank ID</label>
+              <Input
+                value={forkTargetBankId}
+                onChange={(event) => setForkTargetBankId(event.target.value)}
+                placeholder="customer-success-v2"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-foreground">Display name</label>
+              <Input
+                value={forkTargetBankName}
+                onChange={(event) => setForkTargetBankName(event.target.value)}
+                placeholder="Optional bank name"
+              />
+            </div>
+            <label className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 px-3 py-3">
+              <Checkbox
+                checked={forkIncludeWorkspace}
+                onCheckedChange={(checked) => setForkIncludeWorkspace(Boolean(checked))}
+              />
+              <span className="space-y-1">
+                <span className="block text-sm font-medium text-foreground">
+                  Fork live workspace state
+                </span>
+                <span className="block text-xs leading-5 text-muted-foreground">
+                  Use the current unsaved workspace instead of the branch&apos;s latest saved
+                  snapshot.
+                </span>
+              </span>
+            </label>
+            <label className="flex items-start gap-3 rounded-lg border border-border/70 bg-muted/20 px-3 py-3">
+              <Checkbox
+                checked={forkEnableRepo}
+                onCheckedChange={(checked) => setForkEnableRepo(Boolean(checked))}
+              />
+              <span className="space-y-1">
+                <span className="block text-sm font-medium text-foreground">
+                  Enable versioning on the forked bank
+                </span>
+                <span className="block text-xs leading-5 text-muted-foreground">
+                  Start the new bank in repo mode so it can branch and commit immediately.
+                </span>
+              </span>
+            </label>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="secondary"
+              onClick={() => setForkDialogOpen(false)}
+              disabled={forkingBank}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleForkBank} disabled={forkingBank || !forkTargetBankId.trim()}>
+              {forkingBank ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <GitBranch className="mr-2 h-4 w-4" />
+              )}
+              Fork Bank
             </Button>
           </DialogFooter>
         </DialogContent>

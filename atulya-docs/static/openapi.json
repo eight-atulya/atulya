@@ -2228,6 +2228,74 @@
         }
       }
     },
+    "/v1/default/repos/{repo_id}/fork-bank": {
+      "post": {
+        "tags": [
+          "Memory Repos"
+        ],
+        "summary": "Fork a memory repo version into a new bank",
+        "operationId": "fork_memory_repo_bank",
+        "parameters": [
+          {
+            "name": "repo_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Repo Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemoryRepoForkBankRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemoryRepoForkBankResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/repos/{repo_id}/commit": {
       "post": {
         "tags": [
@@ -17936,6 +18004,156 @@
         },
         "type": "object",
         "title": "MemoryRepoEnableRequest"
+      },
+      "MemoryRepoForkBankRequest": {
+        "properties": {
+          "target_bank_id": {
+            "type": "string",
+            "title": "Target Bank Id",
+            "description": "Brand-new bank ID that will receive the forked snapshot"
+          },
+          "target_bank_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Bank Name",
+            "description": "Optional display name for the new bank"
+          },
+          "source_branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Branch",
+            "description": "Optional source branch to fork from. Defaults to the repo's active branch."
+          },
+          "source_commit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Commit Id",
+            "description": "Optional source commit to fork from. Mutually exclusive with source_branch."
+          },
+          "include_workspace": {
+            "type": "boolean",
+            "title": "Include Workspace",
+            "description": "When true, fork the live branch workspace instead of the branch HEAD commit.",
+            "default": false
+          },
+          "enable_repo": {
+            "type": "boolean",
+            "title": "Enable Repo",
+            "description": "Enable repo mode on the forked bank after materializing the snapshot.",
+            "default": false
+          },
+          "repo_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repo Name",
+            "description": "Optional repo display name for the forked bank when enable_repo=true."
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_bank_id"
+        ],
+        "title": "MemoryRepoForkBankRequest"
+      },
+      "MemoryRepoForkBankResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "bank_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Name"
+          },
+          "source_repo_id": {
+            "type": "string",
+            "title": "Source Repo Id"
+          },
+          "source_ref": {
+            "type": "string",
+            "title": "Source Ref"
+          },
+          "source_branch": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Branch"
+          },
+          "source_commit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Commit Id"
+          },
+          "include_workspace": {
+            "type": "boolean",
+            "title": "Include Workspace"
+          },
+          "repo_enabled": {
+            "type": "boolean",
+            "title": "Repo Enabled"
+          },
+          "repo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MemoryRepoSummaryResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "source_repo_id",
+          "source_ref",
+          "include_workspace",
+          "repo_enabled"
+        ],
+        "title": "MemoryRepoForkBankResponse"
       },
       "MemoryRepoListResponse": {
         "properties": {

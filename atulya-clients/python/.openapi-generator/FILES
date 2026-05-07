@@ -156,6 +156,8 @@ atulya_client_api/models/memory_repo_commit_request.py
 atulya_client_api/models/memory_repo_create_request.py
 atulya_client_api/models/memory_repo_diff_response.py
 atulya_client_api/models/memory_repo_enable_request.py
+atulya_client_api/models/memory_repo_fork_bank_request.py
+atulya_client_api/models/memory_repo_fork_bank_response.py
 atulya_client_api/models/memory_repo_list_response.py
 atulya_client_api/models/memory_repo_log_response.py
 atulya_client_api/models/memory_repo_lookup_response.py

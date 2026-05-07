@@ -463,6 +463,102 @@ class MemoryRepoService:
             )
             return await self._repo_summary(conn, await self._get_repo_row(conn, repo_id))
 
+    async def fork_bank(
+        self,
+        repo_id: str,
+        *,
+        target_bank_id: str,
+        target_bank_name: str | None,
+        source_branch: str | None,
+        source_commit_id: str | None,
+        include_workspace: bool,
+        enable_repo: bool,
+        repo_name: str | None,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        target_bank_id = target_bank_id.strip()
+        if not target_bank_id.strip():
+            raise ValueError("target_bank_id is required")
+        if target_bank_id.startswith("__repo__"):
+            raise ValueError("target_bank_id uses a reserved internal prefix")
+        if source_commit_id and source_branch:
+            raise ValueError("Provide source_commit_id or source_branch, not both")
+        if source_commit_id and include_workspace:
+            raise ValueError("include_workspace can only be used with a branch source")
+
+        pool = await self._engine._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            repo = await self._get_repo_row(conn, repo_id)
+            await self._ensure_bank_absent(conn, target_bank_id)
+
+            resolved_branch = source_branch or repo["active_branch"]
+            if source_commit_id:
+                commit_row = await self._get_commit_row(conn, source_commit_id)
+                if commit_row["repo_id"] != repo["id"]:
+                    raise ValueError(f"Commit '{source_commit_id}' does not belong to repo '{repo_id}'")
+                snapshot = await self._load_commit_snapshot(conn, source_commit_id)
+                source_ref = f"commit:{source_commit_id}"
+                resolved_commit_id = source_commit_id
+            elif include_workspace:
+                workspace = await self._get_workspace_row(conn, repo["id"], resolved_branch)
+                snapshot = await self.capture_bank_snapshot(workspace["workspace_bank_id"])
+                source_ref = f"workspace:{resolved_branch}"
+                resolved_commit_id = str(workspace["head_commit_id"]) if workspace["head_commit_id"] else None
+            else:
+                ref = await self._get_ref_row(conn, repo["id"], resolved_branch)
+                if not ref["head_commit_id"]:
+                    raise ValueError(
+                        f"Branch '{resolved_branch}' has no HEAD commit. Use include_workspace=true to fork its live workspace."
+                    )
+                resolved_commit_id = str(ref["head_commit_id"])
+                snapshot = await self._load_commit_snapshot(conn, resolved_commit_id)
+                source_ref = f"branch:{resolved_branch}"
+
+            fork_snapshot = self._override_snapshot_bank_name(snapshot, target_bank_name)
+            await self._restore_snapshot_db_only(
+                conn,
+                target_bank_id=target_bank_id,
+                snapshot=fork_snapshot,
+                internal_workspace=False,
+                root_bank_id=target_bank_id,
+                branch_name="main",
+            )
+
+        resolved_bank_name = self._snapshot_bank_name(fork_snapshot)
+        stored_file_keys = self._snapshot_storage_keys(fork_snapshot)
+        forked_repo: dict[str, Any] | None = None
+        try:
+            await self._store_snapshot_files(fork_snapshot)
+            if enable_repo:
+                forked_repo = await self.enable_repo(
+                    bank_id=target_bank_id,
+                    repo_name=repo_name or resolved_bank_name or target_bank_id,
+                    request_context=request_context,
+                )
+        except Exception:
+            try:
+                await self._cleanup_fork_failure(target_bank_id, stored_file_keys)
+            except Exception as cleanup_error:
+                logger.error(
+                    "[MEMORY_REPO] Failed to clean up fork target after error: bank=%s error=%s",
+                    target_bank_id,
+                    cleanup_error,
+                    exc_info=True,
+                )
+            raise
+
+        return {
+            "bank_id": target_bank_id,
+            "bank_name": resolved_bank_name,
+            "source_repo_id": str(repo_id),
+            "source_ref": source_ref,
+            "source_branch": None if source_commit_id else resolved_branch,
+            "source_commit_id": resolved_commit_id,
+            "include_workspace": include_workspace,
+            "repo_enabled": enable_repo,
+            "repo": forked_repo,
+        }
+
     async def commit(self, repo_id: str, *, message: str, actor: str | None = None) -> dict[str, Any]:
         pool = await self._engine._get_pool()
         async with acquire_with_retry(pool) as conn:
@@ -869,6 +965,23 @@ class MemoryRepoService:
             raise ValueError(f"Workspace not found for branch: {branch_name}")
         return row
 
+    async def _get_commit_row(self, conn: "asyncpg.Connection", commit_id: str):
+        row = await conn.fetchrow(
+            f"SELECT * FROM {_fq_table('memory_commits')} WHERE id = $1",
+            uuid.UUID(commit_id),
+        )
+        if not row:
+            raise ValueError(f"Commit not found: {commit_id}")
+        return row
+
+    async def _ensure_bank_absent(self, conn: "asyncpg.Connection", bank_id: str) -> None:
+        row = await conn.fetchrow(
+            f"SELECT bank_id FROM {_fq_table('banks')} WHERE bank_id = $1",
+            bank_id,
+        )
+        if row is not None:
+            raise ValueError(f"Target bank already exists: {bank_id}")
+
     async def _ensure_branch_absent(self, conn: "asyncpg.Connection", repo_id: uuid.UUID, branch_name: str) -> None:
         row = await conn.fetchrow(
             f"""
@@ -1026,6 +1139,27 @@ class MemoryRepoService:
     async def _store_snapshot_files(self, snapshot: dict[str, Any]) -> None:
         for item in snapshot["components"].get("stored_files", {}).get("files", []):
             await self._engine._file_storage.store(self._decode_bytes(item["data"]), item["storage_key"])
+
+    async def _cleanup_fork_failure(self, bank_id: str, stored_file_keys: list[str]) -> None:
+        pool = await self._engine._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            async with conn.transaction():
+                hidden_workspace_banks = await self.cleanup_repo_for_bank(conn, bank_id)
+                for hidden_bank_id in hidden_workspace_banks:
+                    await self._delete_bank_contents(conn, hidden_bank_id)
+                await self._delete_bank_contents(conn, bank_id)
+        for storage_key in stored_file_keys:
+            try:
+                await self._engine._file_storage.delete(storage_key)
+            except FileNotFoundError:
+                continue
+            except Exception as exc:
+                logger.warning(
+                    "[MEMORY_REPO] Failed to delete fork cleanup storage key %s for bank=%s: %s",
+                    storage_key,
+                    bank_id,
+                    exc,
+                )
 
     async def _get_columns(self, conn: "asyncpg.Connection", table: str) -> list[dict[str, str]]:
         from .memory_engine import get_current_schema
@@ -1291,6 +1425,20 @@ class MemoryRepoService:
         config = bank_rows[0].get("config")
         return config if isinstance(config, dict) else {}
 
+    def _snapshot_bank_name(self, snapshot: dict[str, Any]) -> str | None:
+        bank_rows = snapshot.get("components", {}).get("profile_config", {}).get("tables", {}).get("banks", [])
+        if not bank_rows:
+            return None
+        name = bank_rows[0].get("name")
+        return str(name) if name is not None else None
+
+    def _snapshot_storage_keys(self, snapshot: dict[str, Any]) -> list[str]:
+        return [
+            item["storage_key"]
+            for item in snapshot.get("components", {}).get("stored_files", {}).get("files", [])
+            if item.get("storage_key")
+        ]
+
     def _normalize_snapshot_for_diff(self, snapshot: dict[str, Any]) -> dict[str, Any]:
         components = snapshot.get("components") or {}
         bank_rows = components.get("profile_config", {}).get("tables", {}).get("banks", [])
@@ -1345,6 +1493,15 @@ class MemoryRepoService:
             "components": normalized_components,
             "stats": snapshot.get("stats", {}),
         }
+
+    def _override_snapshot_bank_name(self, snapshot: dict[str, Any], target_bank_name: str | None) -> dict[str, Any]:
+        if not target_bank_name:
+            return snapshot
+        fork_snapshot = json.loads(json.dumps(snapshot))
+        bank_rows = fork_snapshot.get("components", {}).get("profile_config", {}).get("tables", {}).get("banks", [])
+        if bank_rows:
+            bank_rows[0]["name"] = target_bank_name
+        return fork_snapshot
 
     def _build_uuid_id_map(
         self,

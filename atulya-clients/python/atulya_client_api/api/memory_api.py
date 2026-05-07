@@ -2633,6 +2633,7 @@ class MemoryApi:
         self,
         bank_id: StrictStr,
         memory_id: StrictStr,
+        branch_name: Optional[StrictStr] = None,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -2655,6 +2656,8 @@ class MemoryApi:
         :type bank_id: str
         :param memory_id: (required)
         :type memory_id: str
+        :param branch_name:
+        :type branch_name: str
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -2682,6 +2685,7 @@ class MemoryApi:
         _param = self._get_memory_serialize(
             bank_id=bank_id,
             memory_id=memory_id,
+            branch_name=branch_name,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -2709,6 +2713,7 @@ class MemoryApi:
         self,
         bank_id: StrictStr,
         memory_id: StrictStr,
+        branch_name: Optional[StrictStr] = None,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -2731,6 +2736,8 @@ class MemoryApi:
         :type bank_id: str
         :param memory_id: (required)
         :type memory_id: str
+        :param branch_name:
+        :type branch_name: str
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -2758,6 +2765,7 @@ class MemoryApi:
         _param = self._get_memory_serialize(
             bank_id=bank_id,
             memory_id=memory_id,
+            branch_name=branch_name,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -2785,6 +2793,7 @@ class MemoryApi:
         self,
         bank_id: StrictStr,
         memory_id: StrictStr,
+        branch_name: Optional[StrictStr] = None,
         authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
@@ -2807,6 +2816,8 @@ class MemoryApi:
         :type bank_id: str
         :param memory_id: (required)
         :type memory_id: str
+        :param branch_name:
+        :type branch_name: str
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -2834,6 +2845,7 @@ class MemoryApi:
         _param = self._get_memory_serialize(
             bank_id=bank_id,
             memory_id=memory_id,
+            branch_name=branch_name,
             authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -2856,6 +2868,7 @@ class MemoryApi:
         self,
         bank_id,
         memory_id,
+        branch_name,
         authorization,
         _request_auth,
         _content_type,
@@ -2883,6 +2896,10 @@ class MemoryApi:
         if memory_id is not None:
             _path_params['memory_id'] = memory_id
         # process the query parameters
+        if branch_name is not None:
+            
+            _query_params.append(('branch_name', branch_name))
+            
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -4196,6 +4213,7 @@ class MemoryApi:
         bank_id: StrictStr,
         type: Optional[StrictStr] = None,
         q: Optional[StrictStr] = None,
+        branch_name: Optional[StrictStr] = None,
         limit: Optional[StrictInt] = None,
         offset: Optional[StrictInt] = None,
         authorization: Optional[StrictStr] = None,
@@ -4222,6 +4240,8 @@ class MemoryApi:
         :type type: str
         :param q:
         :type q: str
+        :param branch_name:
+        :type branch_name: str
         :param limit:
         :type limit: int
         :param offset:
@@ -4254,6 +4274,7 @@ class MemoryApi:
             bank_id=bank_id,
             type=type,
             q=q,
+            branch_name=branch_name,
             limit=limit,
             offset=offset,
             authorization=authorization,
@@ -4284,6 +4305,7 @@ class MemoryApi:
         bank_id: StrictStr,
         type: Optional[StrictStr] = None,
         q: Optional[StrictStr] = None,
+        branch_name: Optional[StrictStr] = None,
         limit: Optional[StrictInt] = None,
         offset: Optional[StrictInt] = None,
         authorization: Optional[StrictStr] = None,
@@ -4310,6 +4332,8 @@ class MemoryApi:
         :type type: str
         :param q:
         :type q: str
+        :param branch_name:
+        :type branch_name: str
         :param limit:
         :type limit: int
         :param offset:
@@ -4342,6 +4366,7 @@ class MemoryApi:
             bank_id=bank_id,
             type=type,
             q=q,
+            branch_name=branch_name,
             limit=limit,
             offset=offset,
             authorization=authorization,
@@ -4372,6 +4397,7 @@ class MemoryApi:
         bank_id: StrictStr,
         type: Optional[StrictStr] = None,
         q: Optional[StrictStr] = None,
+        branch_name: Optional[StrictStr] = None,
         limit: Optional[StrictInt] = None,
         offset: Optional[StrictInt] = None,
         authorization: Optional[StrictStr] = None,
@@ -4398,6 +4424,8 @@ class MemoryApi:
         :type type: str
         :param q:
         :type q: str
+        :param branch_name:
+        :type branch_name: str
         :param limit:
         :type limit: int
         :param offset:
@@ -4430,6 +4458,7 @@ class MemoryApi:
             bank_id=bank_id,
             type=type,
             q=q,
+            branch_name=branch_name,
             limit=limit,
             offset=offset,
             authorization=authorization,
@@ -4455,6 +4484,7 @@ class MemoryApi:
         bank_id,
         type,
         q,
+        branch_name,
         limit,
         offset,
         authorization,
@@ -4489,6 +4519,10 @@ class MemoryApi:
         if q is not None:
             
             _query_params.append(('q', q))
+            
+        if branch_name is not None:
+            
+            _query_params.append(('branch_name', branch_name))
             
         if limit is not None:
             

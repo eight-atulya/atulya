@@ -284,7 +284,13 @@ type ApiGetDocumentRequest struct {
 	ApiService *DocumentsAPIService
 	bankId string
 	documentId string
+	branchName *string
 	authorization *string
+}
+
+func (r ApiGetDocumentRequest) BranchName(branchName string) ApiGetDocumentRequest {
+	r.branchName = &branchName
+	return r
 }
 
 func (r ApiGetDocumentRequest) Authorization(authorization string) ApiGetDocumentRequest {
@@ -338,6 +344,9 @@ func (a *DocumentsAPIService) GetDocumentExecute(r ApiGetDocumentRequest) (*Docu
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
 
+	if r.branchName != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "branch_name", r.branchName, "form", "")
+	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
 
@@ -410,6 +419,7 @@ type ApiListDocumentsRequest struct {
 	ApiService *DocumentsAPIService
 	bankId string
 	q *string
+	branchName *string
 	tags *[]string
 	tagsMatch *string
 	limit *int32
@@ -420,6 +430,12 @@ type ApiListDocumentsRequest struct {
 // Case-insensitive substring filter on document ID (e.g. &#39;report&#39; matches &#39;report-2024&#39;)
 func (r ApiListDocumentsRequest) Q(q string) ApiListDocumentsRequest {
 	r.q = &q
+	return r
+}
+
+// Optional memory repo branch to inspect without checking it out.
+func (r ApiListDocumentsRequest) BranchName(branchName string) ApiListDocumentsRequest {
+	r.branchName = &branchName
 	return r
 }
 
@@ -495,6 +511,9 @@ func (a *DocumentsAPIService) ListDocumentsExecute(r ApiListDocumentsRequest) (*
 
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
+	}
+	if r.branchName != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "branch_name", r.branchName, "form", "")
 	}
 	if r.tags != nil {
 		t := *r.tags

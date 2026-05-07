@@ -64,6 +64,7 @@ or any "materialize state into a new bank/workspace" behavior, minimum proof is 
 - one typed round-trip fidelity test for the touched tables
 - one workflow isolation test that proves source and target banks stay independent
 - one branch-aware read proof when users or agents can inspect non-active state without checkout
+- one rollback proof when failure can happen after materialization starts but before the workflow is complete
 
 Typed round-trip means asserting the restored row values themselves, not only the API
 status code. For example: `uuid`, `timestamp`, `json/jsonb`, `vector`, arrays, and any

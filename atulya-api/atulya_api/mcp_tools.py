@@ -222,6 +222,7 @@ def register_mcp_tools(
         "memory_repo_log",
         "memory_repo_diff",
         "memory_repo_branch_create",
+        "memory_repo_fork_bank",
         "memory_repo_checkout",
         "memory_repo_commit",
         "memory_repo_reset_hard",
@@ -337,6 +338,9 @@ def register_mcp_tools(
 
     if "memory_repo_branch_create" in tools_to_register:
         _register_memory_repo_branch_create(mcp, memory, config)
+
+    if "memory_repo_fork_bank" in tools_to_register:
+        _register_memory_repo_fork_bank(mcp, memory, config)
 
     if "memory_repo_checkout" in tools_to_register:
         _register_memory_repo_checkout(mcp, memory, config)
@@ -2984,6 +2988,40 @@ def _register_memory_repo_branch_create(mcp: FastMCP, memory: MemoryEngine, conf
             return json.dumps({"error": str(e)})
         except Exception as e:
             logger.error(f"Error creating memory repo branch: {e}", exc_info=True)
+            return json.dumps({"error": str(e)})
+
+
+def _register_memory_repo_fork_bank(mcp: FastMCP, memory: MemoryEngine, config: MCPToolsConfig) -> None:
+    @mcp.tool()
+    async def memory_repo_fork_bank(
+        repo_id: str,
+        target_bank_id: str,
+        target_bank_name: str | None = None,
+        source_branch: str | None = None,
+        source_commit_id: str | None = None,
+        include_workspace: bool = False,
+        enable_repo: bool = False,
+        repo_name: str | None = None,
+    ) -> str:
+        """Fork a repo branch, commit, or live workspace into a brand-new bank."""
+        try:
+            result = await memory.fork_memory_repo_bank(
+                repo_id,
+                target_bank_id=target_bank_id,
+                target_bank_name=target_bank_name,
+                source_branch=source_branch,
+                source_commit_id=source_commit_id,
+                include_workspace=include_workspace,
+                enable_repo=enable_repo,
+                repo_name=repo_name,
+                request_context=_get_request_context(config),
+            )
+            return json.dumps(result, indent=2, default=str)
+        except OperationValidationError as e:
+            logger.warning(f"Operation rejected: {e}")
+            return json.dumps({"error": str(e)})
+        except Exception as e:
+            logger.error(f"Error forking memory repo bank: {e}", exc_info=True)
             return json.dumps({"error": str(e)})
 
 

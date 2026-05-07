@@ -1767,6 +1767,31 @@ class MemoryRepoCheckoutRequest(BaseModel):
     branch_name: str = Field(description="Branch to checkout")
 
 
+class MemoryRepoForkBankRequest(BaseModel):
+    target_bank_id: str = Field(description="Brand-new bank ID that will receive the forked snapshot")
+    target_bank_name: str | None = Field(default=None, description="Optional display name for the new bank")
+    source_branch: str | None = Field(
+        default=None,
+        description="Optional source branch to fork from. Defaults to the repo's active branch.",
+    )
+    source_commit_id: str | None = Field(
+        default=None,
+        description="Optional source commit to fork from. Mutually exclusive with source_branch.",
+    )
+    include_workspace: bool = Field(
+        default=False,
+        description="When true, fork the live branch workspace instead of the branch HEAD commit.",
+    )
+    enable_repo: bool = Field(
+        default=False,
+        description="Enable repo mode on the forked bank after materializing the snapshot.",
+    )
+    repo_name: str | None = Field(
+        default=None,
+        description="Optional repo display name for the forked bank when enable_repo=true.",
+    )
+
+
 class MemoryRepoCommitRequest(BaseModel):
     message: str = Field(description="Commit message")
     actor: str | None = Field(default=None, description="Optional actor label")
@@ -1800,6 +1825,18 @@ class MemoryRepoLookupResponse(BaseModel):
 
 class MemoryRepoBranchesResponse(BaseModel):
     branches: list[dict[str, Any]]
+
+
+class MemoryRepoForkBankResponse(BaseModel):
+    bank_id: str
+    bank_name: str | None = None
+    source_repo_id: str
+    source_ref: str
+    source_branch: str | None = None
+    source_commit_id: str | None = None
+    include_workspace: bool
+    repo_enabled: bool
+    repo: MemoryRepoSummaryResponse | None = None
 
 
 class MemoryRepoStatusResponse(BaseModel):
@@ -4441,6 +4478,44 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in POST /v1/default/repos/{repo_id}/checkout: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/repos/{repo_id}/fork-bank",
+        response_model=MemoryRepoForkBankResponse,
+        summary="Fork a memory repo version into a new bank",
+        operation_id="fork_memory_repo_bank",
+        tags=["Memory Repos"],
+    )
+    async def api_fork_memory_repo_bank(
+        repo_id: str,
+        request: MemoryRepoForkBankRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.fork_memory_repo_bank(
+                repo_id,
+                target_bank_id=request.target_bank_id,
+                target_bank_name=request.target_bank_name,
+                source_branch=request.source_branch,
+                source_commit_id=request.source_commit_id,
+                include_workspace=request.include_workspace,
+                enable_repo=request.enable_repo,
+                repo_name=request.repo_name,
+                request_context=request_context,
+            )
+            return MemoryRepoForkBankResponse.model_validate(result)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in POST /v1/default/repos/{repo_id}/fork-bank: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post(

@@ -31,6 +31,7 @@ class ReflectRequest(BaseModel):
     Request model for reflect endpoint.
     """ # noqa: E501
     query: StrictStr
+    branch_name: Optional[StrictStr] = None
     budget: Optional[Budget] = None
     context: Optional[StrictStr] = None
     max_tokens: Optional[StrictInt] = Field(default=None, description="Maximum tokens for the response")
@@ -39,7 +40,7 @@ class ReflectRequest(BaseModel):
     tags: Optional[List[StrictStr]] = None
     tags_match: Optional[StrictStr] = Field(default=None, description="How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).")
     tag_groups: Optional[List[RecallRequestTagGroupsInner]] = None
-    __properties: ClassVar[List[str]] = ["query", "budget", "context", "max_tokens", "include", "response_schema", "tags", "tags_match", "tag_groups"]
+    __properties: ClassVar[List[str]] = ["query", "branch_name", "budget", "context", "max_tokens", "include", "response_schema", "tags", "tags_match", "tag_groups"]
 
     @field_validator('tags_match')
     def tags_match_validate_enum(cls, value):
@@ -100,6 +101,11 @@ class ReflectRequest(BaseModel):
                 if _item_tag_groups:
                     _items.append(_item_tag_groups.to_dict())
             _dict['tag_groups'] = _items
+        # set to None if branch_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.branch_name is None and "branch_name" in self.model_fields_set:
+            _dict['branch_name'] = None
+
         # set to None if context (nullable) is None
         # and model_fields_set contains the field
         if self.context is None and "context" in self.model_fields_set:
@@ -133,6 +139,7 @@ class ReflectRequest(BaseModel):
 
         _obj = cls.model_validate({
             "query": obj.get("query"),
+            "branch_name": obj.get("branch_name"),
             "budget": obj.get("budget"),
             "context": obj.get("context"),
             "max_tokens": obj.get("max_tokens"),

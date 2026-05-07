@@ -4581,6 +4581,93 @@ export type MemoryRepoEnableRequest = {
 };
 
 /**
+ * MemoryRepoForkBankRequest
+ */
+export type MemoryRepoForkBankRequest = {
+    /**
+     * MemoryRepoForkBankRequestTargetBankId
+     *
+     * Brand-new bank ID that will receive the forked snapshot
+     */
+    target_bank_id: string;
+    /**
+     * MemoryRepoForkBankRequestTargetBankName
+     *
+     * Optional display name for the new bank
+     */
+    target_bank_name?: string | null;
+    /**
+     * MemoryRepoForkBankRequestSourceBranch
+     *
+     * Optional source branch to fork from. Defaults to the repo's active branch.
+     */
+    source_branch?: string | null;
+    /**
+     * MemoryRepoForkBankRequestSourceCommitId
+     *
+     * Optional source commit to fork from. Mutually exclusive with source_branch.
+     */
+    source_commit_id?: string | null;
+    /**
+     * MemoryRepoForkBankRequestIncludeWorkspace
+     *
+     * When true, fork the live branch workspace instead of the branch HEAD commit.
+     */
+    include_workspace?: boolean;
+    /**
+     * MemoryRepoForkBankRequestEnableRepo
+     *
+     * Enable repo mode on the forked bank after materializing the snapshot.
+     */
+    enable_repo?: boolean;
+    /**
+     * MemoryRepoForkBankRequestRepoName
+     *
+     * Optional repo display name for the forked bank when enable_repo=true.
+     */
+    repo_name?: string | null;
+};
+
+/**
+ * MemoryRepoForkBankResponse
+ */
+export type MemoryRepoForkBankResponse = {
+    /**
+     * MemoryRepoForkBankResponseBankId
+     */
+    bank_id: string;
+    /**
+     * MemoryRepoForkBankResponseBankName
+     */
+    bank_name?: string | null;
+    /**
+     * MemoryRepoForkBankResponseSourceRepoId
+     */
+    source_repo_id: string;
+    /**
+     * MemoryRepoForkBankResponseSourceRef
+     */
+    source_ref: string;
+    /**
+     * MemoryRepoForkBankResponseSourceBranch
+     */
+    source_branch?: string | null;
+    /**
+     * MemoryRepoForkBankResponseSourceCommitId
+     */
+    source_commit_id?: string | null;
+    /**
+     * MemoryRepoForkBankResponseIncludeWorkspace
+     */
+    include_workspace: boolean;
+    /**
+     * MemoryRepoForkBankResponseRepoEnabled
+     */
+    repo_enabled: boolean;
+    repo?: MemoryRepoSummaryResponse | null;
+};
+
+/**
  * MemoryRepoListResponse
  */
 export type MemoryRepoListResponse = {
@@ -5089,6 +5176,12 @@ export type RecallRequest = {
      */
     query: string;
     /**
+     * RecallRequestBranchName
+     *
+     * Optional memory repo branch to query without checking it out.
+     */
+    branch_name?: string | null;
+    /**
      * RecallRequestTypes
      *
      * List of fact types to recall: 'world', 'experience', 'observation'. Defaults to world and experience if not specified.
@@ -5395,6 +5488,12 @@ export type ReflectRequest = {
      * ReflectRequestQuery
      */
     query: string;
+    /**
+     * ReflectRequestBranchName
+     *
+     * Optional memory repo branch to query without checking it out.
+     */
+    branch_name?: string | null;
     budget?: Budget;
     /**
      * ReflectRequestContext
@@ -6903,6 +7002,10 @@ export type ListMemoriesData = {
          */
         q?: string | null;
         /**
+         * Branch Name
+         */
+        branch_name?: string | null;
+        /**
          * Limit
          */
         limit?: number;
@@ -6950,7 +7053,12 @@ export type GetMemoryData = {
          */
         memory_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Branch Name
+         */
+        branch_name?: string | null;
+    };
     url: '/v1/default/banks/{bank_id}/memories/{memory_id}';
 };
 
@@ -7500,6 +7608,42 @@ export type CheckoutMemoryRepoBranchResponses = {
 };
 
 export type CheckoutMemoryRepoBranchResponse = CheckoutMemoryRepoBranchResponses[keyof CheckoutMemoryRepoBranchResponses];
+
+export type ForkMemoryRepoBankData = {
+    body: MemoryRepoForkBankRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Repo Id
+         */
+        repo_id: string;
+    };
+    query?: never;
+    url: '/v1/default/repos/{repo_id}/fork-bank';
+};
+
+export type ForkMemoryRepoBankErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ForkMemoryRepoBankError = ForkMemoryRepoBankErrors[keyof ForkMemoryRepoBankErrors];
+
+export type ForkMemoryRepoBankResponses = {
+    /**
+     * Successful Response
+     */
+    200: MemoryRepoForkBankResponse;
+};
+
+export type ForkMemoryRepoBankResponse = ForkMemoryRepoBankResponses[keyof ForkMemoryRepoBankResponses];
 
 export type CommitMemoryRepoData = {
     body: MemoryRepoCommitRequest;
@@ -8565,6 +8709,12 @@ export type ListDocumentsData = {
          */
         q?: string | null;
         /**
+         * Branch Name
+         *
+         * Optional memory repo branch to inspect without checking it out.
+         */
+        branch_name?: string | null;
+        /**
          * Tags
          *
          * Filter documents by tags
@@ -8664,7 +8814,12 @@ export type GetDocumentData = {
          */
         document_id: string;
     };
-    query?: never;
+    query?: {
+        /**
+         * Branch Name
+         */
+        branch_name?: string | null;
+    };
     url: '/v1/default/banks/{bank_id}/documents/{document_id}';
 };
 
