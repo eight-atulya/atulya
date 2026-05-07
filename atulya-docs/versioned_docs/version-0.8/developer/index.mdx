@@ -46,7 +46,7 @@ The brain keeps growing. The intelligence compounds.
 ## Why Atulya?
 
 :::tip[Deep reference]
-Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 114 endpoints, 189 schemas, all design patterns in one page.
+Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 130 endpoints, 206 schemas, all design patterns in one page.
 :::
 
 It all started with a simple observation: 
@@ -82,15 +82,18 @@ Atulya solves these problems with a strong foundation with a memory system desig
 
 ## Start Here If You Build Coding Agents
 
-The developer docs now have three high-leverage workbenches:
+The developer docs now have four high-leverage workbenches:
 
 | Surface | When to open it first | What you get |
 |------|------------------------|--------------|
 | **Codebases** | You need deterministic understanding of a repo before memory changes | ASD parsing, repo map, symbol search, impact analysis, review routing, and approved memory publish |
 | **Graph Intelligence** | You need to inspect what changed inside a memory bank and why Atulya believes it | state-aware graph review, evidence tracing, and scalable investigation views |
 | **Internet Research** | You need live public-web evidence without mutating memory first | SearXNG search, Firecrawl extraction, curated clipboard review, and safe retain-draft handoff |
+| **Memory Repos** | You need safe experimentation on top of a bank instead of one mutable memory line | branches, commits, diff, reset, and fork-to-bank workflows |
 
 If your workflow starts from source code, begin with **Codebases**. If your workflow starts from memory state or evidence review, begin with **Graph Intelligence**. If your workflow starts from fresh public-web evidence that may or may not deserve retention, begin with **Internet Research**.
+
+If your workflow starts from "we want to change this bank, but we do not want to break the main line," begin with **Memory Repos**.
 
 ```mermaid
 flowchart LR
@@ -157,6 +160,27 @@ It gives you three layers of control:
 This keeps public-web research separate from memory mutation by default, while still making it easy to promote high-signal findings into Retain when they are worth preserving.
 
 Start with [Internet Research](/developer/internet-research) for stack setup, API usage, and the control-plane workflow.
+
+## Featured: Memory Repos
+
+One of Atulya's most important new operator features is **Memory Repos**.
+
+It gives a bank a Git-like versioning layer so teams and agents can evolve memory safely:
+
+- branch before experimenting
+- compare workspace state against the last durable commit
+- reset a branch when an experiment goes wrong
+- fork a stable version into a brand-new bank
+
+This matters because the organizational brain should not be one fragile mutable line.
+
+Memory repos are the bridge between plain persistent memory and a more durable brain architecture:
+
+- they preserve how understanding changes over time
+- they let teams test new memory lines without polluting `main`
+- they make it easier to promote stable knowledge into new agent or team contexts
+
+Start with [Memory Repos](/developer/memory-repos) for the full mental model and API surface.
 
 ## Why This Matters For Enterprise
 

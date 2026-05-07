@@ -97,6 +97,12 @@ const sidebars: SidebarsConfig = {
         },
         {
           type: 'doc',
+          id: 'developer/memory-repos',
+          label: 'Memory Repos',
+          customProps: { icon: 'lu-git-branch-plus' },
+        },
+        {
+          type: 'doc',
           id: 'developer/observations',
           label: 'Observations',
           customProps: { icon: 'lu-activity' },

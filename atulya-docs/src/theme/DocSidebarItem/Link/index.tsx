@@ -19,7 +19,7 @@ import {
   LuArrowUpRight, LuBookOpen, LuRss, LuCloud, LuMessageCircle,
   LuChartBar, LuChartColumn, LuStar, LuCircleHelp,
   LuLayoutTemplate, LuFileJson, LuKey, LuUsers,
-  LuGlobe, LuBrainCog, LuSparkles, LuBoxes, LuHistory,
+  LuGlobe, LuBrainCog, LuSparkles, LuBoxes, LuHistory, LuMap,
 } from 'react-icons/lu';
 import {
   SiGo, SiPython, SiGithub, SiSlack, SiDocker, SiKubernetes,
@@ -52,6 +52,7 @@ const ICON_MAP: Record<string, IconType> = {
   'lu-package':         LuPackage,
   'lu-book':            LuBook,
   'lu-book-open':       LuBookOpen,
+  'lu-map':             LuMap,
   'lu-network':         LuNetwork,
   'lu-code':            LuCode,
   'lu-layers':          LuLayers,
@@ -89,6 +90,17 @@ const ICON_MAP: Record<string, IconType> = {
   'si-vercel':          SiVercel,
 };
 
+function isImageSource(value: string): boolean {
+  return (
+    value.startsWith('/') ||
+    value.startsWith('./') ||
+    value.startsWith('../') ||
+    value.startsWith('http://') ||
+    value.startsWith('https://') ||
+    value.startsWith('data:')
+  );
+}
+
 type Props = WrapperProps<typeof LinkType>;
 
 export default function LinkWrapper(props: Props): React.JSX.Element {
@@ -107,7 +119,9 @@ export default function LinkWrapper(props: Props): React.JSX.Element {
   const iconNode = iconKey
     ? IconComponent
       ? <IconComponent size={15} style={{flexShrink: 0, opacity: 0.65, marginTop: 1}} />
-      : <img src={iconKey} alt="" style={{width: 15, height: 15, flexShrink: 0, objectFit: 'contain'}} />
+      : isImageSource(iconKey)
+        ? <img src={iconKey} alt="" style={{width: 15, height: 15, flexShrink: 0, objectFit: 'contain'}} />
+        : <LuCircleHelp size={15} style={{flexShrink: 0, opacity: 0.35, marginTop: 1}} />
     : null;
 
   const iconAfterNode = IconAfterComponent
@@ -127,4 +141,3 @@ export default function LinkWrapper(props: Props): React.JSX.Element {
 
   return <Link {...props} item={modifiedItem} />;
 }
-

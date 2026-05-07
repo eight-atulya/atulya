@@ -1,22 +1,22 @@
 ---
 title: Brain API — Semantic Map
-description: Complete semantic map of all 113 endpoints and 186 schemas. Every field, every enum, every design pattern.
+description: Complete semantic map of all 130 endpoints and 206 schemas. Every field, every enum, every design pattern.
 sidebar_label: Brain API Map
 ---
 
 # Atulya Brain API — Complete Semantic Map
 
-> Source of truth: `atulya-brain-openapi.json` (521KB, 114 endpoints, 189 schemas)
+> Source of truth: `atulya-docs/static/openapi.json` (130 endpoints, 206 schemas)
 > API Version: 0.8.6 | License: Apache 2.0
 > Local: `http://localhost:8888` | Auth: Bearer token
-> Generated: 2026-05-05 | Multi-pass verified: 0 gaps
+> Generated: 2026-05-07 | Multi-pass verified: 0 gaps
 
 ---
 
 ## 1. ARCHITECTURE CORE
 
 **Bank** = isolated memory container. Every operation scoped to a bank_id.
-Each bank has: memories, entities, graph, mental models, directives, dreams, disposition, config, documents, tags, codebases, webhooks.
+Each bank has: memories, entities, graph, mental models, directives, dreams, disposition, config, documents, tags, codebases, webhooks, and an optional repo/versioning layer.
 
 **Multi-tenant**: schema-level isolation. Admin can list tenants, banks per tenant.
 
@@ -825,7 +825,157 @@ Hierarchical configuration: global → tenant → bank. `config` = fully resolve
 
 ---
 
-## 17. BANK CRUD
+## 17. MEMORY REPOS
+
+Git-like versioning for bank memory. Repo mode is opt-in and keeps normal bank APIs working against the active branch workspace.
+
+### Repo discovery and enablement
+
+```
+POST /v1/default/banks/{bank_id}/repos/enable
+  Body: EnableMemoryRepoRequest {default_branch: string|null, create_initial_commit: boolean}
+  Response: MemoryRepoSummaryResponse
+
+GET  /v1/default/banks/{bank_id}/repo
+  Response: MemoryRepoSummaryResponse
+
+GET  /v1/default/banks/{bank_id}/repo/branches
+  Response: MemoryRepoBranchListResponse {items: array<MemoryRepoBranchResponse>}
+```
+
+### Repo lifecycle
+
+```
+POST /v1/default/repos
+  Body: CreateMemoryRepoRequest
+  Response: MemoryRepoSummaryResponse
+
+GET  /v1/default/repos
+  Response: MemoryRepoListResponse {items: array<MemoryRepoSummaryResponse>}
+
+GET  /v1/default/repos/{repo_id}
+  Response: MemoryRepoSummaryResponse
+```
+
+**CreateMemoryRepoRequest**:
+
+- `root_bank_id: string` — bank that becomes the repo root
+- `default_branch: string|null` — defaults to `main`
+- `create_initial_commit: boolean` — snapshot current bank state immediately
+
+**MemoryRepoSummaryResponse**:
+
+- `repo_id: string`
+- `root_bank_id: string`
+- `default_branch: string`
+- `active_branch: string`
+- `head_commit_id: string|null`
+- `head_message: string|null`
+- `head_created_at: string|null`
+- `workspace_bank_id: string`
+- `workspace_dirty: boolean`
+- `branch_count: integer`
+- `created_at: string`
+- `updated_at: string`
+
+### Branching, history, and restore
+
+```
+GET  /v1/default/repos/{repo_id}/branches
+  Response: MemoryRepoBranchListResponse
+
+POST /v1/default/repos/{repo_id}/branches
+  Body: CreateMemoryRepoBranchRequest {branch_name: string, from_branch: string|null, from_commit_id: string|null}
+  Response: MemoryRepoBranchResponse
+
+POST /v1/default/repos/{repo_id}/checkout
+  Body: MemoryRepoCheckoutRequest {branch_name: string}
+  Response: MemoryRepoCheckoutResponse
+
+POST /v1/default/repos/{repo_id}/commit
+  Body: MemoryRepoCommitRequest {message: string, actor: string|null}
+  Response: MemoryRepoCommitResponse
+
+GET  /v1/default/repos/{repo_id}/status
+  Response: MemoryRepoStatusResponse
+
+GET  /v1/default/repos/{repo_id}/log
+  Query: branch_name: string|null, limit: integer
+  Response: MemoryRepoCommitLogResponse {items: array<MemoryRepoCommitSummaryResponse>}
+
+GET  /v1/default/repos/{repo_id}/diff
+  Query: branch_name: string|null, from_commit_id: string|null, to_commit_id: string|null, compare_branch: string|null, workspace: boolean
+  Response: MemoryRepoDiffResponse
+
+POST /v1/default/repos/{repo_id}/reset-hard
+  Body: MemoryRepoResetHardRequest {commit_id: string, force: boolean}
+  Response: MemoryRepoCheckoutResponse
+```
+
+**MemoryRepoBranchResponse**:
+
+- `branch_name: string`
+- `repo_id: string`
+- `head_commit_id: string|null`
+- `workspace_bank_id: string`
+- `is_active: boolean`
+- `last_commit_message: string|null`
+- `last_commit_created_at: string|null`
+
+**MemoryRepoStatusResponse**:
+
+- `repo_id: string`
+- `branch_name: string`
+- `workspace_dirty: boolean`
+- `head_commit_id: string|null`
+- `changed_components: array<string>`
+- `component_diffs: object`
+
+**MemoryRepoDiffResponse**:
+
+- `repo_id: string`
+- `branch_name: string|null`
+- `workspace: boolean`
+- `from_ref: string|null`
+- `to_ref: string|null`
+- `changed_components: array<string>`
+- `component_diffs: object`
+
+### Fork to new bank
+
+```
+POST /v1/default/repos/{repo_id}/fork-bank
+  Body: MemoryRepoForkBankRequest
+  Response: MemoryRepoForkBankResponse
+```
+
+**MemoryRepoForkBankRequest**:
+
+- `target_bank_id: string` — new bank to create
+- `target_bank_name: string|null`
+- `source_branch: string|null`
+- `source_commit_id: string|null`
+- `use_workspace: boolean`
+- `enable_repo_on_target: boolean`
+
+**MemoryRepoForkBankResponse**:
+
+- `source_repo_id: string`
+- `source_branch: string|null`
+- `source_commit_id: string|null`
+- `target_bank_id: string`
+- `target_repo_id: string|null`
+- `forked_from_workspace: boolean`
+
+Key production contract:
+
+- branch workspaces stay isolated from the root bank until checkout
+- restore paths remap bank-local IDs and owned storage pointers
+- delete and rollback paths must not damage source-owned artifacts
+
+---
+
+## 18. BANK CRUD
 
 ```
 GET    /v1/default/banks
@@ -852,7 +1002,7 @@ POST   /v1/default/banks/{bank_id}/background  # deprecated, use mission
 
 ---
 
-## 18. OPERATIONS & WEBHOOKS
+## 19. OPERATIONS & WEBHOOKS
 
 ### Async Operations
 
@@ -918,7 +1068,7 @@ GET    /v1/default/banks/{bank_id}/webhooks/{webhook_id}/deliveries
 
 ---
 
-## 19. ADMIN & SYSTEM
+## 20. ADMIN & SYSTEM
 
 ### API Keys
 

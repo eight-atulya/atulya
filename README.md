@@ -104,6 +104,7 @@ If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](
 
 - Durable memory instead of fragmented context
 - Safe experimentation with branchable banks and rollback-ready snapshots
+- Bank evolution that feels closer to Git than to ad hoc copy-and-paste memory workflows
 - Better answers backed by retained evidence
 - Faster onboarding for engineers, operators, and agents
 - Reusable knowledge that can move between systems through `.brain` files
