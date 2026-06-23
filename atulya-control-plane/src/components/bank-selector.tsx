@@ -39,6 +39,7 @@ import {
   ChevronRight,
   Mic,
   MicOff,
+  UserCircle,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
 import Image from "next/image";
@@ -57,6 +58,7 @@ import { cn } from "@/lib/utils";
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MemoryRepoControls } from "@/components/memory-repo-controls";
+import { UserSettingsDialog } from "@/components/user-settings-dialog";
 
 function BankSelectorInner() {
   const router = useRouter();
@@ -610,6 +612,8 @@ function BankSelectorInner() {
         >
           {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
         </Button>
+
+        <UserSettingsDialog />
 
         <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
@@ -1249,6 +1253,9 @@ export function BankSelector() {
             <div className="h-6 w-px bg-border" />
             <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
               <Moon className="h-5 w-5" />
+            </Button>
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
+              <UserCircle className="h-5 w-5" />
             </Button>
           </div>
         </div>
