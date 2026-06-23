@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { BankSelector } from "@/components/bank-selector";
+import { ControlPlaneShell } from "@/components/control-plane-shell";
 import { Sidebar } from "@/components/sidebar";
 import { DataView } from "@/components/data-view";
 import { DocumentsView } from "@/components/documents-view";
@@ -167,440 +168,423 @@ export default function BankPage() {
   };
 
   return (
-    // Viewport-bound shell: avoid min-h-screen here — it lets the page grow with main content,
-    // stretching the sidebar to document height and pushing the collapse control below the fold.
-    <div className="flex h-dvh min-h-0 flex-col overflow-hidden bg-background">
-      <BankSelector />
+    <>
+      <ControlPlaneShell
+        variant="bank"
+        topbar={<BankSelector />}
+        sidebar={<Sidebar currentTab={view} onTabChange={handleTabChange} />}
+      >
+        {/* Brain View Tab */}
+        {view === "brain" && <BrainView key={`brain:${bankViewKey}`} />}
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <Sidebar currentTab={view} onTabChange={handleTabChange} />
-
-        <main className="min-h-0 flex-1 overflow-y-auto">
-          <div className="p-6">
-            {/* Brain View Tab */}
-            {view === "brain" && <BrainView key={`brain:${bankViewKey}`} />}
-
-            {/* Brain Configuration Tab */}
-            {view === "profile" && (
+        {/* Brain Configuration Tab */}
+        {view === "profile" && (
+          <div>
+            <div className="flex justify-between items-start mb-6">
               <div>
-                <div className="flex justify-between items-start mb-6">
+                <h1 className="text-3xl font-bold mb-2 text-foreground">Brain Configuration</h1>
+                <p className="text-muted-foreground">
+                  Manage brain settings, profile, and operations.
+                </p>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Actions
+                    <MoreVertical className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem
+                    onClick={handleTriggerSubRoutine}
+                    disabled={isSubRoutineRunning || !subRoutineEnabled}
+                    title={!subRoutineEnabled ? "Sub-routine feature is not enabled" : undefined}
+                  >
+                    {isSubRoutineRunning ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Brain className="w-4 h-4 mr-2" />
+                    )}
+                    {isSubRoutineRunning ? "Running Sub-Routine..." : "Run Sub-Routine"}
+                    {!subRoutineEnabled && (
+                      <span className="ml-auto text-xs text-muted-foreground">Off</span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleTriggerConsolidation}
+                    disabled={isConsolidating || !observationsEnabled}
+                    title={!observationsEnabled ? "Observations feature is not enabled" : undefined}
+                  >
+                    {isConsolidating ? (
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    ) : (
+                      <Brain className="w-4 h-4 mr-2" />
+                    )}
+                    {isConsolidating ? "Consolidating..." : "Run Consolidation"}
+                    {!observationsEnabled && (
+                      <span className="ml-auto text-xs text-muted-foreground">Off</span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => setShowClearObservationsDialog(true)}
+                    disabled={!observationsEnabled}
+                    className="text-amber-600 dark:text-amber-400 focus:text-amber-700 dark:focus:text-amber-300"
+                    title={!observationsEnabled ? "Observations feature is not enabled" : undefined}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Clear Observations
+                    {!observationsEnabled && (
+                      <span className="ml-auto text-xs text-muted-foreground">Off</span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowResetConfigDialog(true)}
+                    disabled={!bankConfigEnabled}
+                    className="text-amber-600 dark:text-amber-400 focus:text-amber-700 dark:focus:text-amber-300"
+                    title={!bankConfigEnabled ? "Bank Config API is disabled" : undefined}
+                  >
+                    <RotateCcw className="w-4 h-4 mr-2" />
+                    Reset Configuration
+                    {!bankConfigEnabled && (
+                      <span className="ml-auto text-xs text-muted-foreground">Off</span>
+                    )}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteDialog(true)}
+                    className="text-red-600 dark:text-red-400 focus:text-red-700 dark:focus:text-red-300"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Bank
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Sub-tabs */}
+            <div className="mb-6 border-b border-border">
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleBankConfigTabChange("general")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    bankConfigTab === "general"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  General
+                  {bankConfigTab === "general" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+                {bankConfigEnabled && (
+                  <button
+                    onClick={() => handleBankConfigTabChange("configuration")}
+                    className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                      bankConfigTab === "configuration"
+                        ? "text-primary"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    Configuration
+                    {bankConfigTab === "configuration" && (
+                      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={() => handleBankConfigTabChange("dreams")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    bankConfigTab === "dreams"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Dream/Trance
+                  {bankConfigTab === "dreams" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+                <button
+                  onClick={() => handleBankConfigTabChange("webhooks")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    bankConfigTab === "webhooks"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Webhooks
+                  {bankConfigTab === "webhooks" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Tab content */}
+            <div>
+              {bankConfigTab === "general" && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Overview statistics and background operations for this memory bank.
+                  </p>
+                  <div className="space-y-6">
+                    <MemoryRepoControls key={`repo:${bankViewKey}`} />
+                    <BankStatsView key={`stats:${bankViewKey}`} />
+                    <BankOperationsView key={`ops:${bankViewKey}`} />
+                    <BankProfileView key={`profile:${bankViewKey}`} hideReflectFields />
+                  </div>
+                </div>
+              )}
+              {bankConfigTab === "configuration" && bankConfigEnabled && (
+                <div className="space-y-6">
+                  <BankConfigView key={`config:${bankViewKey}`} />
+                </div>
+              )}
+              {bankConfigTab === "webhooks" && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Manage webhook endpoints to receive event notifications from this memory bank.
+                  </p>
+                  <WebhooksView key={`webhooks:${bankViewKey}`} />
+                </div>
+              )}
+              {bankConfigTab === "dreams" && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Configure dream/trance synthesis and monitor generated HTML insights.
+                  </p>
+                  <DreamTranceView key={`dreams:${bankViewKey}`} />
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Recall Tab */}
+        {view === "recall" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Recall</h1>
+            <p className="text-muted-foreground mb-6">
+              Analyze memory recall with detailed trace information and retrieval methods.
+            </p>
+            <SearchDebugView key={`recall:${bankViewKey}`} />
+          </div>
+        )}
+
+        {/* Reflect Tab */}
+        {view === "reflect" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Reflect</h1>
+            <p className="text-muted-foreground mb-6">
+              Run an agentic loop that autonomously gathers evidence and reasons through the lens of
+              the bank&apos;s disposition to generate contextual responses.
+            </p>
+            <ThinkView key={`reflect:${bankViewKey}`} />
+          </div>
+        )}
+
+        {/* Internet Research Tab */}
+        {view === "internet" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Internet Research</h1>
+            <p className="text-muted-foreground mb-6">
+              Run optional live-web search and extraction against the internet backend. This mode is
+              session-only and does not write directly to the memory bank.
+            </p>
+            <InternetResearchView key={`internet:${bankViewKey}`} />
+          </div>
+        )}
+
+        {/* Codebases Tab */}
+        {view === "codebases" && <CodebasesView key={`codebases:${bankViewKey}`} />}
+
+        {/* Data/Memories Tab */}
+        {view === "data" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Explore Memory Intelligence</h1>
+            <p className="text-muted-foreground mb-6">
+              Explore facts, observations, and mental models. Use State Graph to see what changed
+              and Evidence Graph to inspect the supporting memories.
+            </p>
+
+            <div className="mb-6 border-b border-border">
+              <div className="flex gap-1">
+                <button
+                  onClick={() => handleDataSubTabChange("world")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    subTab === "world"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  World Facts
+                  {subTab === "world" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDataSubTabChange("experience")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    subTab === "experience"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Experience
+                  {subTab === "experience" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDataSubTabChange("observations")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    subTab === "observations"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Observations
+                  {!observationsEnabled && (
+                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                      Off
+                    </span>
+                  )}
+                  {subTab === "observations" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+                <button
+                  onClick={() => handleDataSubTabChange("mental-models")}
+                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
+                    subTab === "mental-models"
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Mental Models
+                  {subTab === "mental-models" && (
+                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              {subTab === "world" && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Objective facts about the world received from external sources.
+                  </p>
+                  <DataView key={`world:${bankViewKey}`} factType="world" />
+                </div>
+              )}
+              {subTab === "experience" && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    The bank&apos;s own actions, interactions, and first-person experiences.
+                  </p>
+                  <DataView key={`experience:${bankViewKey}`} factType="experience" />
+                </div>
+              )}
+              {subTab === "observations" &&
+                (observationsEnabled ? (
                   <div>
-                    <h1 className="text-3xl font-bold mb-2 text-foreground">Brain Configuration</h1>
-                    <p className="text-muted-foreground">
-                      Manage brain settings, profile, and operations.
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Consolidated knowledge synthesized from facts — patterns, preferences, and
+                      learnings that emerge from accumulated evidence.
+                    </p>
+                    <DataView key={`observations:${bankViewKey}`} factType="observation" />
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <div className="text-muted-foreground mb-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="48"
+                        height="48"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" />
+                        <path d="M12 8v4" />
+                        <path d="M12 16h.01" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-1">
+                      Observations Not Enabled
+                    </h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Observations consolidation is disabled on this server. Set{" "}
+                      <code className="px-1 py-0.5 bg-muted rounded text-xs">
+                        ATULYA_API_ENABLE_OBSERVATIONS=true
+                      </code>{" "}
+                      to enable.
                     </p>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        Actions
-                        <MoreVertical className="w-4 h-4 ml-2" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem
-                        onClick={handleTriggerSubRoutine}
-                        disabled={isSubRoutineRunning || !subRoutineEnabled}
-                        title={
-                          !subRoutineEnabled ? "Sub-routine feature is not enabled" : undefined
-                        }
-                      >
-                        {isSubRoutineRunning ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Brain className="w-4 h-4 mr-2" />
-                        )}
-                        {isSubRoutineRunning ? "Running Sub-Routine..." : "Run Sub-Routine"}
-                        {!subRoutineEnabled && (
-                          <span className="ml-auto text-xs text-muted-foreground">Off</span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={handleTriggerConsolidation}
-                        disabled={isConsolidating || !observationsEnabled}
-                        title={
-                          !observationsEnabled ? "Observations feature is not enabled" : undefined
-                        }
-                      >
-                        {isConsolidating ? (
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Brain className="w-4 h-4 mr-2" />
-                        )}
-                        {isConsolidating ? "Consolidating..." : "Run Consolidation"}
-                        {!observationsEnabled && (
-                          <span className="ml-auto text-xs text-muted-foreground">Off</span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setShowClearObservationsDialog(true)}
-                        disabled={!observationsEnabled}
-                        className="text-amber-600 dark:text-amber-400 focus:text-amber-700 dark:focus:text-amber-300"
-                        title={
-                          !observationsEnabled ? "Observations feature is not enabled" : undefined
-                        }
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Clear Observations
-                        {!observationsEnabled && (
-                          <span className="ml-auto text-xs text-muted-foreground">Off</span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setShowResetConfigDialog(true)}
-                        disabled={!bankConfigEnabled}
-                        className="text-amber-600 dark:text-amber-400 focus:text-amber-700 dark:focus:text-amber-300"
-                        title={!bankConfigEnabled ? "Bank Config API is disabled" : undefined}
-                      >
-                        <RotateCcw className="w-4 h-4 mr-2" />
-                        Reset Configuration
-                        {!bankConfigEnabled && (
-                          <span className="ml-auto text-xs text-muted-foreground">Off</span>
-                        )}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={() => setShowDeleteDialog(true)}
-                        className="text-red-600 dark:text-red-400 focus:text-red-700 dark:focus:text-red-300"
-                      >
-                        <Trash2 className="w-4 h-4 mr-2" />
-                        Delete Bank
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-
-                {/* Sub-tabs */}
-                <div className="mb-6 border-b border-border">
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleBankConfigTabChange("general")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        bankConfigTab === "general"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      General
-                      {bankConfigTab === "general" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                    {bankConfigEnabled && (
-                      <button
-                        onClick={() => handleBankConfigTabChange("configuration")}
-                        className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                          bankConfigTab === "configuration"
-                            ? "text-primary"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        Configuration
-                        {bankConfigTab === "configuration" && (
-                          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                        )}
-                      </button>
-                    )}
-                    <button
-                      onClick={() => handleBankConfigTabChange("dreams")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        bankConfigTab === "dreams"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Dream/Trance
-                      {bankConfigTab === "dreams" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleBankConfigTabChange("webhooks")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        bankConfigTab === "webhooks"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Webhooks
-                      {bankConfigTab === "webhooks" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                {/* Tab content */}
+                ))}
+              {subTab === "mental-models" && (
                 <div>
-                  {bankConfigTab === "general" && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Overview statistics and background operations for this memory bank.
-                      </p>
-                      <div className="space-y-6">
-                        <MemoryRepoControls key={`repo:${bankViewKey}`} />
-                        <BankStatsView key={`stats:${bankViewKey}`} />
-                        <BankOperationsView key={`ops:${bankViewKey}`} />
-                        <BankProfileView key={`profile:${bankViewKey}`} hideReflectFields />
-                      </div>
-                    </div>
-                  )}
-                  {bankConfigTab === "configuration" && bankConfigEnabled && (
-                    <div className="space-y-6">
-                      <BankConfigView key={`config:${bankViewKey}`} />
-                    </div>
-                  )}
-                  {bankConfigTab === "webhooks" && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Manage webhook endpoints to receive event notifications from this memory
-                        bank.
-                      </p>
-                      <WebhooksView key={`webhooks:${bankViewKey}`} />
-                    </div>
-                  )}
-                  {bankConfigTab === "dreams" && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Configure dream/trance synthesis and monitor generated HTML insights.
-                      </p>
-                      <DreamTranceView key={`dreams:${bankViewKey}`} />
-                    </div>
-                  )}
+                  <p className="text-sm text-muted-foreground mb-4">
+                    User-curated summaries generated from queries — reusable knowledge snapshots
+                    that can be refreshed as memories evolve.
+                  </p>
+                  <MentalModelsView key={`mental-models:${bankViewKey}`} />
                 </div>
-              </div>
-            )}
-
-            {/* Recall Tab */}
-            {view === "recall" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Recall</h1>
-                <p className="text-muted-foreground mb-6">
-                  Analyze memory recall with detailed trace information and retrieval methods.
-                </p>
-                <SearchDebugView key={`recall:${bankViewKey}`} />
-              </div>
-            )}
-
-            {/* Reflect Tab */}
-            {view === "reflect" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Reflect</h1>
-                <p className="text-muted-foreground mb-6">
-                  Run an agentic loop that autonomously gathers evidence and reasons through the
-                  lens of the bank&apos;s disposition to generate contextual responses.
-                </p>
-                <ThinkView key={`reflect:${bankViewKey}`} />
-              </div>
-            )}
-
-            {/* Internet Research Tab */}
-            {view === "internet" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Internet Research</h1>
-                <p className="text-muted-foreground mb-6">
-                  Run optional live-web search and extraction against the internet backend. This
-                  mode is session-only and does not write directly to the memory bank.
-                </p>
-                <InternetResearchView key={`internet:${bankViewKey}`} />
-              </div>
-            )}
-
-            {/* Codebases Tab */}
-            {view === "codebases" && <CodebasesView key={`codebases:${bankViewKey}`} />}
-
-            {/* Data/Memories Tab */}
-            {view === "data" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">
-                  Explore Memory Intelligence
-                </h1>
-                <p className="text-muted-foreground mb-6">
-                  Explore facts, observations, and mental models. Use State Graph to see what
-                  changed and Evidence Graph to inspect the supporting memories.
-                </p>
-
-                <div className="mb-6 border-b border-border">
-                  <div className="flex gap-1">
-                    <button
-                      onClick={() => handleDataSubTabChange("world")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        subTab === "world"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      World Facts
-                      {subTab === "world" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleDataSubTabChange("experience")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        subTab === "experience"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Experience
-                      {subTab === "experience" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleDataSubTabChange("observations")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        subTab === "observations"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Observations
-                      {!observationsEnabled && (
-                        <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                          Off
-                        </span>
-                      )}
-                      {subTab === "observations" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                    <button
-                      onClick={() => handleDataSubTabChange("mental-models")}
-                      className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                        subTab === "mental-models"
-                          ? "text-primary"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      Mental Models
-                      {subTab === "mental-models" && (
-                        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  {subTab === "world" && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        Objective facts about the world received from external sources.
-                      </p>
-                      <DataView key={`world:${bankViewKey}`} factType="world" />
-                    </div>
-                  )}
-                  {subTab === "experience" && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        The bank&apos;s own actions, interactions, and first-person experiences.
-                      </p>
-                      <DataView key={`experience:${bankViewKey}`} factType="experience" />
-                    </div>
-                  )}
-                  {subTab === "observations" &&
-                    (observationsEnabled ? (
-                      <div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Consolidated knowledge synthesized from facts — patterns, preferences, and
-                          learnings that emerge from accumulated evidence.
-                        </p>
-                        <DataView key={`observations:${bankViewKey}`} factType="observation" />
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <div className="text-muted-foreground mb-2">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="48"
-                            height="48"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z" />
-                            <path d="M12 8v4" />
-                            <path d="M12 16h.01" />
-                          </svg>
-                        </div>
-                        <h3 className="text-lg font-semibold text-foreground mb-1">
-                          Observations Not Enabled
-                        </h3>
-                        <p className="text-sm text-muted-foreground max-w-md">
-                          Observations consolidation is disabled on this server. Set{" "}
-                          <code className="px-1 py-0.5 bg-muted rounded text-xs">
-                            ATULYA_API_ENABLE_OBSERVATIONS=true
-                          </code>{" "}
-                          to enable.
-                        </p>
-                      </div>
-                    ))}
-                  {subTab === "mental-models" && (
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-4">
-                        User-curated summaries generated from queries — reusable knowledge snapshots
-                        that can be refreshed as memories evolve.
-                      </p>
-                      <MentalModelsView key={`mental-models:${bankViewKey}`} />
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Documents Tab */}
-            {view === "documents" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Documents</h1>
-                <p className="text-muted-foreground mb-6">
-                  Manage documents and retain new memories.
-                </p>
-                <DocumentsView key={`documents:${bankViewKey}`} />
-              </div>
-            )}
-
-            {/* Entities Tab */}
-            {view === "entities" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Entities</h1>
-                <p className="text-muted-foreground mb-6">
-                  Explore entities (people, organizations, places) mentioned in memories.
-                </p>
-                <EntitiesView key={`entities:${bankViewKey}`} />
-              </div>
-            )}
-
-            {view === "trajectories" && (
-              <div>
-                <h1 className="text-3xl font-bold mb-2 text-foreground">Entity trajectories</h1>
-                <p className="text-muted-foreground mb-3 max-w-3xl leading-relaxed">
-                  See how a <span className="text-foreground/90">single entity</span> (a person,
-                  company, product, or place extracted from memories) appears to evolve over time:
-                  we turn your chronological facts into a small set of{" "}
-                  <span className="text-foreground/90">story states</span>, how often the narrative
-                  moves between them, and a short look-ahead. This is scoped to one entity at a time
-                  so the picture stays interpretable.
-                </p>
-                <p className="text-sm text-muted-foreground/90 mb-6 max-w-3xl leading-relaxed">
-                  The bank must have{" "}
-                  <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
-                    enable_entity_trajectories
-                  </code>{" "}
-                  enabled. Facts need to be linked to the entity when retained; use{" "}
-                  <span className="font-medium text-foreground">Recompute</span> after changing
-                  settings or memories.
-                </p>
-                <EntityTrajectoriesView key={`trajectories:${bankViewKey}`} />
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </main>
-      </div>
+        )}
+
+        {/* Documents Tab */}
+        {view === "documents" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Documents</h1>
+            <p className="text-muted-foreground mb-6">Manage documents and retain new memories.</p>
+            <DocumentsView key={`documents:${bankViewKey}`} />
+          </div>
+        )}
+
+        {/* Entities Tab */}
+        {view === "entities" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Entities</h1>
+            <p className="text-muted-foreground mb-6">
+              Explore entities (people, organizations, places) mentioned in memories.
+            </p>
+            <EntitiesView key={`entities:${bankViewKey}`} />
+          </div>
+        )}
+
+        {view === "trajectories" && (
+          <div>
+            <h1 className="text-3xl font-bold mb-2 text-foreground">Entity trajectories</h1>
+            <p className="text-muted-foreground mb-3 max-w-3xl leading-relaxed">
+              See how a <span className="text-foreground/90">single entity</span> (a person,
+              company, product, or place extracted from memories) appears to evolve over time: we
+              turn your chronological facts into a small set of{" "}
+              <span className="text-foreground/90">story states</span>, how often the narrative
+              moves between them, and a short look-ahead. This is scoped to one entity at a time so
+              the picture stays interpretable.
+            </p>
+            <p className="text-sm text-muted-foreground/90 mb-6 max-w-3xl leading-relaxed">
+              The bank must have{" "}
+              <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs">
+                enable_entity_trajectories
+              </code>{" "}
+              enabled. Facts need to be linked to the entity when retained; use{" "}
+              <span className="font-medium text-foreground">Recompute</span> after changing settings
+              or memories.
+            </p>
+            <EntityTrajectoriesView key={`trajectories:${bankViewKey}`} />
+          </div>
+        )}
+      </ControlPlaneShell>
 
       {/* Delete Bank Confirmation Dialog */}
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
@@ -720,6 +704,6 @@ export default function BankPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

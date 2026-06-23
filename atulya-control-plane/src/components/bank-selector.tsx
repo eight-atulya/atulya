@@ -454,8 +454,8 @@ function BankSelectorInner() {
   };
 
   return (
-    <div className="bg-card text-card-foreground px-5 py-3 border-b-4 border-primary-gradient">
-      <div className="flex items-center gap-4 text-sm">
+    <div className="flex h-full w-full items-center text-card-foreground">
+      <div className="flex min-h-9 w-full items-center gap-2.5 overflow-x-auto text-sm">
         {/* Logo */}
         <button
           type="button"
@@ -469,15 +469,15 @@ function BankSelectorInner() {
           <Image
             src="/logo.png"
             alt="Atulya"
-            width={40}
-            height={40}
-            className="h-10 w-auto"
+            width={34}
+            height={34}
+            className="h-[34px] w-auto"
             unoptimized
           />
         </button>
 
         {/* Separator */}
-        <div className="h-8 w-px bg-border" />
+        <div className="h-6 w-px bg-border" />
 
         {/* Memory Bank Selector */}
         <Popover
@@ -493,7 +493,7 @@ function BankSelectorInner() {
               role="combobox"
               aria-expanded={open}
               id="bank-selector-trigger"
-              className="w-[250px] justify-between font-bold border-2 border-primary hover:bg-accent"
+              className="h-9 w-[250px] justify-between border-2 border-primary font-bold hover:bg-accent"
             >
               <span className="truncate">{currentBank || "Select a memory bank..."}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -558,14 +558,14 @@ function BankSelectorInner() {
         </Popover>
 
         {/* Separator */}
-        <div className="h-8 w-px bg-border" />
+        <div className="h-6 w-px bg-border" />
 
         {/* Add Document Button */}
         {currentBank && (
           <Button
             variant="outline"
             size="sm"
-            className="h-9 gap-1.5"
+            className="h-8 gap-1.5"
             onClick={() => setDocDialogOpen(true)}
             title="Add document to current bank"
           >
@@ -583,14 +583,14 @@ function BankSelectorInner() {
         <AdminButton />
 
         {/* Separator */}
-        <div className="h-8 w-px bg-border" />
+        <div className="h-6 w-px bg-border" />
 
         {/* GitHub Link */}
         <a
           href="https://github.com/eight-atulya/atulya"
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+          className="flex h-8 items-center gap-2 rounded-lg px-2.5 transition-colors hover:bg-accent text-muted-foreground hover:text-foreground"
           title="View on GitHub"
         >
           <Github className="h-5 w-5" />
@@ -598,14 +598,14 @@ function BankSelectorInner() {
         </a>
 
         {/* Separator */}
-        <div className="h-8 w-px bg-border" />
+        <div className="h-6 w-px bg-border" />
 
         {/* Dark Mode Toggle */}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleTheme}
-          className="h-9 w-9"
+          className="h-8 w-8"
           title={theme === "light" ? "Switch to dark mode" : "Switch to light mode"}
         >
           {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
@@ -1211,8 +1211,8 @@ export function BankSelector() {
   return (
     <Suspense
       fallback={
-        <div className="bg-card text-card-foreground px-5 py-3 border-b-4 border-primary-gradient">
-          <div className="flex items-center gap-4 text-sm">
+        <div className="flex h-full w-full items-center text-card-foreground">
+          <div className="flex min-h-9 w-full items-center gap-2.5 overflow-x-auto text-sm">
             <Link
               href="/dashboard"
               aria-label="Go to dashboard"
@@ -1221,16 +1221,16 @@ export function BankSelector() {
               <Image
                 src="/logo.png"
                 alt="Atulya"
-                width={40}
-                height={40}
-                className="h-10 w-auto"
+                width={34}
+                height={34}
+                className="h-[34px] w-auto"
                 unoptimized
               />
             </Link>
-            <div className="h-8 w-px bg-border" />
+            <div className="h-6 w-px bg-border" />
             <Button
               variant="outline"
-              className="w-[250px] justify-between font-bold border-2 border-primary"
+              className="h-9 w-[250px] justify-between border-2 border-primary font-bold"
               disabled
             >
               Loading...
@@ -1241,13 +1241,13 @@ export function BankSelector() {
               href="https://github.com/eight-atulya/atulya"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-accent transition-colors text-muted-foreground"
+              className="flex h-8 items-center gap-2 rounded-lg px-2.5 transition-colors hover:bg-accent text-muted-foreground"
             >
               <Github className="h-5 w-5" />
               <span className="text-sm font-medium">GitHub</span>
             </a>
-            <div className="h-8 w-px bg-border" />
-            <Button variant="ghost" size="icon" className="h-9 w-9" disabled>
+            <div className="h-6 w-px bg-border" />
+            <Button variant="ghost" size="icon" className="h-8 w-8" disabled>
               <Moon className="h-5 w-5" />
             </Button>
           </div>

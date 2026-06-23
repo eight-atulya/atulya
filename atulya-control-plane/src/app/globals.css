@@ -68,6 +68,17 @@
   --graph-chip-border: oklch(0.9037 0 0);
   --graph-chip-foreground: oklch(0.4386 0 0);
   --graph-overlay-bg: rgba(255, 255, 255, 0.45);
+  --shell-gap: clamp(0.75rem, 1vw, 1rem);
+  --shell-radius: 0.875rem;
+  --shell-topbar-height: 3.875rem;
+  --shell-surface: rgba(255, 255, 255, 0.58);
+  --shell-header-surface: rgba(255, 255, 255, 0.5);
+  --shell-content: rgba(255, 255, 255, 0.72);
+  --shell-border: rgba(15, 23, 42, 0.06);
+  --shell-shadow: 0 16px 36px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(255, 255, 255, 0.45) inset;
+  --shell-header-shadow: 0 14px 34px rgba(15, 23, 42, 0.07), 0 1px 0 rgba(255, 255, 255, 0.52) inset;
+  --shell-backdrop:
+    linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(241, 245, 249, 0.98));
 }
 
 .dark {
@@ -117,6 +128,14 @@
   --graph-chip-border: rgba(255, 255, 255, 0.08);
   --graph-chip-foreground: oklch(0.82 0 0);
   --graph-overlay-bg: rgba(9, 9, 11, 0.4);
+  --shell-surface: rgba(24, 24, 27, 0.56);
+  --shell-header-surface: rgba(24, 24, 27, 0.5);
+  --shell-content: rgba(24, 24, 27, 0.72);
+  --shell-border: rgba(255, 255, 255, 0.075);
+  --shell-shadow: 0 18px 44px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.07) inset;
+  --shell-header-shadow: 0 16px 38px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  --shell-backdrop:
+    linear-gradient(180deg, rgba(24, 24, 27, 0.98), rgba(15, 15, 16, 0.98));
 }
 
 @theme inline {
@@ -196,6 +215,85 @@ code, pre {
 /* Gradient utilities */
 .bg-primary-gradient {
   background: var(--primary-gradient);
+}
+
+.control-plane-surface {
+  border: 1px solid var(--shell-border);
+  border-radius: var(--shell-radius);
+  background: var(--shell-surface);
+  box-shadow: var(--shell-shadow);
+  background-clip: padding-box;
+  backdrop-filter: blur(28px) saturate(1.12);
+  -webkit-backdrop-filter: blur(28px) saturate(1.12);
+}
+
+.control-plane-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: var(--shell-topbar-height) minmax(0, 1fr);
+  gap: var(--shell-gap);
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--shell-gap);
+  background: var(--shell-backdrop);
+}
+
+.control-plane-shell[data-has-sidebar="true"] {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.control-plane-topbar {
+  display: flex;
+  grid-column: 1 / -1;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 1rem;
+  z-index: 30;
+  background: var(--shell-header-surface);
+  box-shadow: var(--shell-header-shadow);
+  backdrop-filter: blur(34px) saturate(1.18);
+  -webkit-backdrop-filter: blur(34px) saturate(1.18);
+}
+
+.control-plane-sidebar-slot {
+  display: flex;
+  grid-column: 1;
+  grid-row: 2;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.control-plane-main {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  min-height: 0;
+  min-width: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-padding-top: var(--shell-gap);
+}
+
+.control-plane-shell[data-has-sidebar="true"] .control-plane-main {
+  grid-column: 2;
+}
+
+@media (max-width: 760px) {
+  .control-plane-shell {
+    --shell-gap: 0.625rem;
+    --shell-radius: 0.75rem;
+    --shell-topbar-height: 3.625rem;
+  }
+
+  .control-plane-topbar {
+    padding: 0 0.75rem;
+  }
+
+  .control-plane-sidebar-slot > * {
+    width: 4rem;
+    max-width: 4rem;
+  }
 }
 
 .border-primary-gradient {

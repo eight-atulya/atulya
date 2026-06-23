@@ -63,12 +63,12 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
     <aside
       className={cn(
         // h-full + min-h-0: fill the viewport-bound row; nav scrolls independently if needed
-        "flex h-full min-h-0 shrink-0 flex-col border-r border-border bg-card transition-all duration-300",
+        "flex h-full min-h-0 shrink-0 flex-col overflow-hidden transition-all duration-300",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <nav className="min-h-0 flex-1 overflow-y-auto p-3 pt-4">
-        <ul className="space-y-1">
+      <nav className="min-h-0 flex-1 overflow-y-auto p-2.5 pt-3">
+        <ul className="space-y-0.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
@@ -88,7 +88,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
                     // Middle-click or Ctrl/Cmd+click will naturally open in new tab
                   }}
                   className={cn(
-                    "w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all",
+                    "w-full flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm font-medium transition-all",
                     isActive
                       ? "bg-primary-gradient text-white shadow-sm"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
@@ -96,7 +96,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
                   )}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <Icon className="h-[18px] w-[18px] flex-shrink-0" />
                   {!isCollapsed && <span>{item.label}</span>}
                 </Link>
               </li>
@@ -106,20 +106,20 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
       </nav>
 
       {/* Pinned footer: stays at bottom of viewport when shell uses fixed height + main scrolls */}
-      <div className="shrink-0 border-t border-border p-3">
+      <div className="shrink-0 border-t border-[var(--shell-border)] p-2.5">
         <button
           onClick={() => setIsCollapsed(!isCollapsed)}
           className={cn(
-            "w-full flex items-center gap-3 px-4 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
+            "w-full flex items-center gap-3 px-3.5 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors",
             isCollapsed && "justify-center px-0"
           )}
           title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {isCollapsed ? (
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="h-[18px] w-[18px]" />
           ) : (
             <>
-              <ChevronLeft className="w-5 h-5" />
+              <ChevronLeft className="h-[18px] w-[18px]" />
               <span>Collapse</span>
             </>
           )}
