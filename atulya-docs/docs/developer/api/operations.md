@@ -29,6 +29,9 @@ Support for external streaming platforms like Kafka for scale-out processing is 
 | **dream_generation** | Consolidation events and/or cron (Dream config) | Runs Assumption -> Audit -> Train -> What-if -> Value synthesis and writes HTML artifacts |
 | **sub_routine** | Manual trigger or startup warmup | Refreshes brain runtime cache and activity model |
 | **brain_learn** | Manual trigger from control plane | Learns and fuses knowledge from a remote brain instance |
+| **forge_job** | `POST .../forge/jobs` | Ingest → consolidate → recipe → quality audit → ATR records |
+
+Forge jobs use the same operation polling model as async retain. See [**Forge API**](./forge) and [**Data Forge**](../data-forge).
 
 ## Dream and Brain Intelligence Operations
 

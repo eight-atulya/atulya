@@ -1,127 +1,57 @@
 ---
-title: "Give Your OpenAI App a Memory in 5 Minutes"
+title: "Give your OpenAI app a memory in five minutes"
 authors: [atulya]
 date: 2026-03-05
-tags: [memory, openai, python, docker, rag, llm, vector, embedding]
+tags: [memory, openai, python, docker, rag, llm]
 hide_table_of_contents: true
+slug: openai-app-memory
 ---
 
-Build a ChatGPT-style chatbot with persistent memory using the OpenAI SDK and Atulya. Three API calls — `retain()`, `recall()`, `reflect()` — and your app remembers users across restarts, no vector database or RAG pipeline required.
+Build a ChatGPT-style loop with `retain()`, `recall()`, and `reflect()`. No vector DB, no embedding pipeline, no custom RAG.
 
 <!-- truncate -->
 
 ## TL;DR
 
-You'll build a ChatGPT-style chatbot that:
+- `retain()` after each turn
+- `recall()` before each completion (or `reflect()` for synthesis questions)
+- Restart the process; memory survives in the bank
 
-- Remembers facts across restarts
-- Recalls relevant context automatically
-- Synthesizes long-term knowledge on demand
-
-All with three API calls:
-
-- `retain()` — store memories
-- `recall()` — retrieve relevant ones
-- `reflect()` — synthesize across everything
-
-No vector database. No embedding pipeline. No RAG plumbing.
-
-Copy, paste, run.
-
----
-
-## The Problem: Your Chatbot Has Amnesia
-
-You build a chatbot with OpenAI:
+## The problem
 
 ```python
 messages = [{"role": "system", "content": "You are a helpful assistant."}]
 ```
 
-It works perfectly.
-
-Until you restart the process.
-
-Now it remembers nothing.
-
-You can serialize `messages` to disk. But then:
-
-- Context windows fill up
-- Token costs explode
-- You start truncating history
-- The assistant forgets early decisions
-
-We ran into this building Jerri, our internal AI project manager at Vectorize.
-
-Jerri lives in Slack. It ingests meeting transcripts, tracks action items, and answers "what did we decide about X?" Without persistent memory, every session started from zero.
-
-That's not memory. That's stateless autocomplete.
-
-What you actually need:
-
-1. Store facts as they happen
-2. Retrieve only what's relevant
-3. Synthesize when necessary
-
-That's what we're building.
-
----
+Works until you restart. Serializing `messages` to disk hits context limits, cost, and truncation. That is chat history, not durable memory.
 
 ## Architecture
-
-Here's the entire loop:
 
 ```
 User message
      ↓
-recall(query)      ← pull relevant memories
+recall(query)
      ↓
-OpenAI completion  ← inject memory into system prompt
+OpenAI completion  (system + recalled context)
      ↓
-retain(exchange)   ← store conversation
+retain(exchange)
      ↓
 Response
 ```
 
-Three calls. Same pattern Jerri runs in production.
-
----
-
-## Step 1 — Start the Memory Layer
-
-Install:
+## Step 1: start Atulya
 
 ```bash
 pip install atulya-all
-```
-
-Start the server:
-
-```bash
 export ATULYA_API_LLM_API_KEY=YOUR_OPENAI_KEY
-
 atulya-api
 ```
 
-It runs locally at `http://localhost:8888`.
+Runs at `http://localhost:8888` with embedded Postgres, extraction, search, graph, synthesis.
 
-It includes:
+[Atulya Cloud](https://ui.atulya.eightengine.com/signup): swap `base_url` for your cloud endpoint.
 
-- Embedded Postgres
-- Fact extraction
-- Semantic search
-- Knowledge graph
-- Synthesis engine
-
-No external infrastructure.
-
-> **Prefer not to self-host?** [Atulya Cloud](https://ui.atulya.eightengine.com/signup) gives you the same API with no setup — just swap `base_url` for your Cloud endpoint.
-
----
-
-## Step 2 — Baseline Chat (No Memory)
-
-Let's start with the broken version:
+## Step 2: baseline chat (no memory)
 
 ```python
 from openai import OpenAI
@@ -133,124 +63,54 @@ while True:
     user_input = input("You: ")
     if user_input in ("quit", "exit"):
         break
-
     messages.append({"role": "user", "content": user_input})
-
-    response = openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=messages,
-    )
-
+    response = openai.chat.completions.create(model="gpt-4o-mini", messages=messages)
     reply = response.choices[0].message.content
     messages.append({"role": "assistant", "content": reply})
-
     print(reply)
 ```
 
-Works great.
+Restart, ask your name: blank.
 
-Restart it.
-
-Ask: "What's my name?"
-
-Blank stare.
-
----
-
-## Step 3 — Add `retain()`
-
-Create a memory bank:
+## Step 3: retain
 
 ```python
 from atulya_client import Atulya
 
 atulya = Atulya(base_url="http://localhost:8888")
-
 atulya.create_bank(
     bank_id="chatbot",
     name="Chatbot Memory",
     reflect_mission="Remember user preferences and important facts.",
 )
-```
 
-Now retain every exchange:
-
-```python
 atulya.retain(
     bank_id="chatbot",
     content=f"User: {user_input}\nAssistant: {reply}",
 )
 ```
 
-That's it.
-
-Atulya extracts facts, identifies entities, builds relationships, and stores them in a knowledge graph. You don't manage any of that.
-
----
-
-## Step 4 — Add `recall()`
-
-Before calling OpenAI, retrieve relevant memories:
+## Step 4: recall
 
 ```python
-memories = atulya.recall(
-    bank_id="chatbot",
-    query=user_input,
-    budget="low",
-)
-
+memories = atulya.recall(bank_id="chatbot", query=user_input, budget="low")
 memory_context = "\n".join(r.text for r in memories.results)
-```
 
-Inject into the system prompt:
-
-```python
 system_prompt = "You are a helpful assistant."
-
 if memory_context:
     system_prompt += "\n\nRelevant past context:\n" + memory_context
 ```
 
-Now:
+## Step 5: reflect for synthesis
 
-1. Tell it your name
-2. Restart
-3. Ask again
-
-It remembers. Because `recall` injects relevant past facts into the prompt.
-
----
-
-## Step 5 — Add `reflect()` for Synthesis
-
-`recall` returns facts. `reflect` returns reasoning.
-
-For questions like:
-
-- "What do you know about me?"
-- "Summarize our conversations."
-- "What patterns do you see?"
-
-Use reflect:
+For "what do you know about me?" / "summarize our chats":
 
 ```python
-reflection = atulya.reflect(
-    bank_id="chatbot",
-    query=user_input,
-)
-
+reflection = atulya.reflect(bank_id="chatbot", query=user_input)
 memory_context = reflection.text
 ```
 
-Reflect traverses the knowledge graph, runs an LLM reasoning chain, and synthesizes across memories.
-
-In Jerri, reflect powers weekly summaries, sprint reviews, and cross-meeting analysis. In your chatbot, it handles "step back and think" queries.
-
----
-
-## Full Working Example
-
-Copy this into `chat.py`:
+## Full example
 
 ```python
 from openai import OpenAI
@@ -266,60 +126,33 @@ atulya.create_bank(
 )
 
 SYSTEM_PROMPT = "You are a helpful assistant with long-term memory."
-
-SYNTHESIS_KEYWORDS = [
-    "summarize",
-    "what do you know about me",
-    "what have we talked about",
-]
+SYNTHESIS_KEYWORDS = ["summarize", "what do you know about me", "what have we talked about"]
 
 
 def get_memory_context(user_input):
     if any(k in user_input.lower() for k in SYNTHESIS_KEYWORDS):
-        reflection = atulya.reflect(
-            bank_id="chatbot",
-            query=user_input,
-        )
-        return reflection.text
-
-    memories = atulya.recall(
-        bank_id="chatbot",
-        query=user_input,
-        budget="low",
-    )
+        return atulya.reflect(bank_id="chatbot", query=user_input).text
+    memories = atulya.recall(bank_id="chatbot", query=user_input, budget="low")
     return "\n".join(r.text for r in memories.results)
 
 
 def main():
     conversation = []
-
     print("Chat with memory. Type 'quit' to exit.\n")
-
     while True:
         user_input = input("You: ")
         if user_input in ("quit", "exit"):
             break
-
         memory_context = get_memory_context(user_input)
-
         conversation.append({"role": "user", "content": user_input})
-
         system = SYSTEM_PROMPT
         if memory_context:
             system += "\n\nRelevant context:\n" + memory_context
-
         messages = [{"role": "system", "content": system}] + conversation
-
-        response = openai.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=messages,
-        )
-
+        response = openai.chat.completions.create(model="gpt-4o-mini", messages=messages)
         reply = response.choices[0].message.content
         conversation.append({"role": "assistant", "content": reply})
-
         print(f"\nAssistant: {reply}\n")
-
         atulya.retain(
             bank_id="chatbot",
             content=f"User: {user_input}\nAssistant: {reply}",
@@ -330,70 +163,24 @@ if __name__ == "__main__":
     main()
 ```
 
-Run:
+## Production notes
 
-```bash
-export OPENAI_API_KEY=YOUR_KEY
-python chat.py
-```
+1. Retain **after** responding.
+2. `budget="low"` in chat loops; raise only when needed.
+3. One bank per user in multi-tenant apps.
+4. Set a clear bank mission.
+5. Retain everything first; optimize later.
 
-Restart it. It still remembers.
+## When to use / skip
 
----
+**Use:** cross-session memory, synthesis over time, no appetite to run RAG infra.
 
-## Production Lessons (From Building Jerri)
+**Skip:** single-session-only bots, structured data that belongs in a database.
 
-**1. Retain after responding.** Otherwise the assistant remembers questions but not answers.
+## Next steps
 
-**2. Use `budget="low"` for chat loops.** Sub-second latency. Upgrade only when needed.
-
-**3. One bank per user in multi-user apps.** Otherwise memories leak across users.
-
-**4. Set a mission.** Fact extraction quality depends heavily on it.
-
-**5. Start by retaining everything.** Optimize later.
-
----
-
-## When to Use This Pattern
-
-**Use it if:**
-
-- You need cross-session memory
-- You want synthesis across time
-- You don't want to build RAG infra
-
-**Don't use it if:**
-
-- You only need single-session context
-- You're storing structured database records
-
-This solves the space between "chat history" and "knowledge base."
-
----
-
-## The Pattern to Remember
-
-- `retain` — after responding
-- `recall` — before responding
-- `reflect` — when synthesizing
-
-That's the loop.
-
-That's what powers Jerri across weeks of meetings.
-
-That's what you just built in 15 minutes.
-
----
-
-## Next Steps
-
-- **Add per-user banks** with unique `bank_id` per user
-- **Use tags** for scoped memory (`tags` on retain, `tags_match` on recall)
-- **Add structured JSON output** to reflect with `response_schema`
-- **Inspect memories in the web UI** at `localhost:9999` via Docker
-- **Try [hosted Atulya](https://ui.atulya.eightengine.com/signup)** instead of self-hosting
-
-Persistent memory turns a chatbot into an agent.
-
-Now yours remembers.
+- Per-user `bank_id`
+- Tags on retain, `tags_match` on recall
+- `response_schema` on reflect for structured output
+- Control plane / Docker UI on port 9999
+- [Hosted Atulya](https://ui.atulya.eightengine.com/signup)

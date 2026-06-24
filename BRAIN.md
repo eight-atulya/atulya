@@ -50,7 +50,7 @@ Operating rules:
 
 Atulya is a monorepo with a memory-system core and multiple operator surfaces:
 
-- `atulya-api/`: FastAPI dataplane for retain, recall, reflect, mental models, directives, Brain, and Dream operations
+- `atulya-api/`: FastAPI dataplane for retain, recall, reflect, mental models, directives, Brain, Dream, and **Data Forge** (training dataset materialization)
 - `atulya-control-plane/`: Next.js admin and operator UI
 - `atulya/`: embedded Python package bundle
 - `atulya-cli/`: Rust CLI
@@ -66,6 +66,8 @@ Core flow:
 3. `recall` retrieves from multiple search paths and reranks evidence
 4. `reflect` reasons over memories, observations, directives, and mental models
 5. Brain and Dream extend the system toward influence analytics, synthesis, integrity maintenance, and portable learning
+6. **Data Forge** materializes bank state into audited **Atulya Training Records (ATR)** for export and (roadmap) on-stack fine-tuning — closing the loop from memory to model weights
+7. **Taste Studio** curates hand-authored training examples (immutable seed + working copy), variants, transforms, one-click retain, and export through the same ATR adapters — the user's "taste" layer beside pipeline forge
 
 Knowledge layers to keep distinct:
 
@@ -99,10 +101,11 @@ How to consume this file efficiently:
 ## Generated: Active Context
 <!-- BRAIN:BEGIN GENERATED:active_context -->
 
+- Data Forge shipped: ingest → purify → recipe → quality audit → ATR export (control plane, API, CLI). Docs and release blogs published under `atulya-docs`.
+- Strategic direction: **memory → training signal → model → eval → retain corrections → re-forge**. Unsloth-style self-contained training is planned as the next forge adapter, not a separate product.
 - The repo is operating with `BRAIN.md` as the primary agent brain layer, while `CLAUDE.md` remains the detailed mechanics reference.
-- Recent active work included graph-intelligence contract protection and control-plane mental-model UI fixes.
-- Current priority is making repo memory more explicit and token-efficient by moving high-signal context into a stable-plus-generated root brain contract.
-- Risk theme: do not let living brain content become a noisy changelog; generated sections must stay compact and evidence-backed.
+- Current priority: closed-loop learning — forge quality gates today, eval-driven retain and on-stack fine-tune tomorrow.
+- Risk theme: training exports must stay aligned with prod memory IDs; never fork dataset lineage from bank evidence.
 - Branch reality: generated repo-brain content should describe durable repo state, not temporary branch-local drift, unless the branch state materially affects operators.
 
 <!-- BRAIN:END GENERATED:active_context -->
@@ -114,6 +117,8 @@ How to consume this file efficiently:
 - Repo-specific procedural learning belongs in `atulya-cortex`, usually as lessons learned first and brain protocols when the workflow becomes reusable.
 - Semantic or heuristic upgrades should preserve the subsystem contract first, then add smarter behavior behind targeted validation.
 - Publish hygiene is part of system integrity. Scope, validation, and reusable learning capture matter alongside the code diff.
+- Data Forge treats **ATR** as the canonical archive format; exporters (OpenAI JSONL, graph FT, future Unsloth) are thin adapters on the same provenance.
+- The north-star loop is self-correcting memory: failed citation/temporal evals should flow back through `retain`, then re-forge — not live only in offline spreadsheets.
 - Agent context should be front-loaded with durable identity and tailed with compact recency. Middle detail is optional and should stay skimmable.
 
 <!-- BRAIN:END GENERATED:durable_mental_models -->
@@ -144,9 +149,11 @@ Relevant reusable protocols:
 ## Generated: Open Loops And Next Actions
 <!-- BRAIN:BEGIN GENERATED:open_loops_and_next_actions -->
 
+- Open loop: Unsloth (or equivalent) forge exporter + training job operator surface.
+- Open loop: eval-driven `retain` hook when forge quality or post-train eval fails on cited facts.
+- Open loop: memory-repo dataset diff between forge exports when bank state changes.
 - Open loop: trace and fix the path that allows local-model control tokens such as `<|channel|>` to leak into saved mental model content.
-- Open loop: define or implement the future section-refresh tooling that rewrites only generated blocks in this file.
-- Next action: when new high-signal incidents land, retain them with `repo:atulya`, `brain:root`, and area tags before refreshing this brain.
+- Next action: when forge or training-loop work lands, retain with `repo:atulya`, `brain:root`, `area:forge` before refreshing this brain.
 - Next action: keep stale resolved items out of this tail section so the last tokens remain a high-signal bootstrap surface.
 
 Staleness rule:
@@ -158,8 +165,8 @@ Staleness rule:
 ## Generated: Refresh Metadata
 <!-- BRAIN:BEGIN GENERATED:refresh_metadata -->
 
-- Last refreshed: 2026-04-02
-- Refresh mode: manual v1 seed following the append-then-refresh contract
+- Last refreshed: 2026-06-24
+- Refresh mode: manual — Data Forge docs + strategic loop update
 - Evidence sources:
   - root repo contract in this file
   - `CLAUDE.md`

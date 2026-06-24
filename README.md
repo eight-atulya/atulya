@@ -9,20 +9,30 @@
 
 For builders: [one-time setup](./scripts/dev/SETUP.md).
 
-Atulya is the memory and reasoning layer for organizations and AI agents.
+You have felt this.
+
+You learn something the hard way. Then the person who knew leaves—or the thread gets buried—and you are explaining it again from scratch. Not because the team was careless. Because the knowing never stayed anywhere everyone could use.
+
+You invested time for a lesson once. The next time it mattered, you did not use it—and caught yourself paying again. Or you learned plenty, but without recall, the taste for what was right faded until you could not trust your own judgment. Happens a lot with founders and people working in intense development and fast growth environment.
+
+Post-mortems blame market fit or money. That is often the last chapter. The first is quieter: the same question asked twice, the decision nobody can trace, the new hire spending months on what someone else already figured out. People spend roughly a fifth of the workweek just finding information that should already be there ([McKinsey](https://www.mckinsey.com/industries/technology-media-and-telecommunications/our-insights/the-social-economy)). When someone walks out, a large part of what made them good walks out too.
+
+That gap—between what you learned and what your organization can still act on—is not solved by another chat tool or another spreadsheet. It is a memory problem. And now it is an AI problem too: agents and models only inherit what was last saved, not what your team actually knows.
+
+> Atulya is the durable memory and reasoning layer for organizations and AI agents.
 It is a brain built on the strongest foundation intelligence can have: memory.
 Atulya stands for **Algorithm That Understands, Learns, Yields, & Adapts**.
 
-Like human intelligence, Atulya starts by remembering, connecting, and learning from experience over time.
-It helps teams keep context, explain decisions, and compound intelligence instead of losing it between people, tools, and workflows.
+It remembers, connects, and learns from experience over time—so context survives people, projects, and handoffs. The same bank can power agents in production and training data grounded in what you actually decided, not what happened to be in the last export.
 
-Built for teams where lost context is expensive, especially small teams where every missed insight costs speed, focus, or revenue.
+Built for teams where losing context costs speed, focus, and revenue—especially when there is no spare person to carry it all in their head.
 
-## Your organization is hemorrhaging intelligence. Every day.
+## The problem, every day
 
 - Someone leaves. Their context goes with them.
 - A decision gets made. Nobody remembers why.
 - An agent solves a problem. The next agent starts from zero.
+- A fine-tune ships. It still learned from a chat export, not from what the bank knows today.
 - A new engineer joins. Six months to get up to speed. Again.
 
 This is not a people problem. It is an infrastructure problem.
@@ -37,6 +47,7 @@ Atulya fills that gap.
 - Give AI agents memory that compounds instead of resetting every run.
 - Reduce onboarding drag by making important history legible.
 - Lower execution risk with evidence-backed recall, reflect, graph, and entity intelligence.
+- Close the memory → model loop: provenance-first export ([Data Forge](./atulya-docs/docs/developer/data-forge.md)) and curated judgment ([Taste Studio](./atulya-docs/docs/developer/taste-studio.md)).
 
 ## Why startups care
 
@@ -48,7 +59,7 @@ For a startup, Atulya can become the organization's brain.
 - Turn hard-won lessons into reusable advantage for future deals, product bets, hiring, and execution.
 - Create more surface area for opportunity by making what the team already knows searchable, explainable, and usable.
 
-Small teams rarely lose because they lack effort. They lose because the learning does not stay alive long enough to compound.
+Small teams rarely lose because they lack effort. They lose because the learning does not stay alive long enough to compound—and because models keep learning from exports while memory keeps moving without them.
 
 Atulya helps that learning stay alive.
 
@@ -62,6 +73,8 @@ Atulya is a living intelligence layer for teams, built on memory first:
 - **Code intelligence** that turns large repos into ranked symbols, module briefs, and curated memory
 - **Entity and graph intelligence** that show who matters, what changed, and where risk is building
 - **Internet research** that keeps live-web investigation separate from durable memory until reviewed
+- **Data Forge** that turns bank state into citation-backed training records—with quality gates before export
+- **Taste Studio** for golden examples, variants, and org taste—retained back into the same bank
 
 If you only read one extra file in this repository, read [ATULYA_PRINCIPLES.md](./ATULYA_PRINCIPLES.md).
 

@@ -128,6 +128,22 @@
         },
         {
           "type": "doc",
+          "id": "developer/data-forge",
+          "label": "Data Forge",
+          "customProps": {
+            "icon": "lu-layers"
+          }
+        },
+        {
+          "type": "doc",
+          "id": "developer/taste-studio",
+          "label": "Taste Studio",
+          "customProps": {
+            "icon": "lu-palette"
+          }
+        },
+        {
+          "type": "doc",
           "id": "developer/observations",
           "label": "Observations",
           "customProps": {
@@ -251,6 +267,14 @@
           "label": "Operations",
           "customProps": {
             "icon": "lu-activity"
+          }
+        },
+        {
+          "type": "doc",
+          "id": "developer/api/forge",
+          "label": "Forge",
+          "customProps": {
+            "icon": "lu-layers"
           }
         },
         {
