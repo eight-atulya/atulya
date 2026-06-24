@@ -20,6 +20,7 @@ import { BankOperationsView } from "@/components/bank-operations-view";
 import { BrainView } from "@/components/brain-view";
 import { MentalModelsView } from "@/components/mental-models-view";
 import { WebhooksView } from "@/components/webhooks-view";
+import { ForgeView } from "@/components/forge-view";
 import { DreamTranceView } from "@/components/dream-trance-view";
 import { EntityTrajectoriesView } from "@/components/entity-trajectories-view";
 import { MemoryRepoControls } from "@/components/memory-repo-controls";
@@ -56,6 +57,7 @@ type NavItem =
   | "codebases"
   | "entities"
   | "trajectories"
+  | "forge"
   | "profile";
 type DataSubTab = "world" | "experience" | "observations" | "mental-models";
 type BankConfigTab = "general" | "configuration" | "webhooks" | "dreams";
@@ -359,6 +361,13 @@ export default function BankPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Data Forge Tab */}
+        {view === "forge" && (
+          <div>
+            <ForgeView key={`forge:${bankViewKey}`} />
           </div>
         )}
 

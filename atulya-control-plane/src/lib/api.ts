@@ -727,7 +727,124 @@ export interface OperationStatus {
 }
 
 export interface OperationResult extends OperationStatus {
-  result: ReflectResponse | Record<string, any> | null;
+  result: ReflectResponse | ForgeJobResult | Record<string, any> | null;
+}
+
+export interface ForgeQualitySummary {
+  total: number;
+  exportable: number;
+  held_back?: number;
+  pass_rate: number;
+  avg_score: number;
+  issue_counts?: Record<string, number>;
+}
+
+export interface ForgeJobResult {
+  quality_summary?: ForgeQualitySummary;
+  records_total?: number;
+  records_exportable?: number;
+}
+
+export interface ForgeRecipeCatalogItem {
+  recipe_id: string;
+  version: string;
+  title: string;
+  description?: string;
+  requires_ingest?: boolean;
+  cost_tier?: string;
+  training_signal?: string;
+}
+
+export interface ForgeExporterCatalogItem {
+  adapter_id: string;
+  version: string;
+  title: string;
+  description?: string;
+}
+
+export interface ForgeCatalogResponse {
+  recipes: ForgeRecipeCatalogItem[];
+  exporters: ForgeExporterCatalogItem[];
+  domain_profiles: Array<{ id: string; title: string; description: string }>;
+  suggested_recipes: string[];
+  stages: Array<{ id: string; label: string }>;
+}
+
+export interface ForgeRecordItem {
+  record_id: string;
+  recipe_id: string;
+  quality_score: number;
+  exportable: boolean;
+  record?: {
+    labels?: { answer?: string; gold_answer?: string };
+    quality?: { issues?: string[] };
+    provenance?: { document_ids?: string[] };
+    tasks?: Array<{ query?: string }>;
+  };
+}
+
+export interface ForgeRecordsResponse {
+  records: ForgeRecordItem[];
+  total: number;
+  exportable_total?: number;
+  limit: number;
+  offset: number;
+}
+
+export type TasteSchemaType = "openai_chat" | "qa_pair" | "custom";
+export type TasteSetStatus = "draft" | "ready" | "retained" | "archived";
+
+export interface TasteDatasetItem {
+  id: string;
+  bank_id: string;
+  name: string;
+  description?: string | null;
+  schema_type: TasteSchemaType;
+  taste_tags: string[];
+  set_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TasteSetItem {
+  id: string;
+  dataset_id: string;
+  bank_id: string;
+  set_key: string;
+  parent_set_id?: string | null;
+  variant_index: number;
+  source_payload: Record<string, unknown>;
+  working_payload: Record<string, unknown>;
+  transform_log?: Array<Record<string, unknown>>;
+  taste_tags: string[];
+  entity_ids?: string[];
+  memory_unit_ids?: string[];
+  status: TasteSetStatus;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface TasteCatalogResponse {
+  schema_types: Array<{ id: string; title: string; description: string }>;
+  transform_ops: Array<{ op_id: string; title: string; description: string }>;
+  exporters: Array<{ adapter_id: string; title: string; description?: string }>;
+}
+
+export interface TasteTransformPreviewItem {
+  set_id: string;
+  set_key: string;
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+}
+
+export interface TasteTransformResponse {
+  preview: boolean;
+  items: TasteTransformPreviewItem[];
+  updated_count?: number;
+  processed_count?: number;
+  total_in_dataset?: number;
+  operation_id?: string;
+  deduplicated?: boolean;
 }
 
 export interface OperationProgress {
@@ -1914,6 +2031,217 @@ export class ControlPlaneClient {
       deduplicated: boolean;
     }>(`/api/banks/${bankId}/consolidate`, {
       method: "POST",
+    });
+  }
+
+  async listForgeRecipes(bankId: string, domainTags?: string[]) {
+    const query =
+      domainTags && domainTags.length
+        ? `?${domainTags.map((t) => `domain_tags=${encodeURIComponent(t)}`).join("&")}`
+        : "";
+    return this.fetchApi<ForgeCatalogResponse>(`/api/banks/${bankId}/forge/recipes${query}`);
+  }
+
+  async submitForgeJob(
+    bankId: string,
+    body: {
+      recipe_id: string;
+      domain_tags?: string[];
+      source?: unknown;
+      quality_threshold?: number;
+      wait_consolidation?: boolean;
+      max_records?: number;
+      repo_commit_on_complete?: boolean;
+      commit_message?: string;
+      options?: Record<string, unknown>;
+    }
+  ) {
+    return this.fetchApi<{ operation_id: string; deduplicated: boolean }>(
+      `/api/banks/${bankId}/forge/jobs`,
+      { method: "POST", body: JSON.stringify(body) }
+    );
+  }
+
+  async listForgeRecords(bankId: string, operationId?: string, limit = 50, offset = 0) {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    if (operationId) params.set("operation_id", operationId);
+    return this.fetchApi<ForgeRecordsResponse>(`/api/banks/${bankId}/forge/records?${params}`);
+  }
+
+  async exportForgeJob(
+    bankId: string,
+    body: {
+      operation_id: string;
+      adapter_id?: string;
+      quality_threshold?: number;
+      options?: Record<string, unknown>;
+    }
+  ) {
+    return this.fetchApi<{
+      adapter_id: string;
+      record_count: number;
+      exportable_count: number;
+      content?: string;
+      quality_summary: Record<string, number>;
+    }>(`/api/banks/${bankId}/forge/export`, { method: "POST", body: JSON.stringify(body) });
+  }
+
+  async getForgeJobLineage(bankId: string, operationId: string) {
+    return this.fetchApi<Record<string, unknown>>(
+      `/api/banks/${bankId}/forge/jobs/${operationId}/lineage`
+    );
+  }
+
+  async listTasteCatalog(bankId: string) {
+    return this.fetchApi<TasteCatalogResponse>(`/api/banks/${bankId}/forge/taste/catalog`);
+  }
+
+  async listTasteDatasets(bankId: string) {
+    return this.fetchApi<{ datasets: TasteDatasetItem[] }>(
+      `/api/banks/${bankId}/forge/taste/datasets`
+    );
+  }
+
+  async createTasteDataset(
+    bankId: string,
+    body: {
+      name: string;
+      description?: string;
+      schema_type?: TasteSchemaType;
+      taste_tags?: string[];
+    }
+  ) {
+    return this.fetchApi<TasteDatasetItem>(`/api/banks/${bankId}/forge/taste/datasets`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async getTasteDataset(bankId: string, datasetId: string) {
+    return this.fetchApi<TasteDatasetItem>(
+      `/api/banks/${bankId}/forge/taste/datasets/${datasetId}`
+    );
+  }
+
+  async updateTasteDataset(
+    bankId: string,
+    datasetId: string,
+    body: { name?: string; description?: string; taste_tags?: string[] }
+  ) {
+    return this.fetchApi<TasteDatasetItem>(
+      `/api/banks/${bankId}/forge/taste/datasets/${datasetId}`,
+      { method: "PATCH", body: JSON.stringify(body) }
+    );
+  }
+
+  async deleteTasteDataset(bankId: string, datasetId: string) {
+    return this.fetchApi<{ deleted: boolean; dataset_id?: string }>(
+      `/api/banks/${bankId}/forge/taste/datasets/${datasetId}`,
+      { method: "DELETE" }
+    );
+  }
+
+  async listTasteSets(bankId: string, datasetId: string, limit = 100, offset = 0) {
+    const params = new URLSearchParams({ limit: String(limit), offset: String(offset) });
+    return this.fetchApi<{ sets: TasteSetItem[]; total: number; limit: number; offset: number }>(
+      `/api/banks/${bankId}/forge/taste/datasets/${datasetId}/sets?${params}`
+    );
+  }
+
+  async importTasteSets(
+    bankId: string,
+    datasetId: string,
+    body: {
+      sets?: Record<string, unknown>[];
+      jsonl?: string;
+      taste_tags?: string[];
+      set_key_prefix?: string;
+    }
+  ) {
+    return this.fetchApi<{ imported_count: number; sets: TasteSetItem[] }>(
+      `/api/banks/${bankId}/forge/taste/datasets/${datasetId}/sets`,
+      { method: "POST", body: JSON.stringify(body) }
+    );
+  }
+
+  async updateTasteSet(
+    bankId: string,
+    setId: string,
+    body: {
+      working_payload?: Record<string, unknown>;
+      taste_tags?: string[];
+      status?: TasteSetStatus;
+    }
+  ) {
+    return this.fetchApi<TasteSetItem>(`/api/banks/${bankId}/forge/taste/sets/${setId}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async revertTasteSet(bankId: string, setId: string) {
+    return this.fetchApi<TasteSetItem>(`/api/banks/${bankId}/forge/taste/sets/${setId}/revert`, {
+      method: "POST",
+    });
+  }
+
+  async submitTasteTransform(
+    bankId: string,
+    body: {
+      dataset_id: string;
+      set_ids?: string[];
+      ops?: Array<{ op: string; params?: Record<string, unknown> }>;
+      preview?: boolean;
+    }
+  ) {
+    return this.fetchApi<TasteTransformResponse>(`/api/banks/${bankId}/forge/taste/transform`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async generateTasteVariants(
+    bankId: string,
+    datasetId: string,
+    body: { set_ids: string[]; count?: number; options?: Record<string, unknown> }
+  ) {
+    return this.fetchApi<
+      | { operation_id: string; deduplicated?: boolean }
+      | { created_count: number; sets: TasteSetItem[] }
+    >(`/api/banks/${bankId}/forge/taste/datasets/${datasetId}/generate`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async retainTasteSets(bankId: string, body: { set_ids: string[] }) {
+    return this.fetchApi<{
+      retained_count: number;
+      memory_unit_ids: string[];
+      sets: TasteSetItem[];
+    }>(`/api/banks/${bankId}/forge/taste/retain`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  async exportTasteDataset(
+    bankId: string,
+    body: {
+      dataset_id: string;
+      set_ids?: string[];
+      adapter_id?: string;
+      options?: Record<string, unknown>;
+    }
+  ) {
+    return this.fetchApi<{
+      adapter_id: string;
+      record_count: number;
+      exportable_count: number;
+      content?: string;
+    }>(`/api/banks/${bankId}/forge/taste/export`, {
+      method: "POST",
+      body: JSON.stringify(body),
     });
   }
 

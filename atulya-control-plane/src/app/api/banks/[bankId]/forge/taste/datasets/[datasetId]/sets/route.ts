@@ -1,0 +1,50 @@
+import { NextResponse } from "next/server";
+import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ bankId: string; datasetId: string }> }
+) {
+  try {
+    const { bankId, datasetId } = await params;
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get("limit") || "100";
+    const offset = searchParams.get("offset") || "0";
+    const res = await fetch(
+      `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}/sets?limit=${limit}&offset=${offset}`,
+      { headers: getDataplaneHeaders() }
+    );
+    const data = await res.json();
+    if (!res.ok)
+      return NextResponse.json({ error: data.detail || "Failed" }, { status: res.status });
+    return NextResponse.json(data, { status: 200 });
+  } catch (error) {
+    console.error("Error listing taste sets:", error);
+    return NextResponse.json({ error: "Failed to list taste sets" }, { status: 500 });
+  }
+}
+
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<{ bankId: string; datasetId: string }> }
+) {
+  try {
+    const { bankId, datasetId } = await params;
+    const body = await request.json();
+    const res = await fetch(
+      `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}/sets`,
+      {
+        method: "POST",
+        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        body: JSON.stringify(body),
+      }
+    );
+    const data = await res.json();
+    if (!res.ok)
+      return NextResponse.json({ error: data.detail || "Failed" }, { status: res.status });
+    return NextResponse.json(data, { status: 200 });
+  } catch (error) {
+    console.error("Error importing taste sets:", error);
+    return NextResponse.json({ error: "Failed to import taste sets" }, { status: 500 });
+  }
+}
