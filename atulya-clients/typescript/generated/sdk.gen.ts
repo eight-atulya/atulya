@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddBankBackgroundData, AddBankBackgroundErrors, AddBankBackgroundResponses, AdminCreateApiKeyData, AdminCreateApiKeyErrors, AdminCreateApiKeyResponses, AdminDecommissionWorkerData, AdminDecommissionWorkerErrors, AdminDecommissionWorkerResponses, AdminListApiKeysData, AdminListApiKeysErrors, AdminListApiKeysResponses, AdminListOperationsData, AdminListOperationsErrors, AdminListOperationsResponses, AdminListTenantBanksData, AdminListTenantBanksErrors, AdminListTenantBanksResponses, AdminListTenantsData, AdminListTenantsErrors, AdminListTenantsResponses, AdminListWorkersData, AdminListWorkersErrors, AdminListWorkersResponses, AdminRevokeApiKeyData, AdminRevokeApiKeyErrors, AdminRevokeApiKeyResponses, AdminSystemHealthData, AdminSystemHealthErrors, AdminSystemHealthResponses, AdminTriggerConsolidationData, AdminTriggerConsolidationErrors, AdminTriggerConsolidationResponses, AdminUpdateApiKeyData, AdminUpdateApiKeyErrors, AdminUpdateApiKeyResponses, AnalyzeCodebaseImpactData, AnalyzeCodebaseImpactErrors, AnalyzeCodebaseImpactResponses, ApproveCodebaseData, ApproveCodebaseErrors, ApproveCodebaseResponses, BrainLearnFromRemoteData, BrainLearnFromRemoteErrors, BrainLearnFromRemoteResponses, CancelOperationData, CancelOperationErrors, CancelOperationResponses, CheckoutMemoryRepoBranchData, CheckoutMemoryRepoBranchErrors, CheckoutMemoryRepoBranchResponses, ClearBankMemoriesData, ClearBankMemoriesErrors, ClearBankMemoriesResponses, ClearMemoryObservationsData, ClearMemoryObservationsErrors, ClearMemoryObservationsResponses, ClearObservationsData, ClearObservationsErrors, ClearObservationsResponses, CommitMemoryRepoData, CommitMemoryRepoErrors, CommitMemoryRepoResponses, CreateDirectiveData, CreateDirectiveErrors, CreateDirectiveResponses, CreateMemoryRepoBranchData, CreateMemoryRepoBranchErrors, CreateMemoryRepoBranchResponses, CreateMemoryRepoData, CreateMemoryRepoErrors, CreateMemoryRepoResponses, CreateMentalModelData, CreateMentalModelErrors, CreateMentalModelResponses, CreateOrUpdateBankData, CreateOrUpdateBankErrors, CreateOrUpdateBankResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CurateCodebaseByIntentData, CurateCodebaseByIntentErrors, CurateCodebaseByIntentResponses, DeleteBankData, DeleteBankErrors, DeleteBankResponses, DeleteDirectiveData, DeleteDirectiveErrors, DeleteDirectiveResponses, DeleteDocumentData, DeleteDocumentErrors, DeleteDocumentResponses, DeleteMentalModelData, DeleteMentalModelErrors, DeleteMentalModelResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DiffMemoryRepoData, DiffMemoryRepoErrors, DiffMemoryRepoResponses, EnableMemoryRepoData, EnableMemoryRepoErrors, EnableMemoryRepoResponses, ExportBrainSnapshotData, ExportBrainSnapshotErrors, ExportBrainSnapshotResponses, FileRetainData, FileRetainErrors, FileRetainResponses, ForkMemoryRepoBankData, ForkMemoryRepoBankErrors, ForkMemoryRepoBankResponses, GetAgentStatsData, GetAgentStatsErrors, GetAgentStatsResponses, GetAnomalyIntelligenceData, GetAnomalyIntelligenceErrors, GetAnomalyIntelligenceResponses, GetBankConfigData, GetBankConfigErrors, GetBankConfigResponses, GetBankProfileData, GetBankProfileErrors, GetBankProfileResponses, GetBrainInfluenceData, GetBrainInfluenceErrors, GetBrainInfluenceResponses, GetBrainRuntimeStatusData, GetBrainRuntimeStatusErrors, GetBrainRuntimeStatusResponses, GetChunkData, GetChunkErrors, GetChunkResponses, GetCodebaseChunkDetailData, GetCodebaseChunkDetailErrors, GetCodebaseChunkDetailResponses, GetCodebaseData, GetCodebaseErrors, GetCodebaseRepoMapData, GetCodebaseRepoMapErrors, GetCodebaseRepoMapResponses, GetCodebaseResponses, GetCodebaseReviewData, GetCodebaseReviewErrors, GetCodebaseReviewResponses, GetCodebaseSymbolCardData, GetCodebaseSymbolCardErrors, GetCodebaseSymbolCardResponses, GetCodebaseTriageSettingsData, GetCodebaseTriageSettingsErrors, GetCodebaseTriageSettingsResponses, GetDirectiveData, GetDirectiveErrors, GetDirectiveResponses, GetDocumentData, GetDocumentErrors, GetDocumentResponses, GetDreamStatsData, GetDreamStatsErrors, GetDreamStatsResponses, GetEntityData, GetEntityErrors, GetEntityIntelligenceData, GetEntityIntelligenceErrors, GetEntityIntelligenceResponses, GetEntityResponses, GetEntityTrajectoryData, GetEntityTrajectoryErrors, GetEntityTrajectoryResponses, GetGraphData, GetGraphErrors, GetGraphIntelligenceData, GetGraphIntelligenceErrors, GetGraphIntelligenceResponses, GetGraphNeighborhoodData, GetGraphNeighborhoodErrors, GetGraphNeighborhoodResponses, GetGraphResponses, GetGraphSummaryData, GetGraphSummaryErrors, GetGraphSummaryResponses, GetMemoryData, GetMemoryErrors, GetMemoryRepoData, GetMemoryRepoErrors, GetMemoryRepoForBankData, GetMemoryRepoForBankErrors, GetMemoryRepoForBankResponses, GetMemoryRepoLogData, GetMemoryRepoLogErrors, GetMemoryRepoLogResponses, GetMemoryRepoResponses, GetMemoryRepoStatusData, GetMemoryRepoStatusErrors, GetMemoryRepoStatusResponses, GetMemoryResponses, GetMentalModelData, GetMentalModelErrors, GetMentalModelHistoryData, GetMentalModelHistoryErrors, GetMentalModelHistoryResponses, GetMentalModelResponses, GetObservationHistoryData, GetObservationHistoryErrors, GetObservationHistoryResponses, GetOperationResultData, GetOperationResultErrors, GetOperationResultResponses, GetOperationStatusData, GetOperationStatusErrors, GetOperationStatusResponses, GetSubRoutineHistogramData, GetSubRoutineHistogramErrors, GetSubRoutineHistogramResponses, GetSubRoutinePredictionsData, GetSubRoutinePredictionsErrors, GetSubRoutinePredictionsResponses, GetTimelineData, GetTimelineErrors, GetTimelineResponses, GetVersionData, GetVersionResponses, HealthEndpointHealthGetData, HealthEndpointHealthGetResponses, ImportBrainSnapshotData, ImportBrainSnapshotErrors, ImportBrainSnapshotResponses, ImportCodebaseFileData, ImportCodebaseFileErrors, ImportCodebaseFileResponses, ImportCodebaseGithubData, ImportCodebaseGithubErrors, ImportCodebaseGithubResponses, ImportCodebaseZipData, ImportCodebaseZipErrors, ImportCodebaseZipResponses, InternetResearchData, InternetResearchErrors, InternetResearchResponses, InvestigateGraphData, InvestigateGraphErrors, InvestigateGraphResponses, ListBanksData, ListBanksErrors, ListBanksResponses, ListCodebaseChunksData, ListCodebaseChunksErrors, ListCodebaseChunksResponses, ListCodebaseFilesData, ListCodebaseFilesErrors, ListCodebaseFilesResponses, ListCodebaseModulesData, ListCodebaseModulesErrors, ListCodebaseModulesResponses, ListCodebaseResearchQueueData, ListCodebaseResearchQueueErrors, ListCodebaseResearchQueueResponses, ListCodebasesData, ListCodebasesErrors, ListCodebasesResponses, ListCodebaseSymbolCardsData, ListCodebaseSymbolCardsErrors, ListCodebaseSymbolCardsResponses, ListDirectivesData, ListDirectivesErrors, ListDirectivesResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListDreamArtifactsData, ListDreamArtifactsErrors, ListDreamArtifactsResponses, ListEntitiesData, ListEntitiesErrors, ListEntitiesResponses, ListMemoriesData, ListMemoriesErrors, ListMemoriesResponses, ListMemoryRepoBranchesData, ListMemoryRepoBranchesErrors, ListMemoryRepoBranchesForBankData, ListMemoryRepoBranchesForBankErrors, ListMemoryRepoBranchesForBankResponses, ListMemoryRepoBranchesResponses, ListMemoryReposData, ListMemoryReposErrors, ListMemoryReposResponses, ListMentalModelsData, ListMentalModelsErrors, ListMentalModelsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTagsData, ListTagsErrors, ListTagsResponses, ListWebhookDeliveriesData, ListWebhookDeliveriesErrors, ListWebhookDeliveriesResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, MetricsEndpointMetricsGetData, MetricsEndpointMetricsGetResponses, PostEntityIntelligenceRecomputeData, PostEntityIntelligenceRecomputeErrors, PostEntityIntelligenceRecomputeResponses, PostEntityTrajectoryRecomputeData, PostEntityTrajectoryRecomputeErrors, PostEntityTrajectoryRecomputeResponses, RecallMemoriesData, RecallMemoriesErrors, RecallMemoriesResponses, ReflectData, ReflectErrors, ReflectResponses, RefreshCodebaseData, RefreshCodebaseErrors, RefreshCodebaseResponses, RefreshMentalModelData, RefreshMentalModelErrors, RefreshMentalModelResponses, RegenerateEntityObservationsData, RegenerateEntityObservationsErrors, RegenerateEntityObservationsResponses, ResetBankConfigData, ResetBankConfigErrors, ResetBankConfigResponses, ResetMemoryRepoHardData, ResetMemoryRepoHardErrors, ResetMemoryRepoHardResponses, RetainMemoriesData, RetainMemoriesErrors, RetainMemoriesResponses, RetryOperationData, RetryOperationErrors, RetryOperationResponses, ReviewDreamProposalData, ReviewDreamProposalErrors, ReviewDreamProposalResponses, RouteCodebaseReviewItemsData, RouteCodebaseReviewItemsErrors, RouteCodebaseReviewItemsResponses, SearchCodebaseSymbolsData, SearchCodebaseSymbolsErrors, SearchCodebaseSymbolsResponses, SubmitAsyncReflectData, SubmitAsyncReflectErrors, SubmitAsyncReflectResponses, TriggerConsolidationData, TriggerConsolidationErrors, TriggerConsolidationResponses, TriggerDreamGenerationData, TriggerDreamGenerationErrors, TriggerDreamGenerationResponses, TriggerSubRoutineData, TriggerSubRoutineErrors, TriggerSubRoutineResponses, UpdateBankConfigData, UpdateBankConfigErrors, UpdateBankConfigResponses, UpdateBankData, UpdateBankDispositionData, UpdateBankDispositionErrors, UpdateBankDispositionResponses, UpdateBankErrors, UpdateBankResponses, UpdateCodebaseTriageSettingsData, UpdateCodebaseTriageSettingsErrors, UpdateCodebaseTriageSettingsResponses, UpdateDirectiveData, UpdateDirectiveErrors, UpdateDirectiveResponses, UpdateDreamPredictionOutcomeData, UpdateDreamPredictionOutcomeErrors, UpdateDreamPredictionOutcomeResponses, UpdateMentalModelData, UpdateMentalModelErrors, UpdateMentalModelResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, ValidateBrainImportData, ValidateBrainImportErrors, ValidateBrainImportResponses } from './types.gen';
+import type { AddBankBackgroundData, AddBankBackgroundErrors, AddBankBackgroundResponses, AdminCreateApiKeyData, AdminCreateApiKeyErrors, AdminCreateApiKeyResponses, AdminDecommissionWorkerData, AdminDecommissionWorkerErrors, AdminDecommissionWorkerResponses, AdminListApiKeysData, AdminListApiKeysErrors, AdminListApiKeysResponses, AdminListOperationsData, AdminListOperationsErrors, AdminListOperationsResponses, AdminListTenantBanksData, AdminListTenantBanksErrors, AdminListTenantBanksResponses, AdminListTenantsData, AdminListTenantsErrors, AdminListTenantsResponses, AdminListWorkersData, AdminListWorkersErrors, AdminListWorkersResponses, AdminRevokeApiKeyData, AdminRevokeApiKeyErrors, AdminRevokeApiKeyResponses, AdminSystemHealthData, AdminSystemHealthErrors, AdminSystemHealthResponses, AdminTriggerConsolidationData, AdminTriggerConsolidationErrors, AdminTriggerConsolidationResponses, AdminUpdateApiKeyData, AdminUpdateApiKeyErrors, AdminUpdateApiKeyResponses, AnalyzeCodebaseImpactData, AnalyzeCodebaseImpactErrors, AnalyzeCodebaseImpactResponses, ApproveCodebaseData, ApproveCodebaseErrors, ApproveCodebaseResponses, BrainLearnFromRemoteData, BrainLearnFromRemoteErrors, BrainLearnFromRemoteResponses, CancelOperationData, CancelOperationErrors, CancelOperationResponses, CheckoutMemoryRepoBranchData, CheckoutMemoryRepoBranchErrors, CheckoutMemoryRepoBranchResponses, ClearBankMemoriesData, ClearBankMemoriesErrors, ClearBankMemoriesResponses, ClearMemoryObservationsData, ClearMemoryObservationsErrors, ClearMemoryObservationsResponses, ClearObservationsData, ClearObservationsErrors, ClearObservationsResponses, CommitMemoryRepoData, CommitMemoryRepoErrors, CommitMemoryRepoResponses, CreateDirectiveData, CreateDirectiveErrors, CreateDirectiveResponses, CreateMemoryRepoBranchData, CreateMemoryRepoBranchErrors, CreateMemoryRepoBranchResponses, CreateMemoryRepoData, CreateMemoryRepoErrors, CreateMemoryRepoResponses, CreateMentalModelData, CreateMentalModelErrors, CreateMentalModelResponses, CreateOrUpdateBankData, CreateOrUpdateBankErrors, CreateOrUpdateBankResponses, CreateTasteDatasetData, CreateTasteDatasetErrors, CreateTasteDatasetResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CurateCodebaseByIntentData, CurateCodebaseByIntentErrors, CurateCodebaseByIntentResponses, DeleteBankData, DeleteBankErrors, DeleteBankResponses, DeleteDirectiveData, DeleteDirectiveErrors, DeleteDirectiveResponses, DeleteDocumentData, DeleteDocumentErrors, DeleteDocumentResponses, DeleteMentalModelData, DeleteMentalModelErrors, DeleteMentalModelResponses, DeleteTasteDatasetData, DeleteTasteDatasetErrors, DeleteTasteDatasetResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DiffMemoryRepoData, DiffMemoryRepoErrors, DiffMemoryRepoResponses, EnableMemoryRepoData, EnableMemoryRepoErrors, EnableMemoryRepoResponses, ExportBrainSnapshotData, ExportBrainSnapshotErrors, ExportBrainSnapshotResponses, ExportForgeJobData, ExportForgeJobErrors, ExportForgeJobResponses, ExportTasteDatasetData, ExportTasteDatasetErrors, ExportTasteDatasetResponses, FileRetainData, FileRetainErrors, FileRetainResponses, ForkMemoryRepoBankData, ForkMemoryRepoBankErrors, ForkMemoryRepoBankResponses, GenerateTasteVariantsData, GenerateTasteVariantsErrors, GenerateTasteVariantsResponses, GetAgentStatsData, GetAgentStatsErrors, GetAgentStatsResponses, GetAnomalyIntelligenceData, GetAnomalyIntelligenceErrors, GetAnomalyIntelligenceResponses, GetBankConfigData, GetBankConfigErrors, GetBankConfigResponses, GetBankProfileData, GetBankProfileErrors, GetBankProfileResponses, GetBrainInfluenceData, GetBrainInfluenceErrors, GetBrainInfluenceResponses, GetBrainRuntimeStatusData, GetBrainRuntimeStatusErrors, GetBrainRuntimeStatusResponses, GetChunkData, GetChunkErrors, GetChunkResponses, GetCodebaseChunkDetailData, GetCodebaseChunkDetailErrors, GetCodebaseChunkDetailResponses, GetCodebaseData, GetCodebaseErrors, GetCodebaseRepoMapData, GetCodebaseRepoMapErrors, GetCodebaseRepoMapResponses, GetCodebaseResponses, GetCodebaseReviewData, GetCodebaseReviewErrors, GetCodebaseReviewResponses, GetCodebaseSymbolCardData, GetCodebaseSymbolCardErrors, GetCodebaseSymbolCardResponses, GetCodebaseTriageSettingsData, GetCodebaseTriageSettingsErrors, GetCodebaseTriageSettingsResponses, GetDirectiveData, GetDirectiveErrors, GetDirectiveResponses, GetDocumentData, GetDocumentErrors, GetDocumentResponses, GetDreamStatsData, GetDreamStatsErrors, GetDreamStatsResponses, GetEntityData, GetEntityErrors, GetEntityIntelligenceData, GetEntityIntelligenceErrors, GetEntityIntelligenceResponses, GetEntityResponses, GetEntityTrajectoryData, GetEntityTrajectoryErrors, GetEntityTrajectoryResponses, GetForgeJobLineageData, GetForgeJobLineageErrors, GetForgeJobLineageResponses, GetGraphData, GetGraphErrors, GetGraphIntelligenceData, GetGraphIntelligenceErrors, GetGraphIntelligenceResponses, GetGraphNeighborhoodData, GetGraphNeighborhoodErrors, GetGraphNeighborhoodResponses, GetGraphResponses, GetGraphSummaryData, GetGraphSummaryErrors, GetGraphSummaryResponses, GetMemoryData, GetMemoryErrors, GetMemoryRepoData, GetMemoryRepoErrors, GetMemoryRepoForBankData, GetMemoryRepoForBankErrors, GetMemoryRepoForBankResponses, GetMemoryRepoLogData, GetMemoryRepoLogErrors, GetMemoryRepoLogResponses, GetMemoryRepoResponses, GetMemoryRepoStatusData, GetMemoryRepoStatusErrors, GetMemoryRepoStatusResponses, GetMemoryResponses, GetMentalModelData, GetMentalModelErrors, GetMentalModelHistoryData, GetMentalModelHistoryErrors, GetMentalModelHistoryResponses, GetMentalModelResponses, GetObservationHistoryData, GetObservationHistoryErrors, GetObservationHistoryResponses, GetOperationResultData, GetOperationResultErrors, GetOperationResultResponses, GetOperationStatusData, GetOperationStatusErrors, GetOperationStatusResponses, GetSubRoutineHistogramData, GetSubRoutineHistogramErrors, GetSubRoutineHistogramResponses, GetSubRoutinePredictionsData, GetSubRoutinePredictionsErrors, GetSubRoutinePredictionsResponses, GetTasteDatasetData, GetTasteDatasetErrors, GetTasteDatasetResponses, GetTasteSetData, GetTasteSetErrors, GetTasteSetResponses, GetTimelineData, GetTimelineErrors, GetTimelineResponses, GetVersionData, GetVersionResponses, HealthEndpointHealthGetData, HealthEndpointHealthGetResponses, ImportBrainSnapshotData, ImportBrainSnapshotErrors, ImportBrainSnapshotResponses, ImportCodebaseFileData, ImportCodebaseFileErrors, ImportCodebaseFileResponses, ImportCodebaseGithubData, ImportCodebaseGithubErrors, ImportCodebaseGithubResponses, ImportCodebaseZipData, ImportCodebaseZipErrors, ImportCodebaseZipResponses, ImportTasteSetsData, ImportTasteSetsErrors, ImportTasteSetsResponses, InternetResearchData, InternetResearchErrors, InternetResearchResponses, InvestigateGraphData, InvestigateGraphErrors, InvestigateGraphResponses, ListBanksData, ListBanksErrors, ListBanksResponses, ListCodebaseChunksData, ListCodebaseChunksErrors, ListCodebaseChunksResponses, ListCodebaseFilesData, ListCodebaseFilesErrors, ListCodebaseFilesResponses, ListCodebaseModulesData, ListCodebaseModulesErrors, ListCodebaseModulesResponses, ListCodebaseResearchQueueData, ListCodebaseResearchQueueErrors, ListCodebaseResearchQueueResponses, ListCodebasesData, ListCodebasesErrors, ListCodebasesResponses, ListCodebaseSymbolCardsData, ListCodebaseSymbolCardsErrors, ListCodebaseSymbolCardsResponses, ListDirectivesData, ListDirectivesErrors, ListDirectivesResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListDreamArtifactsData, ListDreamArtifactsErrors, ListDreamArtifactsResponses, ListEntitiesData, ListEntitiesErrors, ListEntitiesResponses, ListForgeRecipesData, ListForgeRecipesErrors, ListForgeRecipesResponses, ListForgeRecordsData, ListForgeRecordsErrors, ListForgeRecordsResponses, ListMemoriesData, ListMemoriesErrors, ListMemoriesResponses, ListMemoryRepoBranchesData, ListMemoryRepoBranchesErrors, ListMemoryRepoBranchesForBankData, ListMemoryRepoBranchesForBankErrors, ListMemoryRepoBranchesForBankResponses, ListMemoryRepoBranchesResponses, ListMemoryReposData, ListMemoryReposErrors, ListMemoryReposResponses, ListMentalModelsData, ListMentalModelsErrors, ListMentalModelsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTagsData, ListTagsErrors, ListTagsResponses, ListTasteCatalogData, ListTasteCatalogErrors, ListTasteCatalogResponses, ListTasteDatasetsData, ListTasteDatasetsErrors, ListTasteDatasetsResponses, ListTasteSetsData, ListTasteSetsErrors, ListTasteSetsResponses, ListWebhookDeliveriesData, ListWebhookDeliveriesErrors, ListWebhookDeliveriesResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, MetricsEndpointMetricsGetData, MetricsEndpointMetricsGetResponses, PostEntityIntelligenceRecomputeData, PostEntityIntelligenceRecomputeErrors, PostEntityIntelligenceRecomputeResponses, PostEntityTrajectoryRecomputeData, PostEntityTrajectoryRecomputeErrors, PostEntityTrajectoryRecomputeResponses, RecallMemoriesData, RecallMemoriesErrors, RecallMemoriesResponses, ReflectData, ReflectErrors, ReflectResponses, RefreshCodebaseData, RefreshCodebaseErrors, RefreshCodebaseResponses, RefreshMentalModelData, RefreshMentalModelErrors, RefreshMentalModelResponses, RegenerateEntityObservationsData, RegenerateEntityObservationsErrors, RegenerateEntityObservationsResponses, ResetBankConfigData, ResetBankConfigErrors, ResetBankConfigResponses, ResetMemoryRepoHardData, ResetMemoryRepoHardErrors, ResetMemoryRepoHardResponses, RetainMemoriesData, RetainMemoriesErrors, RetainMemoriesResponses, RetainTasteSetsData, RetainTasteSetsErrors, RetainTasteSetsResponses, RetryOperationData, RetryOperationErrors, RetryOperationResponses, RevertTasteSetData, RevertTasteSetErrors, RevertTasteSetResponses, ReviewDreamProposalData, ReviewDreamProposalErrors, ReviewDreamProposalResponses, RouteCodebaseReviewItemsData, RouteCodebaseReviewItemsErrors, RouteCodebaseReviewItemsResponses, SearchCodebaseSymbolsData, SearchCodebaseSymbolsErrors, SearchCodebaseSymbolsResponses, SubmitAsyncReflectData, SubmitAsyncReflectErrors, SubmitAsyncReflectResponses, SubmitForgeJobData, SubmitForgeJobErrors, SubmitForgeJobResponses, SubmitTasteTransformData, SubmitTasteTransformErrors, SubmitTasteTransformResponses, TriggerConsolidationData, TriggerConsolidationErrors, TriggerConsolidationResponses, TriggerDreamGenerationData, TriggerDreamGenerationErrors, TriggerDreamGenerationResponses, TriggerSubRoutineData, TriggerSubRoutineErrors, TriggerSubRoutineResponses, UpdateBankConfigData, UpdateBankConfigErrors, UpdateBankConfigResponses, UpdateBankData, UpdateBankDispositionData, UpdateBankDispositionErrors, UpdateBankDispositionResponses, UpdateBankErrors, UpdateBankResponses, UpdateCodebaseTriageSettingsData, UpdateCodebaseTriageSettingsErrors, UpdateCodebaseTriageSettingsResponses, UpdateDirectiveData, UpdateDirectiveErrors, UpdateDirectiveResponses, UpdateDreamPredictionOutcomeData, UpdateDreamPredictionOutcomeErrors, UpdateDreamPredictionOutcomeResponses, UpdateMentalModelData, UpdateMentalModelErrors, UpdateMentalModelResponses, UpdateTasteDatasetData, UpdateTasteDatasetErrors, UpdateTasteDatasetResponses, UpdateTasteSetData, UpdateTasteSetErrors, UpdateTasteSetResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, ValidateBrainImportData, ValidateBrainImportErrors, ValidateBrainImportResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -692,6 +692,176 @@ export const updateBankConfig = <ThrowOnError extends boolean = false>(options: 
  * Run memory consolidation to create/update observations from recent memories.
  */
 export const triggerConsolidation = <ThrowOnError extends boolean = false>(options: Options<TriggerConsolidationData, ThrowOnError>) => (options.client ?? client).post<TriggerConsolidationResponses, TriggerConsolidationErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/consolidate', ...options });
+
+/**
+ * List forge recipes and exporters
+ */
+export const listForgeRecipes = <ThrowOnError extends boolean = false>(options: Options<ListForgeRecipesData, ThrowOnError>) => (options.client ?? client).get<ListForgeRecipesResponses, ListForgeRecipesErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/recipes', ...options });
+
+/**
+ * Start a Data Forge job
+ */
+export const submitForgeJob = <ThrowOnError extends boolean = false>(options: Options<SubmitForgeJobData, ThrowOnError>) => (options.client ?? client).post<SubmitForgeJobResponses, SubmitForgeJobErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/jobs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List forge training records
+ */
+export const listForgeRecords = <ThrowOnError extends boolean = false>(options: Options<ListForgeRecordsData, ThrowOnError>) => (options.client ?? client).get<ListForgeRecordsResponses, ListForgeRecordsErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/records', ...options });
+
+/**
+ * Export forge records via adapter
+ */
+export const exportForgeJob = <ThrowOnError extends boolean = false>(options: Options<ExportForgeJobData, ThrowOnError>) => (options.client ?? client).post<ExportForgeJobResponses, ExportForgeJobErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/export',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Forge job lineage and repo version
+ */
+export const getForgeJobLineage = <ThrowOnError extends boolean = false>(options: Options<GetForgeJobLineageData, ThrowOnError>) => (options.client ?? client).get<GetForgeJobLineageResponses, GetForgeJobLineageErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/jobs/{operation_id}/lineage', ...options });
+
+/**
+ * Taste Studio catalog
+ */
+export const listTasteCatalog = <ThrowOnError extends boolean = false>(options: Options<ListTasteCatalogData, ThrowOnError>) => (options.client ?? client).get<ListTasteCatalogResponses, ListTasteCatalogErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/catalog', ...options });
+
+/**
+ * List taste datasets
+ */
+export const listTasteDatasets = <ThrowOnError extends boolean = false>(options: Options<ListTasteDatasetsData, ThrowOnError>) => (options.client ?? client).get<ListTasteDatasetsResponses, ListTasteDatasetsErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/datasets', ...options });
+
+/**
+ * Create taste dataset
+ */
+export const createTasteDataset = <ThrowOnError extends boolean = false>(options: Options<CreateTasteDatasetData, ThrowOnError>) => (options.client ?? client).post<CreateTasteDatasetResponses, CreateTasteDatasetErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete taste dataset
+ */
+export const deleteTasteDataset = <ThrowOnError extends boolean = false>(options: Options<DeleteTasteDatasetData, ThrowOnError>) => (options.client ?? client).delete<DeleteTasteDatasetResponses, DeleteTasteDatasetErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}', ...options });
+
+/**
+ * Get taste dataset
+ */
+export const getTasteDataset = <ThrowOnError extends boolean = false>(options: Options<GetTasteDatasetData, ThrowOnError>) => (options.client ?? client).get<GetTasteDatasetResponses, GetTasteDatasetErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}', ...options });
+
+/**
+ * Update taste dataset
+ */
+export const updateTasteDataset = <ThrowOnError extends boolean = false>(options: Options<UpdateTasteDatasetData, ThrowOnError>) => (options.client ?? client).patch<UpdateTasteDatasetResponses, UpdateTasteDatasetErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List taste sets
+ */
+export const listTasteSets = <ThrowOnError extends boolean = false>(options: Options<ListTasteSetsData, ThrowOnError>) => (options.client ?? client).get<ListTasteSetsResponses, ListTasteSetsErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets', ...options });
+
+/**
+ * Import taste sets
+ */
+export const importTasteSets = <ThrowOnError extends boolean = false>(options: Options<ImportTasteSetsData, ThrowOnError>) => (options.client ?? client).post<ImportTasteSetsResponses, ImportTasteSetsErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Generate similar taste variants
+ */
+export const generateTasteVariants = <ThrowOnError extends boolean = false>(options: Options<GenerateTasteVariantsData, ThrowOnError>) => (options.client ?? client).post<GenerateTasteVariantsResponses, GenerateTasteVariantsErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/generate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get taste set
+ */
+export const getTasteSet = <ThrowOnError extends boolean = false>(options: Options<GetTasteSetData, ThrowOnError>) => (options.client ?? client).get<GetTasteSetResponses, GetTasteSetErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}', ...options });
+
+/**
+ * Update taste set
+ */
+export const updateTasteSet = <ThrowOnError extends boolean = false>(options: Options<UpdateTasteSetData, ThrowOnError>) => (options.client ?? client).patch<UpdateTasteSetResponses, UpdateTasteSetErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revert taste set to seed payload
+ */
+export const revertTasteSet = <ThrowOnError extends boolean = false>(options: Options<RevertTasteSetData, ThrowOnError>) => (options.client ?? client).post<RevertTasteSetResponses, RevertTasteSetErrors, ThrowOnError>({ url: '/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}/revert', ...options });
+
+/**
+ * Apply taste transforms with optional preview
+ */
+export const submitTasteTransform = <ThrowOnError extends boolean = false>(options: Options<SubmitTasteTransformData, ThrowOnError>) => (options.client ?? client).post<SubmitTasteTransformResponses, SubmitTasteTransformErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/transform',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Send taste sets to memory
+ */
+export const retainTasteSets = <ThrowOnError extends boolean = false>(options: Options<RetainTasteSetsData, ThrowOnError>) => (options.client ?? client).post<RetainTasteSetsResponses, RetainTasteSetsErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/retain',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Export taste dataset via forge adapter
+ */
+export const exportTasteDataset = <ThrowOnError extends boolean = false>(options: Options<ExportTasteDatasetData, ThrowOnError>) => (options.client ?? client).post<ExportTasteDatasetResponses, ExportTasteDatasetErrors, ThrowOnError>({
+    url: '/v1/default/banks/{bank_id}/forge/taste/export',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
 
 /**
  * Trigger sub_routine

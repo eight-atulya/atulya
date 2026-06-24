@@ -174,6 +174,37 @@ Worker IDs default to the hostname. In Kubernetes StatefulSets, this is the pod 
 
 ---
 
+### forge run
+
+Queue a **Data Forge** job: ingest source JSON (optional), purify the bank, run a recipe, and materialize training records.
+
+```bash
+uv run atulya-admin forge run [OPTIONS]
+```
+
+| Option | Description | Default |
+|--------|-------------|---------|
+| `--bank` | Memory bank ID | required |
+| `--recipe` | Forge recipe ID | `consolidation_pairs` |
+| `--source-file` | Path to ingest source JSON | none (bank-only recipes) |
+| `--domain-tag` | Domain profile tag | `startup_ops` |
+| `--wait` / `--no-wait` | Poll until job completes | `--wait` |
+
+**Example:**
+
+```bash
+uv run atulya-admin forge run \
+  --bank ops-bank \
+  --recipe temporal_qa \
+  --source-file ./scenario-seed.json \
+  --domain-tag startup_ops \
+  --wait
+```
+
+See [**Data Forge**](./data-forge) for recipes, quality audit, and export.
+
+---
+
 ## Environment Variables
 
 The admin CLI uses the same environment variables as the API service. The most important one is:

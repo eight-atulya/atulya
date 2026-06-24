@@ -7,11 +7,13 @@ atulya_client_api/api/directives_api.py
 atulya_client_api/api/documents_api.py
 atulya_client_api/api/entities_api.py
 atulya_client_api/api/files_api.py
+atulya_client_api/api/forge_api.py
 atulya_client_api/api/memory_api.py
 atulya_client_api/api/memory_repos_api.py
 atulya_client_api/api/mental_models_api.py
 atulya_client_api/api/monitoring_api.py
 atulya_client_api/api/operations_api.py
+atulya_client_api/api/taste_api.py
 atulya_client_api/api/webhooks_api.py
 atulya_client_api/api_client.py
 atulya_client_api/api_response.py
@@ -121,6 +123,8 @@ atulya_client_api/models/entity_trajectory_recompute_response.py
 atulya_client_api/models/entity_trajectory_response.py
 atulya_client_api/models/features_info.py
 atulya_client_api/models/file_retain_response.py
+atulya_client_api/models/forge_export_submit_request.py
+atulya_client_api/models/forge_job_submit_request.py
 atulya_client_api/models/graph_change_event_response.py
 atulya_client_api/models/graph_data_response.py
 atulya_client_api/models/graph_evidence_path_step_response.py
@@ -203,6 +207,14 @@ atulya_client_api/models/tag_group_not.py
 atulya_client_api/models/tag_group_not_not.py
 atulya_client_api/models/tag_group_or.py
 atulya_client_api/models/tag_item.py
+atulya_client_api/models/taste_create_dataset_request.py
+atulya_client_api/models/taste_export_submit_request.py
+atulya_client_api/models/taste_generate_submit_request.py
+atulya_client_api/models/taste_import_sets_request.py
+atulya_client_api/models/taste_retain_submit_request.py
+atulya_client_api/models/taste_transform_submit_request.py
+atulya_client_api/models/taste_update_dataset_request.py
+atulya_client_api/models/taste_update_set_request.py
 atulya_client_api/models/tenant_summary_response.py
 atulya_client_api/models/timeline_edge_response.py
 atulya_client_api/models/timeline_item_response.py

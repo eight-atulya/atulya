@@ -9,6 +9,7 @@ Atulya `0.8` adds a new layer on top of normal memory retrieval.
 The simplest way to think about it:
 
 - **Memory** stores what happened.
+- **Memory repos** let that memory evolve safely through branchable history.
 - **Brain** watches patterns in that memory.
 - **Remote brain learning** lets one bank learn from another bank.
 - **Dream** turns a pile of memory into higher-level takeaways in the background.
@@ -115,12 +116,32 @@ Dream runs do not block your app's normal retain, recall, or reflect requests.
 Here is a more realistic way to picture the stack over time:
 
 1. `retain` stores events, observations, and facts.
-2. consolidation links and normalizes those memories.
-3. Brain tracks activity, influence, and which knowledge appears most "live."
-4. Dream turns recurring patterns into higher-level takeaways.
-5. the integrity layer checks whether the bank's beliefs still make sense together.
+2. memory repos let a bank branch, commit, reset, and fork without mutating the main line blindly.
+3. consolidation links and normalizes those memories.
+4. Brain tracks activity, influence, and which knowledge appears most "live."
+5. Dream turns recurring patterns into higher-level takeaways.
+6. the integrity layer checks whether the bank's beliefs still make sense together.
 
 That final step is the big idea behind BRAIN. The goal is not just a bigger memory store, but a memory system that can increasingly explain, defend, and revise its own understanding.
+
+## Why Memory Repos Matter For Brain Design
+
+Versioned memory is one of the clearest bridges between "persistent memory" and a fuller brain layer.
+
+Without versioning, long-running memory systems have one main weakness:
+
+- every experiment is live
+- every change touches the same line
+- promoting good knowledge into a new context becomes a copy workflow instead of a first-class operation
+
+Memory repos improve that by adding:
+
+- branchable memory evolution
+- inspectable history
+- rollback to known-good states
+- fork-to-bank workflows for new agents, customers, or missions
+
+That does not solve the full integrity problem by itself, but it gives Atulya a much better substrate for safe learning over time.
 
 ## How They Work Together
 

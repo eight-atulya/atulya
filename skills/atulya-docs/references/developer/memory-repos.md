@@ -1,0 +1,238 @@
+
+# Memory Repos
+
+Atulya memory banks can now behave more like version-controlled knowledge systems.
+
+The simplest way to think about it:
+
+- a **bank** is durable memory for one org, user, workflow, or agent
+- a **memory repo** adds version history on top of that bank
+- a **branch** lets you experiment without mutating your main line
+- a **commit** turns the current workspace into a durable snapshot
+- a **fork to bank** lets one version become a brand-new bank
+
+This is one of the clearest bridges between Atulya today and the broader brain hypothesis.
+Memory is not just storage. It is a system that should be able to:
+
+- preserve understanding over time
+- support safe experimentation
+- explain how a belief or workflow changed
+- let agents inherit stable knowledge without starting from zero
+
+## Why This Exists
+
+Teams and agents do not only need memory. They need safe memory evolution.
+
+Without versioning, you get one fragile line:
+
+- one bank
+- one mutable state
+- one bad experiment can pollute the working memory
+
+With memory repos, you can:
+
+- keep a stable `main` bank line
+- create `v1`, `v2`, or `experiment/*` branches
+- compare workspace state against the last durable commit
+- reset a branch back to a known good state
+- fork a promising branch into a separate bank for a new customer, team, or agent
+
+## Mental Model
+
+| Git idea | Atulya equivalent |
+|---|---|
+| repository | full durable memory history for one bank root |
+| branch | named line of memory evolution |
+| working tree | active workspace bank |
+| commit | immutable snapshot of durable bank state |
+| checkout | switch which branch is active in the root bank |
+| reset hard | restore a branch workspace to a selected commit |
+| fork | materialize one branch, commit, or workspace into a brand-new bank |
+
+This is intentionally Git-like, but not full Git parity.
+
+Current core:
+
+- create repo
+- create branch
+- checkout
+- commit
+- status
+- diff
+- log
+- reset hard
+- fork to new bank
+
+Not in the current core:
+
+- merge
+- rebase
+- cherry-pick
+- remotes
+- push/pull
+
+## How It Works
+
+Atulya keeps versioning opt-in and bank-safe.
+
+- legacy banks keep working with normal bank APIs
+- enabling repo mode creates a repo layer for that bank
+- the active branch uses the visible root bank
+- inactive branches live in hidden workspace banks
+- commits are content-addressed snapshots of durable bank state
+
+The result is a workflow where the existing memory engine still operates on normal banks,
+while the repo layer orchestrates which workspace is active and how snapshots are restored.
+
+## What Gets Versioned
+
+Memory repo commits include durable bank state such as:
+
+- bank profile and bank config
+- directives
+- mental models
+- documents and chunks
+- memory units
+- entities and graph links
+- codebases and code-intel review artifacts
+- webhooks
+
+They do not treat every runtime artifact as versioned source of truth.
+
+Examples of excluded or derived state:
+
+- async operation queue state
+- derived local brain cache files
+- transient worker/runtime metadata
+
+## What “Branch-Aware” Means
+
+Normal bank APIs still work on the active branch.
+
+If you need to inspect another branch without checking it out, repo-aware read paths can
+query branch state directly for repo workflows such as:
+
+- status
+- diff
+- log
+- branch-aware recall/reflect style reads where supported by the repo layer
+
+The big idea is: active-branch use stays simple, while non-active inspection becomes explicit.
+
+## Safe Forks To New Banks
+
+The newest step in the repo system is **fork to bank**.
+
+Use it when a version should become its own durable brain:
+
+- a customer-specific variant
+- a sandbox promoted into a real workspace
+- a branch with a different mission or directives
+- a seed brain for a new agent
+
+Forking is different from branching:
+
+- branching keeps history inside the same repo
+- forking creates a brand-new bank with independent durable state
+
+Atulya now treats forked storage ownership as part of the core contract:
+
+- restored rows get remapped IDs where needed
+- external storage pointers get remapped to target-owned artifacts
+- rollback does not delete source-owned files
+- deleting one bank does not silently break another bank's stored artifacts
+
+That ownership model is important. A fork is only safe if it is independent.
+
+## Control Plane Workflow
+
+In the control plane, repo-enabled banks expose a versioning workbench where you can:
+
+- see the active branch
+- inspect whether the workspace is clean or dirty
+- commit with a message
+- create a branch
+- reset hard to an older commit
+- fork the current branch into a new bank
+
+This gives operators a workflow that feels much closer to real engineering practice:
+
+- keep `main` stable
+- test on a branch
+- promote, reset, or fork when the result proves useful
+
+## API Surface
+
+### Bank-scoped repo discovery
+
+- `POST /v1/default/banks/{bank_id}/repos/enable`
+- `GET /v1/default/banks/{bank_id}/repo`
+- `GET /v1/default/banks/{bank_id}/repo/branches`
+
+### Repo lifecycle
+
+- `POST /v1/default/repos`
+- `GET /v1/default/repos`
+- `GET /v1/default/repos/{repo_id}`
+
+### Branching and history
+
+- `GET /v1/default/repos/{repo_id}/branches`
+- `POST /v1/default/repos/{repo_id}/branches`
+- `POST /v1/default/repos/{repo_id}/checkout`
+- `POST /v1/default/repos/{repo_id}/commit`
+- `GET /v1/default/repos/{repo_id}/status`
+- `GET /v1/default/repos/{repo_id}/log`
+- `GET /v1/default/repos/{repo_id}/diff`
+- `POST /v1/default/repos/{repo_id}/reset-hard`
+
+### Forking
+
+- `POST /v1/default/repos/{repo_id}/fork-bank`
+
+The fork endpoint supports:
+
+- branch head
+- specific commit
+- live workspace state
+- optional repo enablement on the new bank
+
+## MCP / Agent Use
+
+Agents can use repo-aware MCP tools to manage memory more deliberately:
+
+- inspect repo state before mutating memory
+- branch for experiments
+- commit only when the workspace is worth keeping
+- fork stable knowledge into a fresh bank for a new mission
+
+This matters for long-running agent systems because it lets memory become more operationally reliable:
+
+- experiments do not have to contaminate the main bank
+- stable knowledge can be promoted intentionally
+- rollback becomes part of normal agent memory hygiene
+
+## Why This Matters For The Brain Hypothesis
+
+The broader brain idea is not only “remember more.”
+
+It is also:
+
+- keep memory coherent over time
+- preserve how understanding changed
+- support safe revision
+- make learning portable between agents, teams, and contexts
+
+Memory repos move Atulya closer to that design.
+
+They do not solve the full integrity problem yet, but they add an important missing layer:
+versioned, inspectable, branchable memory evolution.
+
+That makes Atulya feel less like a passive memory bucket and more like a living knowledge system.
+
+## Where To Look Next
+
+- [Developer Overview](/)
+- [Brain and Dream](/developer/brain-and-dream)
+- [Configuration](/developer/configuration)
+- [MCP Server](/developer/mcp-server)

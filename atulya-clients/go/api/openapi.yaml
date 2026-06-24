@@ -7,7 +7,7 @@ info:
     name: Apache 2.0
     url: https://www.apache.org/licenses/LICENSE-2.0.html
   title: Atulya HTTP API
-  version: 0.8.6
+  version: 0.8.7
 servers:
 - url: /
 paths:
@@ -3770,6 +3770,892 @@ paths:
       summary: Trigger consolidation
       tags:
       - Banks
+  /v1/default/banks/{bank_id}/forge/recipes:
+    get:
+      operationId: list_forge_recipes
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: domain_tags
+        required: false
+        schema:
+          items:
+            type: string
+          nullable: true
+          type: array
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List forge recipes and exporters
+      tags:
+      - Forge
+  /v1/default/banks/{bank_id}/forge/jobs:
+    post:
+      operationId: submit_forge_job
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgeJobSubmitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsolidationResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Start a Data Forge job
+      tags:
+      - Forge
+  /v1/default/banks/{bank_id}/forge/records:
+    get:
+      operationId: list_forge_records
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: operation_id
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          title: Limit
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          title: Offset
+          type: integer
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List forge training records
+      tags:
+      - Forge
+  /v1/default/banks/{bank_id}/forge/export:
+    post:
+      operationId: export_forge_job
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ForgeExportSubmitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Export forge records via adapter
+      tags:
+      - Forge
+  /v1/default/banks/{bank_id}/forge/jobs/{operation_id}/lineage:
+    get:
+      operationId: get_forge_job_lineage
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: operation_id
+        required: true
+        schema:
+          title: Operation Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Forge job lineage and repo version
+      tags:
+      - Forge
+  /v1/default/banks/{bank_id}/forge/taste/catalog:
+    get:
+      operationId: list_taste_catalog
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Taste Studio catalog
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/datasets:
+    get:
+      operationId: list_taste_datasets
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List taste datasets
+      tags:
+      - Taste
+    post:
+      operationId: create_taste_dataset
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteCreateDatasetRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Create taste dataset
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}:
+    delete:
+      operationId: delete_taste_dataset
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: dataset_id
+        required: true
+        schema:
+          title: Dataset Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Delete taste dataset
+      tags:
+      - Taste
+    get:
+      operationId: get_taste_dataset
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: dataset_id
+        required: true
+        schema:
+          title: Dataset Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get taste dataset
+      tags:
+      - Taste
+    patch:
+      operationId: update_taste_dataset
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: dataset_id
+        required: true
+        schema:
+          title: Dataset Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteUpdateDatasetRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Update taste dataset
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets:
+    get:
+      operationId: list_taste_sets
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: dataset_id
+        required: true
+        schema:
+          title: Dataset Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          title: Limit
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          title: Offset
+          type: integer
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List taste sets
+      tags:
+      - Taste
+    post:
+      operationId: import_taste_sets
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: dataset_id
+        required: true
+        schema:
+          title: Dataset Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteImportSetsRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Import taste sets
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/generate:
+    post:
+      operationId: generate_taste_variants
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: dataset_id
+        required: true
+        schema:
+          title: Dataset Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteGenerateSubmitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Generate similar taste variants
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/sets/{set_id}:
+    get:
+      operationId: get_taste_set
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: set_id
+        required: true
+        schema:
+          title: Set Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get taste set
+      tags:
+      - Taste
+    patch:
+      operationId: update_taste_set
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: set_id
+        required: true
+        schema:
+          title: Set Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteUpdateSetRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Update taste set
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/sets/{set_id}/revert:
+    post:
+      operationId: revert_taste_set
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: set_id
+        required: true
+        schema:
+          title: Set Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Revert taste set to seed payload
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/transform:
+    post:
+      operationId: submit_taste_transform
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteTransformSubmitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Apply taste transforms with optional preview
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/retain:
+    post:
+      operationId: retain_taste_sets
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteRetainSubmitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Send taste sets to memory
+      tags:
+      - Taste
+  /v1/default/banks/{bank_id}/forge/taste/export:
+    post:
+      operationId: export_taste_dataset
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TasteExportSubmitRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Export taste dataset via forge adapter
+      tags:
+      - Taste
   /v1/default/banks/{bank_id}/sub-routine:
     post:
       description: Queue a sub_routine operation for atulya-brain cache refresh and
@@ -11197,6 +12083,84 @@ components:
       required:
       - operation_ids
       title: FileRetainResponse
+    ForgeExportSubmitRequest:
+      example:
+        options:
+          key: ""
+        operation_id: operation_id
+        adapter_id: adapter_id
+        quality_threshold: 0.8008281904610115
+      properties:
+        operation_id:
+          title: ForgeExportSubmitRequestOperationId
+          type: string
+        adapter_id:
+          title: ForgeExportSubmitRequestAdapterId
+          type: string
+        quality_threshold:
+          nullable: true
+          type: number
+        options:
+          additionalProperties: true
+          title: ForgeExportSubmitRequestOptions
+          type: object
+      required:
+      - operation_id
+      title: ForgeExportSubmitRequest
+    ForgeJobSubmitRequest:
+      example:
+        recipe_id: recipe_id
+        domain_tags:
+        - domain_tags
+        - domain_tags
+        repo_commit_on_complete: true
+        options:
+          key: ""
+        wait_consolidation: true
+        max_records: 6027
+        quality_threshold: 0.08008281904610115
+        source:
+          key: ""
+        commit_message: commit_message
+      properties:
+        recipe_id:
+          title: ForgeJobSubmitRequestRecipeId
+          type: string
+        domain_tags:
+          items:
+            type: string
+          title: ForgeJobSubmitRequestDomainTags
+          type: array
+        source:
+          additionalProperties: true
+          nullable: true
+          type: object
+        quality_threshold:
+          maximum: 1.0
+          minimum: 0.0
+          title: ForgeJobSubmitRequestQualityThreshold
+          type: number
+        wait_consolidation:
+          title: ForgeJobSubmitRequestWaitConsolidation
+          type: boolean
+        max_records:
+          maximum: 10000.0
+          minimum: 1.0
+          title: ForgeJobSubmitRequestMaxRecords
+          type: integer
+        repo_commit_on_complete:
+          title: ForgeJobSubmitRequestRepoCommitOnComplete
+          type: boolean
+        commit_message:
+          nullable: true
+          type: string
+        options:
+          additionalProperties: true
+          title: ForgeJobSubmitRequestOptions
+          type: object
+      required:
+      - recipe_id
+      title: ForgeJobSubmitRequest
     GraphChangeEventResponse:
       example:
         summary: summary
@@ -14270,6 +15234,211 @@ components:
       - count
       - tag
       title: TagItem
+    TasteCreateDatasetRequest:
+      example:
+        name: name
+        taste_tags:
+        - taste_tags
+        - taste_tags
+        description: description
+        schema_type: schema_type
+      properties:
+        name:
+          title: TasteCreateDatasetRequestName
+          type: string
+        description:
+          nullable: true
+          type: string
+        schema_type:
+          title: TasteCreateDatasetRequestSchemaType
+          type: string
+        taste_tags:
+          items:
+            type: string
+          title: TasteCreateDatasetRequestTasteTags
+          type: array
+      required:
+      - name
+      title: TasteCreateDatasetRequest
+    TasteExportSubmitRequest:
+      example:
+        dataset_id: dataset_id
+        options:
+          key: ""
+        adapter_id: adapter_id
+        set_ids:
+        - set_ids
+        - set_ids
+      properties:
+        dataset_id:
+          title: TasteExportSubmitRequestDatasetId
+          type: string
+        set_ids:
+          items:
+            type: string
+          title: TasteExportSubmitRequestSetIds
+          type: array
+        adapter_id:
+          title: TasteExportSubmitRequestAdapterId
+          type: string
+        options:
+          additionalProperties: true
+          title: TasteExportSubmitRequestOptions
+          type: object
+      required:
+      - dataset_id
+      title: TasteExportSubmitRequest
+    TasteGenerateSubmitRequest:
+      example:
+        count: 3
+        options:
+          key: ""
+        set_ids:
+        - set_ids
+        - set_ids
+      properties:
+        set_ids:
+          items:
+            type: string
+          title: TasteGenerateSubmitRequestSetIds
+          type: array
+        count:
+          maximum: 32.0
+          minimum: 1.0
+          title: TasteGenerateSubmitRequestCount
+          type: integer
+        options:
+          additionalProperties: true
+          title: TasteGenerateSubmitRequestOptions
+          type: object
+      title: TasteGenerateSubmitRequest
+    TasteImportSetsRequest:
+      example:
+        sets:
+        - key: ""
+        - key: ""
+        taste_tags:
+        - taste_tags
+        - taste_tags
+        set_key_prefix: set_key_prefix
+        jsonl: jsonl
+      properties:
+        sets:
+          items:
+            additionalProperties: true
+            type: object
+          title: TasteImportSetsRequestSets
+          type: array
+        jsonl:
+          nullable: true
+          type: string
+        taste_tags:
+          items:
+            type: string
+          title: TasteImportSetsRequestTasteTags
+          type: array
+        set_key_prefix:
+          nullable: true
+          type: string
+      title: TasteImportSetsRequest
+    TasteRetainSubmitRequest:
+      example:
+        set_ids:
+        - set_ids
+        - set_ids
+      properties:
+        set_ids:
+          items:
+            type: string
+          minItems: 1
+          title: TasteRetainSubmitRequestSetIds
+          type: array
+      required:
+      - set_ids
+      title: TasteRetainSubmitRequest
+    TasteTransformSubmitRequest:
+      example:
+        preview: true
+        ops:
+        - key: ""
+        - key: ""
+        chain_id: chain_id
+        dataset_id: dataset_id
+        set_ids:
+        - set_ids
+        - set_ids
+      properties:
+        dataset_id:
+          title: TasteTransformSubmitRequestDatasetId
+          type: string
+        set_ids:
+          items:
+            type: string
+          title: TasteTransformSubmitRequestSetIds
+          type: array
+        chain_id:
+          nullable: true
+          type: string
+        ops:
+          items:
+            additionalProperties: true
+            type: object
+          title: TasteTransformSubmitRequestOps
+          type: array
+        preview:
+          title: TasteTransformSubmitRequestPreview
+          type: boolean
+      required:
+      - dataset_id
+      title: TasteTransformSubmitRequest
+    TasteUpdateDatasetRequest:
+      example:
+        name: name
+        taste_tags:
+        - taste_tags
+        - taste_tags
+        description: description
+        taste_profile_json:
+          key: ""
+      properties:
+        name:
+          nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
+        taste_tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        taste_profile_json:
+          additionalProperties: true
+          nullable: true
+          type: object
+      title: TasteUpdateDatasetRequest
+    TasteUpdateSetRequest:
+      example:
+        working_payload:
+          key: ""
+        taste_tags:
+        - taste_tags
+        - taste_tags
+        status: status
+      properties:
+        working_payload:
+          additionalProperties: true
+          nullable: true
+          type: object
+        taste_tags:
+          items:
+            type: string
+          nullable: true
+          type: array
+        status:
+          nullable: true
+          type: string
+      title: TasteUpdateSetRequest
     TenantSummaryResponse:
       example:
         bank_count: 0

@@ -3531,6 +3531,76 @@ export type FileRetainResponse = {
 };
 
 /**
+ * ForgeExportSubmitRequest
+ */
+export type ForgeExportSubmitRequest = {
+    /**
+     * ForgeExportSubmitRequestOperationId
+     */
+    operation_id: string;
+    /**
+     * ForgeExportSubmitRequestAdapterId
+     */
+    adapter_id?: string;
+    /**
+     * ForgeExportSubmitRequestQualityThreshold
+     */
+    quality_threshold?: number | null;
+    /**
+     * ForgeExportSubmitRequestOptions
+     */
+    options?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * ForgeJobSubmitRequest
+ */
+export type ForgeJobSubmitRequest = {
+    /**
+     * ForgeJobSubmitRequestRecipeId
+     */
+    recipe_id: string;
+    /**
+     * ForgeJobSubmitRequestDomainTags
+     */
+    domain_tags?: Array<string>;
+    /**
+     * ForgeJobSubmitRequestSource
+     */
+    source?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * ForgeJobSubmitRequestQualityThreshold
+     */
+    quality_threshold?: number;
+    /**
+     * ForgeJobSubmitRequestWaitConsolidation
+     */
+    wait_consolidation?: boolean;
+    /**
+     * ForgeJobSubmitRequestMaxRecords
+     */
+    max_records?: number;
+    /**
+     * ForgeJobSubmitRequestRepoCommitOnComplete
+     */
+    repo_commit_on_complete?: boolean;
+    /**
+     * ForgeJobSubmitRequestCommitMessage
+     */
+    commit_message?: string | null;
+    /**
+     * ForgeJobSubmitRequestOptions
+     */
+    options?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
  * GraphChangeEventResponse
  */
 export type GraphChangeEventResponse = {
@@ -5941,6 +6011,178 @@ export type TagItem = {
      * Number of memories with this tag
      */
     count: number;
+};
+
+/**
+ * TasteCreateDatasetRequest
+ */
+export type TasteCreateDatasetRequest = {
+    /**
+     * TasteCreateDatasetRequestName
+     */
+    name: string;
+    /**
+     * TasteCreateDatasetRequestDescription
+     */
+    description?: string | null;
+    /**
+     * TasteCreateDatasetRequestSchemaType
+     */
+    schema_type?: string;
+    /**
+     * TasteCreateDatasetRequestTasteTags
+     */
+    taste_tags?: Array<string>;
+};
+
+/**
+ * TasteExportSubmitRequest
+ */
+export type TasteExportSubmitRequest = {
+    /**
+     * TasteExportSubmitRequestDatasetId
+     */
+    dataset_id: string;
+    /**
+     * TasteExportSubmitRequestSetIds
+     */
+    set_ids?: Array<string>;
+    /**
+     * TasteExportSubmitRequestAdapterId
+     */
+    adapter_id?: string;
+    /**
+     * TasteExportSubmitRequestOptions
+     */
+    options?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * TasteGenerateSubmitRequest
+ */
+export type TasteGenerateSubmitRequest = {
+    /**
+     * TasteGenerateSubmitRequestSetIds
+     */
+    set_ids?: Array<string>;
+    /**
+     * TasteGenerateSubmitRequestCount
+     */
+    count?: number;
+    /**
+     * TasteGenerateSubmitRequestOptions
+     */
+    options?: {
+        [key: string]: unknown;
+    };
+};
+
+/**
+ * TasteImportSetsRequest
+ */
+export type TasteImportSetsRequest = {
+    /**
+     * TasteImportSetsRequestSets
+     */
+    sets?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * TasteImportSetsRequestJsonl
+     */
+    jsonl?: string | null;
+    /**
+     * TasteImportSetsRequestTasteTags
+     */
+    taste_tags?: Array<string>;
+    /**
+     * TasteImportSetsRequestSetKeyPrefix
+     */
+    set_key_prefix?: string | null;
+};
+
+/**
+ * TasteRetainSubmitRequest
+ */
+export type TasteRetainSubmitRequest = {
+    /**
+     * TasteRetainSubmitRequestSetIds
+     */
+    set_ids: Array<string>;
+};
+
+/**
+ * TasteTransformSubmitRequest
+ */
+export type TasteTransformSubmitRequest = {
+    /**
+     * TasteTransformSubmitRequestDatasetId
+     */
+    dataset_id: string;
+    /**
+     * TasteTransformSubmitRequestSetIds
+     */
+    set_ids?: Array<string>;
+    /**
+     * TasteTransformSubmitRequestChainId
+     */
+    chain_id?: string | null;
+    /**
+     * TasteTransformSubmitRequestOps
+     */
+    ops?: Array<{
+        [key: string]: unknown;
+    }>;
+    /**
+     * TasteTransformSubmitRequestPreview
+     */
+    preview?: boolean;
+};
+
+/**
+ * TasteUpdateDatasetRequest
+ */
+export type TasteUpdateDatasetRequest = {
+    /**
+     * TasteUpdateDatasetRequestName
+     */
+    name?: string | null;
+    /**
+     * TasteUpdateDatasetRequestDescription
+     */
+    description?: string | null;
+    /**
+     * TasteUpdateDatasetRequestTasteTags
+     */
+    taste_tags?: Array<string> | null;
+    /**
+     * TasteUpdateDatasetRequestTasteProfileJson
+     */
+    taste_profile_json?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
+ * TasteUpdateSetRequest
+ */
+export type TasteUpdateSetRequest = {
+    /**
+     * TasteUpdateSetRequestWorkingPayload
+     */
+    working_payload?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * TasteUpdateSetRequestTasteTags
+     */
+    taste_tags?: Array<string> | null;
+    /**
+     * TasteUpdateSetRequestStatus
+     */
+    status?: string | null;
 };
 
 /**
@@ -9588,6 +9830,755 @@ export type TriggerConsolidationResponses = {
 };
 
 export type TriggerConsolidationResponse = TriggerConsolidationResponses[keyof TriggerConsolidationResponses];
+
+export type ListForgeRecipesData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: {
+        /**
+         * Domain Tags
+         */
+        domain_tags?: Array<string> | null;
+    };
+    url: '/v1/default/banks/{bank_id}/forge/recipes';
+};
+
+export type ListForgeRecipesErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListForgeRecipesError = ListForgeRecipesErrors[keyof ListForgeRecipesErrors];
+
+export type ListForgeRecipesResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SubmitForgeJobData = {
+    body: ForgeJobSubmitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/jobs';
+};
+
+export type SubmitForgeJobErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SubmitForgeJobError = SubmitForgeJobErrors[keyof SubmitForgeJobErrors];
+
+export type SubmitForgeJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: ConsolidationResponse;
+};
+
+export type SubmitForgeJobResponse = SubmitForgeJobResponses[keyof SubmitForgeJobResponses];
+
+export type ListForgeRecordsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: {
+        /**
+         * Operation Id
+         */
+        operation_id?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/v1/default/banks/{bank_id}/forge/records';
+};
+
+export type ListForgeRecordsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListForgeRecordsError = ListForgeRecordsErrors[keyof ListForgeRecordsErrors];
+
+export type ListForgeRecordsResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ExportForgeJobData = {
+    body: ForgeExportSubmitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/export';
+};
+
+export type ExportForgeJobErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExportForgeJobError = ExportForgeJobErrors[keyof ExportForgeJobErrors];
+
+export type ExportForgeJobResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetForgeJobLineageData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Operation Id
+         */
+        operation_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/jobs/{operation_id}/lineage';
+};
+
+export type GetForgeJobLineageErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetForgeJobLineageError = GetForgeJobLineageErrors[keyof GetForgeJobLineageErrors];
+
+export type GetForgeJobLineageResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ListTasteCatalogData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/catalog';
+};
+
+export type ListTasteCatalogErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTasteCatalogError = ListTasteCatalogErrors[keyof ListTasteCatalogErrors];
+
+export type ListTasteCatalogResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ListTasteDatasetsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets';
+};
+
+export type ListTasteDatasetsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTasteDatasetsError = ListTasteDatasetsErrors[keyof ListTasteDatasetsErrors];
+
+export type ListTasteDatasetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type CreateTasteDatasetData = {
+    body: TasteCreateDatasetRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets';
+};
+
+export type CreateTasteDatasetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type CreateTasteDatasetError = CreateTasteDatasetErrors[keyof CreateTasteDatasetErrors];
+
+export type CreateTasteDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type DeleteTasteDatasetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}';
+};
+
+export type DeleteTasteDatasetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type DeleteTasteDatasetError = DeleteTasteDatasetErrors[keyof DeleteTasteDatasetErrors];
+
+export type DeleteTasteDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetTasteDatasetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}';
+};
+
+export type GetTasteDatasetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTasteDatasetError = GetTasteDatasetErrors[keyof GetTasteDatasetErrors];
+
+export type GetTasteDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UpdateTasteDatasetData = {
+    body: TasteUpdateDatasetRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}';
+};
+
+export type UpdateTasteDatasetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateTasteDatasetError = UpdateTasteDatasetErrors[keyof UpdateTasteDatasetErrors];
+
+export type UpdateTasteDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ListTasteSetsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         */
+        limit?: number;
+        /**
+         * Offset
+         */
+        offset?: number;
+    };
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets';
+};
+
+export type ListTasteSetsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListTasteSetsError = ListTasteSetsErrors[keyof ListTasteSetsErrors];
+
+export type ListTasteSetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ImportTasteSetsData = {
+    body: TasteImportSetsRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets';
+};
+
+export type ImportTasteSetsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ImportTasteSetsError = ImportTasteSetsErrors[keyof ImportTasteSetsErrors];
+
+export type ImportTasteSetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GenerateTasteVariantsData = {
+    body: TasteGenerateSubmitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Dataset Id
+         */
+        dataset_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/generate';
+};
+
+export type GenerateTasteVariantsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GenerateTasteVariantsError = GenerateTasteVariantsErrors[keyof GenerateTasteVariantsErrors];
+
+export type GenerateTasteVariantsResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type GetTasteSetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Set Id
+         */
+        set_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}';
+};
+
+export type GetTasteSetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetTasteSetError = GetTasteSetErrors[keyof GetTasteSetErrors];
+
+export type GetTasteSetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type UpdateTasteSetData = {
+    body: TasteUpdateSetRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Set Id
+         */
+        set_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}';
+};
+
+export type UpdateTasteSetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type UpdateTasteSetError = UpdateTasteSetErrors[keyof UpdateTasteSetErrors];
+
+export type UpdateTasteSetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type RevertTasteSetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Set Id
+         */
+        set_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}/revert';
+};
+
+export type RevertTasteSetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RevertTasteSetError = RevertTasteSetErrors[keyof RevertTasteSetErrors];
+
+export type RevertTasteSetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type SubmitTasteTransformData = {
+    body: TasteTransformSubmitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/transform';
+};
+
+export type SubmitTasteTransformErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type SubmitTasteTransformError = SubmitTasteTransformErrors[keyof SubmitTasteTransformErrors];
+
+export type SubmitTasteTransformResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type RetainTasteSetsData = {
+    body: TasteRetainSubmitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/retain';
+};
+
+export type RetainTasteSetsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type RetainTasteSetsError = RetainTasteSetsErrors[keyof RetainTasteSetsErrors];
+
+export type RetainTasteSetsResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ExportTasteDatasetData = {
+    body: TasteExportSubmitRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: never;
+    url: '/v1/default/banks/{bank_id}/forge/taste/export';
+};
+
+export type ExportTasteDatasetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ExportTasteDatasetError = ExportTasteDatasetErrors[keyof ExportTasteDatasetErrors];
+
+export type ExportTasteDatasetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type TriggerSubRoutineData = {
     body: SubRoutineSubmitRequest;

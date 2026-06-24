@@ -39,7 +39,7 @@ The brain keeps growing. The intelligence compounds.
 ## Why Atulya?
 
 :::tip[Deep reference]
-Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 114 endpoints, 189 schemas, all design patterns in one page.
+Looking for every endpoint, every schema, every field? → **[Brain API Semantic Map](/developer/brain-api-map)** ~ 130 endpoints, 206 schemas, all design patterns in one page.
 It all started with a simple observation: 
 > Why do same mistakes again and again? I'm not talking about the ai-agent but the human behind it. I have to keep reminding myself to tell the agent what it should know, and it keeps forgetting. I wish there was a way to just tell it once and have it remember forever.
 > **A intelligent system that can match the learning efficiency of humans.**
@@ -80,8 +80,14 @@ The developer docs now have three high-leverage workbenches:
 | **Codebases** | You need deterministic understanding of a repo before memory changes | ASD parsing, repo map, symbol search, impact analysis, review routing, and approved memory publish |
 | **Graph Intelligence** | You need to inspect what changed inside a memory bank and why Atulya believes it | state-aware graph review, evidence tracing, and scalable investigation views |
 | **Internet Research** | You need live public-web evidence without mutating memory first | SearXNG search, Firecrawl extraction, curated clipboard review, and safe retain-draft handoff |
+| **Memory Repos** | You need safe experimentation on top of a bank instead of one mutable memory line | branches, commits, diff, reset, and fork-to-bank workflows |
+| **Data Forge** | You need fine-tuning data with citations and provenance from live memory | recipes, quality audit, ATR export, training adapters |
 
 If your workflow starts from source code, begin with **Codebases**. If your workflow starts from memory state or evidence review, begin with **Graph Intelligence**. If your workflow starts from fresh public-web evidence that may or may not deserve retention, begin with **Internet Research**.
+
+If your workflow starts from "we want to change this bank, but we do not want to break the main line," begin with **Memory Repos**.
+
+If your workflow starts from "we need JSONL for fine-tuning but our chat exports have no lineage," begin with **Data Forge**.
 
 ```mermaid
 flowchart LR
@@ -149,6 +155,41 @@ This keeps public-web research separate from memory mutation by default, while s
 
 Start with [Internet Research](/developer/internet-research) for stack setup, API usage, and the control-plane workflow.
 
+## Featured: Memory Repos
+
+One of Atulya's most important new operator features is **Memory Repos**.
+
+It gives a bank a Git-like versioning layer so teams and agents can evolve memory safely:
+
+- branch before experimenting
+- compare workspace state against the last durable commit
+- reset a branch when an experiment goes wrong
+- fork a stable version into a brand-new bank
+
+This matters because the organizational brain should not be one fragile mutable line.
+
+Memory repos are the bridge between plain persistent memory and a more durable brain architecture:
+
+- they preserve how understanding changes over time
+- they let teams test new memory lines without polluting `main`
+- they make it easier to promote stable knowledge into new agent or team contexts
+
+Start with [Memory Repos](/developer/memory-repos) for the full mental model and API surface.
+
+## Featured: Data Forge
+
+**Data Forge** turns the same memory bank your agents use into **audited training data**.
+
+| Step | What you get |
+|------|----------------|
+| Connect | Scenario, chat, timeseries, or bank-only sources |
+| Purify & forge | Recipes emit cited Atulya Training Records (ATR) |
+| Preview & export | Quality dashboard, held-back rows, JSONL download |
+
+The ROI is simple: stop hand-labeling what memory already knows, and stop fine-tuning on chat dumps with no provenance.
+
+Roadmap: **Unsloth**-style on-stack training and eval-driven re-retain so memory and model weights co-improve. See [Data Forge](/developer/data-forge) and [From memory to model](/blog/memory-that-trains-itself).
+
 ## Why This Matters For Enterprise
 
 Most enterprise software makes work faster.  
@@ -176,7 +217,7 @@ The easiest way to think about the roadmap is:
 | Layer | What it means |
 |------|----------------|
 | **Atulya today** | Persistent memory, multi-strategy retrieval, observation consolidation, and configurable reasoning context |
-| **BRAIN direction** | Integrity-aware agent infrastructure with contradiction handling, provenance, temporal coherence, portable learning, and stronger organizational trust |
+| **BRAIN direction** | Integrity-aware agent infrastructure with contradiction handling, provenance, temporal coherence, portable learning, **Data Forge training exports**, and (roadmap) self-correcting fine-tune loops |
 
 You do not need the full BRAIN vision to get value from Atulya. But that vision explains why Atulya is structured the way it is: as a foundation for long-running, enterprise-grade agent systems rather than a thin chat memory add-on.
 
@@ -187,7 +228,8 @@ graph LR
     C --> D["observations<br/>consolidated working knowledge"]
     D --> E["brain<br/>influence, anomaly, integrity signals"]
     E --> F["dream<br/>background synthesis and higher-level takeaways"]
-    F --> G["future enterprise layer<br/>more coherent, explainable, durable agent organizations"]
+    F --> H["data forge<br/>ATR export, quality audit, training adapters"]
+    H --> G["future enterprise layer<br/>memory ↔ model self-correction"]
 ```
 
 Today, Atulya already covers the left side of this flow strongly. Brain and Dream represent the path toward richer background learning, better integrity maintenance, and more durable organizational memory.
