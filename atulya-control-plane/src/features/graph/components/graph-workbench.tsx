@@ -19,6 +19,7 @@ import {
   XYPosition,
   applyNodeChanges,
   getSmoothStepPath,
+  type OnNodeDrag,
   useReactFlow,
 } from "@xyflow/react";
 import { Expand, Minimize2, Radar } from "lucide-react";
@@ -28,7 +29,6 @@ import {
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
   SetStateAction,
-  type TouchEvent as ReactTouchEvent,
   memo,
   useCallback,
   useEffect,
@@ -1471,8 +1471,8 @@ function GraphWorkbenchInner({
     setFlowNodes((current) => applyNodeChanges(changes, current));
   }, []);
 
-  const handleNodeDragStop = useCallback(
-    (_event: ReactMouseEvent | ReactTouchEvent, node: Node<WorkbenchNodeData>) => {
+  const handleNodeDragStop = useCallback<OnNodeDrag<Node<WorkbenchNodeData>>>(
+    (_event, node) => {
       setPinnedNodes((current) => ({
         ...current,
         [node.id]: node.position,
