@@ -2636,6 +2636,77 @@ class ConsolidationResponse(BaseModel):
     deduplicated: bool = Field(default=False, description="True if an existing pending task was reused")
 
 
+class ForgeJobSubmitRequest(BaseModel):
+    recipe_id: str
+    domain_tags: list[str] = Field(default_factory=list)
+    source: dict[str, Any] | None = None
+    quality_threshold: float = Field(default=0.6, ge=0.0, le=1.0)
+    wait_consolidation: bool = True
+    max_records: int = Field(default=500, ge=1, le=10000)
+    repo_commit_on_complete: bool = False
+    commit_message: str | None = None
+    options: dict[str, Any] = Field(default_factory=dict)
+
+
+class ForgeExportSubmitRequest(BaseModel):
+    operation_id: str
+    adapter_id: str = "atr_jsonl"
+    quality_threshold: float | None = None
+    options: dict[str, Any] = Field(default_factory=dict)
+
+
+class TasteCreateDatasetRequest(BaseModel):
+    name: str
+    description: str | None = None
+    schema_type: str = "openai_chat"
+    taste_tags: list[str] = Field(default_factory=list)
+
+
+class TasteUpdateDatasetRequest(BaseModel):
+    name: str | None = None
+    description: str | None = None
+    taste_tags: list[str] | None = None
+    taste_profile_json: dict[str, Any] | None = None
+
+
+class TasteImportSetsRequest(BaseModel):
+    sets: list[dict[str, Any]] = Field(default_factory=list)
+    jsonl: str | None = None
+    taste_tags: list[str] = Field(default_factory=list)
+    set_key_prefix: str | None = None
+
+
+class TasteUpdateSetRequest(BaseModel):
+    working_payload: dict[str, Any] | None = None
+    taste_tags: list[str] | None = None
+    status: str | None = None
+
+
+class TasteTransformSubmitRequest(BaseModel):
+    dataset_id: str
+    set_ids: list[str] = Field(default_factory=list)
+    chain_id: str | None = None
+    ops: list[dict[str, Any]] = Field(default_factory=list)
+    preview: bool = False
+
+
+class TasteGenerateSubmitRequest(BaseModel):
+    set_ids: list[str] = Field(default_factory=list)
+    count: int = Field(default=8, ge=1, le=32)
+    options: dict[str, Any] = Field(default_factory=dict)
+
+
+class TasteRetainSubmitRequest(BaseModel):
+    set_ids: list[str] = Field(min_length=1)
+
+
+class TasteExportSubmitRequest(BaseModel):
+    dataset_id: str
+    set_ids: list[str] = Field(default_factory=list)
+    adapter_id: str = "openai_chat_jsonl"
+    options: dict[str, Any] = Field(default_factory=dict)
+
+
 class OperationsListResponse(BaseModel):
     """Response model for list operations endpoint."""
 
@@ -6365,6 +6436,637 @@ def _register_routes(app: FastAPI):
 
             error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
             logger.error(f"Error in POST /v1/default/banks/{bank_id}/consolidate: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/recipes",
+        summary="List forge recipes and exporters",
+        operation_id="list_forge_recipes",
+        tags=["Forge"],
+    )
+    async def api_list_forge_recipes(
+        bank_id: str,
+        domain_tags: list[str] | None = Query(None),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            await app.state.memory._authenticate_tenant(request_context)
+            return app.state.memory.list_forge_recipes(domain_tags)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/jobs",
+        response_model=ConsolidationResponse,
+        summary="Start a Data Forge job",
+        operation_id="submit_forge_job",
+        tags=["Forge"],
+    )
+    async def api_submit_forge_job(
+        bank_id: str,
+        request: ForgeJobSubmitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.errors import ForgeValidationError
+        from atulya_api.forge.models import ForgeIngestSource, ForgeJobRequest
+
+        try:
+            source = ForgeIngestSource.model_validate(request.source) if request.source else None
+            forge_request = ForgeJobRequest(
+                recipe_id=request.recipe_id,  # type: ignore[arg-type]
+                domain_tags=request.domain_tags,
+                source=source,
+                quality_threshold=request.quality_threshold,
+                wait_consolidation=request.wait_consolidation,
+                max_records=request.max_records,
+                repo_commit_on_complete=request.repo_commit_on_complete,
+                commit_message=request.commit_message,
+                options=request.options,
+            )
+            result = await app.state.memory.submit_forge_job(
+                bank_id=bank_id,
+                request=forge_request,
+                request_context=request_context,
+            )
+            return ConsolidationResponse(
+                operation_id=result["operation_id"],
+                deduplicated=result.get("deduplicated", False),
+            )
+        except ForgeValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "field": e.field, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            logger.error(f"Error in POST forge/jobs: {traceback.format_exc()}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/records",
+        summary="List forge training records",
+        operation_id="list_forge_records",
+        tags=["Forge"],
+    )
+    async def api_list_forge_records(
+        bank_id: str,
+        operation_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.errors import ForgeValidationError
+
+        try:
+            return await app.state.memory.list_forge_records(
+                bank_id,
+                operation_id=operation_id,
+                limit=limit,
+                offset=offset,
+                request_context=request_context,
+            )
+        except ForgeValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "field": e.field, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/export",
+        summary="Export forge records via adapter",
+        operation_id="export_forge_job",
+        tags=["Forge"],
+    )
+    async def api_export_forge_job(
+        bank_id: str,
+        request: ForgeExportSubmitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.errors import ForgeExportError, ForgeValidationError
+        from atulya_api.forge.models import ForgeExportRequest
+
+        try:
+            export_request = ForgeExportRequest(
+                operation_id=request.operation_id,
+                adapter_id=request.adapter_id,
+                quality_threshold=request.quality_threshold,
+                options=request.options,
+            )
+            return await app.state.memory.export_forge_job(
+                bank_id,
+                export_request,
+                request_context=request_context,
+            )
+        except (ForgeValidationError, ForgeExportError) as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/jobs/{operation_id}/lineage",
+        summary="Forge job lineage and repo version",
+        operation_id="get_forge_job_lineage",
+        tags=["Forge"],
+    )
+    async def api_get_forge_job_lineage(
+        bank_id: str,
+        operation_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            op = await app.state.memory.get_operation_result(
+                bank_id=bank_id,
+                operation_id=operation_id,
+                request_context=request_context,
+            )
+            result = (op or {}).get("result_payload") or (op or {}).get("result_metadata") or {}
+            repo_commit_id = result.get("repo_commit_id")
+            lineage: dict[str, Any] = {
+                "operation_id": operation_id,
+                "recipe_id": result.get("recipe_id"),
+                "repo_commit_id": repo_commit_id,
+                "quality_summary": result.get("quality_summary"),
+            }
+            if repo_commit_id:
+                repo = await app.state.memory.get_memory_repo_for_bank(bank_id, request_context=request_context)
+                if repo and repo.get("repo_id"):
+                    log = await app.state.memory.get_memory_repo_log(
+                        str(repo["repo_id"]),
+                        limit=5,
+                        request_context=request_context,
+                    )
+                    lineage["recent_commits"] = log
+            return lineage
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/taste/catalog",
+        summary="Taste Studio catalog",
+        operation_id="list_taste_catalog",
+        tags=["Forge", "Taste"],
+    )
+    async def api_list_taste_catalog(
+        bank_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            await app.state.memory._authenticate_tenant(request_context)
+            return app.state.memory.list_taste_catalog()
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets",
+        summary="List taste datasets",
+        operation_id="list_taste_datasets",
+        tags=["Forge", "Taste"],
+    )
+    async def api_list_taste_datasets(
+        bank_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            return await app.state.memory.taste_list_datasets(bank_id, request_context=request_context)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets",
+        summary="Create taste dataset",
+        operation_id="create_taste_dataset",
+        tags=["Forge", "Taste"],
+    )
+    async def api_create_taste_dataset(
+        bank_id: str,
+        request: TasteCreateDatasetRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteValidationError
+        from atulya_api.forge.taste.models import CreateTasteDatasetRequest
+
+        try:
+            payload = CreateTasteDatasetRequest.model_validate(request.model_dump())
+            return await app.state.memory.taste_create_dataset(bank_id, payload, request_context=request_context)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}",
+        summary="Get taste dataset",
+        operation_id="get_taste_dataset",
+        tags=["Forge", "Taste"],
+    )
+    async def api_get_taste_dataset(
+        bank_id: str,
+        dataset_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError
+
+        try:
+            return await app.state.memory.taste_get_dataset(bank_id, dataset_id, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.patch(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}",
+        summary="Update taste dataset",
+        operation_id="update_taste_dataset",
+        tags=["Forge", "Taste"],
+    )
+    async def api_update_taste_dataset(
+        bank_id: str,
+        dataset_id: str,
+        request: TasteUpdateDatasetRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import UpdateTasteDatasetRequest
+
+        try:
+            payload = UpdateTasteDatasetRequest.model_validate(request.model_dump(exclude_unset=True))
+            return await app.state.memory.taste_update_dataset(
+                bank_id, dataset_id, payload, request_context=request_context
+            )
+        except (TasteNotFoundError,) as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.delete(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}",
+        summary="Delete taste dataset",
+        operation_id="delete_taste_dataset",
+        tags=["Forge", "Taste"],
+    )
+    async def api_delete_taste_dataset(
+        bank_id: str,
+        dataset_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError
+
+        try:
+            return await app.state.memory.taste_delete_dataset(bank_id, dataset_id, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets",
+        summary="List taste sets",
+        operation_id="list_taste_sets",
+        tags=["Forge", "Taste"],
+    )
+    async def api_list_taste_sets(
+        bank_id: str,
+        dataset_id: str,
+        limit: int = 100,
+        offset: int = 0,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError
+
+        try:
+            capped_limit = min(max(limit, 1), 500)
+            return await app.state.memory.taste_list_sets(
+                bank_id,
+                dataset_id,
+                limit=capped_limit,
+                offset=max(offset, 0),
+                request_context=request_context,
+            )
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets",
+        summary="Import taste sets",
+        operation_id="import_taste_sets",
+        tags=["Forge", "Taste"],
+    )
+    async def api_import_taste_sets(
+        bank_id: str,
+        dataset_id: str,
+        request: TasteImportSetsRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import ImportTasteSetsRequest
+
+        try:
+            payload = ImportTasteSetsRequest.model_validate(request.model_dump())
+            return await app.state.memory.taste_import_sets(
+                bank_id, dataset_id, payload, request_context=request_context
+            )
+        except (TasteNotFoundError,) as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/generate",
+        summary="Generate similar taste variants",
+        operation_id="generate_taste_variants",
+        tags=["Forge", "Taste"],
+    )
+    async def api_generate_taste_variants(
+        bank_id: str,
+        dataset_id: str,
+        request: TasteGenerateSubmitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import TasteGenerateRequest
+
+        try:
+            payload = TasteGenerateRequest.model_validate(request.model_dump())
+            result = await app.state.memory.submit_taste_generate(
+                bank_id, dataset_id, payload, request_context=request_context
+            )
+            if "operation_id" in result:
+                return ConsolidationResponse(
+                    operation_id=result["operation_id"],
+                    deduplicated=result.get("deduplicated", False),
+                )
+            return result
+        except (TasteNotFoundError,) as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}",
+        summary="Get taste set",
+        operation_id="get_taste_set",
+        tags=["Forge", "Taste"],
+    )
+    async def api_get_taste_set(
+        bank_id: str,
+        set_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError
+
+        try:
+            return await app.state.memory.taste_get_set(bank_id, set_id, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.patch(
+        "/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}",
+        summary="Update taste set",
+        operation_id="update_taste_set",
+        tags=["Forge", "Taste"],
+    )
+    async def api_update_taste_set(
+        bank_id: str,
+        set_id: str,
+        request: TasteUpdateSetRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import UpdateTasteSetRequest
+
+        try:
+            payload = UpdateTasteSetRequest.model_validate(request.model_dump(exclude_unset=True))
+            return await app.state.memory.taste_update_set(bank_id, set_id, payload, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}/revert",
+        summary="Revert taste set to seed payload",
+        operation_id="revert_taste_set",
+        tags=["Forge", "Taste"],
+    )
+    async def api_revert_taste_set(
+        bank_id: str,
+        set_id: str,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError
+
+        try:
+            return await app.state.memory.taste_revert_set(bank_id, set_id, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/transform",
+        summary="Apply taste transforms with optional preview",
+        operation_id="submit_taste_transform",
+        tags=["Forge", "Taste"],
+    )
+    async def api_submit_taste_transform(
+        bank_id: str,
+        request: TasteTransformSubmitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import TasteTransformRequest, TransformOpSpec
+
+        try:
+            ops = [TransformOpSpec.model_validate(op) for op in request.ops]
+            payload = TasteTransformRequest(
+                dataset_id=request.dataset_id,
+                set_ids=request.set_ids,
+                chain_id=request.chain_id,
+                ops=ops,
+                preview=request.preview,
+            )
+            result = await app.state.memory.submit_taste_transform(bank_id, payload, request_context=request_context)
+            if "operation_id" in result and not request.preview:
+                return ConsolidationResponse(
+                    operation_id=result["operation_id"],
+                    deduplicated=result.get("deduplicated", False),
+                )
+            return result
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/retain",
+        summary="Send taste sets to memory",
+        operation_id="retain_taste_sets",
+        tags=["Forge", "Taste"],
+    )
+    async def api_retain_taste_sets(
+        bank_id: str,
+        request: TasteRetainSubmitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import TasteRetainRequest
+
+        try:
+            payload = TasteRetainRequest.model_validate(request.model_dump())
+            return await app.state.memory.retain_taste_sets(bank_id, payload, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.post(
+        "/v1/default/banks/{bank_id}/forge/taste/export",
+        summary="Export taste dataset via forge adapter",
+        operation_id="export_taste_dataset",
+        tags=["Forge", "Taste"],
+    )
+    async def api_export_taste_dataset(
+        bank_id: str,
+        request: TasteExportSubmitRequest,
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        from atulya_api.forge.taste.errors import TasteNotFoundError, TasteValidationError
+        from atulya_api.forge.taste.models import TasteExportRequest
+
+        try:
+            payload = TasteExportRequest.model_validate(request.model_dump())
+            return await app.state.memory.export_taste_dataset(bank_id, payload, request_context=request_context)
+        except TasteNotFoundError as e:
+            raise HTTPException(status_code=404, detail=e.message)
+        except TasteValidationError as e:
+            raise HTTPException(
+                status_code=400,
+                detail={"message": e.message, "code": e.code, "details": e.details},
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     @app.post(

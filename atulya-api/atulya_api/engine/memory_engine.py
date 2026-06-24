@@ -155,6 +155,10 @@ _PROTECTED_TABLES = frozenset(
         "codebase_symbols",
         "codebase_edges",
         "dream_artifacts",
+        "forge_records",
+        "forge_taste_datasets",
+        "forge_taste_sets",
+        "forge_transform_chains",
         "dream_runs",
         "dream_predictions",
         "dream_proposals",
@@ -4609,6 +4613,12 @@ class MemoryEngine(MemoryEngineInterface):
                 await self._handle_entity_trajectory_recompute(task_dict)
             elif task_type == "entity_intelligence_recompute":
                 await self._handle_entity_intelligence_recompute(task_dict)
+            elif task_type == "forge_job":
+                task_result_payload = await self._handle_forge_job(task_dict)
+            elif task_type == "taste_transform_job":
+                task_result_payload = await self._handle_taste_transform_job(task_dict)
+            elif task_type == "taste_variant_job":
+                task_result_payload = await self._handle_taste_variant_job(task_dict)
             elif task_type == "webhook_delivery":
                 await self._handle_webhook_delivery(task_dict)
             else:
@@ -7792,6 +7802,15 @@ class MemoryEngine(MemoryEngineInterface):
 
                         # Delete entities (cascades to unit_entities, entity_cooccurrences, memory_links with entity_id)
                         await conn.execute(f"DELETE FROM {fq_table('entities')} WHERE bank_id = $1", bank_id)
+
+                        # Delete forge records for this bank
+                        await conn.execute(f"DELETE FROM {fq_table('forge_records')} WHERE bank_id = $1", bank_id)
+                        await conn.execute(
+                            f"DELETE FROM {fq_table('forge_transform_chains')} WHERE bank_id = $1", bank_id
+                        )
+                        await conn.execute(
+                            f"DELETE FROM {fq_table('forge_taste_datasets')} WHERE bank_id = $1", bank_id
+                        )
 
                         # Delete async operations for this bank (pending/processing/completed/failed),
                         # so a recreated bank starts with a clean queue state.
@@ -17081,3 +17100,175 @@ class MemoryEngine(MemoryEngineInterface):
                 *args,
             )
         return [dict(r) for r in rows]
+
+    async def _handle_forge_job(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        from atulya_api.forge.engine import handle_forge_job
+
+        return await handle_forge_job(self, task_dict)
+
+    async def submit_forge_job(
+        self,
+        bank_id: str,
+        request: Any,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.forge.engine import submit_forge_job
+
+        return await submit_forge_job(self, bank_id, request, request_context=request_context)
+
+    async def list_forge_records(
+        self,
+        bank_id: str,
+        *,
+        operation_id: str | None = None,
+        limit: int = 50,
+        offset: int = 0,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.forge.engine import list_forge_records_for_job
+
+        return await list_forge_records_for_job(
+            self,
+            bank_id,
+            operation_id=operation_id,
+            limit=limit,
+            offset=offset,
+            request_context=request_context,
+        )
+
+    async def export_forge_job(
+        self,
+        bank_id: str,
+        request: Any,
+        *,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.forge.engine import export_forge_job
+
+        return await export_forge_job(self, bank_id, request, request_context=request_context)
+
+    def list_forge_recipes(self, domain_tags: list[str] | None = None) -> dict[str, Any]:
+        from atulya_api.forge.engine import forge_recipes_payload
+
+        return forge_recipes_payload(domain_tags)
+
+    async def _handle_taste_transform_job(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import handle_taste_transform_job
+
+        return await handle_taste_transform_job(self, task_dict)
+
+    async def _handle_taste_variant_job(self, task_dict: dict[str, Any]) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import handle_taste_variant_job
+
+        return await handle_taste_variant_job(self, task_dict)
+
+    def list_taste_catalog(self) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_catalog_payload
+
+        return taste_catalog_payload()
+
+    async def taste_list_datasets(self, bank_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_list_datasets
+
+        return await taste_list_datasets(self, bank_id, request_context=request_context)
+
+    async def taste_create_dataset(
+        self, bank_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_create_dataset
+
+        return await taste_create_dataset(self, bank_id, request, request_context=request_context)
+
+    async def taste_get_dataset(
+        self, bank_id: str, dataset_id: str, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_get_dataset
+
+        return await taste_get_dataset(self, bank_id, dataset_id, request_context=request_context)
+
+    async def taste_update_dataset(
+        self, bank_id: str, dataset_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_update_dataset
+
+        return await taste_update_dataset(self, bank_id, dataset_id, request, request_context=request_context)
+
+    async def taste_delete_dataset(
+        self, bank_id: str, dataset_id: str, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_delete_dataset
+
+        return await taste_delete_dataset(self, bank_id, dataset_id, request_context=request_context)
+
+    async def taste_import_sets(
+        self, bank_id: str, dataset_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_import_sets
+
+        return await taste_import_sets(self, bank_id, dataset_id, request, request_context=request_context)
+
+    async def taste_list_sets(
+        self,
+        bank_id: str,
+        dataset_id: str,
+        *,
+        limit: int = 100,
+        offset: int = 0,
+        request_context: "RequestContext",
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_list_sets
+
+        return await taste_list_sets(
+            self, bank_id, dataset_id, limit=limit, offset=offset, request_context=request_context
+        )
+
+    async def taste_get_set(self, bank_id: str, set_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_get_set
+
+        return await taste_get_set(self, bank_id, set_id, request_context=request_context)
+
+    async def taste_update_set(
+        self, bank_id: str, set_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_update_set
+
+        return await taste_update_set(self, bank_id, set_id, request, request_context=request_context)
+
+    async def taste_revert_set(self, bank_id: str, set_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_revert_set
+
+        return await taste_revert_set(self, bank_id, set_id, request_context=request_context)
+
+    async def submit_taste_transform(
+        self, bank_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import submit_taste_transform
+
+        return await submit_taste_transform(self, bank_id, request, request_context=request_context)
+
+    async def submit_taste_generate(
+        self, bank_id: str, dataset_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import submit_taste_generate
+
+        return await submit_taste_generate(self, bank_id, dataset_id, request, request_context=request_context)
+
+    async def retain_taste_sets(
+        self, bank_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import retain_taste_sets_request
+
+        return await retain_taste_sets_request(self, bank_id, request, request_context=request_context)
+
+    async def export_taste_dataset(
+        self, bank_id: str, request: Any, *, request_context: "RequestContext"
+    ) -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import export_taste_dataset
+
+        return await export_taste_dataset(self, bank_id, request, request_context=request_context)
+
+    async def taste_list_chains(self, bank_id: str, *, request_context: "RequestContext") -> dict[str, Any]:
+        from atulya_api.forge.taste.engine import taste_list_chains
+
+        return await taste_list_chains(self, bank_id, request_context=request_context)

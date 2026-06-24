@@ -65,6 +65,10 @@ BACKUP_TABLES: list[str] = [
     "documents",
     "entities",
     "async_operations",
+    "forge_records",
+    "forge_taste_datasets",
+    "forge_taste_sets",
+    "forge_transform_chains",
     "webhooks",
     "directives",
     "mental_models",
@@ -557,6 +561,65 @@ def backfill_timeline_metadata(
 
     typer.echo(f"Scanned {result['scanned']} memory units")
     typer.echo(f"{'Would update' if dry_run else 'Updated'} {result['updated']} memory units")
+
+
+forge_app = typer.Typer(name="forge", help="Data Forge training dataset commands")
+app.add_typer(forge_app, name="forge")
+
+
+@forge_app.command("run")
+def forge_run(
+    bank_id: str = typer.Option(..., "--bank", help="Memory bank ID"),
+    recipe: str = typer.Option("consolidation_pairs", "--recipe", help="Forge recipe ID"),
+    source_file: Path | None = typer.Option(None, "--source-file", help="JSON ingest source file"),
+    domain_tag: str = typer.Option("startup_ops", "--domain-tag", help="Domain profile tag"),
+    wait: bool = typer.Option(True, "--wait/--no-wait", help="Wait for job completion"),
+):
+    """Queue a Data Forge job and optionally wait for completion."""
+
+    async def _run() -> None:
+        from atulya_api.engine.memory_engine import MemoryEngine
+        from atulya_api.forge.models import ForgeIngestSource, ForgeJobRequest
+        from atulya_api.models import RequestContext
+
+        config = AtulyaConfig.from_env()
+        memory = MemoryEngine(
+            db_url=config.database_url or "pg0",
+            memory_llm_provider=config.llm_provider,
+            memory_llm_api_key=config.llm_api_key,
+            memory_llm_model=config.llm_model,
+            memory_llm_base_url=config.llm_base_url,
+        )
+        await memory.initialize()
+        ctx = RequestContext(internal=True)
+        source = None
+        if source_file:
+            payload = json.loads(source_file.read_text(encoding="utf-8"))
+            source = ForgeIngestSource.model_validate(payload)
+        request = ForgeJobRequest(
+            recipe_id=recipe,  # type: ignore[arg-type]
+            domain_tags=[domain_tag],
+            source=source,
+        )
+        submitted = await memory.submit_forge_job(bank_id, request, request_context=ctx)
+        typer.echo(f"Forge job queued: {submitted['operation_id']}")
+        if not wait:
+            return
+        op_id = submitted["operation_id"]
+        for _ in range(120):
+            status = await memory.get_operation_status(bank_id, op_id, request_context=ctx)
+            if status.get("status") == "completed":
+                result = await memory.get_operation_result(bank_id, op_id, request_context=ctx)
+                typer.echo(json.dumps(result.get("result_payload") or {}, indent=2))
+                return
+            if status.get("status") == "failed":
+                typer.echo(f"Forge job failed: {status.get('error_message')}", err=True)
+                raise typer.Exit(1)
+            await asyncio.sleep(2)
+        typer.echo("Timed out waiting for forge job", err=True)
+        raise typer.Exit(1)
+
+    asyncio.run(_run())
 
 
 def main():
