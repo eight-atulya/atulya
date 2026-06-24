@@ -6630,7 +6630,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/catalog",
         summary="Taste Studio catalog",
         operation_id="list_taste_catalog",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_list_taste_catalog(
         bank_id: str,
@@ -6650,7 +6650,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets",
         summary="List taste datasets",
         operation_id="list_taste_datasets",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_list_taste_datasets(
         bank_id: str,
@@ -6669,7 +6669,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets",
         summary="Create taste dataset",
         operation_id="create_taste_dataset",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_create_taste_dataset(
         bank_id: str,
@@ -6698,7 +6698,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}",
         summary="Get taste dataset",
         operation_id="get_taste_dataset",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_get_taste_dataset(
         bank_id: str,
@@ -6722,7 +6722,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}",
         summary="Update taste dataset",
         operation_id="update_taste_dataset",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_update_taste_dataset(
         bank_id: str,
@@ -6756,7 +6756,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}",
         summary="Delete taste dataset",
         operation_id="delete_taste_dataset",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_delete_taste_dataset(
         bank_id: str,
@@ -6780,7 +6780,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets",
         summary="List taste sets",
         operation_id="list_taste_sets",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_list_taste_sets(
         bank_id: str,
@@ -6813,7 +6813,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/sets",
         summary="Import taste sets",
         operation_id="import_taste_sets",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_import_taste_sets(
         bank_id: str,
@@ -6847,7 +6847,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/datasets/{dataset_id}/generate",
         summary="Generate similar taste variants",
         operation_id="generate_taste_variants",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_generate_taste_variants(
         bank_id: str,
@@ -6887,7 +6887,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}",
         summary="Get taste set",
         operation_id="get_taste_set",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_get_taste_set(
         bank_id: str,
@@ -6911,7 +6911,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}",
         summary="Update taste set",
         operation_id="update_taste_set",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_update_taste_set(
         bank_id: str,
@@ -6943,7 +6943,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/sets/{set_id}/revert",
         summary="Revert taste set to seed payload",
         operation_id="revert_taste_set",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_revert_taste_set(
         bank_id: str,
@@ -6967,7 +6967,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/transform",
         summary="Apply taste transforms with optional preview",
         operation_id="submit_taste_transform",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_submit_taste_transform(
         bank_id: str,
@@ -7011,7 +7011,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/retain",
         summary="Send taste sets to memory",
         operation_id="retain_taste_sets",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_retain_taste_sets(
         bank_id: str,
@@ -7042,7 +7042,7 @@ def _register_routes(app: FastAPI):
         "/v1/default/banks/{bank_id}/forge/taste/export",
         summary="Export taste dataset via forge adapter",
         operation_id="export_taste_dataset",
-        tags=["Forge", "Taste"],
+        tags=["Taste"],
     )
     async def api_export_taste_dataset(
         bank_id: str,

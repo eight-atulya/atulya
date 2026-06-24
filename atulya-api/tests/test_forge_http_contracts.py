@@ -42,6 +42,16 @@ def test_async_only_submission_routes_keep_consolidation_response_model():
     assert consolidate_route.response_model is ConsolidationResponse
 
 
+def test_taste_routes_have_single_openapi_tag_for_client_generation():
+    app = create_app(_mock_memory(), initialize_memory=False, http_extension=None)
+
+    taste_route = _route_by_operation_id(app, "generate_taste_variants")
+    forge_route = _route_by_operation_id(app, "submit_forge_job")
+
+    assert taste_route.tags == ["Taste"]
+    assert forge_route.tags == ["Forge"]
+
+
 def test_taste_generate_route_returns_immediate_variant_payload():
     memory = _mock_memory()
     memory.submit_taste_generate = AsyncMock(
