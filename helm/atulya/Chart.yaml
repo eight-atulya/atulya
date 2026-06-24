@@ -2,8 +2,8 @@ apiVersion: v2
 name: atulya
 description: Atulya helm chart
 type: application
-version: 0.8.6
-appVersion: "0.8.6"
+version: 0.8.7
+appVersion: "0.8.7"
 keywords:
   - ai
   - memory

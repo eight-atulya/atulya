@@ -148,7 +148,7 @@ from .wrappers import (
 )
 
 
-__version__ = "0.8.6"
+__version__ = "0.8.7"
 
 # Track whether we've registered with LiteLLM
 _enabled = False

@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "atulya"
-version = "0.8.0"
+version = "0.8.7"
 description = "Atulya bridge CLI - first connection between your machine and memory"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
-    "atulya-all==0.8.0",
+    "atulya-all==0.8.7",
 ]
 
 [tool.uv.sources]
