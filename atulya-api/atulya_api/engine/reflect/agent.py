@@ -1,10 +1,58 @@
 """
-Reflect agent - agentic loop for reflection with native tool calling.
+Reflect agent — LLM tool-calling loop for memory-grounded reasoning.
 
-Uses hierarchical retrieval:
-1. search_mental_models - User-curated summaries (highest quality)
-2. search_observations - Consolidated knowledge with freshness
-3. recall - Raw facts as ground truth
+Purpose:
+    Run the reflect operation: an iterative agent that searches mental models,
+    observations, and raw facts via injected tool callbacks, then produces a final
+    answer (optionally JSON-schema constrained) with citation validation.
+
+Trigger path:
+    - ``MemoryEngine.reflect_async`` wires bank-specific callbacks and calls
+      ``run_reflect_agent`` here
+    - Not invoked directly from HTTP routes
+
+Retrieval hierarchy (tool preference order):
+    1. ``search_mental_models`` — user-curated summaries (highest signal)
+    2. ``search_observations`` — consolidated knowledge with freshness metadata
+    3. ``recall`` — raw facts as ground truth evidence
+    4. ``expand`` — chunk/document context for cited memory IDs
+
+Inputs:
+    - ``llm_config``: reflect LLM provider (per-bank resolved)
+    - Tool callbacks injected by ``MemoryEngine`` (closures over bank_id, tags, budget)
+    - ``directives``: directive-type mental models injected as hard rules in prompts
+    - ``response_schema``: optional JSON Schema for structured final answers
+    - ``max_iterations``: safety cap (default 10) before forced completion
+
+Outputs:
+    - ``ReflectAgentResult``: final answer, tool trace, token usage, cited IDs
+
+Side effects:
+    - Multiple LLM round-trips (tool calls until ``done`` tool or iteration limit)
+    - Tool callbacks may hit PostgreSQL via engine recall/search methods
+
+Mutability:
+    - ``messages`` list grows each iteration; ``available_*_ids`` sets accumulate
+      valid citation targets to reject hallucinated IDs in final output
+
+Core logic:
+    - Native tool calling loop with provider-specific name normalization
+    - Fallback parsers for local models that leak special tokens or JSON into text
+    - Directive rules optionally require explicit compliance field on ``done`` tool
+
+Failure modes:
+    - Iteration limit forces best-effort answer from accumulated context
+    - Malformed tool names normalized via ``_normalize_tool_name`` (see maintenance notes
+      for HF-style token leakage patterns)
+
+Impact radius:
+    - User-facing answer quality, citation integrity, and reflect latency/cost
+    - Disposition traits from bank profile affect prompts but not recall paths
+
+Maintenance notes:
+    - Good: add tools via ``tools_schema.get_reflect_tools`` + engine callback wiring.
+    - Bad: skip ID validation sets — enables hallucinated memory citations in answers.
+    - Bad: move retrieval logic into this module; keep callbacks injected from engine.
 """
 
 import asyncio
@@ -408,30 +456,40 @@ async def run_reflect_agent(
     max_context_tokens: int = 100_000,
 ) -> ReflectAgentResult:
     """
-    Execute the reflect agent loop using native tool calling.
+    Execute the reflect agent loop using native LLM tool calling.
 
-    The agent uses hierarchical retrieval:
-    1. search_mental_models - User-curated summaries (try first)
-    2. search_observations - Consolidated knowledge with freshness
-    3. recall - Raw facts as ground truth
+    Purpose:
+        Iteratively gather evidence from mental models, observations, and recall tools,
+        then emit a final ``done`` answer with validated citations.
 
-    Args:
-        llm_config: LLM provider for agent calls
-        bank_id: Bank identifier
-        query: Question to answer
-        bank_profile: Bank profile with name and mission
-        search_mental_models_fn: Tool callback for searching mental models (query, max_results) -> result
-        search_observations_fn: Tool callback for searching observations (query, max_results) -> result
-        recall_fn: Tool callback for recall (query, max_tokens) -> result
-        expand_fn: Tool callback for expand (memory_ids, depth) -> result
-        context: Optional additional context
-        max_iterations: Maximum number of iterations before forcing response
-        max_tokens: Maximum tokens for the final response
-        response_schema: Optional JSON Schema for structured output in final response
-        directives: Optional list of directive mental models to inject as hard rules
+    Trigger path:
+        ``MemoryEngine.reflect_async`` after loading bank profile, directives, and wiring
+        search/recall/expand closures.
 
-    Returns:
-        ReflectAgentResult with final answer and metadata
+    Inputs:
+        Callbacks (must remain async):
+            ``search_mental_models_fn(query, max_results)``
+            ``search_observations_fn(query, max_results)``
+            ``recall_fn(query, max_tokens, max_results)``
+            ``expand_fn(memory_ids, depth)``
+        ``directives`` constrain behavior via system prompt injection (start + end).
+        ``has_mental_models`` toggles prompt sections when bank has no models yet.
+
+    Outputs:
+        ``ReflectAgentResult`` with answer, traces, token totals, and applied directives.
+
+    Side effects:
+        LLM API calls; downstream DB reads through injected callbacks only.
+
+    Mutability:
+        Internal message history and ID tracking sets mutate until loop completes.
+
+    Failure modes:
+        Hitting ``max_iterations`` triggers forced finalization from ``context_history``.
+
+    Maintenance notes:
+        - Good: extend tool schema and matching callback in engine together.
+        - Bad: hard-code bank_id SQL here — breaks testability and bank isolation guarantees.
     """
     reflect_id = f"{bank_id[:8]}-{int(time.time() * 1000) % 100000}"
     start_time = time.time()

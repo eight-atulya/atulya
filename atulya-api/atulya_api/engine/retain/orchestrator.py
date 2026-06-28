@@ -1,7 +1,58 @@
 """
-Main orchestrator for the retain pipeline.
+Retain pipeline orchestrator — coordinates ingest from raw content to stored memory graph.
 
-Coordinates all retain pipeline modules to store memories efficiently.
+Purpose:
+    Single entry for batch retain processing: fact extraction, chunking, embeddings,
+    entity resolution, link creation, document tracking, anomaly detection, and optional
+    outbox notifications. Called by ``MemoryEngine.retain_batch_async`` (not HTTP directly).
+
+Trigger path:
+    - ``MemoryEngine.retain_batch_async`` → ``retain_batch`` here
+    - Background batch retain child tasks may call with ``progress_callback``
+
+Inputs:
+    - ``contents_dicts``: list of retain payloads (content, tags, event_date, metadata, etc.)
+    - Resolved per-bank ``config`` (chunk sizes, LLM settings, feature flags)
+    - Shared infra: ``pool``, ``embeddings_model``, ``llm_config``, ``entity_resolver``
+    - Optional ``document_id``, ``document_tags``, ``operation_id``, ``schema``
+    - Callbacks: ``outbox_callback`` (post-commit fanout), ``progress_callback`` (UI stages)
+
+Outputs:
+    - ``(unit_id_lists, TokenUsage)`` — created memory unit IDs grouped per input item
+    - DB writes: facts, chunks, embeddings, entities, links, documents, anomalies
+
+Side effects:
+    - One or more PostgreSQL transactions (large batches may split internally upstream)
+    - LLM calls for fact extraction inside ``fact_extraction`` submodule
+    - Embedding batch generation via ``embedding_processing``
+    - Progress events when ``progress_callback`` provided
+
+Mutability:
+    - ``contents_dicts`` items may be mutated in-place for ``update_mode="append"`` merge
+      (prepends existing document text on first batch only)
+    - ``RetainContent`` objects are built as immutable-ish dataclass instances from dicts
+
+Pipeline stages (core logic):
+    1. Bank profile lookup
+    2. Append-mode document merge (first batch only)
+    3. Fact extraction + chunking (LLM)
+    4. Adaptive corrections + flaw detection + pattern library matching
+    5. Embedding generation (batched)
+    6. Entity processing + fact storage + link creation (transactional)
+    7. Write-time anomaly detection + persistence
+
+Failure modes:
+    - Empty extraction still may create document rows when ``document_id`` or chunks exist
+    - ``parse_datetime_flexible`` raises on invalid date types
+
+Impact radius:
+    - All ingest quality, graph connectivity, and downstream recall/recall accuracy
+    - Changing stage order or transaction boundaries affects consolidation triggers
+
+Maintenance notes:
+    - Good: add pipeline stages as submodule calls with clear progress reporting.
+    - Bad: skip bank_id scoping in SQL or merge tags inconsistently between code paths.
+    - ``is_first_batch=False`` must not re-run append prepend (paged document ingest).
 """
 
 import logging
@@ -104,25 +155,35 @@ async def retain_batch(
     progress_callback: Callable[[str, dict[str, Any] | None], Awaitable[None]] | None = None,
 ) -> tuple[list[list[str]], TokenUsage]:
     """
-    Process a batch of content through the retain pipeline.
+    Process a batch of content through the full retain pipeline.
 
-    Args:
-        pool: Database connection pool
-        embeddings_model: Embeddings model for generating embeddings
-        llm_config: LLM configuration for fact extraction
-        entity_resolver: Entity resolver for entity processing
-        format_date_fn: Function to format datetime to readable string
-        bank_id: Bank identifier
-        contents_dicts: List of content dictionaries
-        config: Resolved AtulyaConfig for this bank
-        document_id: Optional document ID
-        is_first_batch: Whether this is the first batch
-        fact_type_override: Override fact type for all facts
-        confidence_score: Confidence score for opinions
-        document_tags: Tags applied to all items in this batch
+    Purpose:
+        Transform raw text inputs into structured facts, chunks, embeddings, entities,
+        and graph links within a single bank. This is the hot path for memory creation.
 
-    Returns:
-        Tuple of (unit ID lists, token usage for fact extraction)
+    Trigger path:
+        ``MemoryEngine.retain_batch_async`` after auth, config resolution, and optional
+        batch splitting for large payloads.
+
+    Inputs:
+        See module docstring for pool/models/config; ``contents_dicts`` is the primary
+        payload. ``fact_type_override`` and ``confidence_score`` apply to opinion facts.
+
+    Outputs:
+        Tuple of per-item unit ID lists and aggregated LLM token usage for extraction.
+
+    Side effects:
+        PostgreSQL writes across retain tables; optional ``outbox_callback`` after commit.
+
+    Mutability:
+        May mutate ``contents_dicts`` entries for append-mode document merge.
+
+    Impact radius:
+        Foundational for all downstream recall, reflect, consolidation, and forge ingest.
+
+    Maintenance notes:
+        - Good: extend via submodule hooks (e.g., anomaly detection) without widening TX scope.
+        - Bad: open nested transactions that partially commit facts without links.
     """
     start_time = time.time()
     total_chars = sum(len(item.get("content", "")) for item in contents_dicts)

@@ -1,11 +1,48 @@
 """
-Retrieval module for 4-way parallel search.
+Parallel multi-path retrieval for recall operations.
 
-Implements:
-1. Semantic retrieval (vector similarity)
-2. BM25 retrieval (keyword/full-text search)
-3. Graph retrieval (via pluggable GraphRetriever interface)
-4. Temporal retrieval (time-aware search with spreading)
+Purpose:
+    Execute semantic (vector), BM25 (full-text), graph (MPFP/BFS/link expansion), and
+    optional temporal retrieval paths, batched across fact types to minimize DB round-trips.
+    Results feed ``engine/search/fusion.py`` for RRF merging before reranking.
+
+Trigger path:
+    - ``MemoryEngine.recall_async`` → ``retrieve_all_fact_types_parallel`` and helpers
+    - Reflect agent ``recall`` tool callback (indirectly through engine)
+
+Inputs:
+    - ``pool``: asyncpg pool (connections via ``acquire_with_retry``)
+    - Query text + embedding string from upstream query analysis
+    - ``bank_id``, ``fact_types``, ``thinking_budget`` (maps to recall Budget enum)
+    - Optional temporal anchor ``question_date``, tag filters, ``query_analyzer``
+    - Graph retriever from ``get_default_graph_retriever()`` (config: ``graph_retriever``)
+
+Outputs:
+    - ``MultiFactTypeRetrievalResult`` / ``ParallelRetrievalResult`` dataclasses with
+      per-method result lists and timing metadata
+
+Side effects:
+    - Read-only PostgreSQL queries (vector, FTS, graph traversals)
+    - Module-global ``_default_graph_retriever`` singleton (mutable via ``set_default_graph_retriever``)
+
+Mutability:
+    - ``_default_graph_retriever`` global — tests may replace; production uses config once.
+
+Impact radius:
+    - Recall latency, accuracy, and connection pool pressure (``max_conn_wait`` tracked)
+    - Graph retriever choice affects semantic recall quality on relational queries
+
+Core logic:
+    - ``retrieve_semantic_bm25_combined``: single CTE query for all fact types
+    - Graph + temporal paths run per fact type in parallel asyncio tasks
+
+Failure modes:
+    - Unknown ``graph_retriever`` config falls back to ``LinkExpansionRetriever`` with warning
+
+Maintenance notes:
+    - Good: add retrieval paths as pluggable retrievers implementing ``GraphRetriever``.
+    - Bad: return raw tuples instead of ``RetrievalResult`` (fusion.py validates types).
+    - Performance-sensitive: prefer combined CTE queries over N sequential round-trips.
 """
 
 import asyncio
@@ -28,7 +65,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ParallelRetrievalResult:
-    """Result from parallel retrieval across all methods."""
+    """Per-fact-type bundle of parallel retrieval method outputs.
+
+    Fields are lists of ``RetrievalResult`` except ``temporal`` which may be None when
+    temporal path is disabled. ``timings`` and ``mpfp_timings`` support recall tracing
+    and performance tuning. ``max_conn_wait`` aggregates pool acquisition latency.
+    """
 
     semantic: list[RetrievalResult]
     bm25: list[RetrievalResult]
@@ -42,7 +84,11 @@ class ParallelRetrievalResult:
 
 @dataclass
 class MultiFactTypeRetrievalResult:
-    """Result from retrieval across all fact types."""
+    """Aggregated retrieval across multiple fact types (e.g., world + experience).
+
+    ``results_by_fact_type`` maps each requested type to its ``ParallelRetrievalResult``.
+    Top-level ``timings`` and ``max_conn_wait`` roll up stats for the whole recall query.
+    """
 
     # Results per fact type
     results_by_fact_type: dict[str, ParallelRetrievalResult]

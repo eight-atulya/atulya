@@ -1,10 +1,33 @@
 """
-Command-line interface for Atulya Worker.
+CLI entry point for the Atulya background worker process.
 
-Run the worker with:
-    atulya-worker
+Purpose:
+    Poll the task backend for async operations (consolidation, forge, batch retain,
+    codebase ingest, etc.), execute them against a shared ``MemoryEngine``, and expose
+    worker health/metrics endpoints.
 
-Stop with Ctrl+C (graceful shutdown).
+Trigger path:
+    - Console script ``atulya-worker``
+    - ``python -m atulya_api.worker.main``
+
+Inputs:
+    - Environment config via ``get_config()``
+    - CLI: ``--host``, ``--port`` for metrics server, worker identity options
+
+Outputs / side effects:
+    - Claims and executes tasks via ``WorkerPoller`` + ``SyncTaskBackend``
+    - Serves ``/health`` and ``/metrics`` on a minimal FastAPI app
+    - Shares DB pool metrics with Prometheus collector when available
+
+Mutability:
+    - ``WorkerPoller.is_shutdown`` flipped on SIGINT/SIGTERM for graceful drain
+
+Impact radius:
+    - All long-running async operations; worker outage stalls forge/consolidation queues
+
+Maintenance notes:
+    - Good: register new task types in poller dispatch + engine handler together.
+    - Bad: run worker without same DB/schema config as API servers for a tenant.
 """
 
 import argparse

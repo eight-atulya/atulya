@@ -1,8 +1,31 @@
-"""Abstract interface for MemoryEngine public methods.
+"""Public contract for MemoryEngine — stable surface for HTTP, MCP, and extensions.
 
-This module defines the public API that HTTP endpoints and extensions should use
-to interact with the memory system. All methods require a RequestContext for
-authentication when a TenantExtension is configured.
+Purpose:
+    Define abstract async methods for all bank-scoped memory operations. Implementations
+    live in ``engine/memory_engine.py``; callers should type-hint against this interface
+    rather than the concrete class to preserve test doubles and extension stability.
+
+Trigger path:
+    - HTTP routes receive concrete ``MemoryEngine`` but should call only methods listed here
+    - ``ExtensionContext.get_memory_engine()`` returns this interface type
+    - Unit tests may provide fake implementations
+
+Inputs:
+    - Every method requires ``RequestContext`` when tenant auth is enabled
+    - ``bank_id`` scopes all operations (strict isolation invariant)
+
+Outputs:
+    Typed result models and operation metadata dicts (see method docstrings)
+
+Side effects:
+    Implementation-dependent; interface documents intent only.
+
+Impact radius:
+    - Breaking changes here require OpenAPI updates, SDK regen, and control-plane sync.
+
+Maintenance notes:
+    - Good: add optional kwargs with defaults on existing methods.
+    - Bad: add methods only on concrete ``MemoryEngine`` without updating this ABC.
 """
 
 from abc import ABC, abstractmethod
@@ -18,10 +41,28 @@ if TYPE_CHECKING:
 
 class MemoryEngineInterface(ABC):
     """
-    Abstract interface for the Memory Engine.
+    Abstract API boundary for the memory dataplane.
 
-    This defines the public API that should be used by HTTP endpoints and extensions.
-    All methods require a RequestContext for authentication.
+    Purpose:
+        Document and enforce the stable contract between transport layers (HTTP, MCP,
+        workers, extensions) and the memory engine implementation.
+
+    Trigger path:
+        Implemented by ``MemoryEngine``; consumed via dependency injection in routes.
+
+    Authentication:
+        When a ``TenantExtension`` is configured, ``RequestContext`` must carry valid
+        tenant/API key metadata or methods raise auth errors.
+
+    Core operation groups:
+        - Health & status
+        - Retain / recall / reflect (primary trilogy — keep responsibilities separate)
+        - Banks, entities, documents, mental models, directives
+        - Consolidation, Brain, Dream, forge, taste, memory repos, async operations
+
+    Maintenance notes:
+        - Good: extend with new abstract methods + engine implementation + HTTP route together.
+        - Bad: expose private ``MemoryEngine._`` helpers through extensions or routes.
     """
 
     # =========================================================================

@@ -1,4 +1,31 @@
-"""Extension loader utilities."""
+"""Dynamic extension loading from environment configuration.
+
+Purpose:
+    Instantiate optional pluggable extensions (tenant auth, HTTP routers, operation
+    validators, MCP hooks) from ``ATULYA_API_{PREFIX}_EXTENSION=module:Class`` env vars.
+
+Trigger path:
+    - ``server.py`` / ``main.py`` at startup for ``OPERATION_VALIDATOR`` and ``TENANT``
+    - ``api/http.py`` may load ``HTTP`` extension for custom routes
+
+Inputs:
+    - ``prefix``: extension category (e.g., ``OPERATION_VALIDATOR``)
+    - ``base_class``: required base type for isinstance validation
+    - Env vars ``ATULYA_API_{PREFIX}_*`` passed as kwargs to extension constructor
+
+Outputs:
+    - Extension instance or ``None`` when env var unset
+
+Side effects:
+    - ``importlib.import_module`` loads third-party code at startup
+
+Failure modes:
+    - ``ExtensionLoadError`` when class missing, wrong type, or import fails
+
+Maintenance notes:
+    - Good: ship builtin extensions under ``extensions/builtin/``.
+    - Bad: load extensions without type check against ``base_class``.
+"""
 
 import importlib
 import logging

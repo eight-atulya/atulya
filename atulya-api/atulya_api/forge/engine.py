@@ -1,4 +1,32 @@
-"""MemoryEngine forge integration."""
+"""MemoryEngine integration layer for Data Forge (training record materialization).
+
+Purpose:
+    Bridge async forge jobs to ``MemoryEngine``: validate requests, enqueue worker tasks,
+    persist ``Atulya Training Record`` (ATR) rows, and serve export/download flows.
+    Recipes and exporters live in ``forge/recipes`` and ``forge/exporters``.
+
+Trigger path:
+    - HTTP forge routes → ``submit_forge_job`` / ``handle_forge_export`` etc.
+    - Worker task type ``forge_job`` → ``handle_forge_job``
+
+Inputs:
+    - ``ForgeJobRequest`` / ``ForgeExportRequest`` Pydantic models
+    - ``RequestContext`` for tenant authentication
+    - Bank-scoped ``bank_id`` and operation UUIDs
+
+Outputs / side effects:
+    - Inserts into ``forge_records`` table (JSONB ATR payloads + quality scores)
+    - Async operation rows updated via ``memory_engine._set_operation_stage`` callbacks
+    - Export streams produced by registered exporters (OpenAI JSONL, graph FT, ATR JSONL)
+
+Impact radius:
+    - Training dataset lineage must stay aligned with prod memory IDs (see BRAIN.md)
+    - Quality gates in ``forge/quality.py`` determine ``exportable`` flag persisted here
+
+Maintenance notes:
+    - Good: add recipes/exporters without changing persist schema columns.
+    - Bad: fork record provenance from bank evidence or skip ``validate_forge_job_request``.
+"""
 
 from __future__ import annotations
 
@@ -38,6 +66,14 @@ async def persist_forge_records(
     bank_id: str,
     records: list[dict[str, Any]],
 ) -> None:
+    """Write forge output rows to ``forge_records`` for a completed job.
+
+    Side effects:
+        One INSERT per record in a pooled connection (not batched in a single TX).
+
+    Maintenance notes:
+        - Records must include ``record_id``, ``recipe_id``, and optional ``quality`` dict.
+    """
     from atulya_api.engine.db_utils import acquire_with_retry
     from atulya_api.engine.memory_engine import fq_table
 
@@ -62,6 +98,20 @@ async def persist_forge_records(
 
 
 async def handle_forge_job(memory_engine: "MemoryEngine", task_dict: dict[str, Any]) -> dict[str, Any]:
+    """Worker entry point: run forge recipe pipeline and persist ATR records.
+
+    Trigger path:
+        Task backend dispatches ``task_type="forge_job"`` payloads here.
+
+    Inputs:
+        ``task_dict`` must include ``bank_id``, ``operation_id``, and ``forge_request``.
+
+    Outputs:
+        Summary dict (counts, quality summary, recipe_id) stored on operation metadata.
+
+    Side effects:
+        DB inserts via ``persist_forge_records``; stage updates via callback.
+    """
     from atulya_api.models import RequestContext
 
     bank_id = task_dict.get("bank_id")

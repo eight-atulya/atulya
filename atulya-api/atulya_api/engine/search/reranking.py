@@ -1,5 +1,28 @@
 """
-Cross-encoder neural reranking for search results.
+Cross-encoder reranking and score fusion for recall results.
+
+Purpose:
+    Re-score ``MergedCandidate`` items from RRF fusion using a local or remote
+    cross-encoder, then apply configurable boosts (fact type, proof count, recency,
+    temporal proximity) before final truncation to token budget.
+
+Trigger path:
+    - ``MemoryEngine.recall_async`` after ``reciprocal_rank_fusion`` in the search stack
+
+Inputs:
+    - ``MergedCandidate`` list with embedded ``RetrievalResult`` metadata
+    - Query text, optional ``question_date`` for temporal boosts
+    - Global reranker config (static fields via ``get_config()``)
+
+Outputs:
+    - ``ScoredResult`` list sorted for response packaging
+
+Side effects:
+    - Cross-encoder inference (CPU/GPU or TEI HTTP depending on config)
+
+Maintenance notes:
+    - Good: tune boost alphas via config without changing candidate ID semantics.
+    - Bad: use bank-configurable recall limits from global ``get_config()`` by mistake.
 """
 
 import logging

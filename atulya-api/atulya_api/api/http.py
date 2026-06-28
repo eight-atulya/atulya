@@ -1,8 +1,51 @@
 """
-FastAPI application factory and API routes for memory system.
+HTTP REST API surface for the Atulya memory dataplane.
 
-This module provides the create_app function to create and configure
-the FastAPI application with all API endpoints.
+Purpose:
+    Define Pydantic request/response models, FastAPI route handlers, and the
+    ``create_app`` factory that exposes retain, recall, reflect, bank admin, forge,
+    taste studio, memory repos, Brain/Dream, and operational endpoints.
+
+Trigger path:
+    - ``api/__init__.py:create_app`` when ``http_api_enabled=True``
+    - Control plane Next.js routes proxy to these endpoints (see ``atulya-control-plane``)
+    - Generated OpenAPI clients in ``atulya-clients/`` derive from this schema
+
+Inputs:
+    - ``MemoryEngine`` injected at app creation
+    - Per-request ``RequestContext`` built from API keys / tenant headers
+    - Request bodies validated as Pydantic models (``RecallRequest``, ``ReflectRequest``, etc.)
+    - Bank-scoped path parameters (``bank_id``) on nearly all memory operations
+
+Outputs / side effects:
+    - JSON HTTP responses matching OpenAPI models
+    - Async operations enqueue tasks via ``MemoryEngine._submit_async_operation``
+    - Metrics/tracing hooks via ``metrics`` and ``tracing`` modules
+    - Database reads/writes delegated entirely to ``MemoryEngine`` methods
+
+Mutability:
+    - Route handlers must not mutate global ``MemoryEngine`` configuration; bank-level
+      settings flow through ``ConfigResolver`` inside the engine.
+
+Impact radius:
+    - Any change to route paths, request shapes, or response models requires:
+      1. Regenerating OpenAPI: ``./scripts/generate-openapi.sh``
+      2. Updating control-plane proxy routes and ``lib/api.ts`` types
+      3. Regenerating client SDKs when public contracts change
+
+Core logic:
+    - Thin validation + auth wrapper around ``MemoryEngineInterface`` methods
+    - ``Depends`` helpers resolve tenant/schema context before engine calls
+
+Failure modes:
+    - ``HTTPException`` for client errors; ``AuthenticationError`` from extensions
+    - Engine-level failures propagate as 4xx/5xx with structured error bodies
+
+Maintenance notes:
+    - Good: add optional request fields with defaults preserving backward compatibility.
+    - Bad: call ``MemoryEngine`` internals (``_pool``, private helpers) from routes;
+      use public async methods on the interface instead.
+    - Recall query token limit enforced here via ``MAX_QUERY_TOKENS`` (500).
 """
 
 import asyncio

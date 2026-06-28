@@ -1,7 +1,36 @@
 """
-Unified API module for Atulya.
+Unified FastAPI application factory for HTTP REST and MCP surfaces.
 
-Provides both HTTP REST API and MCP (Model Context Protocol) server.
+Purpose:
+    Compose a single ASGI app that can expose the dataplane HTTP API, the MCP
+    protocol (multi-bank and single-bank servers), or both. HTTP route definitions
+    live in ``api/http.py``; MCP wiring lives in ``api/mcp.py``.
+
+Trigger path:
+    - ``create_app`` called from ``server.py`` and ``main.py`` after ``MemoryEngine``
+      construction
+    - Tests may call ``create_app`` with feature flags disabled for isolation
+
+Inputs:
+    - Pre-constructed ``MemoryEngine`` (migrations already controlled at engine level)
+    - Feature flags: ``http_api_enabled``, ``mcp_api_enabled``, ``mcp_mount_path``,
+      ``initialize_memory``
+
+Outputs:
+    - Configured ``FastAPI`` instance with chained lifespans when MCP is enabled
+
+Side effects:
+    - MCP middleware intercepts ``/mcp*`` requests before FastAPI routing
+    - Lifespan hooks start/stop MCP Starlette apps alongside HTTP startup/shutdown
+
+Impact radius:
+    - Changing mount order, lifespan chaining, or middleware here affects every
+      external integration (control plane proxies, CLI, MCP clients).
+
+Maintenance notes:
+    - Good: add optional surfaces behind explicit flags without altering default HTTP.
+    - Bad: mount MCP with Starlette ``Mount`` (causes 307 redirect on ``/mcp``);
+      the wrapping ``MCPMiddleware`` exists specifically to avoid that behavior.
 """
 
 import logging
@@ -24,26 +53,36 @@ def create_app(
     """
     Create and configure the unified Atulya API application.
 
-    Args:
-        memory: MemoryEngine instance (already initialized with required parameters).
-                Migrations are controlled by the MemoryEngine's run_migrations parameter.
-        http_api_enabled: Whether to enable HTTP REST API endpoints (default: True)
-        mcp_api_enabled: Whether to enable MCP server (default: False)
-        mcp_mount_path: Path to mount MCP server (default: /mcp)
-        initialize_memory: Whether to initialize memory system on startup (default: True)
+    Purpose:
+        Single composition root for HTTP routes and optional MCP servers sharing one
+        ``MemoryEngine`` instance.
 
-    Returns:
-        Configured FastAPI application with enabled APIs
+    Trigger path:
+        Called at process startup from ``server.py`` / ``main.py`` after engine init.
 
-    Example:
-        # HTTP only
-        app = create_app(memory)
+    Inputs:
+        memory: Fully constructed ``MemoryEngine`` (pool, extensions, migrations flag).
+        http_api_enabled: When True, delegates to ``api.http.create_app`` for REST routes.
+        mcp_api_enabled: When True, loads MCP deps and wraps app with ``MCPMiddleware``.
+        mcp_mount_path: URL prefix for MCP (default ``/mcp``; no trailing slash required).
+        initialize_memory: Passed to HTTP app lifespan for eager vs lazy engine warmup.
 
-        # MCP only
-        app = create_app(memory, http_api_enabled=False, mcp_api_enabled=True)
+    Outputs:
+        ``FastAPI`` app ready for uvicorn. MCP lifespans are chained when MCP is on.
 
-        # Both HTTP and MCP
-        app = create_app(memory, mcp_api_enabled=True)
+    Side effects:
+        Imports ``api.http`` and/or ``api.mcp`` submodules; MCP path raises
+        ``ImportError`` if optional ``atulya-api[mcp]`` extras are missing.
+
+    Impact radius:
+        All external API contracts (OpenAPI, MCP tools) depend on which flags are enabled.
+
+    Failure modes:
+        ``ImportError`` when ``mcp_api_enabled=True`` without MCP dependencies installed.
+
+    Maintenance notes:
+        - Good: gate new protocol surfaces behind explicit boolean flags.
+        - Bad: construct a second ``MemoryEngine`` inside this factory.
     """
     mcp_servers = None
 

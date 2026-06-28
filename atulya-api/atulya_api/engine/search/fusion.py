@@ -1,5 +1,31 @@
 """
-Helper functions for hybrid search (semantic + BM25 + graph).
+Hybrid search fusion — merge ranked lists from multiple retrieval paths.
+
+Purpose:
+    Combine semantic, BM25, graph, and temporal result lists into a single ranked
+    candidate set using Reciprocal Rank Fusion (RRF) before cross-encoder reranking.
+
+Trigger path:
+    - ``MemoryEngine.recall_async`` after ``retrieve_all_fact_types_parallel`` returns
+    - Any code path merging multiple ``RetrievalResult`` lists for the same query
+
+Inputs:
+    - Lists of ``RetrievalResult`` objects (one list per retrieval method)
+    - RRF constant ``k`` (default 60)
+
+Outputs:
+    - ``MergedCandidate`` list sorted by descending RRF score
+
+Side effects:
+    None (pure transformation).
+
+Failure modes:
+    - ``TypeError`` if a list contains tuples or non-``RetrievalResult`` entries
+      (guards against regressions where SQL rows were not wrapped)
+
+Maintenance notes:
+    - Good: tune ``k`` or add normalization helpers without changing ``RetrievalResult`` shape.
+    - Bad: silently coerce wrong types — explicit ``TypeError`` is intentional.
 """
 
 from typing import Any
