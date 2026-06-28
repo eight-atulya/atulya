@@ -1,10 +1,47 @@
 """
-FastAPI server for Atulya API.
+ASGI entrypoint and process-level wiring for the Atulya API server.
 
-This module provides the ASGI app for uvicorn import string usage:
-    uvicorn atulya_api.server:app
+Purpose:
+    Bootstrap configuration, extensions, ``MemoryEngine``, and the unified FastAPI
+    app (HTTP + optional MCP) for uvicorn or ``python -m atulya_api.server``.
 
-For CLI usage, use the atulya-api command instead.
+Trigger path:
+    - Production: ``uvicorn atulya_api.server:app`` (import string).
+    - Direct run: ``__main__`` delegates to ``atulya_api.main`` CLI.
+    - Tests may import ``app`` or ``_memory`` for in-process clients.
+
+Inputs:
+    - Environment variables via ``get_config()`` (``.env`` loaded in ``config.py``).
+    - Optional extensions: ``OPERATION_VALIDATOR``, ``TENANT`` (env class paths).
+
+Outputs:
+    - Module-level ``app``: FastAPI ASGI application.
+    - Module-level ``_memory``: initialized ``MemoryEngine`` singleton.
+
+Side effects:
+    - Configures logging, suppresses third-party deprecation warnings.
+    - Sets ``TOKENIZERS_PARALLELISM=false`` for embedding workers.
+    - Runs DB migrations when ``run_migrations_on_startup`` is true (idempotent).
+    - Sets tenant extension context (DB URL + engine reference) when loaded.
+
+Mutability:
+    - ``_memory`` and ``app`` are created at import time — reload restarts process.
+
+Impact radius:
+    - Every HTTP/MCP route and background task handler depends on this wiring order.
+    - Changing extension load order can break schema provisioning or auth.
+
+Core logic:
+    Load config → extensions → engine → ``create_app(memory=..., mcp_enabled=...)``.
+
+Failure modes:
+    - Extension import/instantiation failures fail process startup.
+    - Migration failures block engine init when migrations enabled.
+
+Maintenance notes:
+    Good: add new extension hooks following ``load_extension`` pattern.
+    Bad: lazy-init ``MemoryEngine`` inside route handlers — breaks MCP mount and
+    extension context setup done here at import time.
 """
 
 import logging

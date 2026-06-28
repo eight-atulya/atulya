@@ -1,9 +1,66 @@
 """
-Task backend for distributed task processing.
+Task backend for distributed async operation execution.
 
-This provides an abstraction for task storage and execution:
-- BrokerTaskBackend: Uses PostgreSQL as broker (production)
-- SyncTaskBackend: Executes tasks immediately (testing/embedded)
+Purpose:
+    Abstracts how background work is queued and (optionally) executed. The API
+    submits task dicts; workers poll ``async_operations`` and call
+    ``MemoryEngine.execute_task`` to run them.
+
+Trigger path:
+    - ``MemoryEngine`` selects a backend at init based on ``worker_enabled`` and
+      test/embedded mode (see ``MemoryEngine._init_task_backend``).
+    - HTTP handlers and engine methods call ``submit_task`` after creating or
+      updating ``async_operations`` rows (retain, reflect, consolidation, etc.).
+    - ``WorkerPoller`` (separate process/module) claims rows and invokes the
+      registered executor; ``SyncTaskBackend`` executes inline in-process.
+
+Inputs:
+    - ``task_dict``: JSON-serializable dict with at least ``type``; often
+      ``operation_id``, ``bank_id``, and operation-specific payload fields.
+    - ``pool_getter`` / ``schema`` / ``schema_getter``: tenant routing for
+      ``BrokerTaskBackend``.
+    - Executor callback: async ``(task_dict) -> None``, typically
+      ``MemoryEngine.execute_task``.
+
+Outputs:
+    - ``BrokerTaskBackend``: INSERT/UPDATE on ``async_operations.task_payload``.
+    - ``SyncTaskBackend``: direct executor invocation; no queue row required
+      when ``operation_id`` is absent.
+    - Returns are always ``None``; outcomes are persisted by the executor.
+
+Side effects:
+    - PostgreSQL writes to ``async_operations`` (broker mode).
+    - In-process task execution (sync mode or when executor is registered).
+    - Error logging on executor failures; no automatic retry at this layer.
+
+Mutability:
+    - ``TaskBackend._executor`` and ``_initialized`` are set at runtime.
+    - ``task_dict`` is serialized to JSON; callers should treat it as immutable
+      after submit (workers read the stored payload).
+
+Impact radius:
+    - All async features: retain batches, reflect, consolidation, webhooks,
+      access-count updates, dream runs, etc.
+    - Changing publish semantics (``task_payload IS NULL`` guard) can corrupt
+      in-flight operations or duplicate work.
+    - Schema resolution must stay aligned with ``WorkerPoller`` and
+      ``WebhookManager``.
+
+Core logic:
+    - Broker: publish-once semantics — UPDATE only when ``task_payload IS NULL``;
+      otherwise INSERT a new pending operation.
+    - Sync: ``submit_task`` immediately calls ``_execute_task``.
+
+Failure modes:
+    - Missing executor: task is logged and skipped (broker still stores payload).
+    - Non-JSON-serializable task fields: ``json.dumps`` raises before DB write.
+    - Executor exceptions: logged with traceback; worker layer handles retries.
+
+Maintenance notes:
+    Good: add a new ``type`` value and handler in ``execute_task`` without
+    changing backend interfaces.
+    Bad: remove the ``task_payload IS NULL`` guard or bypass ``async_operations``
+    for operations that workers expect to claim.
 """
 
 import json
@@ -27,15 +84,32 @@ def fq_table(table: str, schema: str | None = None) -> str:
 
 class TaskBackend(ABC):
     """
-    Abstract base class for task execution backends.
+    Abstract base for task queue backends.
 
-    Implementations must:
-    1. Store/publish task events (as serializable dicts)
-    2. Execute tasks through a provided executor callback (optional)
+    Purpose:
+        Define the contract for publishing task dicts and optionally executing
+        them in-process when an executor is registered.
 
-    The backend treats tasks as pure dictionaries that can be serialized
-    and stored in the database. The executor (typically MemoryEngine.execute_task)
-    receives the dict and routes it to the appropriate handler.
+    Trigger path:
+        Subclassed by ``SyncTaskBackend`` and ``BrokerTaskBackend``; wired from
+        ``MemoryEngine`` during engine initialization.
+
+    Inputs:
+        Executor callback set via ``set_executor`` before worker/poller use.
+
+    Outputs / side effects:
+        Subclasses implement ``submit_task`` (queue or run) and ``shutdown``.
+
+    Mutability:
+        ``_executor`` and ``_initialized`` are instance state mutated at runtime.
+
+    Impact radius:
+        Any change to this interface affects both API submission and test sync
+        execution paths.
+
+    Maintenance notes:
+        Keep task dicts JSON-serializable; datetime handling is only in
+        ``BrokerTaskBackend.submit_task`` via ``datetime_encoder``.
     """
 
     def __init__(self):
@@ -100,10 +174,24 @@ class TaskBackend(ABC):
 
 class SyncTaskBackend(TaskBackend):
     """
-    Synchronous task backend that executes tasks immediately.
+    In-process task backend for tests and embedded mode.
 
-    This is useful for tests and embedded/CLI usage where we don't want
-    background workers. Tasks are executed inline rather than being queued.
+    Purpose:
+        Execute tasks immediately on ``submit_task`` without writing to
+        ``async_operations`` (unless the executor itself does).
+
+    Trigger path:
+        Selected when ``worker_enabled`` is false or in isolated test setups.
+
+    Side effects:
+        Runs executor synchronously in the caller's async context.
+
+    Failure modes:
+        Executor exceptions propagate to the ``submit_task`` caller.
+
+    Maintenance notes:
+        Do not use in production multi-worker deployments; there is no
+        cross-process queue or claim semantics.
     """
 
     async def initialize(self):
@@ -131,13 +219,35 @@ class SyncTaskBackend(TaskBackend):
 
 class BrokerTaskBackend(TaskBackend):
     """
-    Task backend using PostgreSQL as broker.
+    PostgreSQL-backed task publish backend (production default).
 
-    submit_task() stores task_payload in async_operations table.
-    Actual polling and execution is handled separately by WorkerPoller.
+    Purpose:
+        Persist ``task_payload`` on ``async_operations`` rows for ``WorkerPoller``
+        to claim with ``FOR UPDATE SKIP LOCKED``.
 
-    This backend is used by the API to store tasks. Workers poll
-    the database separately to claim and execute tasks.
+    Trigger path:
+        API ``MemoryEngine`` when background workers are enabled.
+
+    Inputs:
+        ``pool_getter``, static ``schema``, or dynamic ``schema_getter`` for
+        multi-tenant table qualification.
+
+    Side effects:
+        INSERT or conditional UPDATE on ``async_operations``; does not execute
+        tasks itself (except via separately registered executor in tests).
+
+    Core logic:
+        Publish-once UPDATE when ``operation_id`` is present; INSERT when absent.
+
+    Impact radius:
+        Worker fairness, webhook delivery ordering, and async operation status
+        all depend on consistent payload publication.
+
+    Maintenance notes:
+        Good: pass ``operation_id`` from the row created by the HTTP handler so
+        publish and claim share one operation record.
+        Bad: overwrite ``task_payload`` after a worker claim — the NULL guard
+        exists specifically to prevent that race.
     """
 
     def __init__(

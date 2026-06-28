@@ -1,4 +1,34 @@
-"""S3 object storage backend using obstore."""
+"""
+S3-compatible object storage backend (production scale).
+
+Purpose:
+    Offload retain uploads and codebase archives to S3, MinIO, R2, or other
+    S3-compatible APIs using the Rust-backed ``obstore`` client.
+
+Trigger path:
+    Selected when ``ATULYA_API_FILE_STORAGE=s3`` and bucket credentials are set
+    in ``MemoryEngine`` storage factory.
+
+Inputs:
+    - ``bucket``, ``region``, ``endpoint``, ``access_key_id``, ``secret_access_key``.
+    - ``allow_http`` inferred when ``endpoint`` uses ``http://`` (local MinIO).
+
+Outputs / side effects:
+    - Async put/get/delete/head/sign via ``obstore``.
+    - ``get_download_url`` returns time-limited presigned GET URLs.
+
+Failure modes:
+    - Missing keys mapped to ``FileNotFoundError`` on retrieve.
+    - ``exists`` swallows errors and returns False (does not distinguish auth vs missing).
+
+Impact radius:
+    Memory repo restore must copy objects when remapping ``storage_key`` values;
+    deleting DB rows without ``delete`` leaks bucket objects.
+
+Maintenance notes:
+    Good: use distinct key prefixes per bank for lifecycle policies.
+    Bad: assume PostgreSQL download API paths — clients must use presigned URLs.
+"""
 
 import logging
 from datetime import timedelta
@@ -13,10 +43,16 @@ logger = logging.getLogger(__name__)
 
 class S3FileStorage(FileStorage):
     """
-    S3-compatible object storage backend.
+    ``FileStorage`` implementation backed by ``obstore.store.S3Store``.
 
-    Uses obstore (Rust-backed) for high-throughput async access to
-    Amazon S3, MinIO, Cloudflare R2, and other S3-compliant APIs.
+    Purpose:
+        Durable, horizontally scalable binary storage with presigned downloads.
+
+    Mutability:
+        ``store`` overwrites objects at the same key (S3 put semantics).
+
+    Maintenance notes:
+        Endpoint and credential rotation requires engine restart to rebuild store.
     """
 
     def __init__(

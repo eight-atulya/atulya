@@ -1,3 +1,40 @@
+"""
+Embedded PostgreSQL lifecycle via pg0 (zero external DB setup).
+
+Purpose:
+    Start/stop a local PostgreSQL instance when ``ATULYA_API_DATABASE_URL`` is
+    ``pg0`` or ``pg0://instance[:port]``, enabling dev and tests without Docker.
+
+Trigger path:
+    - ``resolve_database_url`` during ``MemoryEngine`` / CLI startup.
+    - ``start_embedded_postgres`` / ``stop_embedded_postgres`` convenience APIs.
+
+Inputs:
+    - ``pg0`` / ``pg0://name`` / ``pg0://name:port`` URL forms.
+    - ``EmbeddedPostgres`` constructor: credentials, database name, optional port.
+
+Outputs:
+    - Resolved ``postgresql://`` connection URI after ``ensure_running``.
+
+Side effects:
+    - Spawns/stops OS PostgreSQL process via ``pg0`` (blocking calls in executor).
+    - Module singleton ``_default_instance`` for unnamed ``pg0`` URL.
+
+Mutability:
+    - ``_default_instance`` global; ``EmbeddedPostgres._pg0`` lazy-init.
+
+Impact radius:
+    - All schema migrations and data when using embedded mode.
+    - Port conflicts if multiple instances use the same name/port.
+
+Failure modes:
+    - ``start`` retries with exponential backoff; final ``RuntimeError`` if exhausted.
+    - ``stop`` ignores "not running" errors.
+
+Maintenance notes:
+    Good: use distinct ``pg0://instance-name`` for parallel test workers.
+    Bad: assume fixed port when ``port=None`` — pg0 auto-assigns.
+"""
 import asyncio
 import logging
 
@@ -11,7 +48,18 @@ DEFAULT_DATABASE = "atulya"
 
 
 class EmbeddedPostgres:
-    """Manages an embedded PostgreSQL server instance using pg0-embedded."""
+    """
+    Async wrapper around synchronous ``pg0.Pg0`` start/stop/info calls.
+
+    Purpose:
+        Bridge blocking pg0 APIs into asyncio via ``run_in_executor``.
+
+    Side effects:
+        Starts/stops a real PostgreSQL server process on the host.
+
+    Maintenance notes:
+        ``ensure_running`` is idempotent — safe to call on every URL resolve.
+    """
 
     def __init__(
         self,

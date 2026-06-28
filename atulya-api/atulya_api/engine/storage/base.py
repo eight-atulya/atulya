@@ -1,10 +1,62 @@
-"""Abstract base class for file storage backends."""
+"""
+File storage abstraction for retain uploads and codebase archives.
+
+Purpose:
+    Uniform async interface for storing binary artifacts referenced by
+    ``file_storage_key`` / ``source_archive_storage_key`` columns across banks,
+    documents, and codebase snapshots.
+
+Trigger path:
+    - ``MemoryEngine`` selects an implementation from ``ATULYA_API_FILE_STORAGE``
+      (PostgreSQL default, or S3/GCS/Azure) at init.
+    - Retain file upload, document download, memory repo restore/copy paths call
+      ``store`` / ``retrieve`` / ``delete`` / ``get_download_url``.
+
+Inputs:
+    - ``key``: logical path (e.g. ``banks/{bank_id}/files/{id}.pdf``).
+    - ``file_data``: raw bytes on write.
+    - Optional ``metadata`` (backend-specific; not all implementations persist it).
+
+Outputs:
+    - ``store`` returns the storage key (usually echo of input key).
+    - ``retrieve`` returns bytes; ``get_download_url`` returns API path or presigned URL.
+
+Side effects:
+    - External object store or PostgreSQL ``file_storage`` BYTEA rows.
+
+Mutability:
+    - Keys are overwrite-on-conflict in PostgreSQL backend; object stores follow
+      put semantics.
+
+Impact radius:
+    - Memory repo restore must remap storage keys when copying across banks.
+    - Deleting banks/documents without deleting orphaned blobs leaks storage.
+
+Failure modes:
+    - ``FileNotFoundError`` on missing keys (callers must handle).
+    - Backend-specific network/auth errors propagate from cloud providers.
+
+Maintenance notes:
+    Good: add a backend by subclassing ``FileStorage`` and wiring factory in engine.
+    Bad: bypass this interface and write BYTEA directly — breaks S3 deployments.
+"""
 
 from abc import ABC, abstractmethod
 
 
 class FileStorage(ABC):
-    """Abstract base for file storage backends."""
+    """
+    Async contract for durable binary artifact storage.
+
+    Purpose:
+        Isolate retain/repo/codebase flows from the concrete storage medium.
+
+    Trigger path:
+        Resolved once per ``MemoryEngine`` and passed into retain and repo services.
+
+    Maintenance notes:
+        All methods are bank-scoped only by key convention — enforcement is caller-side.
+    """
 
     @abstractmethod
     async def store(

@@ -1,8 +1,46 @@
 """
-FastAPI application factory and API routes for memory system.
+FastAPI application factory and HTTP dataplane routes.
 
-This module provides the create_app function to create and configure
-the FastAPI application with all API endpoints.
+Purpose:
+    Build the unified FastAPI app (HTTP ± MCP), register retain/recall/reflect,
+    bank admin, memory repos, forge, brain, dream, codebase, and async operation
+    endpoints. Proxied by ``atulya-control-plane`` route handlers.
+
+Trigger path:
+    - ``create_app`` from ``server.py``, CLI ``main.py``, and tests.
+    - Uvicorn serves ``app`` with ``MemoryEngine`` injected at factory time.
+
+Inputs:
+    - ``MemoryEngine`` instance, feature flags (MCP, admin, CORS), extension auth.
+    - Per-request: ``RequestContext`` from tenant extension, bank_id path params,
+      Pydantic bodies matching OpenAPI models.
+
+Outputs:
+    - JSON HTTP responses, streaming where applicable, OpenAPI schema surface.
+    - Side effects delegated to ``MemoryEngine`` (DB, LLM, task queue, webhooks).
+
+Side effects:
+    - Does not own business logic — calls engine methods that mutate bank state.
+    - May enqueue ``async_operations`` for long-running work.
+
+Mutability:
+    - Route handlers must not cache bank-scoped state on the app object.
+
+Impact radius:
+    - Public API contract consumed by SDKs, control plane, and MCP clients.
+    - Any request/response shape change requires OpenAPI regen and client updates.
+
+Core logic:
+    Auth/context middleware → validate models → engine call → serialize response.
+
+Failure modes:
+    - ``HTTPException`` for client errors; engine errors mapped to status codes.
+    - ``AuthenticationError`` from extensions becomes 401/403.
+
+Maintenance notes:
+    Good: add optional fields with defaults via ``FieldWithDefault`` for OpenAPI.
+    Bad: read ``get_config()`` for bank-hierarchical fields — use resolved config.
+    Bad: change route paths without regenerating clients and control-plane proxies.
 """
 
 import asyncio

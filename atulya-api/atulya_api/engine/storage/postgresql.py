@@ -1,4 +1,37 @@
-"""PostgreSQL BYTEA-based file storage (default, zero-config)."""
+"""
+PostgreSQL BYTEA file storage (zero-config default).
+
+Purpose:
+    Store uploaded files inline in the ``file_storage`` table for single-node and
+    dev deployments without object-store credentials.
+
+Trigger path:
+    Default when ``ATULYA_API_FILE_STORAGE=postgresql`` or unset; constructed in
+    ``MemoryEngine`` with ``pool_getter`` and tenant ``schema_getter``.
+
+Inputs:
+    - ``pool_getter``: returns shared ``asyncpg.Pool``.
+    - ``schema`` / ``schema_getter``: multi-tenant table qualification.
+
+Outputs / side effects:
+    - INSERT ... ON CONFLICT UPDATE on ``file_storage(storage_key, data)``.
+    - ``get_download_url`` returns a relative API path (auth at HTTP layer).
+
+Mutability:
+    ``store`` overwrites existing keys (upsert).
+
+Impact radius:
+    Large files bloat PostgreSQL backups and replication; repo clone/copy may
+    duplicate BYTEA rows when storage keys are remapped.
+
+Performance:
+    Suitable for small/medium files (<~10MB); high volume or large blobs should
+    use ``S3FileStorage``.
+
+Maintenance notes:
+    Good: keep keys stable and referenced from DB columns only.
+    Bad: store multi-GB archives here in production — use object storage instead.
+"""
 
 import logging
 from collections.abc import Callable
@@ -21,23 +54,20 @@ def fq_table(table: str, schema: str | None = None) -> str:
 
 class PostgreSQLFileStorage(FileStorage):
     """
-    PostgreSQL BYTEA-based file storage.
+    BYTEA-backed ``FileStorage`` using the shared API database pool.
 
-    Stores files directly in PostgreSQL using BYTEA columns.
-    This is the default storage backend - zero configuration required!
+    Purpose:
+        Transactionally co-locate file bytes with bank metadata for embedded pg0
+        and simple deployments.
 
-    Pros:
-    - Works out of the box (no external dependencies)
-    - Transactional consistency with database
-    - Simple backups (included in pg_dump)
-    - Good performance for <10MB files
+    Side effects:
+        Acquires pool connections per operation; one round-trip per method.
 
-    Cons:
-    - Database bloat for large/many files
-    - Not ideal for distributed deployments
-    - Higher cost than object storage at scale
+    Failure modes:
+        ``FileNotFoundError`` when ``retrieve`` finds no row.
 
-    For production/scale, consider S3FileStorage instead.
+    Maintenance notes:
+        ``schema_getter`` must match the tenant context of the calling request.
     """
 
     def __init__(

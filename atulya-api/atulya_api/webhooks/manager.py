@@ -1,4 +1,56 @@
-"""Webhook manager for delivering event notifications."""
+"""
+Webhook registration lookup and delivery queueing.
+
+Purpose:
+    Match fired domain events to registered webhooks (env-global and per-bank DB
+    rows) and enqueue ``webhook_delivery`` tasks on ``async_operations`` for
+    the worker to HTTP POST (via ``MemoryEngine._handle_webhook_delivery``).
+
+Trigger path:
+    - ``MemoryEngine`` after retain/consolidation completion (and similar flows).
+    - ``fire_event``: standalone pool acquire (post-commit delivery).
+    - ``fire_event_with_conn``: same transaction as the triggering write
+      (transactional outbox — delivery row rolls back if parent txn aborts).
+
+Inputs:
+    - ``WebhookEvent``: ``event``, ``bank_id``, ``operation_id``, ``status``,
+      ``timestamp``, typed ``data`` payload.
+    - ``global_webhooks``: parsed from env at engine init.
+    - ``schema``: tenant schema for ``webhooks`` and ``async_operations`` tables.
+
+Outputs:
+    - One ``async_operations`` INSERT per matched webhook (pending,
+      ``operation_type='webhook_delivery'``).
+    - Debug/error logs; no synchronous HTTP from this module.
+
+Side effects:
+    - PostgreSQL writes only; actual HTTP is deferred to workers.
+    - ``fire_event`` swallows queueing errors (primary operation already committed).
+    - ``fire_event_with_conn`` re-raises on failure (aborts enclosing txn).
+
+Mutability:
+    - Read-only on webhook config; creates new operation rows and UUIDs per match.
+
+Impact radius:
+    - Customer integrations listening for ``retain.completed`` /
+      ``consolidation.completed``.
+    - Retry schedule (``RETRY_DELAYS``) is consumed downstream in delivery handler,
+      not here.
+
+Core logic:
+    Load enabled webhooks where ``bank_id = event.bank_id OR bank_id IS NULL``,
+    filter by ``event_types``, serialize payload once, enqueue delivery tasks.
+
+Failure modes:
+    - DB errors in ``fire_event``: logged, event may be lost (no outbox).
+    - DB errors in ``fire_event_with_conn``: txn aborted — caller must retry all.
+
+Maintenance notes:
+    Good: add a new ``WebhookEventType`` and fire it from the completing operation
+    using ``fire_event_with_conn`` inside the success transaction.
+    Bad: perform synchronous HTTP here — would block retain/consolidation and
+    bypass worker retry/backoff semantics.
+"""
 
 import hashlib
 import hmac
@@ -41,11 +93,25 @@ def _parse_http_config(value: str | dict | None) -> WebhookHttpConfig:
 
 class WebhookManager:
     """
-    Manages webhook registration and event firing.
+    Queues webhook deliveries as async worker tasks.
 
-    Supports both global webhooks (configured via env vars) and per-bank
-    webhooks stored in the database. Deliveries are queued as async_operations
-    tasks (operation_type='webhook_delivery') and picked up by the worker poller.
+    Purpose:
+        Bridge domain events to outbound HTTP without blocking the dataplane.
+
+    Trigger path:
+        Constructed on ``MemoryEngine`` init; ``fire_event*`` called from engine
+        completion paths.
+
+    Inputs:
+        ``asyncpg.Pool``, env ``global_webhooks``, optional ``TenantExtension``.
+
+    Side effects:
+        Inserts into ``async_operations``; HMAC signing happens at delivery time
+        in the worker handler, not here.
+
+    Maintenance notes:
+        Global webhooks are prepended to DB rows — duplicate URLs may receive
+        multiple deliveries if registered both globally and per-bank.
     """
 
     def __init__(

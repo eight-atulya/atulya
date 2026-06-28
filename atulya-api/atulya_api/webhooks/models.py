@@ -1,4 +1,32 @@
-"""Pydantic models for the webhook system."""
+"""
+Pydantic contracts for webhook configuration and outbound event payloads.
+
+Purpose:
+    Typed boundaries between HTTP admin routes, ``WebhookManager``, and delivery
+    workers. Ensures consistent JSON shape for HMAC-signed POST bodies.
+
+Trigger path:
+    - ``WebhookConfig`` / ``WebhookHttpConfig``: loaded from DB rows or env.
+    - ``WebhookEvent``: built in ``MemoryEngine`` when firing after operations.
+
+Inputs:
+    - DB columns: ``url``, ``secret``, ``event_types``, ``http_config`` JSONB.
+    - Operation metadata: counts, errors, document IDs for event ``data``.
+
+Outputs:
+    - ``model_dump_json()`` used as the canonical delivery payload string.
+
+Side effects:
+    None — pure data models.
+
+Impact radius:
+    Changing field names or enum values breaks registered customer webhook
+    parsers and OpenAPI/admin UI contracts.
+
+Maintenance notes:
+    Good: extend ``WebhookEventType`` and add a matching ``*EventData`` model.
+    Bad: rename ``event`` or ``bank_id`` on ``WebhookEvent`` without versioning.
+"""
 
 from datetime import datetime
 from enum import StrEnum
