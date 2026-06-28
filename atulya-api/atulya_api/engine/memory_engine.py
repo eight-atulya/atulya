@@ -1,12 +1,66 @@
 """
-Memory Engine for Memory Banks.
+Memory Engine — central orchestrator for bank-scoped memory operations.
 
-This implements a sophisticated memory architecture that combines:
-1. Temporal links: Memories connected by time proximity
-2. Semantic links: Memories connected by meaning/similarity
-3. Entity links: Memories connected by shared entities (PERSON, ORG, etc.)
-4. Spreading activation: Search through the graph with activation decay
-5. Dynamic weighting: Recency and frequency-based importance
+Purpose:
+    Implement the Atulya dataplane: retain (ingest + structure), recall (multi-path
+    retrieval + rerank), reflect (agentic reasoning), consolidation, Brain/Dream,
+    forge/taste integration, memory repos, and async background work. This module is
+    the primary integration point between HTTP/MCP routes, PostgreSQL, LLM providers,
+    embeddings, and the worker task backend.
+
+Architecture (link types used during recall graph traversal):
+    1. Temporal links — memories connected by time proximity
+    2. Semantic links — vector similarity between units
+    3. Entity links — shared NER entities (PERSON, ORG, etc.)
+    4. Spreading activation — graph search with activation decay
+    5. Dynamic weighting — recency and frequency-based importance
+
+Trigger path:
+    - ``MemoryEngine`` constructed in ``server.py`` / ``main.py`` / worker processes
+    - Public methods invoked from ``api/http.py``, ``api/mcp.py``, extensions, and
+      ``worker/poller.py`` task handlers
+    - Internal submodules: ``engine/retain/*``, ``engine/search/*``, ``engine/reflect/*``,
+      ``forge/*``, ``brain/*``
+
+Inputs:
+    - ``RequestContext`` on every authenticated operation (tenant, API key, internal flag)
+    - Bank-scoped ``bank_id`` — strict isolation invariant (no cross-bank reads/writes)
+    - Per-bank resolved config via ``ConfigResolver`` (LLM, chunk sizes, feature flags)
+    - Schema from ``get_current_schema()`` contextvar (multi-tenant PostgreSQL schemas)
+
+Outputs / side effects:
+    - PostgreSQL reads/writes across facts, chunks, links, entities, observations,
+      mental models, operations, forge records, memory repo metadata, etc.
+    - LLM and embedding provider network calls (retain extraction, reflect loop, consolidation)
+    - Task queue submissions for long-running jobs (consolidation, forge, codebase ingest)
+    - Metrics, tracing spans, access telemetry on recall paths
+
+Mutability:
+    - ``_current_schema`` contextvar is set per-request/task; must not leak across async tasks.
+    - Engine instance holds connection pool, provider clients, and extension references;
+      bank data mutates only through explicit SQL transactions in submodules.
+
+Impact radius:
+    - Changes here affect every memory operation, benchmark, control-plane feature, and SDK.
+    - ``MemoryEngineInterface`` (``engine/interface.py``) documents the stable public surface;
+      HTTP routes should depend on that interface, not private ``_`` methods.
+
+Core logic:
+    - ``retain_batch_async`` → ``retain/orchestrator.retain_batch`` pipeline
+    - ``recall_async`` → query analysis → parallel retrieval → fusion → rerank → packaging
+    - ``reflect_async`` → ``reflect/agent.run_reflect_agent`` tool loop with injected callbacks
+
+Failure modes:
+    - DB pool exhaustion surfaces as timeouts (see ``db_budget``, ``acquire_with_retry``)
+    - LLM failures may retry per provider config; async ops record stage in ``operations`` table
+    - ``RetryTaskAt`` from worker for transient task failures
+
+Maintenance notes:
+    - Good: add new operations as interface methods + thin HTTP routes; keep bank isolation.
+    - Bad: read hierarchical config fields from ``get_config()`` global proxy (raises or
+      uses wrong defaults) — always resolve per bank.
+    - Bad: blur recall (retrieval-only) and reflect (reasoning) responsibilities.
+    - This file is large (~17k lines); prefer extending submodules over inlining new domains.
 """
 
 import asyncio
@@ -77,7 +131,25 @@ _current_schema: contextvars.ContextVar[str | None] = contextvars.ContextVar("cu
 
 
 def get_current_schema() -> str:
-    """Get the current schema from context (falls back to config default)."""
+    """Return the active PostgreSQL schema for this async task.
+
+    Trigger path:
+        Set via ``_current_schema`` contextvar during tenant-aware request handling
+        or worker task execution before DB access.
+
+    Inputs:
+        Contextvar override, else ``get_config().database_schema`` default.
+
+    Outputs:
+        Schema name string used by ``fq_table()`` and raw SQL builders.
+
+    Side effects:
+        None (read-only).
+
+    Maintenance notes:
+        - Good: set contextvar at request/task boundary once.
+        - Bad: pass schema manually to some queries but not others in the same operation.
+    """
     schema = _current_schema.get()
     if schema is None:
         # Fall back to configured default schema
@@ -568,13 +640,46 @@ def _normalize_triage_settings(raw: dict[str, Any]) -> dict[str, Any]:
 
 class MemoryEngine(MemoryEngineInterface):
     """
-    Advanced memory system using temporal and semantic linking with PostgreSQL.
+    PostgreSQL-backed memory system implementing retain, recall, reflect, and extensions.
 
-    This class provides:
-    - Embedding generation for semantic search
-    - Entity, temporal, and semantic link creation
-    - Think operations for formulating answers with opinions
-    - bank profile and disposition management
+    Purpose:
+        Single process-wide coordinator for all bank-scoped memory operations. Owns the
+        DB pool, provider clients, extension hooks, config resolution, and delegation
+        to specialized submodules (retain pipeline, search stack, reflect agent, forge).
+
+    Trigger path:
+        Instantiated once per API/worker process. HTTP/MCP routes and background workers
+        call public async methods defined on ``MemoryEngineInterface``.
+
+    Inputs:
+        Constructor params override env defaults (see ``__init__`` docstring).
+        Every operation requires ``bank_id`` + ``RequestContext`` for auth/tenant routing.
+
+    Outputs:
+        Typed result models (``RecallResult``, ``ReflectResult``, operation metadata dicts).
+        Side effects include SQL transactions, embedding/LLM calls, and task enqueue.
+
+    Mutability:
+        Holds mutable pool and provider state; does not store per-bank business data in
+        Python fields — bank state lives in PostgreSQL.
+
+    Impact radius:
+        Entire dataplane. Subclasses or monkey-patching break HTTP, MCP, workers, and tests.
+
+    Core subsystems (private wiring, public methods on interface):
+        - Retain: fact extraction, chunking, embeddings, entity/link graph writes
+        - Recall: parallel semantic/BM25/graph/temporal retrieval + reranking
+        - Reflect: agentic tool loop over mental models, observations, and raw facts
+        - Async ops: consolidation, forge jobs, codebase ingest via task backend
+
+    Failure modes:
+        Health check reports unhealthy when DB unreachable. Long retain batches split
+        internally to avoid statement timeouts.
+
+    Maintenance notes:
+        - Good: implement new features in submodules; expose via interface + one engine method.
+        - Bad: add cross-bank queries or bypass ``RequestContext`` authentication.
+        - Interface contract lives in ``engine/interface.py`` — keep it synchronized.
     """
 
     def __init__(

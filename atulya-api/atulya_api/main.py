@@ -1,13 +1,49 @@
 """
-Command-line interface for Atulya API.
+CLI entry point for starting the Atulya API server interactively.
 
-Run the server with:
-    atulya-api
+Purpose:
+    Parse command-line flags, merge them with environment-backed defaults from
+    ``AtulyaConfig``, construct a ``MemoryEngine``, and run uvicorn (optionally in
+    daemon mode with idle timeout).
 
-Run as background daemon:
-    atulya-api --daemon
+Trigger path:
+    - Console script ``atulya-api`` (see package entry points)
+    - ``python -m atulya_api.main``
 
-Stop with Ctrl+C.
+Inputs:
+    - CLI flags: ``--host``, ``--port``, ``--log-level``, ``--reload``, ``--workers``,
+      ``--daemon``, ``--idle-timeout``, LLM/db overrides, etc.
+    - Environment variables loaded by ``_get_raw_config()`` (see ``config.py``)
+    - Optional ``OPERATION_VALIDATOR`` and ``TENANT`` extensions
+
+Outputs / side effects:
+    - Starts uvicorn serving ``create_app(memory=...)`` (HTTP + optional MCP)
+    - Registers ``atexit`` handler ``_cleanup`` to stop embedded pg0 when used
+    - Global ``_memory`` reference retained for graceful pg0 shutdown
+
+Mutability:
+    - CLI overrides produce a new ``AtulyaConfig`` via ``dataclasses.replace``;
+      they do not mutate the cached global config singleton.
+
+Impact radius:
+    - Dev/prod operator experience: wrong flags here affect binding, workers,
+      reload, daemon lifecycle, and which LLM/db settings the engine sees at boot.
+
+Core logic:
+    1. Load env config → build argparse defaults.
+    2. Apply CLI overrides into a fresh ``AtulyaConfig``.
+    3. Load extensions and construct ``MemoryEngine`` with explicit parameters.
+    4. Optionally ``daemonize()`` then run uvicorn with chosen worker count.
+
+Failure modes:
+    - Invalid CLI combinations fall through to argparse errors.
+    - pg0 cleanup errors are logged on exit but do not block process termination.
+
+Maintenance notes:
+    - Good: add CLI flags that map cleanly to existing ``AtulyaConfig`` fields.
+    - Bad: bypass ``MemoryEngine`` construction paths used by ``server.py`` in ways
+      that change default behavior between import-string and CLI startup.
+    - ``server.py`` is the import-string path; keep behavioral parity for shared flags.
 """
 
 import argparse

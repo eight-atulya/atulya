@@ -1,8 +1,31 @@
 """
-Fact extraction from text using LLM.
+LLM-powered fact extraction for the retain pipeline.
 
-Extracts semantic facts, entities, and temporal information from text.
-Uses the LLMConfig wrapper for all LLM calls.
+Purpose:
+    Turn raw retain content into structured ``ProcessedFact`` rows, optional chunks,
+    and temporal/entity annotations using bank-configured LLM prompts and schemas.
+
+Trigger path:
+    - ``retain/orchestrator.retain_batch`` step 1 via ``extract_facts_from_contents``
+
+Inputs:
+    - ``RetainContent`` items (text, context, event_date, tags, metadata)
+    - ``LLMConfig`` for retain operation (per-bank resolved)
+    - Bank agent name and ``config`` chunk/label settings
+
+Outputs:
+    - Extracted facts list, chunk list, ``TokenUsage`` aggregate
+
+Side effects:
+    - LLM API calls (parallelized across contents where safe)
+    - Progress callbacks for long extraction phases
+
+Impact radius:
+    - Extraction quality drives entire memory graph; prompt/schema changes need retest
+
+Maintenance notes:
+    - Good: extend Pydantic fact models and validators for new fact types.
+    - Bad: bypass ``sanitize_llm_output`` or temporal classification helpers.
 """
 
 import asyncio

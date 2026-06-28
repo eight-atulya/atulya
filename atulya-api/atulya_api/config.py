@@ -1,7 +1,50 @@
 """
-Centralized configuration for Atulya API.
+Centralized configuration for the Atulya API server and worker processes.
 
-All environment variables and their defaults are defined here.
+Purpose:
+    Define environment variable names, defaults, the ``AtulyaConfig`` dataclass, and
+    accessors that enforce the hierarchical config model: **Global (env) → Tenant
+    (extension) → Bank (database)**.
+
+Trigger path:
+    - ``get_config()`` / ``_get_raw_config()`` at import and startup
+    - ``ConfigResolver.resolve_full_config(bank_id, context)`` per bank operation
+    - CLI overrides in ``main.py`` via ``dataclasses.replace``
+
+Inputs:
+    - ``.env`` file (via ``python-dotenv``, cwd-aware search)
+    - Process environment variables prefixed with ``ATULYA_API_``
+    - Bank/tenant overrides stored in DB (resolved outside this module)
+
+Outputs:
+    - ``StaticConfigProxy`` from ``get_config()`` — **static fields only**
+    - Full ``AtulyaConfig`` from ``_get_raw_config()`` (internal)
+    - Per-bank merged config from ``ConfigResolver`` (not defined here)
+
+Side effects:
+    - ``load_dotenv(..., override=True)`` mutates ``os.environ`` at import time
+
+Mutability:
+    - ``StaticConfigProxy`` is read-only; bank fields raise ``ConfigFieldAccessError``
+      to prevent accidental use of global defaults where bank overrides exist.
+
+Impact radius:
+    - Every LLM call, retrieval limit, feature flag, and infra knob flows from here.
+    - Misclassified hierarchical vs static fields cause subtle prod bugs (wrong model,
+      wrong chunk size, disabled features).
+
+Core logic:
+    - ``hierarchical()`` / ``static()`` field markers drive ``get_configurable_fields()``
+    - ``normalize_config_key`` bridges env var names and Python field names
+
+Failure modes:
+    - Accessing bank-configurable fields on ``get_config()`` raises with remediation text.
+
+Maintenance notes:
+    - Good: add new fields with explicit hierarchical/static classification + docs entry
+      in ``atulya-docs/docs/developer/configuration.md``.
+    - Bad: read ``enable_observations``-style fields from global config in engine code.
+    - See ``CLAUDE.md`` "Adding New API Configuration Flags" for the full checklist.
 """
 
 import json
@@ -755,7 +798,20 @@ def _get_default_model_for_provider(provider: str) -> str:
 
 @dataclass
 class AtulyaConfig:
-    """Configuration container for Atulya API."""
+    """Server configuration container loaded from environment variables.
+
+    Purpose:
+        Hold all ``ATULYA_API_*`` settings with typed defaults. Fields marked
+        hierarchical (via ``hierarchical()``) can be overridden per tenant/bank in the
+        database; static fields apply process-wide only.
+
+    Trigger path:
+        Built by ``AtulyaConfig.from_env()`` inside ``_get_raw_config()``.
+
+    Maintenance notes:
+        - Good: add ``ENV_*`` constant + ``DEFAULT_*`` + ``from_env`` wiring together.
+        - Bad: add hierarchical fields without listing them in ``_HIERARCHICAL_FIELDS``.
+    """
 
     # Database
     database_url: str

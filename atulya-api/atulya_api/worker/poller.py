@@ -1,8 +1,35 @@
 """
-Worker poller for distributed task execution.
+Distributed task poller — claims and executes async operations from PostgreSQL.
 
-Polls PostgreSQL for pending tasks and executes them using
-FOR UPDATE SKIP LOCKED for safe concurrent claiming.
+Purpose:
+    Worker-side loop that claims pending tasks using ``FOR UPDATE SKIP LOCKED``,
+    dispatches to typed handlers (consolidation, forge, batch retain, etc.), updates
+    operation progress, and respects tenant schema context per task.
+
+Trigger path:
+    - ``WorkerPoller.run()`` started from ``worker/main.py`` alongside metrics server
+
+Inputs:
+    - Shared ``MemoryEngine`` instance (same DB URL/schema config as API)
+    - Task rows from operations/task tables (schema from claimed task metadata)
+
+Outputs / side effects:
+    - Task status transitions (running, completed, failed, retry scheduled)
+    - Handler-specific side effects (forge persist, consolidation writes, etc.)
+    - Progress logs every ``PROGRESS_LOG_INTERVAL`` seconds for long tasks
+
+Mutability:
+    - ``ClaimedTask`` carries schema name applied to ``get_current_schema`` contextvar
+
+Core logic:
+    - Concurrent claim loop with backoff; ``RetryTaskAt`` reschedules transient failures
+
+Impact radius:
+    - Worker downtime blocks all async operator workflows (forge, consolidation, ingest)
+
+Maintenance notes:
+    - Good: add handler branch + engine method + task_type string in one change.
+    - Bad: claim tasks without setting schema context (cross-tenant data risk).
 """
 
 import asyncio
