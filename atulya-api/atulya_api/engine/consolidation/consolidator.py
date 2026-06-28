@@ -1,18 +1,51 @@
 """Consolidation engine for automatic observation creation from memories.
 
-The consolidation engine runs as a background job after retain operations complete.
-It processes new memories and either:
-- Creates new observations from novel facts
-- Updates existing observations when new evidence supports/contradicts/refines them
+Purpose:
+    After retain completes, synthesize durable ``observation`` memory units from
+    raw facts — creating, updating, or deleting observations based on new evidence.
+    Observations are bottom-up patterns; mental models are separate user-curated
+    summaries refreshed via reflect.
 
-Observations are stored in memory_units with fact_type='observation' and include:
-- proof_count: Number of supporting memories
-- source_memory_ids: Array of memory UUIDs that contribute to this observation
-- history: JSONB tracking changes over time
+Trigger path:
+    - Async worker task ``consolidation`` post-retain (primary path).
+    - ``MemoryEngine`` consolidation hooks and manual triggers.
 
-NOTE: Observations are distinct from mental models (pinned reflections).
-- Observations: auto-generated bottom-up by this engine from raw facts (memory_units table, fact_type='observation')
-- Mental models: user-defined queries stored in the mental_models table, refreshed on demand via reflect
+Inputs:
+    - New/updated ``memory_units`` (facts) for a bank scope.
+    - Bank config: observation caps, LLM provider, consolidation concurrency.
+    - Existing observations in scope via recall-like fanout inside batches.
+
+Outputs:
+    - INSERT/UPDATE/DELETE on ``memory_units`` where ``fact_type='observation'``.
+    - Updates ``proof_count``, ``source_memory_ids``, ``history`` JSONB.
+    - Webhook ``consolidation.completed`` when configured.
+
+Side effects:
+    - LLM batch calls (structured create/update/delete actions).
+    - Recall queries during batch building (semaphore-limited).
+    - PostgreSQL row locks via ``FOR SHARE`` on source memory liveness checks.
+
+Mutability:
+    - Observations and their JSONB history mutated in place.
+    - Module-level ``_consolidation_recall_semaphores`` keyed by concurrency limit.
+
+Impact radius:
+    - Downstream recall quality (observations appear in search/graph).
+    - Orphan observations if source memory delete races are mishandled.
+    - Distinct from mental_models table — do not conflate the two concepts.
+
+Core logic:
+    Batch new facts + candidate observations → LLM structured response → apply
+    creates/updates/deletes with live source ID filtering and scope caps.
+
+Failure modes:
+    - ``ConsolidationBatchError`` on unrecoverable LLM batch failures.
+    - Stale source IDs silently dropped by ``_filter_live_source_memories``.
+
+Maintenance notes:
+    Good: tighten caps via bank config without changing observation schema.
+    Bad: remove ``FOR SHARE`` liveness filter — allows orphan ``source_memory_ids``.
+    Bad: write mental model rows from this engine — violates layer separation.
 """
 
 import asyncio

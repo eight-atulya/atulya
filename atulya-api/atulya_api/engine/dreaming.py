@@ -1,5 +1,46 @@
 """
 Dream/Trance helpers for evidence-grounded foresight generation.
+
+Purpose:
+    Pure functions and Pydantic models for Dream runs: maturity scoring, HTML
+    artifact sizing, preset merging, prediction status, and layman-language
+    validation helpers. Does not perform LLM calls itself.
+
+Trigger path:
+    - ``MemoryEngine`` dream/trance worker tasks and HTTP dream endpoints import
+      these utilities when assembling prompts and validating LLM output.
+
+Inputs:
+    - ``DEFAULT_DREAM_CONFIG`` and ``PRESET_OVERRIDES`` baseline tuning.
+    - Recall results, bank signal stats, prior dream artifacts for novelty checks.
+
+Outputs:
+    - Validated structured dream artifacts, maturity tiers, promotion proposals.
+    - No direct database writes in this module (engine persists results).
+
+Side effects:
+    None at module level — stateless transforms except ``deepcopy`` on inputs.
+
+Mutability:
+    Callers must not mutate ``DEFAULT_DREAM_CONFIG`` in place; presets merge into
+    copies in engine code.
+
+Impact radius:
+    - Dream quality gates (``quality_threshold``, ``novelty_threshold``) affect
+      whether proposals reach human review vs auto-reject paths.
+    - HTML byte caps prevent oversized stored artifacts.
+
+Core logic:
+    Normalize config → score signal/maturity → validate LLM JSON/HTML → classify
+    run status (``success``, ``low_signal``, ``duplicate_low_novelty``, etc.).
+
+Failure modes:
+    - Validation failures map to ``failed_validation`` / ``failed_llm`` statuses
+      at the engine layer (handled outside this module).
+
+Maintenance notes:
+    Good: adjust thresholds via bank config presets without changing engine storage.
+    Bad: embed DB or LLM calls here — keep this module testable and side-effect free.
 """
 
 from __future__ import annotations

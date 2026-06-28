@@ -1,8 +1,49 @@
 """
-Worker poller for distributed task execution.
+Worker poller for distributed async task execution.
 
-Polls PostgreSQL for pending tasks and executes them using
-FOR UPDATE SKIP LOCKED for safe concurrent claiming.
+Purpose:
+    Claim pending ``async_operations`` rows across tenant schemas and execute them
+    through ``MemoryEngine.execute_task`` with fair concurrency limits per task type.
+
+Trigger path:
+    - ``atulya_api.worker.main`` starts one or more ``WorkerPoller`` instances.
+    - API may embed pollers when ``worker_enabled`` co-locates workers with API.
+
+Inputs:
+    - ``asyncpg.Pool``, unique ``worker_id``, executor callback, poll interval.
+    - Slot limits: ``max_slots``, ``consolidation_max_slots``, ``sub_routine_max_slots``.
+    - Optional ``TenantExtension`` for dynamic schema discovery.
+
+Outputs:
+    - Updates operation ``status``, ``result_metadata``, ``result_payload``, errors.
+    - Invokes executor with deserialized ``task_dict`` from ``task_payload``.
+
+Side effects:
+    - PostgreSQL ``FOR UPDATE SKIP LOCKED`` claims (multi-worker safe).
+    - Concurrent asyncio tasks per claimed operation.
+    - Progress logs every ``PROGRESS_LOG_INTERVAL`` seconds during long tasks.
+
+Mutability:
+    - In-memory slot counters and active task sets per poller instance.
+    - Claimed rows transition pending → running → completed/failed/retry.
+
+Impact radius:
+    - All async operations: retain, reflect, consolidation, webhooks, dream, etc.
+    - Slot misconfiguration can starve consolidation or overload LLM concurrency.
+    - Schema list must match ``BrokerTaskBackend`` publish paths.
+
+Core logic:
+    Poll schemas → claim next eligible row → deserialize payload → execute →
+    finalize or schedule retry via ``RetryTaskAt``.
+
+Failure modes:
+    - ``RetryTaskAt``: requeue with future timestamp (webhook backoff).
+    - Executor exceptions: persisted on operation row; may retry per type rules.
+
+Maintenance notes:
+    Good: tune slot caps via env without changing claim SQL.
+    Bad: remove ``SKIP LOCKED`` — workers will block each other on hot rows.
+    Bad: execute tasks without updating operation status — breaks client polling.
 """
 
 import asyncio
@@ -46,12 +87,17 @@ class ClaimedTask:
 
 class WorkerPoller:
     """
-    Polls PostgreSQL for pending tasks and executes them.
+    Multi-tenant PostgreSQL task consumer with typed concurrency gates.
 
-    Uses FOR UPDATE SKIP LOCKED for safe distributed claiming,
-    allowing multiple workers to process tasks without conflicts.
+    Purpose:
+        Bridge ``async_operations`` queue rows to ``execute_task`` handlers.
 
-    Supports dynamic multi-tenant discovery via tenant_extension.
+    Trigger path:
+        Worker process main loop; one poller may serve many tenant schemas.
+
+    Maintenance notes:
+        ``ClaimedTask.schema`` must be passed through to executor so handlers
+        qualify tables with the same schema the row was claimed from.
     """
 
     def __init__(

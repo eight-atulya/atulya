@@ -1,11 +1,51 @@
 """
-Configuration resolution with hierarchical overrides.
+Hierarchical configuration resolution: global → tenant → bank.
 
-Resolves config values through the hierarchy:
-  Global (env vars) → Tenant config (via extension) → Bank config (database)
+Purpose:
+    Merge environment defaults, tenant extension overrides, and per-bank JSONB
+    config so every request sees consistent LLM/retain/recall settings without
+    caching stale values across API replicas.
 
-Config values are resolved on every request to ensure consistency across
-multiple API servers.
+Trigger path:
+    - ``MemoryEngine.get_resolved_config`` / operation handlers per request.
+    - HTTP bank config GET/PATCH routes via ``ConfigResolver`` methods.
+    - Internal engine paths call ``resolve_full_config`` (includes credentials).
+
+Inputs:
+    - ``bank_id``, optional ``RequestContext`` for tenant extension.
+    - ``banks.config`` JSONB column (bank overrides).
+    - ``TenantExtension.get_tenant_config`` / ``get_allowed_config_fields``.
+
+Outputs:
+    - ``resolve_full_config``: complete ``AtulyaConfig`` dataclass (internal).
+    - ``get_bank_config``: filtered dict safe for API responses (no credentials).
+    - ``update_bank_config`` / ``reset_bank_config``: mutates ``banks.config``.
+
+Side effects:
+    - PostgreSQL read on every resolve; write on config updates.
+    - Logs applied override keys at debug level.
+
+Mutability:
+    - ``banks.config`` merged with ``||`` on update; reset clears to ``{}``.
+    - Global env config is read once at resolver init (``_global_config`` snapshot).
+
+Impact radius:
+    - Every LLM call, embedding dimension, retain mode, and feature flag.
+    - Mis-filtering credentials in ``get_bank_config`` is a security regression.
+
+Core logic:
+    Layer overrides in order; normalize env-style keys; strip non-configurable and
+    credential fields for external API; enforce tenant permission allowlists.
+
+Failure modes:
+    - Tenant extension errors: logged, resolution continues without tenant layer.
+    - Invalid update fields: ``ValueError`` before DB write.
+    - Permission check errors on update: fail-open (backward compatibility).
+
+Maintenance notes:
+    Good: add a field to ``_HIERARCHICAL_FIELDS`` in ``config.py`` and document it.
+    Bad: cache ``resolve_full_config`` per bank — breaks multi-server consistency.
+    Bad: expose credential fields via ``get_bank_config``.
 """
 
 import json
@@ -24,7 +64,19 @@ logger = logging.getLogger(__name__)
 
 
 class ConfigResolver:
-    """Resolves hierarchical configuration with tenant/bank overrides."""
+    """
+    Per-request bank configuration merger with security filtering.
+
+    Purpose:
+        Single entry point for hierarchical config reads/writes on ``banks.config``.
+
+    Trigger path:
+        Owned by ``MemoryEngine``; passed into retain/recall/reflect subsystems.
+
+    Maintenance notes:
+        Use ``resolve_full_config`` inside the engine; never return it from HTTP.
+        Use ``get_config()`` static proxy only for non-hierarchical fields.
+    """
 
     def __init__(self, pool: asyncpg.Pool, tenant_extension: TenantExtension | None = None):
         """

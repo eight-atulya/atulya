@@ -1,4 +1,51 @@
-"""Git-like memory repo snapshotting and branch workspace orchestration."""
+"""
+Git-like memory repo snapshotting, branches, and workspace materialization.
+
+Purpose:
+    Provide version control semantics over a bank's durable state: capture
+    snapshots, commit manifests, branch checkout, clone/fork/restore across banks
+    with identifier remapping for external storage pointers.
+
+Trigger path:
+    - HTTP routes under ``/v1/.../memory-repos`` in ``api/http.py``.
+    - ``MemoryEngine`` delegates to ``MemoryRepoService`` for repo operations.
+
+Inputs:
+    - ``bank_id``, ``repo_id``, branch/ref names, component filters for partial
+      snapshots, ``RequestContext`` for auth/profile checks.
+    - Source snapshot JSON manifests and ``RestoreIdMaps`` for cross-bank restore.
+
+Outputs:
+    - Rows in ``memory_repos``, ``memory_commits``, ``memory_refs``, snapshot
+      blob tables; duplicated rows across many bank-scoped tables on restore.
+    - Remapped ``file_storage_key`` / archive keys when ``remap_enabled``.
+
+Side effects:
+    - Heavy PostgreSQL read/write across ``_COMPONENT_TABLES`` domains.
+    - File storage copy when external keys are remapped during restore.
+    - ``_column_cache`` mutated per (schema, table) for introspection caching.
+
+Mutability:
+    - ``RestoreIdMaps`` accumulates old→new ID mappings during restore walks.
+    - Active branch pointers and head commits updated on checkout/commit.
+
+Impact radius:
+    - Incorrect remap skips leak cross-bank references or break downloads.
+    - Partial component restore can leave inconsistent graph/codebase linkage.
+    - Tests in ``tests/test_memory_repos.py`` are the contract guard.
+
+Core logic:
+    Snapshot = serialized table rows + manifest hash; restore replays inserts
+    with ID remapping and optional independent file copies.
+
+Failure modes:
+    - Missing source rows or storage keys surface as partial restore / errors.
+    - Long transactions may deadlock — callers use ``acquire_with_retry``.
+
+Maintenance notes:
+    Good: add new tables to ``RestoreIdMaps`` and ``_COMPONENT_TABLES`` together.
+    Bad: copy rows without remapping external storage keys — breaks isolation.
+"""
 
 from __future__ import annotations
 
@@ -25,7 +72,20 @@ logger = logging.getLogger(__name__)
 
 @dataclass(slots=True)
 class RestoreIdMaps:
-    """Identifier remap state for restoring one snapshot into another workspace bank."""
+    """
+    Old→new identifier maps used during snapshot restore into a target bank.
+
+    Purpose:
+        Track remapped primary keys and external storage keys so foreign-key-like
+        arrays and file pointers remain consistent after restore.
+
+    Mutability:
+        Dict fields are appended during restore walks; treat as working state.
+
+    Maintenance notes:
+        Any new table with external blob references needs a matching map field
+        and replay logic in restore — see ``_ORIGIN_ID_MAP_FIELDS``.
+    """
 
     remap_enabled: bool = False
     chunk_ids: dict[str, str] = field(default_factory=dict)
@@ -163,7 +223,22 @@ def _fq_table(name: str) -> str:
 
 
 class MemoryRepoService:
-    """Encapsulates repo snapshot, branch, and commit behavior."""
+    """
+    Orchestrates repo CRUD, snapshots, commits, branches, and restore.
+
+    Purpose:
+        Encapsulate git-like memory repo behavior behind ``MemoryEngine`` methods.
+
+    Trigger path:
+        Instantiated on ``MemoryEngine``; methods called from HTTP repo routes.
+
+    Side effects:
+        Multi-table PostgreSQL transactions; may invoke file storage copy.
+
+    Maintenance notes:
+        ``_column_cache`` avoids repeated information_schema queries — invalidate
+        logic is process-lifetime only (safe for long-running API, not schema migrations mid-flight).
+    """
 
     def __init__(self, engine: "MemoryEngine"):
         self._engine = engine

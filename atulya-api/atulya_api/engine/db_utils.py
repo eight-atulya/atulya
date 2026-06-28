@@ -1,5 +1,38 @@
 """
-Database utility functions for connection management with retry logic.
+Database connection helpers with transient-failure retry.
+
+Purpose:
+    Wrap ``asyncpg`` pool acquire and one-shot operations with exponential backoff
+    for deadlocks, connection drops, and pool exhaustion bursts.
+
+Trigger path:
+    - ``acquire_with_retry``: long transactions (memory repos, bulk writes).
+    - ``retry_with_backoff``: ad-hoc retry wrapper for callable DB work.
+
+Inputs:
+    - ``asyncpg.Pool``, retry counts/delays, ``RETRYABLE_EXCEPTIONS`` tuple.
+
+Outputs:
+    - Yields connection from ``acquire_with_retry``; returns func result from
+      ``retry_with_backoff``.
+
+Side effects:
+    - Sleeps between retries; warning/error logs on failure.
+
+Mutability:
+    None — does not mutate pool or connection state beyond acquire/release.
+
+Impact radius:
+    - Memory repo snapshot/restore reliability under load.
+    - Over-aggressive retries can amplify thundering herds on DB outages.
+
+Failure modes:
+    - Re-raises last exception after exhausting retries.
+    - Non-retryable exceptions (e.g. syntax errors) fail immediately.
+
+Maintenance notes:
+    Good: use for multi-statement repo operations that may hit transient deadlocks.
+    Bad: wrap idempotent-sensitive logic without application-level idempotency keys.
 """
 
 import asyncio
