@@ -1,5 +1,47 @@
 """
 Flaw detection over causal and opinion structures.
+
+Purpose
+    Heuristic post-retain analysis of ``caused_by`` links and opinion memories
+    to emit ``DetectedAnomaly`` instances for the anomaly intelligence pipeline.
+
+Trigger path
+    - ``engine/retain/orchestrator.retain_batch`` after facts/links are written,
+      within the same DB connection/transaction context.
+
+Inputs
+    - Open asyncpg ``conn``, ``bank_id``, and ``unit_ids`` from the retain batch.
+
+Outputs
+    - List of ``DetectedAnomaly`` (may be empty); caller persists via
+      ``anomaly_detection.persist_anomalies``.
+
+Side effects
+    - Read-only queries against ``memory_links`` and ``memory_units`` (including
+      pgvector distance for unsupported-opinion check).
+
+Mutability
+    None — pure detection.
+
+Impact radius
+    - Triggers adaptive corrections for high-severity contradictions.
+    - Causal flaw suggestions surface to operators as acknowledged events.
+
+Core logic
+    1. Build ``caused_by`` adjacency → DFS cycle detection (severity 1.0).
+    2. For each causal pair: temporal violation if cause ``occurred_start`` after
+       effect; missing-step if embedding cosine similarity < 0.30.
+    3. For opinions: flag if no world/experience neighbor within distance 0.40.
+
+Failure modes
+    - Empty ``unit_ids`` returns immediately.
+    - Missing embeddings skip similarity checks silently.
+
+Maintenance notes
+    - Good: tune thresholds with benchmark-backed justification in comments.
+    - Bad: write to ``memory_units`` here — corrections belong in
+      ``adaptive_correction`` or explicit operator actions.
+    - Severity for temporal violations scales with delta up to 7 days.
 """
 
 from __future__ import annotations
@@ -13,6 +55,7 @@ from atulya_api.engine.memory_engine import fq_table
 
 
 def _detect_cycle(adjacency: dict[str, set[str]]) -> list[list[str]]:
+    """Return causal cycles as node paths (used for flaw_circular anomalies)."""
     visited: set[str] = set()
     stack: set[str] = set()
     path: list[str] = []
@@ -46,6 +89,7 @@ async def detect_flaws(
     bank_id: str,
     unit_ids: list[str],
 ) -> list[DetectedAnomaly]:
+    """Detect causal and opinion-structure flaws for memories in ``unit_ids``."""
     if not unit_ids:
         return []
 
@@ -99,6 +143,7 @@ async def detect_flaws(
             target_time = target_row["occurred_start"]
             if isinstance(source_time, datetime) and isinstance(target_time, datetime) and source_time > target_time:
                 delta_seconds = (source_time - target_time).total_seconds()
+                # Scale severity up to 1.0 over a 7-day cause-after-effect gap.
                 severity = max(0.0, min(1.0, delta_seconds / (7 * 86400)))
                 anomalies.append(
                     DetectedAnomaly(

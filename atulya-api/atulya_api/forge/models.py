@@ -1,4 +1,45 @@
-"""Canonical Atulya Training Record (ATR) models for Data Forge."""
+"""Canonical Atulya Training Record (ATR) models for Data Forge.
+
+Purpose
+    Define the shared training-data contract (ATR) produced by forge recipes
+    and consumed by exporters (JSONL, OpenAI chat, graph intelligence). Also
+    holds forge job request/status types and export manifests.
+
+Trigger path
+    - Recipes in ``forge/recipes/*`` build ``AtulyaTrainingRecord`` instances.
+    - ``forge/job.py`` audits records; ``forge/engine.py`` persists and exports.
+    - Taste export materializes simplified records then uses same exporters.
+
+Inputs
+    - Bank memory snapshots (facts, observations, links, graph) from recipes.
+    - ``ForgeJobRequest`` from HTTP/worker with recipe_id, ingest source, options.
+
+Outputs
+    - Serialized ATR JSON stored in ``forge_records`` table.
+    - ``ExportManifest`` with adapter output and lineage block.
+
+Side effects
+    None at model layer.
+
+Mutability
+    - ``TrainingLabels`` fields vary by recipe (only relevant label slots populated).
+    - ``QualityScore.exportable`` set by ``forge/quality.audit_record``.
+
+Impact radius
+    - All training exporters, eval pipelines, and future fine-tune adapters.
+    - ``LineageBlock`` ties records to recipe version and optional repo commit.
+
+Core logic
+    - ATR bundles timeline context, evidence snapshots, tasks, labels, provenance,
+      quality gates, and lineage for auditability.
+
+Failure modes
+    - Pydantic validation on ``ForgeJobRequest`` / ``query_anchor`` coercion.
+
+Maintenance notes
+    - Good: add optional label sub-fields without breaking existing exporters.
+    - Bad: change ``record_id`` or ``forge_job_id`` semantics without migration.
+"""
 
 from __future__ import annotations
 
@@ -99,6 +140,8 @@ class TrainingTask(BaseModel):
 
 
 class TrainingLabels(BaseModel):
+    """Supervision targets; only recipe-relevant fields are populated per record."""
+
     answer: str | None = None
     gold_answer: str | None = None
     cited_memory_ids: list[str] = Field(default_factory=list)
@@ -106,12 +149,14 @@ class TrainingLabels(BaseModel):
     cited_mental_model_ids: list[str] = Field(default_factory=list)
     tool_trace: list[ToolTraceStep] = Field(default_factory=list)
     structured_output: dict[str, Any] | None = None
-    expected_graph: dict[str, Any] | None = None
-    belief_update: dict[str, Any] | None = None
-    consolidation_pair: dict[str, Any] | None = None
+    expected_graph: dict[str, Any] | None = None  # graph_state recipe
+    belief_update: dict[str, Any] | None = None  # belief_update recipe
+    consolidation_pair: dict[str, Any] | None = None  # consolidation_pairs recipe
 
 
 class ProvenanceBlock(BaseModel):
+    """Pointers back to source documents/chunks in the memory bank."""
+
     document_ids: list[str] = Field(default_factory=list)
     chunk_ids: list[str] = Field(default_factory=list)
     source_chains: list[list[str]] = Field(default_factory=list)
@@ -119,17 +164,21 @@ class ProvenanceBlock(BaseModel):
 
 
 class QualityScore(BaseModel):
+    """Gate computed by ``forge/quality.audit_record`` before export."""
+
     overall: float = 0.0
     provenance_complete: bool = False
     temporal_coherent: bool = True
     citation_valid: bool = True
     contradiction_unresolved: bool = False
     judge_score: float | None = None
-    exportable: bool = False
+    exportable: bool = False  # True when overall >= job quality_threshold
     issues: list[str] = Field(default_factory=list)
 
 
 class LineageBlock(BaseModel):
+    """Audit trail linking a record to recipe, model, and optional repo snapshot."""
+
     snapshot_hash: str | None = None
     repo_commit_id: str | None = None
     recipe_id: str
@@ -141,6 +190,8 @@ class LineageBlock(BaseModel):
 
 
 class AtulyaTrainingRecord(BaseModel):
+    """Canonical training record (ATR) — single exportable unit from Data Forge."""
+
     record_id: str
     forge_job_id: str
     bank_id: str
@@ -187,6 +238,8 @@ class ForgeIngestSource(BaseModel):
 
 
 class ForgeJobRequest(BaseModel):
+    """Request to run a forge job: ingest → consolidate → recipe → quality audit."""
+
     recipe_id: ForgeRecipeId
     domain_tags: list[str] = Field(default_factory=list)
     source: ForgeIngestSource | None = None

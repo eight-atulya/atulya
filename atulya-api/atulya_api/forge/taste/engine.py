@@ -1,4 +1,62 @@
-"""MemoryEngine integration for Taste Studio."""
+"""MemoryEngine integration for Taste Studio.
+
+Purpose
+    Orchestrates Taste Studio workflows: dataset/set CRUD, transform chains,
+    LLM variant generation, ATR export, and one-click retain into bank memory.
+    Sits between HTTP routes (``api/http.py``) / async worker jobs and the
+  ``store``, ``transforms``, ``variants``, and ``retain`` submodules.
+
+Trigger path
+    - Sync: ``taste_*`` handlers called from HTTP routes after auth.
+    - Async: ``submit_taste_transform`` / ``submit_taste_generate`` enqueue
+      worker tasks when batch size exceeds thresholds; worker invokes
+      ``handle_taste_transform_job`` / ``handle_taste_variant_job``.
+
+Inputs
+    - ``MemoryEngine`` for pool access, tenant auth, LLM config resolution,
+      and async operation submission.
+    - Pydantic request models from ``.models`` (``TasteTransformRequest``, etc.).
+    - ``RequestContext`` for tenant/API-key propagation into jobs.
+
+Outputs
+    - JSON-serializable dict responses for HTTP; async jobs return the same
+      shape via operation result storage.
+    - On persist transforms: updated ``forge_taste_sets`` rows via ``store``.
+
+Side effects
+    - PostgreSQL writes through ``store`` (sets, transform logs, variants).
+    - LLM calls during transforms and variant generation.
+    - ``retain_taste_sets`` creates ``memory_units`` in the target bank.
+    - Async path: ``memory_engine._submit_async_operation`` inserts task rows.
+
+Mutability
+    - ``preview=True`` transforms mutate only in-memory copies of ``TasteSet``.
+    - ``persist`` path appends to ``transform_log`` and overwrites
+      ``working_payload``; ``source_payload`` stays immutable until revert.
+
+Impact radius
+    - Control-plane Taste Studio UI, OpenAPI taste routes, forge exporters
+      (``atr_jsonl``, ``openai_chat_jsonl``), and bank memory when retain runs.
+    - Changing async thresholds affects latency vs worker load tradeoff.
+
+Core logic
+    - Resolve target sets → apply transform op chain (or saved chain) per set →
+      optionally persist with hashed audit log entries.
+    - Export materializes sets to ATR records then delegates to forge exporters.
+
+Failure modes
+    - ``TasteNotFoundError`` / ``TasteValidationError`` for bad IDs, schema, or
+      empty targets; worker jobs raise ``ValueError`` on missing ``bank_id``.
+    - Unknown transform ops bubble from ``get_transform`` as validation errors.
+
+Maintenance notes
+    - Good: add a new transform op via ``transforms/registry`` without touching
+      this file beyond catalog exposure.
+    - Bad: bypass ``_authenticate_tenant`` in CRUD wrappers or run transforms
+      without schema validation from the parent dataset.
+    - ``ASYNC_TRANSFORM_THRESHOLD`` and ``ASYNC_GENERATE_WORK_THRESHOLD`` are
+      tuning knobs; document changes in release notes when adjusted.
+"""
 
 from __future__ import annotations
 
@@ -51,11 +109,14 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
+# Sets above this count (or full-dataset transform) go through the async worker.
 ASYNC_TRANSFORM_THRESHOLD = 3
+# LLM work units = len(set_ids) * count; above this, variant generation is async.
 ASYNC_GENERATE_WORK_THRESHOLD = 12
 
 
 def _ensure_sets_in_dataset(taste_sets: list[Any], dataset_id: str) -> None:
+    """Raise if any set does not belong to the requested dataset."""
     mismatched = [row.id for row in taste_sets if row.dataset_id != dataset_id]
     if mismatched:
         raise TasteValidationError(
@@ -71,6 +132,7 @@ async def _resolve_target_sets(
     dataset_id: str,
     set_ids: list[str],
 ) -> list[Any]:
+    """Return explicit sets by ID, or all sets in the dataset when ``set_ids`` is empty."""
     if set_ids:
         taste_sets = await get_sets_by_ids(memory_engine, bank_id, set_ids)
         if len(taste_sets) != len(set_ids):
@@ -81,6 +143,7 @@ async def _resolve_target_sets(
 
 
 def taste_catalog_payload() -> dict[str, Any]:
+    """Build static catalog of schema types, transform ops, and taste-safe exporters."""
     from atulya_api.forge.metadata import EXPORTER_METADATA
 
     return {
@@ -99,6 +162,7 @@ def taste_catalog_payload() -> dict[str, Any]:
 
 
 async def _resolve_llm(memory_engine: "MemoryEngine", bank_id: str, request_context: "RequestContext"):
+    """Resolve bank-hierarchical LLM config used by LLM-backed transforms."""
     config = await memory_engine._config_resolver.resolve_full_config(bank_id, request_context)
     llm_config = memory_engine._consolidation_llm_config.with_config(config)
     return llm_config, getattr(config, "llm_model", None)
@@ -109,6 +173,7 @@ async def _resolve_ops(
     bank_id: str,
     request: TasteTransformRequest,
 ) -> list[TransformOpSpec]:
+    """Load ops from a saved chain or inline ``request.ops``; requires one source."""
     if request.chain_id:
         chain = await get_transform_chain(memory_engine, bank_id, request.chain_id)
         return chain.ops
@@ -127,6 +192,7 @@ async def _apply_ops_to_set(
     request_context: "RequestContext",
     persist: bool,
 ) -> dict[str, Any]:
+    """Run a transform op chain on one set; persist appends audit log entries to the DB."""
     llm_config, model_name = await _resolve_llm(memory_engine, bank_id, request_context)
     ctx = TasteTransformContext(bank_id=bank_id, schema_type=schema_type, llm_config=llm_config, model_name=model_name)
     before = dict(taste_set.working_payload)
@@ -173,6 +239,7 @@ async def run_taste_transform(
     *,
     request_context: "RequestContext",
 ) -> dict[str, Any]:
+    """Apply transform ops to target sets; ``preview`` skips DB persistence."""
     await memory_engine._authenticate_tenant(request_context)
     dataset = await get_dataset(memory_engine, bank_id, request.dataset_id)
     ops = await _resolve_ops(memory_engine, bank_id, request)
@@ -206,6 +273,7 @@ async def run_taste_transform(
 
 
 async def handle_taste_transform_job(memory_engine: "MemoryEngine", task_dict: dict[str, Any]) -> dict[str, Any]:
+    """Worker entry point for async taste transform jobs."""
     from atulya_api.models import RequestContext
 
     bank_id = task_dict.get("bank_id")
@@ -233,6 +301,7 @@ async def submit_taste_transform(
     *,
     request_context: "RequestContext",
 ) -> dict[str, Any]:
+    """Run transform inline or enqueue async job based on target set count."""
     await memory_engine._authenticate_tenant(request_context)
     if request.preview:
         return await run_taste_transform(memory_engine, bank_id, request, request_context=request_context)
@@ -267,6 +336,7 @@ async def run_taste_generate(
     *,
     request_context: "RequestContext",
 ) -> dict[str, Any]:
+    """LLM-generate variant sets from parent sets and persist as child rows."""
     await memory_engine._authenticate_tenant(request_context)
     dataset = await get_dataset(memory_engine, bank_id, dataset_id)
     parents = await get_sets_by_ids(memory_engine, bank_id, request.set_ids)
@@ -300,6 +370,7 @@ async def run_taste_generate(
 
 
 async def handle_taste_variant_job(memory_engine: "MemoryEngine", task_dict: dict[str, Any]) -> dict[str, Any]:
+    """Worker entry point for async taste variant generation jobs."""
     from atulya_api.models import RequestContext
 
     bank_id = task_dict.get("bank_id")
@@ -333,6 +404,7 @@ async def submit_taste_generate(
     *,
     request_context: "RequestContext",
 ) -> dict[str, Any]:
+    """Run variant generation inline or enqueue when LLM work exceeds threshold."""
     await memory_engine._authenticate_tenant(request_context)
     llm_work = len(request.set_ids) * request.count
     if llm_work <= ASYNC_GENERATE_WORK_THRESHOLD:
@@ -364,6 +436,7 @@ async def export_taste_dataset(
     *,
     request_context: "RequestContext",
 ) -> dict[str, Any]:
+    """Materialize taste sets to ATR records and export via a forge adapter."""
     await memory_engine._authenticate_tenant(request_context)
     dataset = await get_dataset(memory_engine, bank_id, request.dataset_id)
     if request.set_ids:
@@ -395,6 +468,7 @@ async def retain_taste_sets_request(
     *,
     request_context: "RequestContext",
 ) -> dict[str, Any]:
+    """Retain selected taste sets into bank memory and mark sets as ``retained``."""
     await memory_engine._authenticate_tenant(request_context)
     taste_sets = await get_sets_by_ids(memory_engine, bank_id, request.set_ids)
     if len(taste_sets) != len(request.set_ids):

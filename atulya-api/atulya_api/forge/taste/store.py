@@ -1,4 +1,56 @@
-"""Database persistence for Taste Studio."""
+"""Database persistence for Taste Studio.
+
+Purpose
+    CRUD and lineage operations for ``forge_taste_datasets``, ``forge_taste_sets``,
+    and ``forge_transform_chains`` tables. Maps asyncpg rows to Pydantic models.
+
+Trigger path
+    Called exclusively from ``forge/taste/engine.py``, ``retain.py``, and
+    transform handlers — not directly from HTTP routes.
+
+Inputs
+    - ``MemoryEngine`` for connection pool (``_get_pool``) and tenant schema
+      via ``fq_table``.
+    - UUID string IDs, JSON payloads validated upstream or via ``validation``.
+
+Outputs
+    - ``TasteDataset``, ``TasteSet``, ``TasteTransformChain`` models.
+    - Paginated dict for ``list_sets`` (``sets``, ``total``, ``limit``, ``offset``).
+
+Side effects
+    - INSERT/UPDATE/DELETE on forge taste tables within bank tenant schema.
+    - ``import_sets`` and ``create_variant_sets`` run in transactions.
+    - ``revert_set`` clears transform log, retain linkage, and resets working copy.
+
+Mutability
+    - ``source_payload`` is set at import/variant creation and not updated by
+      transforms (only ``working_payload`` changes).
+    - ``transform_log`` is append-only via ``append_transform_log``; revert
+      resets it to empty.
+    - Status lifecycle: ``draft`` → ``ready`` (manual) → ``retained`` (after
+      retain) or back to ``draft`` on revert.
+
+Impact radius
+    - All Taste Studio UI data, export materialization, and retain linkage
+      (``memory_unit_ids``, ``entity_ids`` on sets).
+    - Dataset ``updated_at`` bumped on set mutations for list ordering.
+
+Core logic
+    - Row mappers coerce JSONB/text columns into typed Pydantic structures.
+    - Import assigns sequential ``set_key`` values with optional prefix.
+    - Variants share ``set_key`` with parent but increment ``variant_index``.
+
+Failure modes
+    - Invalid UUIDs raise ``TasteNotFoundError`` (intentionally vague message).
+    - Missing rows on delete/update raise ``TasteNotFoundError``.
+    - Payload validation on ``update_set`` delegates to ``validate_payload_for_schema``.
+
+Maintenance notes
+    - Good: add columns with matching changes to ``_row_to_*`` mappers and models.
+    - Bad: delete datasets without CASCADE awareness — FK behavior depends on
+      migration definitions; verify schema before adding hard deletes.
+    - ``LIST_SETS_PAGE_SIZE`` caps page size; ``list_all_sets`` paginates internally.
+"""
 
 from __future__ import annotations
 
@@ -132,6 +184,7 @@ async def _get_dataset_row(conn: Any, bank_id: str, dataset_id: str) -> Any:
 
 
 async def list_datasets(memory_engine: "MemoryEngine", bank_id: str) -> list[TasteDataset]:
+    """List datasets for a bank with aggregated ``set_count`` per dataset."""
     pool = await memory_engine._get_pool()
     async with acquire_with_retry(pool) as conn:
         rows = await conn.fetch(
@@ -159,6 +212,7 @@ async def create_dataset(
     schema_type: str,
     taste_tags: list[str],
 ) -> TasteDataset:
+    """Insert a new taste dataset; sets start empty."""
     pool = await memory_engine._get_pool()
     now = _utcnow()
     async with acquire_with_retry(pool) as conn:
@@ -356,6 +410,7 @@ async def import_sets(
     taste_tags: list[str] | None = None,
     set_key_prefix: str | None = None,
 ) -> list[TasteSet]:
+    """Bulk-import sets; both ``source_payload`` and ``working_payload`` start identical."""
     pool = await memory_engine._get_pool()
     dataset_uuid = _parse_uuid(dataset_id, label="Dataset")
     async with acquire_with_retry(pool) as conn:
@@ -456,6 +511,7 @@ async def update_set(
 
 
 async def revert_set(memory_engine: "MemoryEngine", bank_id: str, set_id: str) -> TasteSet:
+    """Reset working copy to source, clear transform log and retain linkage."""
     pool = await memory_engine._get_pool()
     set_uuid = _parse_uuid(set_id, label="Set")
     async with acquire_with_retry(pool) as conn:
@@ -491,6 +547,7 @@ async def append_transform_log(
     entry: TransformLogEntry,
     working_payload: dict[str, Any],
 ) -> TasteSet:
+    """Atomically append one transform audit entry and update working payload."""
     pool = await memory_engine._get_pool()
     set_uuid = _parse_uuid(set_id, label="Set")
     async with acquire_with_retry(pool) as conn:
@@ -537,6 +594,7 @@ async def create_variant_sets(
     *,
     variants: list[dict[str, Any]],
 ) -> list[TasteSet]:
+    """Insert child variant rows sharing parent's ``set_key`` with incremented index."""
     pool = await memory_engine._get_pool()
     created: list[TasteSet] = []
     now = _utcnow()
@@ -590,6 +648,7 @@ async def update_set_after_retain(
     memory_unit_ids: list[str],
     entity_ids: list[str] | None = None,
 ) -> TasteSet:
+    """Link retained memory units to a set and mark status ``retained``."""
     pool = await memory_engine._get_pool()
     set_uuid = _parse_uuid(set_id, label="Set")
     async with acquire_with_retry(pool) as conn:
