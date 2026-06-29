@@ -1,4 +1,40 @@
-"""Base types for forge recipes."""
+"""Base types for forge recipes.
+
+Purpose
+    Shared recipe infrastructure: execution context, result wrapper, bank snapshot
+    loading, timeline construction from ingest, and lineage helpers.
+
+Trigger path
+    - ``forge/job.run_forge_job`` builds ``ForgeRecipeContext`` and calls
+      ``recipe.run(ctx)`` on the registered recipe implementation.
+
+Inputs
+    - ``ForgeRecipeContext`` carries engine, bank, job id, domain tags, options,
+      max_records cap, and normalized ingest sessions.
+
+Outputs
+    - ``RecipeResult`` with list of ``AtulyaTrainingRecord`` (may be empty).
+
+Side effects
+    - ``load_bank_snapshots`` reads ``memory_units`` and ``memory_links`` tables.
+
+Mutability
+    - Context is passed read-only to recipes; recipes build new record lists.
+
+Impact radius
+    - All six recipe modules inherit ``BaseForgeRecipe`` contract.
+
+Core logic
+    - ``load_bank_snapshots`` loads world/experience facts, observations, and
+      causal links (limit scaled by ``max_records``).
+
+Failure modes
+    - Unimplemented ``BaseForgeRecipe.run`` raises ``NotImplementedError``.
+
+Maintenance notes
+    - Good: add snapshot fields in ``FactSnapshot`` with matching SQL column.
+    - Bad: raise ``max_records`` limits in SQL without index awareness.
+"""
 
 from __future__ import annotations
 
@@ -28,6 +64,8 @@ if TYPE_CHECKING:
 
 @dataclass
 class ForgeRecipeContext:
+    """Immutable-ish execution context passed to every forge recipe."""
+
     memory_engine: "MemoryEngine"
     bank_id: str
     forge_job_id: str
@@ -41,10 +79,14 @@ class ForgeRecipeContext:
 
 @dataclass
 class RecipeResult:
+    """Output of ``BaseForgeRecipe.run``."""
+
     records: list[AtulyaTrainingRecord] = field(default_factory=list)
 
 
 class BaseForgeRecipe:
+    """Recipe plugin base; each recipe sets ``recipe_id`` and implements ``run``."""
+
     recipe_id: str = "base"
     version: str = "1"
 

@@ -1,4 +1,42 @@
-"""Validation helpers for Taste Studio payloads."""
+"""Validation helpers for Taste Studio payloads.
+
+Purpose
+    Enforce schema-specific payload shape at import and manual set update time.
+    Centralizes rules so HTTP, store, and engine share one validation path.
+
+Trigger path
+    - ``store.import_sets`` and ``store.update_set`` when ``working_payload`` changes.
+    - ``parse_import_sets`` during bulk import (JSONL or inline sets).
+
+Inputs
+    - ``schema_type``: ``openai_chat``, ``qa_pair``, or ``custom``.
+    - Payload dicts or JSONL string (mutually exclusive with inline sets).
+
+Outputs
+    - ``validate_payload_for_schema``: None on success; raises on failure.
+    - ``parse_import_sets``: list of validated payload dicts.
+
+Side effects
+    None — pure validation.
+
+Mutability
+    Input payloads are read-only; callers own the returned list.
+
+Impact radius
+    - All taste import/update error messages seen by operators.
+    - ``MAX_IMPORT_ROWS`` caps bulk import size per request.
+
+Core logic
+    - Per-schema required fields (messages[], question/answer, non-empty custom).
+    - JSONL: one JSON object per non-empty line, max 500 rows.
+
+Failure modes
+    - ``TasteValidationError`` with ``field`` hint for API error mapping.
+
+Maintenance notes
+    - Good: add a new ``schema_type`` with explicit rules here and in catalog.
+    - Bad: skip validation in a new code path that writes ``working_payload``.
+"""
 
 from __future__ import annotations
 
@@ -16,6 +54,7 @@ def _non_empty_str(value: Any) -> bool:
 
 
 def validate_payload_for_schema(payload: dict[str, Any], schema_type: TasteSchemaType) -> None:
+    """Raise ``TasteValidationError`` if payload does not match ``schema_type`` rules."""
     if schema_type == "openai_chat":
         messages = payload.get("messages")
         if not isinstance(messages, list) or not messages:
@@ -43,6 +82,7 @@ def parse_import_sets(
     sets: list[dict[str, Any]] | None = None,
     jsonl: str | None = None,
 ) -> list[dict[str, Any]]:
+    """Parse and validate import input; ``jsonl`` and ``sets`` are mutually exclusive."""
     has_jsonl = bool(jsonl and jsonl.strip())
     has_sets = bool(sets)
     if has_jsonl and has_sets:
