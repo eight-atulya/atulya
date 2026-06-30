@@ -1,4 +1,64 @@
-"""Tenant Extension for multi-tenancy and API key authentication."""
+"""
+Tenant extension: multi-tenancy, RBAC, and API-key authentication.
+
+Purpose
+-------
+Defines the ``TenantExtension`` hook that maps incoming ``RequestContext`` to a
+``TenantContext`` (PostgreSQL schema + role + bank allowlist). This is the
+security boundary between HTTP/MCP/worker entry and per-tenant data isolation.
+
+Trigger path
+------------
+Loaded via ``extensions.loader.load_extension("TENANT", TenantExtension)``
+during server startup. ``authenticate()`` runs per request in ``api/http.py``
+and ``api/mcp.py``; ``list_tenants()`` feeds worker poller tenant discovery.
+
+Inputs
+------
+- ``RequestContext`` (api_key, internal flag, allowed_bank_ids from upstream).
+- Extension config from ``ATULYA_API_TENANT_*`` env vars.
+- ``Role`` vocabulary: ``superuser`` > ``admin`` > ``user``.
+
+Outputs
+------
+- ``TenantContext`` with ``schema_name`` for fully-qualified SQL.
+- Optional tenant config overrides via ``get_tenant_config()``.
+- ``AuthenticationError`` on failure (surfaced as 401).
+
+Side effects
+------------
+None directly — sets context used by subsequent DB queries. Mis-authentication
+prevents all engine access for that request.
+
+Mutability
+----------
+``TenantContext`` is immutable after construction except ``is_superuser`` which
+is derived from ``role`` in ``__post_init__``. Never set ``is_superuser``
+directly.
+
+Impact radius
+-------------
+Every database query depends on resolved ``schema_name``. Changing role checks
+or ``can_access_bank`` affects all bank-scoped endpoints and MCP tools.
+
+Core logic
+----------
+RBAC via ``has_role()``; ABAC via ``allowed_bank_ids`` (None = unrestricted
+within schema). Superusers bypass bank allowlists.
+
+Failure modes
+-------------
+``AuthenticationError`` with optional response headers. Invalid roles fall to
+least-privileged index in ``has_role``.
+
+Maintenance notes
+-----------------
+Good: add a new ``Role`` here and extend ``ROLES_ORDERED`` once.
+
+Bad: scatter role string literals in HTTP routes — use ``TenantContext`` helpers.
+
+Bad: return a schema name without validating the caller — breaks tenant isolation.
+"""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
