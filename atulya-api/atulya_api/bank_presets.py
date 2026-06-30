@@ -1,7 +1,61 @@
-"""Curated per-bank configuration presets for create/update bank APIs.
+"""
+Curated bank configuration presets for create/update bank APIs.
 
-Presets are merged into bank config before explicit request fields (explicit wins).
-Keep text lean: retain_custom_instructions replaces the default extraction guideline block.
+Purpose
+-------
+Supplies opinionated default config bundles (missions, extraction instructions,
+feature flags) and seeded mental-model/directive content when operators choose
+a preset at bank creation — e.g. the ``codebase`` preset for repository memory.
+
+Trigger path
+------------
+``merge_bank_preset()`` is called from ``api/http.py`` bank create/update
+handlers before config is persisted. ``MemoryEngine`` imports
+``CODEBASE_SEED_MENTAL_MODELS`` and ``CODEBASE_SEED_DIRECTIVE`` during
+preset-aware bank initialization.
+
+Inputs
+------
+- ``preset_key`` from API request (e.g. ``"codebase"``).
+- ``explicit_updates`` dict from request body (wins over preset fields).
+- Stable UUID namespace for deterministic preset mental-model IDs.
+
+Outputs
+------
+Merged config dict written to bank hierarchical config. Seed structures for
+mental models and directives inserted once per new preset bank.
+
+Side effects
+------------
+None in this module — callers persist merged config and seeds via engine/SQL.
+
+Mutability
+----------
+``BANK_PRESET_CONFIG`` is module-level constant; do not mutate at runtime.
+``merge_bank_preset`` returns a new dict without modifying inputs.
+
+Impact radius
+-------------
+Preset text directly shapes retain extraction and reflect behavior for every
+bank created with that preset. Changing ``_preset_mental_model_id`` namespace or
+IDs breaks idempotent seeding assumptions.
+
+Core logic
+----------
+Shallow merge: preset base overlaid by explicit non-empty request fields.
+Preset-specific LLM instruction blocks are large strings — keep them lean per
+file header note; ``retain_custom_instructions`` replaces the default guideline.
+
+Failure modes
+-------------
+Unknown preset keys are ignored (empty base). Invalid explicit fields are
+validated downstream by config resolution.
+
+Maintenance notes
+-----------------
+Good: add a new preset key with missions + seed IDs without changing merge logic.
+
+Bad: edit preset instruction text without reviewing retain quality on real repos.
 """
 
 from __future__ import annotations

@@ -1,4 +1,55 @@
-"""Pydantic models for directives."""
+"""
+Pydantic model for bank-scoped reasoning directives.
+
+Purpose
+-------
+Defines the ``Directive`` shape used when listing, creating, or injecting
+hard rules into reflect prompts. Directives are explicit user-authored
+constraints (unlike mental models, which are consolidated from memory).
+
+Trigger path
+------------
+Loaded from PostgreSQL by ``MemoryEngine`` directive CRUD and reflect assembly.
+Referenced in ``response_models.DirectiveRef`` when reflect reports which
+directives were applied. HTTP routes in ``api/http.py`` and MCP tools in
+``mcp_tools.py`` expose CRUD to clients.
+
+Inputs
+------
+Database rows or create/update payloads: ``bank_id``, ``name``, ``content``,
+``priority``, ``is_active``, ``tags``.
+
+Outputs
+------
+Validated ``Directive`` instances sorted by priority during prompt injection.
+Inactive directives are filtered out before reflect.
+
+Side effects
+------------
+None at this layer — persistence is handled by ``MemoryEngine`` SQL.
+
+Mutability
+----------
+Pydantic instances are immutable; updates go through engine methods that write
+new row versions.
+
+Impact radius
+-------------
+Changing ``content`` semantics or priority ordering affects every reflect call
+for banks with directives. ``bank_presets`` seeds a codebase directive on bank
+create — keep preset content aligned with this schema.
+
+Failure modes
+-------------
+UUID/datetime parse failures on read indicate corrupt rows.
+
+Maintenance notes
+-----------------
+Good: add optional metadata fields with defaults.
+
+Bad: merge directives into mental-model tables — they have different lifecycle
+and injection rules.
+"""
 
 from datetime import datetime, timezone
 from uuid import UUID
@@ -7,16 +58,11 @@ from pydantic import BaseModel, Field
 
 
 class Directive(BaseModel):
-    """A directive is a hard rule injected into prompts.
+    """
+    Hard rule injected into reflect prompts for a single bank.
 
-    Directives are user-defined rules that guide agent behavior. Unlike mental models
-    which are automatically consolidated from memories, directives are explicit
-    instructions that are always included in relevant prompts.
-
-    Examples:
-    - "Always respond in formal English"
-    - "Never share personal data with third parties"
-    - "Prefer conservative investment recommendations"
+    Higher ``priority`` values are injected first. Only rows with ``is_active=True``
+    participate in reflect assembly. Stored in PostgreSQL outside ORM ``models.py``.
     """
 
     id: UUID = Field(description="Unique identifier")
