@@ -1,5 +1,75 @@
 """
-SQLAlchemy models for the memory system.
+SQLAlchemy ORM models for the Atulya memory dataplane.
+
+Purpose
+-------
+Defines the canonical table mappings for core memory storage: documents, memory
+units, entities, graph links, bank profiles, entity trajectories/intelligence,
+and git-like memory-repo objects. Also defines ``RequestContext``, the auth
+envelope propagated from HTTP/MCP/worker entry points into ``MemoryEngine``.
+
+Trigger path
+------------
+Imported by ``MemoryEngine``, Alembic migrations, admin backup/restore
+(``admin/cli.py``), and any code that needs typed row shapes. ORM models are
+not the only database access path — much of ``MemoryEngine`` uses raw SQL with
+fully-qualified ``{schema}.table`` names — but migrations and backup manifests
+treat these classes as the schema contract.
+
+Inputs
+------
+- ``EMBEDDING_DIMENSION`` from ``config`` (vector column width for HNSW index).
+- Tenant schema is **not** embedded in models; callers qualify table names at
+  query time via ``TenantContext.schema_name``.
+
+Outputs
+-------
+- SQLAlchemy ``Mapped`` column definitions and relationship graphs used by
+  Alembic autogenerate and documentation.
+- ``RequestContext`` instances consumed by extensions and engine methods.
+
+Side effects
+------------
+None at import time. Instances are not persisted until explicit session/commit
+in callers (most engine paths use asyncpg directly instead of the ORM session).
+
+Mutability
+----------
+ORM instances are mutable once loaded. ``RequestContext`` is a plain dataclass
+mutated by middleware (tenant_id, allowed_bank_ids). Composite primary keys
+(``Document.id + bank_id``, ``MemoryLink`` quadruple) are immutable identity
+once inserted.
+
+Impact radius
+-------------
+Schema changes here require Alembic migrations, admin ``BACKUP_TABLES`` order
+updates, and may break recall indexes (HNSW), FK cascades, and memory-repo
+materialization. Mental models and directives are **not** modeled here — they
+live in separate tables accessed via raw SQL in ``MemoryEngine``.
+
+Core logic
+----------
+Maps PostgreSQL tables to Python types with bank-scoped isolation:
+``bank_id`` appears on nearly every user-data table. Memory graph is
+``MemoryUnit`` nodes connected by ``MemoryLink`` (temporal/semantic/entity/
+causal). ``MemoryRepo`` + ``MemoryCommit`` + ``MemoryRef`` + ``MemoryWorkspace``
+model branch-aware repo semantics.
+
+Failure modes
+-------------
+Constraint violations (fact_type checks, confidence_score rules, entity
+co-occurrence ordering) surface at INSERT/UPDATE time. Misaligned migration vs
+model causes Alembic drift or restore FK failures.
+
+Maintenance notes
+-----------------
+Good: add a migration + ``BACKUP_TABLES`` entry in the correct FK layer when
+adding a table.
+
+Bad: rename columns without updating raw SQL in ``MemoryEngine``, MCP tools,
+and backup manifest — ORM-only changes will not update the hot path.
+
+Bad: add cross-bank FKs — bank isolation is a repo invariant.
 """
 
 from dataclasses import dataclass
@@ -10,11 +80,18 @@ from uuid import UUID as PyUUID
 @dataclass
 class RequestContext:
     """
-    Context for request authentication and authorization.
+    Auth and tenancy envelope for a single engine operation.
 
-    This dataclass carries authentication data from HTTP requests to the
-    memory engine operations. It can be extended to include additional
-    context like headers, tokens, user info, etc.
+    Built by HTTP middleware (``api/http.py``), MCP auth (``api/mcp.py``), or
+    worker paths and passed into ``MemoryEngine`` methods. ``TenantExtension``
+    reads ``api_key`` / ``internal`` / ``allowed_bank_ids`` during
+    ``authenticate()``; the resolved ``tenant_id`` may be written back before
+    engine execution.
+
+    ``internal=True`` skips extension auth (background jobs). ``user_initiated``
+    marks async work that originated from an external request (used for metering
+    and validation). ``allowed_bank_ids=None`` means unrestricted bank access
+    within the tenant schema.
     """
 
     api_key: str | None = None

@@ -1,10 +1,64 @@
 """
-Runtime bridge for atulya-brain.
+Runtime bridge for atulya-brain: `.atulya` cache and native sub_routines.
 
-This runtime is intentionally fail-safe:
-- PostgreSQL remains source of truth
-- `.atulya` files are derived cache artifacts
-- failures do not block core memory operations
+Purpose
+-------
+Materializes and reads derived ``brain.atulya`` snapshot files from PostgreSQL
+bank state. Optional native library executes sub_routines (warmup/incremental/
+full_copy) for influence prediction. Designed fail-safe: core retain/recall/
+reflect never depend on brain file success.
+
+Trigger path
+------------
+``MemoryEngine`` holds ``AtulyaBrainRuntime`` when brain features enabled.
+``sync_brain_file``, ``run_sub_routine``, and remote fetch paths call into here
+from engine brain endpoints and background jobs.
+
+Inputs
+------
+- ``BrainRuntimeConfig``: enabled flag, cache_dir, native path, circuit breaker,
+  max file size, hardware tier, prediction mode.
+- PostgreSQL rows for activity histograms, HMM/Kalman models (via activity_models).
+- Optional remote brain URLs via ``fetch_remote_brain``.
+
+Outputs
+------
+Encoded ``.atulya`` files on disk; ``BrainSnapshot`` / compatibility reports;
+metrics counter increments; optional native prediction results.
+
+Side effects
+------------
+Filesystem writes under ``cache_dir`` (atomic temp + rename). Native CDLL
+calls when library loaded. Circuit opens after ``circuit_breaker_threshold``
+failures — disables runtime until restart.
+
+Mutability
+----------
+``_failure_count``, ``_circuit_open``, ``_metrics`` mutated per operation.
+PostgreSQL is never written by this module directly.
+
+Impact radius
+-------------
+Brain file corruption affects only derived cache — Postgres rebuild can recover.
+Circuit breaker mis-tuning disables all brain acceleration silently (logs only).
+
+Core logic
+----------
+Encode/decode via ``brain.models``; merge activity models; native path optional.
+Failures call ``_mark_failure`` without raising to engine callers.
+
+Failure modes
+-------------
+Missing native lib → Python-only path. Oversized files rejected. Remote fetch
+errors logged; local cache retained.
+
+Maintenance notes
+-----------------
+Good: extend snapshot schema with versioned compatibility checks.
+
+Bad: treat ``.atulya`` as source of truth — Postgres always wins.
+
+Bad: propagate brain runtime exceptions into retain/recall — must stay fail-safe.
 """
 
 from __future__ import annotations
@@ -48,7 +102,13 @@ class BrainRuntimeConfig:
 
 
 class AtulyaBrainRuntime:
-    """Runtime manager for brain.atulya cache and sub_routine execution."""
+    """
+    Manages brain.atulya cache files and optional native sub_routine execution.
+
+    Owned by ``MemoryEngine`` when brain is enabled. Callers should use ``enabled``
+    property before invoking native paths. Circuit breaker opens after repeated
+    failures — subsequent calls no-op until process restart.
+    """
 
     def __init__(self, config: BrainRuntimeConfig):
         self._config = config
