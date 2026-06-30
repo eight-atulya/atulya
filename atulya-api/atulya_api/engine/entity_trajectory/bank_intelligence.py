@@ -1,4 +1,65 @@
-"""Bank-level entity intelligence built from entity inventory + trajectories."""
+"""
+Bank-level entity intelligence: "digital person" synthesis from trajectories.
+
+Purpose
+-------
+Aggregates per-entity inventory, co-occurrence, trajectory forecasts, and fact
+previews into a single bank-scoped intelligence document (markdown + structured
+JSON). Powers anomaly/entity map features and persisted ``entity_intelligence``
+rows.
+
+Trigger path
+------------
+Invoked from ``MemoryEngine`` entity intelligence endpoints and background
+refresh paths. Reads ``entities``, ``entity_trajectories``, and related facts
+via asyncpg; writes via intelligence persistence helpers.
+
+Inputs
+------
+- Entity rows with metadata, mention counts, categories (``categorize_entity_name``).
+- Trajectory JSON: state vocabulary, Viterbi path, forecast distribution.
+- ``LLMConfig`` for synthesis; prompt version ``_PROMPT_VERSION``.
+
+Outputs
+------
+- ``build_entity_intelligence_context`` dict fed to LLM.
+- Structured ``StructuredDocument`` with delta apply for incremental updates.
+- Persisted content + ``entity_snapshot_hash`` for change detection.
+
+Side effects
+------------
+LLM API calls; INSERT/UPDATE on ``entity_intelligence`` table; token counting
+via tiktoken for budget trimming.
+
+Mutability
+----------
+Context dicts are built fresh per run; delta ops mutate structured doc in memory
+before render — not the database until persist.
+
+Impact radius
+-------------
+Prompt or category heuristic changes alter all bank intelligence outputs.
+``_snapshot_hash`` invalidates caches — changing hash inputs triggers full regen.
+
+Core logic
+----------
+``_build_digital_person_map`` clusters entities into circles/categories;
+LLM synthesizes narrative sections; ``apply_operations`` merges deltas onto
+prior structured content when possible.
+
+Failure modes
+-------------
+``ValidationError`` on malformed persisted JSON falls back to default document.
+LLM JSON parse failures logged; partial context may yield thin intelligence.
+
+Maintenance notes
+-----------------
+Good: bump ``_PROMPT_VERSION`` when changing prompt semantics for auditability.
+
+Bad: invent facts beyond supplied inventory — prompts explicitly forbid this.
+
+Bad: change categorization without backfill — stale intelligence until refresh.
+"""
 
 from __future__ import annotations
 

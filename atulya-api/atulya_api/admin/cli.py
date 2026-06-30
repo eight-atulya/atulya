@@ -1,5 +1,63 @@
 """
-Atulya Admin CLI - backup and restore operations.
+Atulya Admin CLI (`atulya-admin`): migrations, backup, restore, maintenance.
+
+Purpose
+-------
+Operator-facing Typer CLI for database lifecycle tasks that must not run inside
+the hot API path: schema migrations, tenant-scoped backup/restore ZIPs, worker
+decommission, and timeline metadata backfills.
+
+Trigger path
+------------
+Installed as console script ``atulya-admin``. Commands: ``backup``, ``restore``,
+``run-db-migration``, ``decommission-worker``, ``backfill-timeline-metadata``.
+Invoked manually or in deploy scripts; uses ``AtulyaConfig`` / ``resolve_database_url``.
+
+Inputs
+------
+- ``ATULYA_API_DATABASE_URL`` or pg0 embedded URL.
+- Target schema name (``--schema``) for multi-tenant migrations/backups.
+- Backup ZIP paths; ``BACKUP_TABLES`` ordered manifest for COPY in/out.
+
+Outputs
+------
+- Migration stdout / Alembic side effects on target schema.
+- ZIP backups with per-table COPY data + manifest JSON.
+- Restore truncates in reverse FK order then COPY inserts; refreshes derived views.
+
+Side effects
+------------
+**Destructive on restore** (truncate + reload). Migrations alter DDL. Backfill
+commands UPDATE rows in place. All require live PostgreSQL connectivity.
+
+Mutability
+----------
+``BACKUP_TABLES`` is the authoritative table order — edit when migrations add
+tables (see inline layer comments). Restore mutates entire schema data set.
+
+Impact radius
+-------------
+Wrong ``BACKUP_TABLES`` ordering causes FK violations on restore (loud failure).
+Omitting new tables from manifest means backups silently miss data. Migration
+failures block deploys for all tenants sharing the database.
+
+Core logic
+----------
+``_fq_table`` qualifies names. Backup streams COPY TO; restore TRUNCATE CASCADE
+reverse order then COPY FROM. ``run-db-migration`` wraps Alembic programmatically.
+
+Failure modes
+-------------
+FK errors on restore; connection errors; partial ZIP corrupts restore. Timeline
+backfill may be long-running — interrupts leave partial updates.
+
+Maintenance notes
+-----------------
+Good: add new tables to ``BACKUP_TABLES`` in correct FK layer with migration.
+
+Bad: include ``alembic_version`` or materialized views in backup — documented exclusions.
+
+Bad: run restore against production without schema isolation confirmation.
 """
 
 import asyncio

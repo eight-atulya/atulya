@@ -1,5 +1,63 @@
 """
-LLM wrapper for unified configuration across providers.
+Unified LLM provider facade for retain, reflect, consolidation, and forge.
+
+Purpose
+-------
+Routes chat/completion requests to provider-specific backends (OpenAI, Groq,
+Anthropic, Gemini/Vertex, Ollama, LM Studio, llama.cpp, mock, etc.) with shared
+timeout, concurrency, JSON parsing, output sanitization, and metrics.
+
+Trigger path
+------------
+Constructed per bank via hierarchical config in ``MemoryEngine`` and forge/taste
+pipelines. ``ConfiguredLLMProvider`` wraps bank-resolved settings. Global
+``_global_llm_semaphore`` limits concurrent LLM calls process-wide.
+
+Inputs
+------
+- Provider name, api_key, base_url, model from ``AtulyaConfig`` / bank overrides.
+- ``ATULYA_API_LLM_MAX_CONCURRENT``, ``ATULYA_API_LLM_TIMEOUT``, service tiers.
+- Vertex: project, region, service account path from config.
+
+Outputs
+------
+Model text, optional tool-call structures, ``TokenUsage`` metrics. ``parse_llm_json``
+and ``sanitize_llm_output`` clean provider output before DB/JSON persistence.
+
+Side effects
+------------
+HTTP calls to external LLM APIs; metrics increments; logs on connection errors.
+Groq requests use fixed seed ``DEFAULT_LLM_SEED`` for reproducibility.
+
+Mutability
+----------
+``LLMProvider`` instance holds provider config; do not mutate model mid-request.
+Semaphore is process-global — changing concurrency affects all banks.
+
+Impact radius
+-------------
+Every LLM-backed feature (fact extraction, reflect, dreaming, entity
+intelligence, taste transforms) depends on this module. Provider additions require
+factory branch in ``create_llm_from_config`` and valid_providers list.
+
+Core logic
+----------
+``LLMProvider.complete()`` selects backend client, applies semaphore, maps
+provider errors to ``OutputTooLongError`` where applicable.
+
+Failure modes
+-------------
+``ValueError`` for unknown provider or missing Vertex config. ``APIConnectionError``,
+``APIStatusError`` logged and re-raised. Malformed JSON from LLM fails at
+``parse_llm_json``.
+
+Maintenance notes
+-----------------
+Good: add provider behind existing interface with sanitize + metrics.
+
+Bad: skip ``sanitize_llm_output`` — control chars break PostgreSQL JSONB.
+
+Bad: raise provider-specific exceptions to engine callers — use bridge types.
 """
 
 import asyncio
@@ -277,9 +335,11 @@ def create_llm_provider(
 
 class LLMProvider:
     """
-    Unified LLM provider.
+    Unified async LLM client routing to provider-specific HTTP/SDK backends.
 
-    Supports OpenAI, Groq, Ollama (OpenAI-compatible), and Gemini.
+    All outbound calls acquire ``_global_llm_semaphore``; output is sanitized
+    before return. Prefer ``ConfiguredLLMProvider`` in engine code for per-bank
+    config resolution.
     """
 
     def __init__(
