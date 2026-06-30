@@ -1,4 +1,65 @@
-"""Atulya MCP Server implementation using FastMCP (HTTP transport)."""
+"""
+HTTP MCP server: FastMCP mount, auth, and tool registration for the API.
+
+Purpose
+-------
+Exposes Atulya memory operations as MCP tools over HTTP transport (alongside
+REST in ``api/http.py``). Wires ``MemoryEngine`` into ``register_mcp_tools``,
+applies tenant auth, tool allowlists, and optional ``MCPExtension`` hooks.
+
+Trigger path
+------------
+Mounted from ``server.py`` / ``main.py`` when MCP is enabled. Each tool call
+flows: MCP middleware → context vars (bank_id, api_key, tenant_id) →
+``mcp_tools`` handlers → ``MemoryEngine``.
+
+Inputs
+------
+- ``MemoryEngine`` instance (required at ``create_mcp_server()``).
+- ``ATULYA_MCP_BANK_ID``, ``ATULYA_API_MCP_AUTH_TOKEN`` (legacy), log level.
+- ``mcp_enabled_tools`` global allowlist from config.
+- ``TenantExtension.authenticate_mcp()`` for API keys.
+
+Outputs
+------
+Configured ``FastMCP`` server with filtered tool set. Context vars consumed
+by ``MCPToolsConfig`` resolvers for ``RequestContext`` propagation.
+
+Side effects
+------------
+Tool calls mutate bank state via engine (retain/recall/reflect, CRUD). Auth
+failures return MCP errors without touching data.
+
+Mutability
+----------
+Module-level ``ContextVar``s hold per-request bank_id and auth — must be set
+in middleware before tool execution; never share across concurrent requests.
+
+Impact radius
+-------------
+Tool list in ``_ALL_TOOLS`` must stay in sync with ``mcp_tools.register_mcp_tools``.
+Single-bank mode excludes bank-management tools. Changing auth order (legacy
+token vs tenant extension) affects all MCP clients.
+
+Core logic
+----------
+``create_mcp_server(multi_bank)`` intersects mode tools, env allowlist, and
+registers shared implementations. ``authenticate_request`` resolves tenant
+schema into ``_current_schema`` for engine queries.
+
+Failure modes
+-------------
+``AuthenticationError`` from tenant extension. Missing bank_id in single-bank
+mode falls back to ``DEFAULT_BANK_ID``.
+
+Maintenance notes
+-----------------
+Good: add new tools to ``_ALL_TOOLS``, ``mcp_tools``, and OpenAPI docs together.
+
+Bad: bypass ``RequestContext`` resolvers — breaks tenant auth and usage metering.
+
+Bad: use wildcard tool filtering — explicit allowlists only (see ``_ALL_TOOLS``).
+"""
 
 import json
 import logging
