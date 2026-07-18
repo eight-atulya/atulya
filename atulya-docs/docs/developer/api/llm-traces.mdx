@@ -1,0 +1,131 @@
+---
+sidebar_position: 10
+---
+
+# LLM Traces
+
+Database-backed LLM traces make Atulya's model calls inspectable per memory bank. They are designed for debugging retain, consolidation, reflect, Dream, entity intelligence, and other LLM-backed workflows without wiring a separate observability backend.
+
+:::tip When to use this
+Use LLM traces when you need to answer: what prompt was sent, which provider/model handled it, what came back, how many tokens were used, how long it took, and where an error happened.
+:::
+
+## Enable Capture
+
+Set the API flag and run the database migrations so the `llm_requests` table exists:
+
+```bash
+export ATULYA_API_LLM_TRACE_ENABLED=true
+```
+
+For large prompts, bound stored payload size with:
+
+```bash
+export ATULYA_API_LLM_TRACE_MAX_PAYLOAD_CHARS=50000
+```
+
+Trace capture is best-effort. A failed trace insert should not fail the user request path.
+
+## What Is Captured
+
+Each trace row is scoped to one bank and records:
+
+| Field group | What it means |
+|-------------|---------------|
+| Identity | `id`, `bank_id`, `trace_id`, `span_id`, `parent_span_id` |
+| Operation | High-level operation such as `retain`, `consolidation`, `reflect`, `dream`, or `mental_model_refresh` |
+| Provider | Provider, model, scope, latency, status |
+| Payloads | Structured input, output, error, LLM info, and operation metadata |
+| Tokens | Input, output, cached, and total token counts when the provider reports them |
+
+Payloads are stored as bounded JSON so operators can inspect exact prompts and responses from the control plane while keeping storage growth controlled. Public API payload fields are JSON objects for SDK compatibility. Object payloads are returned as-is. Array payloads are returned as `{ "kind": "array", "items": [...] }`; text payloads as `{ "kind": "text", "text": "..." }`; scalar payloads as `{ "kind": "value", "value": ... }`.
+
+## List Trace Rows
+
+```http
+GET /v1/default/banks/{bank_id}/llm-requests
+```
+
+Query parameters:
+
+| Parameter | Description |
+|-----------|-------------|
+| `limit` | Rows to return, `1..500` |
+| `offset` | Rows to skip |
+| `trace_id` | Return rows for one trace chain |
+| `status` | Filter by status, for example `success` or `error` |
+| `operation` | Filter by operation, for example `retain`, `consolidation`, or `reflect` |
+| `provider` | Filter by provider, for example `openai`, `gemini`, `groq`, or `lmstudio` |
+
+Example:
+
+```bash
+curl "http://localhost:8888/v1/default/banks/my-bank/llm-requests?operation=consolidation&limit=20"
+```
+
+Response shape:
+
+```json
+{
+  "items": [
+    {
+      "id": "trace-row-id",
+      "bank_id": "my-bank",
+      "operation": "consolidation",
+      "scope": "consolidation",
+      "trace_id": "trace-id",
+      "provider": "lmstudio",
+      "model": "local-model",
+      "status": "success",
+      "duration_ms": 4520,
+      "input_tokens": 1840,
+      "output_tokens": 291,
+      "cached_tokens": 0,
+      "total_tokens": 2131,
+      "input": { "kind": "array", "items": [{ "role": "user", "content": "..." }] },
+      "output": { "creates": [], "updates": [], "deletes": [] },
+      "error": null,
+      "metadata": { "attempt": 1 }
+    }
+  ],
+  "total": 1,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+## Get Activity Stats
+
+```http
+GET /v1/default/banks/{bank_id}/llm-requests/stats
+```
+
+Query parameters:
+
+| Parameter | Description |
+|-----------|-------------|
+| `period_hours` | Lookback window in hours, `1..2160` |
+| `trunc` | Bucket size: `minute`, `hour`, or `day` |
+
+Example:
+
+```bash
+curl "http://localhost:8888/v1/default/banks/my-bank/llm-requests/stats?period_hours=24&trunc=hour"
+```
+
+The stats endpoint returns bucketed counts and token totals grouped by status. The control plane uses it for the LLM Traces activity chart.
+
+## Control Plane
+
+When `llm_trace` is enabled, the control plane exposes **LLM Traces** in the bank navigation. Operators can filter by status, operation, provider, and trace ID, inspect input/output/error payloads, and hover the activity chart for bucket-level status and token details.
+
+## Relationship To OpenTelemetry
+
+LLM Traces and OpenTelemetry solve different problems:
+
+| Tool | Best for |
+|------|----------|
+| LLM Traces | Bank-scoped prompt, output, token, and error inspection inside Atulya |
+| OpenTelemetry | Distributed tracing across services and external observability backends |
+
+You can enable both. Use LLM Traces for product/operator inspection and OpenTelemetry for fleet-level observability.

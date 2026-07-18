@@ -169,6 +169,10 @@ __all__ = [
     "InfluenceTrendPoint",
     "InternetResearchRequest",
     "InternetResearchResponse",
+    "LLMRequestListResponse",
+    "LLMRequestRow",
+    "LLMRequestStatsBucket",
+    "LLMRequestStatsResponse",
     "ListDocumentsResponse",
     "ListMemoryUnitsResponse",
     "ListTagsResponse",
@@ -193,6 +197,7 @@ __all__ = [
     "MentalModelListResponse",
     "MentalModelResponse",
     "MentalModelTrigger",
+    "MinScores",
     "OperationProgressResponse",
     "OperationResponse",
     "OperationResultResponse",
@@ -416,6 +421,10 @@ from atulya_client_api.models.influence_row import InfluenceRow as InfluenceRow
 from atulya_client_api.models.influence_trend_point import InfluenceTrendPoint as InfluenceTrendPoint
 from atulya_client_api.models.internet_research_request import InternetResearchRequest as InternetResearchRequest
 from atulya_client_api.models.internet_research_response import InternetResearchResponse as InternetResearchResponse
+from atulya_client_api.models.llm_request_list_response import LLMRequestListResponse as LLMRequestListResponse
+from atulya_client_api.models.llm_request_row import LLMRequestRow as LLMRequestRow
+from atulya_client_api.models.llm_request_stats_bucket import LLMRequestStatsBucket as LLMRequestStatsBucket
+from atulya_client_api.models.llm_request_stats_response import LLMRequestStatsResponse as LLMRequestStatsResponse
 from atulya_client_api.models.list_documents_response import ListDocumentsResponse as ListDocumentsResponse
 from atulya_client_api.models.list_memory_units_response import ListMemoryUnitsResponse as ListMemoryUnitsResponse
 from atulya_client_api.models.list_tags_response import ListTagsResponse as ListTagsResponse
@@ -440,6 +449,7 @@ from atulya_client_api.models.memory_repo_summary_response import MemoryRepoSumm
 from atulya_client_api.models.mental_model_list_response import MentalModelListResponse as MentalModelListResponse
 from atulya_client_api.models.mental_model_response import MentalModelResponse as MentalModelResponse
 from atulya_client_api.models.mental_model_trigger import MentalModelTrigger as MentalModelTrigger
+from atulya_client_api.models.min_scores import MinScores as MinScores
 from atulya_client_api.models.operation_progress_response import OperationProgressResponse as OperationProgressResponse
 from atulya_client_api.models.operation_response import OperationResponse as OperationResponse
 from atulya_client_api.models.operation_result_response import OperationResultResponse as OperationResultResponse

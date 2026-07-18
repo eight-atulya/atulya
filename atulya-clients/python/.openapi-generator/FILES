@@ -150,6 +150,10 @@ atulya_client_api/models/internet_research_response.py
 atulya_client_api/models/list_documents_response.py
 atulya_client_api/models/list_memory_units_response.py
 atulya_client_api/models/list_tags_response.py
+atulya_client_api/models/llm_request_list_response.py
+atulya_client_api/models/llm_request_row.py
+atulya_client_api/models/llm_request_stats_bucket.py
+atulya_client_api/models/llm_request_stats_response.py
 atulya_client_api/models/memory_item.py
 atulya_client_api/models/memory_item_observation_scopes.py
 atulya_client_api/models/memory_item_timestamp.py
@@ -171,6 +175,7 @@ atulya_client_api/models/memory_repo_summary_response.py
 atulya_client_api/models/mental_model_list_response.py
 atulya_client_api/models/mental_model_response.py
 atulya_client_api/models/mental_model_trigger.py
+atulya_client_api/models/min_scores.py
 atulya_client_api/models/operation_progress_response.py
 atulya_client_api/models/operation_response.py
 atulya_client_api/models/operation_result_response.py

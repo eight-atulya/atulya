@@ -39,6 +39,8 @@ type FeaturesInfo struct {
 	SubRoutine bool `json:"sub_routine"`
 	// Whether .brain import/export APIs are enabled
 	BrainImportExport bool `json:"brain_import_export"`
+	// Whether Database LLM trace capture is enabled (per bank configurable)
+	LlmTrace bool `json:"llm_trace"`
 }
 
 type _FeaturesInfo FeaturesInfo
@@ -47,7 +49,7 @@ type _FeaturesInfo FeaturesInfo
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewFeaturesInfo(observations bool, timelineV2 bool, mcp bool, worker bool, bankConfigApi bool, fileUploadApi bool, brainRuntime bool, subRoutine bool, brainImportExport bool) *FeaturesInfo {
+func NewFeaturesInfo(observations bool, timelineV2 bool, mcp bool, worker bool, bankConfigApi bool, fileUploadApi bool, brainRuntime bool, subRoutine bool, brainImportExport bool, llmTrace bool) *FeaturesInfo {
 	this := FeaturesInfo{}
 	this.Observations = observations
 	this.TimelineV2 = timelineV2
@@ -58,6 +60,7 @@ func NewFeaturesInfo(observations bool, timelineV2 bool, mcp bool, worker bool, 
 	this.BrainRuntime = brainRuntime
 	this.SubRoutine = subRoutine
 	this.BrainImportExport = brainImportExport
+	this.LlmTrace = llmTrace
 	return &this
 }
 
@@ -285,6 +288,30 @@ func (o *FeaturesInfo) SetBrainImportExport(v bool) {
 	o.BrainImportExport = v
 }
 
+// GetLlmTrace returns the LlmTrace field value
+func (o *FeaturesInfo) GetLlmTrace() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.LlmTrace
+}
+
+// GetLlmTraceOk returns a tuple with the LlmTrace field value
+// and a boolean to check if the value has been set.
+func (o *FeaturesInfo) GetLlmTraceOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.LlmTrace, true
+}
+
+// SetLlmTrace sets field value
+func (o *FeaturesInfo) SetLlmTrace(v bool) {
+	o.LlmTrace = v
+}
+
 func (o FeaturesInfo) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -304,6 +331,7 @@ func (o FeaturesInfo) ToMap() (map[string]interface{}, error) {
 	toSerialize["brain_runtime"] = o.BrainRuntime
 	toSerialize["sub_routine"] = o.SubRoutine
 	toSerialize["brain_import_export"] = o.BrainImportExport
+	toSerialize["llm_trace"] = o.LlmTrace
 	return toSerialize, nil
 }
 
@@ -321,6 +349,7 @@ func (o *FeaturesInfo) UnmarshalJSON(data []byte) (err error) {
 		"brain_runtime",
 		"sub_routine",
 		"brain_import_export",
+		"llm_trace",
 	}
 
 	allProperties := make(map[string]interface{})

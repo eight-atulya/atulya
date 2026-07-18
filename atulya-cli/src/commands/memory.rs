@@ -281,6 +281,8 @@ pub fn recall(
         budget: Some(parse_budget(&budget)),
         max_tokens: Some(max_tokens),
         trace: Some(trace),
+        min_score: None,
+        prefer_observations: None,
         query_timestamp: None,
         include,
         tags: None,

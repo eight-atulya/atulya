@@ -19630,7 +19630,10 @@
           },
           "input": {
             "anyOf": [
-              {},
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
               {
                 "type": "null"
               }
@@ -19639,7 +19642,10 @@
           },
           "output": {
             "anyOf": [
-              {},
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
               {
                 "type": "null"
               }
@@ -19648,7 +19654,10 @@
           },
           "error": {
             "anyOf": [
-              {},
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
               {
                 "type": "null"
               }
@@ -19657,7 +19666,10 @@
           },
           "llm_info": {
             "anyOf": [
-              {},
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
               {
                 "type": "null"
               }
@@ -19666,7 +19678,10 @@
           },
           "metadata": {
             "anyOf": [
-              {},
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
               {
                 "type": "null"
               }

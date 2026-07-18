@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, Strict
 from typing import Any, ClassVar, Dict, List, Optional
 from atulya_client_api.models.budget import Budget
 from atulya_client_api.models.include_options import IncludeOptions
+from atulya_client_api.models.min_scores import MinScores
 from atulya_client_api.models.recall_request_tag_groups_inner import RecallRequestTagGroupsInner
 from typing import Optional, Set
 from typing_extensions import Self
@@ -41,7 +42,9 @@ class RecallRequest(BaseModel):
     tags: Optional[List[StrictStr]] = None
     tags_match: Optional[StrictStr] = Field(default=None, description="How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).")
     tag_groups: Optional[List[RecallRequestTagGroupsInner]] = None
-    __properties: ClassVar[List[str]] = ["query", "branch_name", "types", "budget", "max_tokens", "trace", "query_timestamp", "include", "tags", "tags_match", "tag_groups"]
+    prefer_observations: Optional[StrictBool] = Field(default=None, description="Prefer observation results during recall ranking.")
+    min_score: Optional[MinScores] = None
+    __properties: ClassVar[List[str]] = ["query", "branch_name", "types", "budget", "max_tokens", "trace", "query_timestamp", "include", "tags", "tags_match", "tag_groups", "prefer_observations", "min_score"]
 
     @field_validator('tags_match')
     def tags_match_validate_enum(cls, value):
@@ -102,6 +105,9 @@ class RecallRequest(BaseModel):
                 if _item_tag_groups:
                     _items.append(_item_tag_groups.to_dict())
             _dict['tag_groups'] = _items
+        # override the default output from pydantic by calling `to_dict()` of min_score
+        if self.min_score:
+            _dict['min_score'] = self.min_score.to_dict()
         # set to None if branch_name (nullable) is None
         # and model_fields_set contains the field
         if self.branch_name is None and "branch_name" in self.model_fields_set:
@@ -127,6 +133,11 @@ class RecallRequest(BaseModel):
         if self.tag_groups is None and "tag_groups" in self.model_fields_set:
             _dict['tag_groups'] = None
 
+        # set to None if min_score (nullable) is None
+        # and model_fields_set contains the field
+        if self.min_score is None and "min_score" in self.model_fields_set:
+            _dict['min_score'] = None
+
         return _dict
 
     @classmethod
@@ -149,7 +160,9 @@ class RecallRequest(BaseModel):
             "include": IncludeOptions.from_dict(obj["include"]) if obj.get("include") is not None else None,
             "tags": obj.get("tags"),
             "tags_match": obj.get("tags_match"),
-            "tag_groups": [RecallRequestTagGroupsInner.from_dict(_item) for _item in obj["tag_groups"]] if obj.get("tag_groups") is not None else None
+            "tag_groups": [RecallRequestTagGroupsInner.from_dict(_item) for _item in obj["tag_groups"]] if obj.get("tag_groups") is not None else None,
+            "prefer_observations": obj.get("prefer_observations"),
+            "min_score": MinScores.from_dict(obj["min_score"]) if obj.get("min_score") is not None else None
         })
         return _obj
 

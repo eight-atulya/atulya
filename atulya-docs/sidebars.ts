@@ -170,6 +170,7 @@ const sidebars: SidebarsConfig = {
         { type: 'doc', id: 'developer/api/memory-banks',  label: 'Memory Banks',   customProps: { icon: 'lu-boxes' } },
         { type: 'doc', id: 'developer/api/documents',     label: 'Documents',      customProps: { icon: 'lu-file-text' } },
         { type: 'doc', id: 'developer/api/operations',    label: 'Operations',     customProps: { icon: 'lu-activity' } },
+        { type: 'doc', id: 'developer/api/llm-traces',    label: 'LLM Traces',     customProps: { icon: 'lu-workflow' } },
         { type: 'doc', id: 'developer/api/forge',       label: 'Forge',          customProps: { icon: 'lu-layers' } },
         { type: 'doc', id: 'developer/api/webhooks',      label: 'Webhooks',       customProps: { icon: 'lu-webhook' } },
       ],

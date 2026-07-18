@@ -101,6 +101,8 @@ mod tests {
             trace: false,
             budget: None,
             include: None,
+            min_score: None,
+            prefer_observations: None,
             query_timestamp: None,
             types: None,
             tags: None,

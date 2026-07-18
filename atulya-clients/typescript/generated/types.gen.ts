@@ -3514,6 +3514,12 @@ export type FeaturesInfo = {
      * Whether .brain import/export APIs are enabled
      */
     brain_import_export: boolean;
+    /**
+     * FeaturesInfoLlmTrace
+     *
+     * Whether Database LLM trace capture is enabled (per bank configurable)
+     */
+    llm_trace: boolean;
 };
 
 /**
@@ -4387,6 +4393,196 @@ export type InternetResearchResponse = {
 };
 
 /**
+ * LLMRequestListResponse
+ *
+ * Response model for listing LLM request traces.
+ */
+export type LlmRequestListResponse = {
+    /**
+     * LLMRequestListResponseItems
+     */
+    items: Array<LlmRequestRow>;
+    /**
+     * LLMRequestListResponseTotal
+     */
+    total: number;
+    /**
+     * LLMRequestListResponseLimit
+     */
+    limit: number;
+    /**
+     * LLMRequestListResponseOffset
+     */
+    offset: number;
+};
+
+/**
+ * LLMRequestRow
+ *
+ * A single row in an LLM request trace.
+ */
+export type LlmRequestRow = {
+    /**
+     * LLMRequestRowId
+     */
+    id: string;
+    /**
+     * LLMRequestRowBankId
+     */
+    bank_id?: string | null;
+    /**
+     * LLMRequestRowOperation
+     */
+    operation?: string | null;
+    /**
+     * LLMRequestRowScope
+     */
+    scope?: string | null;
+    /**
+     * LLMRequestRowTraceId
+     */
+    trace_id?: string | null;
+    /**
+     * LLMRequestRowSpanId
+     */
+    span_id?: string | null;
+    /**
+     * LLMRequestRowParentSpanId
+     */
+    parent_span_id?: string | null;
+    /**
+     * LLMRequestRowProvider
+     */
+    provider?: string | null;
+    /**
+     * LLMRequestRowModel
+     */
+    model?: string | null;
+    /**
+     * LLMRequestRowStatus
+     */
+    status: string;
+    /**
+     * LLMRequestRowStartedAt
+     */
+    started_at: string;
+    /**
+     * LLMRequestRowEndedAt
+     */
+    ended_at?: string | null;
+    /**
+     * LLMRequestRowDurationMs
+     */
+    duration_ms?: number | null;
+    /**
+     * LLMRequestRowInputTokens
+     */
+    input_tokens?: number | null;
+    /**
+     * LLMRequestRowOutputTokens
+     */
+    output_tokens?: number | null;
+    /**
+     * LLMRequestRowCachedTokens
+     */
+    cached_tokens?: number | null;
+    /**
+     * LLMRequestRowTotalTokens
+     */
+    total_tokens?: number | null;
+    /**
+     * LLMRequestRowInput
+     */
+    input?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * LLMRequestRowOutput
+     */
+    output?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * LLMRequestRowError
+     */
+    error?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * LLMRequestRowLlmInfo
+     */
+    llm_info?: {
+        [key: string]: unknown;
+    } | null;
+    /**
+     * LLMRequestRowMetadata
+     */
+    metadata?: {
+        [key: string]: unknown;
+    } | null;
+};
+
+/**
+ * LLMRequestStatsBucket
+ *
+ * A single bucket of LLM request statistics.
+ */
+export type LlmRequestStatsBucket = {
+    /**
+     * LLMRequestStatsBucketBucket
+     */
+    bucket: string;
+    /**
+     * LLMRequestStatsBucketStatus
+     */
+    status: string;
+    /**
+     * LLMRequestStatsBucketCount
+     */
+    count: number;
+    /**
+     * LLMRequestStatsBucketInputTokens
+     */
+    input_tokens?: number;
+    /**
+     * LLMRequestStatsBucketOutputTokens
+     */
+    output_tokens?: number;
+    /**
+     * LLMRequestStatsBucketCachedTokens
+     */
+    cached_tokens?: number;
+    /**
+     * LLMRequestStatsBucketTotalTokens
+     */
+    total_tokens?: number;
+};
+
+/**
+ * LLMRequestStatsResponse
+ *
+ * Response model for LLM request statistics.
+ */
+export type LlmRequestStatsResponse = {
+    /**
+     * LLMRequestStatsResponseBankId
+     */
+    bank_id: string;
+    /**
+     * LLMRequestStatsResponsePeriod
+     */
+    period: string;
+    /**
+     * LLMRequestStatsResponseTrunc
+     */
+    trunc: string;
+    /**
+     * LLMRequestStatsResponseItems
+     */
+    items: Array<LlmRequestStatsBucket>;
+};
+
+/**
  * ListDocumentsResponse
  *
  * Response model for list documents endpoint.
@@ -4958,6 +5154,38 @@ export type MentalModelTrigger = {
 };
 
 /**
+ * MinScores
+ *
+ * Minimum scores for filtering recall results (all inclusive, AND-ed).
+ */
+export type MinScores = {
+    /**
+     * MinScoresSemantic
+     *
+     * Restrival-level: minimum vector similarity score (0-1)
+     */
+    semantic?: number | null;
+    /**
+     * MinScoresKeyword
+     *
+     * Retrieval-level: minimum BM25/keyword match score (0-1)
+     */
+    keyword?: number | null;
+    /**
+     * MinScoresReranker
+     *
+     * Post-reranking minimum reranker score (0-1)
+     */
+    reranker?: number | null;
+    /**
+     * MinScoresFinal
+     *
+     * Post-reranking: minimum final ranking score (0-1)
+     */
+    final?: number | null;
+};
+
+/**
  * OperationProgressResponse
  *
  * Typed progress payload for async operations when totals are known.
@@ -5294,6 +5522,16 @@ export type RecallRequest = {
      * Compound boolean tag predicates. Each entry is a leaf (``{"tags": [...], "match": "any|all|any_strict|all_strict"}``) or a nested group (``{"and": [...]}``, ``{"or": [...]}``, ``{"not": {...}}``). Top-level entries are AND-ed together. Mutually exclusive with `tags`.
      */
     tag_groups?: Array<TagGroupLeaf | TagGroupAnd | TagGroupOr | TagGroupNot> | null;
+    /**
+     * RecallRequestPreferObservations
+     *
+     * Prefer observation results during recall ranking.
+     */
+    prefer_observations?: boolean;
+    /**
+     * Optional minimum score filters.
+     */
+    min_score?: MinScores | null;
 };
 
 /**
@@ -7394,6 +7632,128 @@ export type RecallMemoriesResponses = {
 
 export type RecallMemoriesResponse = RecallMemoriesResponses[keyof RecallMemoriesResponses];
 
+export type ListLlmRequestsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum trace rows to return
+         */
+        limit?: number;
+        /**
+         * Offset
+         *
+         * Rows to skip
+         */
+        offset?: number;
+        /**
+         * Trace Id
+         *
+         * Filter by trace ID
+         */
+        trace_id?: string | null;
+        /**
+         * Status
+         *
+         * Filter by status, e.g. success or error
+         */
+        status?: string | null;
+        /**
+         * Operation
+         *
+         * Filter by operation, e.g. retain or reflect
+         */
+        operation?: string | null;
+        /**
+         * Provider
+         *
+         * Filter by LLM provider
+         */
+        provider?: string | null;
+    };
+    url: '/v1/default/banks/{bank_id}/llm-requests';
+};
+
+export type ListLlmRequestsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ListLlmRequestsError = ListLlmRequestsErrors[keyof ListLlmRequestsErrors];
+
+export type ListLlmRequestsResponses = {
+    /**
+     * Successful Response
+     */
+    200: LlmRequestListResponse;
+};
+
+export type ListLlmRequestsResponse = ListLlmRequestsResponses[keyof ListLlmRequestsResponses];
+
+export type GetLlmRequestStatsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+    };
+    query?: {
+        /**
+         * Period Hours
+         *
+         * Lookback period in hours
+         */
+        period_hours?: number;
+        /**
+         * Trunc
+         *
+         * Time bucket size
+         */
+        trunc?: 'minute' | 'hour' | 'day';
+    };
+    url: '/v1/default/banks/{bank_id}/llm-requests/stats';
+};
+
+export type GetLlmRequestStatsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type GetLlmRequestStatsError = GetLlmRequestStatsErrors[keyof GetLlmRequestStatsErrors];
+
+export type GetLlmRequestStatsResponses = {
+    /**
+     * Successful Response
+     */
+    200: LlmRequestStatsResponse;
+};
+
+export type GetLlmRequestStatsResponse = GetLlmRequestStatsResponses[keyof GetLlmRequestStatsResponses];
+
 export type ReflectData = {
     body: ReflectRequest;
     headers?: {
@@ -9173,6 +9533,108 @@ export type GetChunkResponses = {
 };
 
 export type GetChunkResponse = GetChunkResponses[keyof GetChunkResponses];
+
+export type ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of chunks to return
+         */
+        limit?: number;
+        /**
+         * Offset
+         *
+         * Number of chunks to skip for pagination
+         */
+        offset?: number;
+    };
+    url: '/v1/default/banks/{bank_id}/documents/{document_id}/chunks';
+};
+
+export type ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetError = ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetErrors[keyof ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetErrors];
+
+export type ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
+
+export type ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path: {
+        /**
+         * Bank Id
+         */
+        bank_id: string;
+        /**
+         * Document Id
+         */
+        document_id: string;
+    };
+    query?: {
+        /**
+         * Limit
+         *
+         * Maximum number of memory units to return
+         */
+        limit?: number;
+        /**
+         * Offset
+         *
+         * Number of memory units to skip for pagination
+         */
+        offset?: number;
+    };
+    url: '/v1/default/banks/{bank_id}/documents/{document_id}/memories';
+};
+
+export type ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetError = ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetErrors[keyof ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetErrors];
+
+export type ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetResponses = {
+    /**
+     * Successful Response
+     */
+    200: unknown;
+};
 
 export type ListOperationsData = {
     body?: never;

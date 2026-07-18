@@ -34,6 +34,9 @@ type RecallRequest struct {
 	// How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
 	TagsMatch *string `json:"tags_match,omitempty"`
 	TagGroups []RecallRequestTagGroupsInner `json:"tag_groups,omitempty"`
+	// Prefer observation results during recall ranking.
+	PreferObservations *bool `json:"prefer_observations,omitempty"`
+	MinScore NullableMinScores `json:"min_score,omitempty"`
 }
 
 type _RecallRequest RecallRequest
@@ -423,6 +426,80 @@ func (o *RecallRequest) SetTagGroups(v []RecallRequestTagGroupsInner) {
 	o.TagGroups = v
 }
 
+// GetPreferObservations returns the PreferObservations field value if set, zero value otherwise.
+func (o *RecallRequest) GetPreferObservations() bool {
+	if o == nil || IsNil(o.PreferObservations) {
+		var ret bool
+		return ret
+	}
+	return *o.PreferObservations
+}
+
+// GetPreferObservationsOk returns a tuple with the PreferObservations field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *RecallRequest) GetPreferObservationsOk() (*bool, bool) {
+	if o == nil || IsNil(o.PreferObservations) {
+		return nil, false
+	}
+	return o.PreferObservations, true
+}
+
+// HasPreferObservations returns a boolean if a field has been set.
+func (o *RecallRequest) HasPreferObservations() bool {
+	if o != nil && !IsNil(o.PreferObservations) {
+		return true
+	}
+
+	return false
+}
+
+// SetPreferObservations gets a reference to the given bool and assigns it to the PreferObservations field.
+func (o *RecallRequest) SetPreferObservations(v bool) {
+	o.PreferObservations = &v
+}
+
+// GetMinScore returns the MinScore field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *RecallRequest) GetMinScore() MinScores {
+	if o == nil || IsNil(o.MinScore.Get()) {
+		var ret MinScores
+		return ret
+	}
+	return *o.MinScore.Get()
+}
+
+// GetMinScoreOk returns a tuple with the MinScore field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *RecallRequest) GetMinScoreOk() (*MinScores, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.MinScore.Get(), o.MinScore.IsSet()
+}
+
+// HasMinScore returns a boolean if a field has been set.
+func (o *RecallRequest) HasMinScore() bool {
+	if o != nil && o.MinScore.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetMinScore gets a reference to the given NullableMinScores and assigns it to the MinScore field.
+func (o *RecallRequest) SetMinScore(v MinScores) {
+	o.MinScore.Set(&v)
+}
+// SetMinScoreNil sets the value for MinScore to be an explicit nil
+func (o *RecallRequest) SetMinScoreNil() {
+	o.MinScore.Set(nil)
+}
+
+// UnsetMinScore ensures that no value is present for MinScore, not even an explicit nil
+func (o *RecallRequest) UnsetMinScore() {
+	o.MinScore.Unset()
+}
+
 func (o RecallRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -463,6 +540,12 @@ func (o RecallRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if o.TagGroups != nil {
 		toSerialize["tag_groups"] = o.TagGroups
+	}
+	if !IsNil(o.PreferObservations) {
+		toSerialize["prefer_observations"] = o.PreferObservations
+	}
+	if o.MinScore.IsSet() {
+		toSerialize["min_score"] = o.MinScore.Get()
 	}
 	return toSerialize, nil
 }

@@ -31,6 +31,8 @@ from atulya_client_api.models.graph_neighborhood_response import GraphNeighborho
 from atulya_client_api.models.graph_summary_response import GraphSummaryResponse
 from atulya_client_api.models.internet_research_request import InternetResearchRequest
 from atulya_client_api.models.internet_research_response import InternetResearchResponse
+from atulya_client_api.models.llm_request_list_response import LLMRequestListResponse
+from atulya_client_api.models.llm_request_stats_response import LLMRequestStatsResponse
 from atulya_client_api.models.list_memory_units_response import ListMemoryUnitsResponse
 from atulya_client_api.models.list_tags_response import ListTagsResponse
 from atulya_client_api.models.recall_request import RecallRequest
@@ -2629,6 +2631,318 @@ class MemoryApi:
 
 
     @validate_call
+    async def get_llm_request_stats(
+        self,
+        bank_id: StrictStr,
+        period_hours: Annotated[Optional[Annotated[int, Field(le=2160, strict=True, ge=1)]], Field(description="Lookback period in hours")] = None,
+        trunc: Annotated[Optional[StrictStr], Field(description="Time bucket size")] = None,
+        authorization: Optional[StrictStr] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> LLMRequestStatsResponse:
+        """Get LLM request trace statistics
+
+        Return time-bucketed LLM request counts and token totals for one bank.
+
+        :param bank_id: (required)
+        :type bank_id: str
+        :param period_hours: Lookback period in hours
+        :type period_hours: int
+        :param trunc: Time bucket size
+        :type trunc: str
+        :param authorization:
+        :type authorization: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_llm_request_stats_serialize(
+            bank_id=bank_id,
+            period_hours=period_hours,
+            trunc=trunc,
+            authorization=authorization,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "LLMRequestStatsResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def get_llm_request_stats_with_http_info(
+        self,
+        bank_id: StrictStr,
+        period_hours: Annotated[Optional[Annotated[int, Field(le=2160, strict=True, ge=1)]], Field(description="Lookback period in hours")] = None,
+        trunc: Annotated[Optional[StrictStr], Field(description="Time bucket size")] = None,
+        authorization: Optional[StrictStr] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[LLMRequestStatsResponse]:
+        """Get LLM request trace statistics
+
+        Return time-bucketed LLM request counts and token totals for one bank.
+
+        :param bank_id: (required)
+        :type bank_id: str
+        :param period_hours: Lookback period in hours
+        :type period_hours: int
+        :param trunc: Time bucket size
+        :type trunc: str
+        :param authorization:
+        :type authorization: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_llm_request_stats_serialize(
+            bank_id=bank_id,
+            period_hours=period_hours,
+            trunc=trunc,
+            authorization=authorization,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "LLMRequestStatsResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def get_llm_request_stats_without_preload_content(
+        self,
+        bank_id: StrictStr,
+        period_hours: Annotated[Optional[Annotated[int, Field(le=2160, strict=True, ge=1)]], Field(description="Lookback period in hours")] = None,
+        trunc: Annotated[Optional[StrictStr], Field(description="Time bucket size")] = None,
+        authorization: Optional[StrictStr] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get LLM request trace statistics
+
+        Return time-bucketed LLM request counts and token totals for one bank.
+
+        :param bank_id: (required)
+        :type bank_id: str
+        :param period_hours: Lookback period in hours
+        :type period_hours: int
+        :param trunc: Time bucket size
+        :type trunc: str
+        :param authorization:
+        :type authorization: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._get_llm_request_stats_serialize(
+            bank_id=bank_id,
+            period_hours=period_hours,
+            trunc=trunc,
+            authorization=authorization,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "LLMRequestStatsResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _get_llm_request_stats_serialize(
+        self,
+        bank_id,
+        period_hours,
+        trunc,
+        authorization,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if bank_id is not None:
+            _path_params['bank_id'] = bank_id
+        # process the query parameters
+        if period_hours is not None:
+            
+            _query_params.append(('period_hours', period_hours))
+            
+        if trunc is not None:
+            
+            _query_params.append(('trunc', trunc))
+            
+        # process the header parameters
+        if authorization is not None:
+            _header_params['authorization'] = authorization
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/v1/default/banks/{bank_id}/llm-requests/stats',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
     async def get_memory(
         self,
         bank_id: StrictStr,
@@ -4192,6 +4506,386 @@ class MemoryApi:
         return self.api_client.param_serialize(
             method='POST',
             resource_path='/v1/default/banks/{bank_id}/graph/investigate',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    async def list_llm_requests(
+        self,
+        bank_id: StrictStr,
+        limit: Annotated[Optional[Annotated[int, Field(le=500, strict=True, ge=1)]], Field(description="Maximum trace rows to return")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Rows to skip")] = None,
+        trace_id: Annotated[Optional[StrictStr], Field(description="Filter by trace ID")] = None,
+        status: Annotated[Optional[StrictStr], Field(description="Filter by status, e.g. success or error")] = None,
+        operation: Annotated[Optional[StrictStr], Field(description="Filter by operation, e.g. retain or reflect")] = None,
+        provider: Annotated[Optional[StrictStr], Field(description="Filter by LLM provider")] = None,
+        authorization: Optional[StrictStr] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> LLMRequestListResponse:
+        """List LLM request traces
+
+        List database-backed LLM request traces for one bank.
+
+        :param bank_id: (required)
+        :type bank_id: str
+        :param limit: Maximum trace rows to return
+        :type limit: int
+        :param offset: Rows to skip
+        :type offset: int
+        :param trace_id: Filter by trace ID
+        :type trace_id: str
+        :param status: Filter by status, e.g. success or error
+        :type status: str
+        :param operation: Filter by operation, e.g. retain or reflect
+        :type operation: str
+        :param provider: Filter by LLM provider
+        :type provider: str
+        :param authorization:
+        :type authorization: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_llm_requests_serialize(
+            bank_id=bank_id,
+            limit=limit,
+            offset=offset,
+            trace_id=trace_id,
+            status=status,
+            operation=operation,
+            provider=provider,
+            authorization=authorization,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "LLMRequestListResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    async def list_llm_requests_with_http_info(
+        self,
+        bank_id: StrictStr,
+        limit: Annotated[Optional[Annotated[int, Field(le=500, strict=True, ge=1)]], Field(description="Maximum trace rows to return")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Rows to skip")] = None,
+        trace_id: Annotated[Optional[StrictStr], Field(description="Filter by trace ID")] = None,
+        status: Annotated[Optional[StrictStr], Field(description="Filter by status, e.g. success or error")] = None,
+        operation: Annotated[Optional[StrictStr], Field(description="Filter by operation, e.g. retain or reflect")] = None,
+        provider: Annotated[Optional[StrictStr], Field(description="Filter by LLM provider")] = None,
+        authorization: Optional[StrictStr] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[LLMRequestListResponse]:
+        """List LLM request traces
+
+        List database-backed LLM request traces for one bank.
+
+        :param bank_id: (required)
+        :type bank_id: str
+        :param limit: Maximum trace rows to return
+        :type limit: int
+        :param offset: Rows to skip
+        :type offset: int
+        :param trace_id: Filter by trace ID
+        :type trace_id: str
+        :param status: Filter by status, e.g. success or error
+        :type status: str
+        :param operation: Filter by operation, e.g. retain or reflect
+        :type operation: str
+        :param provider: Filter by LLM provider
+        :type provider: str
+        :param authorization:
+        :type authorization: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_llm_requests_serialize(
+            bank_id=bank_id,
+            limit=limit,
+            offset=offset,
+            trace_id=trace_id,
+            status=status,
+            operation=operation,
+            provider=provider,
+            authorization=authorization,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "LLMRequestListResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        await response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    async def list_llm_requests_without_preload_content(
+        self,
+        bank_id: StrictStr,
+        limit: Annotated[Optional[Annotated[int, Field(le=500, strict=True, ge=1)]], Field(description="Maximum trace rows to return")] = None,
+        offset: Annotated[Optional[Annotated[int, Field(strict=True, ge=0)]], Field(description="Rows to skip")] = None,
+        trace_id: Annotated[Optional[StrictStr], Field(description="Filter by trace ID")] = None,
+        status: Annotated[Optional[StrictStr], Field(description="Filter by status, e.g. success or error")] = None,
+        operation: Annotated[Optional[StrictStr], Field(description="Filter by operation, e.g. retain or reflect")] = None,
+        provider: Annotated[Optional[StrictStr], Field(description="Filter by LLM provider")] = None,
+        authorization: Optional[StrictStr] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """List LLM request traces
+
+        List database-backed LLM request traces for one bank.
+
+        :param bank_id: (required)
+        :type bank_id: str
+        :param limit: Maximum trace rows to return
+        :type limit: int
+        :param offset: Rows to skip
+        :type offset: int
+        :param trace_id: Filter by trace ID
+        :type trace_id: str
+        :param status: Filter by status, e.g. success or error
+        :type status: str
+        :param operation: Filter by operation, e.g. retain or reflect
+        :type operation: str
+        :param provider: Filter by LLM provider
+        :type provider: str
+        :param authorization:
+        :type authorization: str
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._list_llm_requests_serialize(
+            bank_id=bank_id,
+            limit=limit,
+            offset=offset,
+            trace_id=trace_id,
+            status=status,
+            operation=operation,
+            provider=provider,
+            authorization=authorization,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "LLMRequestListResponse",
+            '422': "HTTPValidationError",
+        }
+        response_data = await self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _list_llm_requests_serialize(
+        self,
+        bank_id,
+        limit,
+        offset,
+        trace_id,
+        status,
+        operation,
+        provider,
+        authorization,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if bank_id is not None:
+            _path_params['bank_id'] = bank_id
+        # process the query parameters
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        if offset is not None:
+            
+            _query_params.append(('offset', offset))
+            
+        if trace_id is not None:
+            
+            _query_params.append(('trace_id', trace_id))
+            
+        if status is not None:
+            
+            _query_params.append(('status', status))
+            
+        if operation is not None:
+            
+            _query_params.append(('operation', operation))
+            
+        if provider is not None:
+            
+            _query_params.append(('provider', provider))
+            
+        # process the header parameters
+        if authorization is not None:
+            _header_params['authorization'] = authorization
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/v1/default/banks/{bank_id}/llm-requests',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

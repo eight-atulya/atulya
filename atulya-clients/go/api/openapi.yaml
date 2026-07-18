@@ -924,6 +924,166 @@ paths:
       summary: Recall memory
       tags:
       - Memory
+  /v1/default/banks/{bank_id}/llm-requests:
+    get:
+      description: List database-backed LLM request traces for one bank.
+      operationId: list_llm_requests
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - description: Maximum trace rows to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          description: Maximum trace rows to return
+          maximum: 500
+          minimum: 1
+          title: Limit
+          type: integer
+        style: form
+      - description: Rows to skip
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          description: Rows to skip
+          minimum: 0
+          title: Offset
+          type: integer
+        style: form
+      - description: Filter by trace ID
+        explode: true
+        in: query
+        name: trace_id
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - description: "Filter by status, e.g. success or error"
+        explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - description: "Filter by operation, e.g. retain or reflect"
+        explode: true
+        in: query
+        name: operation
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - description: Filter by LLM provider
+        explode: true
+        in: query
+        name: provider
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LLMRequestListResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List LLM request traces
+      tags:
+      - Memory
+  /v1/default/banks/{bank_id}/llm-requests/stats:
+    get:
+      description: Return time-bucketed LLM request counts and token totals for one
+        bank.
+      operationId: get_llm_request_stats
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - description: Lookback period in hours
+        explode: true
+        in: query
+        name: period_hours
+        required: false
+        schema:
+          description: Lookback period in hours
+          maximum: 2160
+          minimum: 1
+          title: Period Hours
+          type: integer
+        style: form
+      - description: Time bucket size
+        explode: true
+        in: query
+        name: trunc
+        required: false
+        schema:
+          description: Time bucket size
+          enum:
+          - minute
+          - hour
+          - day
+          title: Trunc
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LLMRequestStatsResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Get LLM request trace statistics
+      tags:
+      - Memory
   /v1/default/banks/{bank_id}/reflect:
     post:
       description: |-
@@ -3007,6 +3167,141 @@ paths:
                 $ref: "#/components/schemas/HTTPValidationError"
           description: Validation Error
       summary: Get chunk details
+      tags:
+      - Documents
+  /v1/default/banks/{bank_id}/documents/{document_id}/chunks:
+    get:
+      description: List all chunks IDs and metadata associated with a specific document.
+      operationId: api_list_chunks_for_document_v1_default_banks__bank_id__documents__document_id__chunks_get
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: document_id
+        required: true
+        schema:
+          title: Document Id
+          type: string
+        style: simple
+      - description: Maximum number of chunks to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          description: Maximum number of chunks to return
+          maximum: 1000
+          minimum: 1
+          title: Limit
+          type: integer
+        style: form
+      - description: Number of chunks to skip for pagination
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          description: Number of chunks to skip for pagination
+          minimum: 0
+          title: Offset
+          type: integer
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List chunks for a document
+      tags:
+      - Documents
+  /v1/default/banks/{bank_id}/documents/{document_id}/memories:
+    get:
+      description: List all memory units and observations associated with a specific
+        document.
+      operationId: api_list_document_memories_v1_default_banks__bank_id__documents__document_id__memories_get
+      parameters:
+      - explode: false
+        in: path
+        name: bank_id
+        required: true
+        schema:
+          title: Bank Id
+          type: string
+        style: simple
+      - explode: false
+        in: path
+        name: document_id
+        required: true
+        schema:
+          title: Document Id
+          type: string
+        style: simple
+      - description: Maximum number of memory units to return
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          description: Maximum number of memory units to return
+          maximum: 1000
+          minimum: 1
+          title: Limit
+          type: integer
+        style: form
+      - description: Number of memory units to skip for pagination
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          description: Number of memory units to skip for pagination
+          minimum: 0
+          title: Offset
+          type: integer
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: List memory units for a document
       tags:
       - Documents
   /v1/default/banks/{bank_id}/operations:
@@ -12054,11 +12349,16 @@ components:
           description: Whether .brain import/export APIs are enabled
           title: FeaturesInfoBrainImportExport
           type: boolean
+        llm_trace:
+          description: Whether Database LLM trace capture is enabled (per bank configurable)
+          title: FeaturesInfoLlmTrace
+          type: boolean
       required:
       - bank_config_api
       - brain_import_export
       - brain_runtime
       - file_upload_api
+      - llm_trace
       - mcp
       - observations
       - sub_routine
@@ -13416,6 +13716,274 @@ components:
       required:
       - text
       title: InternetResearchResponse
+    LLMRequestListResponse:
+      description: Response model for listing LLM request traces.
+      example:
+        total: 2
+        offset: 9
+        limit: 7
+        items:
+        - parent_span_id: parent_span_id
+          trace_id: trace_id
+          metadata:
+            key: ""
+          span_id: span_id
+          error:
+            key: ""
+          llm_info:
+            key: ""
+          input_tokens: 6
+          duration_ms: 0
+          output:
+            key: ""
+          input:
+            key: ""
+          provider: provider
+          bank_id: bank_id
+          scope: scope
+          total_tokens: 5
+          started_at: started_at
+          model: model
+          output_tokens: 1
+          id: id
+          operation: operation
+          ended_at: ended_at
+          status: status
+          cached_tokens: 5
+        - parent_span_id: parent_span_id
+          trace_id: trace_id
+          metadata:
+            key: ""
+          span_id: span_id
+          error:
+            key: ""
+          llm_info:
+            key: ""
+          input_tokens: 6
+          duration_ms: 0
+          output:
+            key: ""
+          input:
+            key: ""
+          provider: provider
+          bank_id: bank_id
+          scope: scope
+          total_tokens: 5
+          started_at: started_at
+          model: model
+          output_tokens: 1
+          id: id
+          operation: operation
+          ended_at: ended_at
+          status: status
+          cached_tokens: 5
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/LLMRequestRow"
+          title: LLMRequestListResponseItems
+          type: array
+        total:
+          title: LLMRequestListResponseTotal
+          type: integer
+        limit:
+          title: LLMRequestListResponseLimit
+          type: integer
+        offset:
+          title: LLMRequestListResponseOffset
+          type: integer
+      required:
+      - items
+      - limit
+      - offset
+      - total
+      title: LLMRequestListResponse
+    LLMRequestRow:
+      description: A single row in an LLM request trace.
+      example:
+        parent_span_id: parent_span_id
+        trace_id: trace_id
+        metadata:
+          key: ""
+        span_id: span_id
+        error:
+          key: ""
+        llm_info:
+          key: ""
+        input_tokens: 6
+        duration_ms: 0
+        output:
+          key: ""
+        input:
+          key: ""
+        provider: provider
+        bank_id: bank_id
+        scope: scope
+        total_tokens: 5
+        started_at: started_at
+        model: model
+        output_tokens: 1
+        id: id
+        operation: operation
+        ended_at: ended_at
+        status: status
+        cached_tokens: 5
+      properties:
+        id:
+          title: LLMRequestRowId
+          type: string
+        bank_id:
+          nullable: true
+          type: string
+        operation:
+          nullable: true
+          type: string
+        scope:
+          nullable: true
+          type: string
+        trace_id:
+          nullable: true
+          type: string
+        span_id:
+          nullable: true
+          type: string
+        parent_span_id:
+          nullable: true
+          type: string
+        provider:
+          nullable: true
+          type: string
+        model:
+          nullable: true
+          type: string
+        status:
+          title: LLMRequestRowStatus
+          type: string
+        started_at:
+          title: LLMRequestRowStartedAt
+          type: string
+        ended_at:
+          nullable: true
+          type: string
+        duration_ms:
+          nullable: true
+          type: integer
+        input_tokens:
+          nullable: true
+          type: integer
+        output_tokens:
+          nullable: true
+          type: integer
+        cached_tokens:
+          nullable: true
+          type: integer
+        total_tokens:
+          nullable: true
+          type: integer
+        input:
+          additionalProperties: true
+          nullable: true
+          type: object
+        output:
+          additionalProperties: true
+          nullable: true
+          type: object
+        error:
+          additionalProperties: true
+          nullable: true
+          type: object
+        llm_info:
+          additionalProperties: true
+          nullable: true
+          type: object
+        metadata:
+          additionalProperties: true
+          nullable: true
+          type: object
+      required:
+      - id
+      - started_at
+      - status
+      title: LLMRequestRow
+    LLMRequestStatsBucket:
+      description: A single bucket of LLM request statistics.
+      example:
+        bucket: bucket
+        count: 0
+        total_tokens: 5
+        output_tokens: 1
+        input_tokens: 6
+        status: status
+        cached_tokens: 5
+      properties:
+        bucket:
+          title: LLMRequestStatsBucketBucket
+          type: string
+        status:
+          title: LLMRequestStatsBucketStatus
+          type: string
+        count:
+          title: LLMRequestStatsBucketCount
+          type: integer
+        input_tokens:
+          title: LLMRequestStatsBucketInputTokens
+          type: integer
+        output_tokens:
+          title: LLMRequestStatsBucketOutputTokens
+          type: integer
+        cached_tokens:
+          title: LLMRequestStatsBucketCachedTokens
+          type: integer
+        total_tokens:
+          title: LLMRequestStatsBucketTotalTokens
+          type: integer
+      required:
+      - bucket
+      - count
+      - status
+      title: LLMRequestStatsBucket
+    LLMRequestStatsResponse:
+      description: Response model for LLM request statistics.
+      example:
+        period: period
+        trunc: trunc
+        bank_id: bank_id
+        items:
+        - bucket: bucket
+          count: 0
+          total_tokens: 5
+          output_tokens: 1
+          input_tokens: 6
+          status: status
+          cached_tokens: 5
+        - bucket: bucket
+          count: 0
+          total_tokens: 5
+          output_tokens: 1
+          input_tokens: 6
+          status: status
+          cached_tokens: 5
+      properties:
+        bank_id:
+          title: LLMRequestStatsResponseBankId
+          type: string
+        period:
+          title: LLMRequestStatsResponsePeriod
+          type: string
+        trunc:
+          title: LLMRequestStatsResponseTrunc
+          type: string
+        items:
+          items:
+            $ref: "#/components/schemas/LLMRequestStatsBucket"
+          title: LLMRequestStatsResponseItems
+          type: array
+      required:
+      - bank_id
+      - items
+      - period
+      - trunc
+      title: LLMRequestStatsResponse
     ListDocumentsResponse:
       description: Response model for list documents endpoint.
       example:
@@ -14101,6 +14669,22 @@ components:
           title: MentalModelTriggerRefreshAfterConsolidation
           type: boolean
       title: MentalModelTrigger
+    MinScores:
+      description: "Minimum scores for filtering recall results (all inclusive, AND-ed)."
+      properties:
+        semantic:
+          nullable: true
+          type: number
+        keyword:
+          nullable: true
+          type: number
+        reranker:
+          nullable: true
+          type: number
+        final:
+          nullable: true
+          type: number
+      title: MinScores
     OperationProgressResponse:
       description: Typed progress payload for async operations when totals are known.
       properties:
@@ -14466,6 +15050,14 @@ components:
             $ref: "#/components/schemas/RecallRequest_tag_groups_inner"
           nullable: true
           type: array
+        prefer_observations:
+          description: Prefer observation results during recall ranking.
+          title: RecallRequestPreferObservations
+          type: boolean
+        min_score:
+          allOf:
+          - $ref: "#/components/schemas/MinScores"
+          nullable: true
       required:
       - query
       title: RecallRequest
@@ -15921,6 +16513,7 @@ components:
           brain_import_export: false
           brain_runtime: true
           file_upload_api: true
+          llm_trace: false
           mcp: true
           observations: false
           sub_routine: true

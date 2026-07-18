@@ -17,27 +17,22 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictBool
+from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List
+from atulya_client_api.models.llm_request_stats_bucket import LLMRequestStatsBucket
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class FeaturesInfo(BaseModel):
+class LLMRequestStatsResponse(BaseModel):
     """
-    Feature flags indicating which capabilities are enabled.
+    Response model for LLM request statistics.
     """ # noqa: E501
-    observations: StrictBool = Field(description="Whether observations (auto-consolidation) are enabled")
-    timeline_v2: StrictBool = Field(description="Whether the git-style timeline API/UI is enabled")
-    mcp: StrictBool = Field(description="Whether MCP (Model Context Protocol) server is enabled")
-    worker: StrictBool = Field(description="Whether the background worker is enabled")
-    bank_config_api: StrictBool = Field(description="Whether per-bank configuration API is enabled")
-    file_upload_api: StrictBool = Field(description="Whether file upload/conversion API is enabled")
-    brain_runtime: StrictBool = Field(description="Whether atulya-brain runtime is enabled")
-    sub_routine: StrictBool = Field(description="Whether sub_routine operations are enabled")
-    brain_import_export: StrictBool = Field(description="Whether .brain import/export APIs are enabled")
-    llm_trace: StrictBool = Field(description="Whether Database LLM trace capture is enabled (per bank configurable)")
-    __properties: ClassVar[List[str]] = ["observations", "timeline_v2", "mcp", "worker", "bank_config_api", "file_upload_api", "brain_runtime", "sub_routine", "brain_import_export", "llm_trace"]
+    bank_id: StrictStr
+    period: StrictStr
+    trunc: StrictStr
+    items: List[LLMRequestStatsBucket]
+    __properties: ClassVar[List[str]] = ["bank_id", "period", "trunc", "items"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -57,7 +52,7 @@ class FeaturesInfo(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of FeaturesInfo from a JSON string"""
+        """Create an instance of LLMRequestStatsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,11 +73,18 @@ class FeaturesInfo(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in items (list)
+        _items = []
+        if self.items:
+            for _item_items in self.items:
+                if _item_items:
+                    _items.append(_item_items.to_dict())
+            _dict['items'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of FeaturesInfo from a dict"""
+        """Create an instance of LLMRequestStatsResponse from a dict"""
         if obj is None:
             return None
 
@@ -90,16 +92,10 @@ class FeaturesInfo(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "observations": obj.get("observations"),
-            "timeline_v2": obj.get("timeline_v2"),
-            "mcp": obj.get("mcp"),
-            "worker": obj.get("worker"),
-            "bank_config_api": obj.get("bank_config_api"),
-            "file_upload_api": obj.get("file_upload_api"),
-            "brain_runtime": obj.get("brain_runtime"),
-            "sub_routine": obj.get("sub_routine"),
-            "brain_import_export": obj.get("brain_import_export"),
-            "llm_trace": obj.get("llm_trace")
+            "bank_id": obj.get("bank_id"),
+            "period": obj.get("period"),
+            "trunc": obj.get("trunc"),
+            "items": [LLMRequestStatsBucket.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None
         })
         return _obj
 

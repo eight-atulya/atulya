@@ -24,6 +24,298 @@ import (
 // DocumentsAPIService DocumentsAPI service
 type DocumentsAPIService service
 
+type ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest struct {
+	ctx context.Context
+	ApiService *DocumentsAPIService
+	bankId string
+	documentId string
+	limit *int32
+	offset *int32
+	authorization *string
+}
+
+// Maximum number of chunks to return
+func (r ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest) Limit(limit int32) ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest {
+	r.limit = &limit
+	return r
+}
+
+// Number of chunks to skip for pagination
+func (r ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest) Offset(offset int32) ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest) Authorization(authorization string) ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest) Execute() (interface{}, *http.Response, error) {
+	return r.ApiService.ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetExecute(r)
+}
+
+/*
+ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGet List chunks for a document
+
+List all chunks IDs and metadata associated with a specific document.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param documentId
+ @return ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest
+*/
+func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGet(ctx context.Context, bankId string, documentId string) ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest {
+	return ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		documentId: documentId,
+	}
+}
+
+// Execute executes the request
+//  @return interface{}
+func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetExecute(r ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest) (interface{}, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/documents/{document_id}/chunks"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"document_id"+"}", url.PathEscape(parameterValueToString(r.documentId, "documentId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest struct {
+	ctx context.Context
+	ApiService *DocumentsAPIService
+	bankId string
+	documentId string
+	limit *int32
+	offset *int32
+	authorization *string
+}
+
+// Maximum number of memory units to return
+func (r ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest) Limit(limit int32) ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest {
+	r.limit = &limit
+	return r
+}
+
+// Number of memory units to skip for pagination
+func (r ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest) Offset(offset int32) ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest {
+	r.offset = &offset
+	return r
+}
+
+func (r ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest) Authorization(authorization string) ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest) Execute() (interface{}, *http.Response, error) {
+	return r.ApiService.ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetExecute(r)
+}
+
+/*
+ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGet List memory units for a document
+
+List all memory units and observations associated with a specific document.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @param documentId
+ @return ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest
+*/
+func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGet(ctx context.Context, bankId string, documentId string) ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest {
+	return ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+		documentId: documentId,
+	}
+}
+
+// Execute executes the request
+//  @return interface{}
+func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetExecute(r ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest) (interface{}, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  interface{}
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGet")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/documents/{document_id}/memories"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"document_id"+"}", url.PathEscape(parameterValueToString(r.documentId, "documentId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiDeleteDocumentRequest struct {
 	ctx context.Context
 	ApiService *DocumentsAPIService

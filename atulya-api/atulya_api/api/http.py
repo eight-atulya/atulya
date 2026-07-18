@@ -2938,11 +2938,11 @@ class LLMRequestRow(BaseModel):
     output_tokens: int | None = None
     cached_tokens: int | None = None
     total_tokens: int | None = None
-    input: Any | None = None
-    output: Any | None = None
-    error: Any | None = None
-    llm_info: Any | None = None
-    metadata: Any | None = None
+    input: dict[str, Any] | None = None
+    output: dict[str, Any] | None = None
+    error: dict[str, Any] | None = None
+    llm_info: dict[str, Any] | None = None
+    metadata: dict[str, Any] | None = None
 
 
 class LLMRequestListResponse(BaseModel):
@@ -3488,7 +3488,21 @@ def _register_routes(app: FastAPI):
             value = row.get(key)
             if isinstance(value, datetime):
                 row[key] = value.replace(tzinfo=timezone.utc).isoformat()
+        for key in ("input", "output", "error", "llm_info", "metadata"):
+            row[key] = _normalize_llm_trace_payload(row.get(key))
         return LLMRequestRow(**row)
+
+    def _normalize_llm_trace_payload(value: Any) -> dict[str, Any] | None:
+        """Return a generator-friendly JSON object while preserving the payload value."""
+        if value is None:
+            return None
+        if isinstance(value, dict):
+            return value
+        if isinstance(value, list):
+            return {"kind": "array", "items": value}
+        if isinstance(value, str):
+            return {"kind": "text", "text": value}
+        return {"kind": "value", "value": value}
 
     def _normalize_llm_request_stats_bucket(raw_row: dict[str, Any]) -> LLMRequestStatsBucket:
         """Normalize raw LLM request stats bucket from DB."""

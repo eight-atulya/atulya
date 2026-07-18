@@ -139,6 +139,16 @@ function parseJsonString(value: unknown): unknown {
   }
 }
 
+function unwrapTracePayload(value: unknown): unknown {
+  const parsed = parseJsonString(value);
+  const record = asRecord(parsed);
+  if (!record) return parsed;
+  if (record.kind === "array" && Array.isArray(record.items)) return record.items;
+  if (record.kind === "text" && typeof record.text === "string") return record.text;
+  if (record.kind === "value" && "value" in record) return record.value;
+  return parsed;
+}
+
 type TraceMessage = {
   role: string;
   content: unknown;
@@ -159,7 +169,7 @@ type ActivityTooltip = {
 };
 
 function extractMessages(value: unknown): TraceMessage[] {
-  const parsed = parseJsonString(value);
+  const parsed = unwrapTracePayload(value);
   const source = asRecord(parsed)?.messages ?? parsed;
   if (!Array.isArray(source)) return [];
 
@@ -217,13 +227,14 @@ function StatBlock({
 }
 
 function JsonPanel({ title, value }: { title: string; value: unknown }) {
-  const formatted = useMemo(() => formatJson(value), [value]);
+  const displayValue = useMemo(() => unwrapTracePayload(value), [value]);
+  const formatted = useMemo(() => formatJson(displayValue), [displayValue]);
   return (
     <div className="min-h-0 rounded-lg border border-border">
       <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2">
         <div className="min-w-0">
           <p className="truncate text-sm font-medium">{title}</p>
-          <p className="text-xs text-muted-foreground">{payloadSummary(value)}</p>
+          <p className="text-xs text-muted-foreground">{payloadSummary(displayValue)}</p>
         </div>
         <CopyButton text={formatted} label="Copy JSON" />
       </div>
@@ -235,7 +246,8 @@ function JsonPanel({ title, value }: { title: string; value: unknown }) {
 }
 
 function InputPayloadPanel({ value }: { value: unknown }) {
-  const formatted = useMemo(() => formatJson(value), [value]);
+  const displayValue = useMemo(() => unwrapTracePayload(value), [value]);
+  const formatted = useMemo(() => formatJson(displayValue), [displayValue]);
   const messages = useMemo(() => extractMessages(value), [value]);
 
   if (!messages.length) {

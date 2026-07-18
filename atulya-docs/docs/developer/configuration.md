@@ -1053,7 +1053,26 @@ await memory.initialize()
 
 ## Observability & Tracing
 
-Atulya provides OpenTelemetry-based observability for LLM calls, conforming to GenAI semantic conventions.
+Atulya provides two complementary observability paths for LLM calls:
+
+- **Database-backed LLM traces** for bank-scoped prompt/output/error inspection in the control plane.
+- **OpenTelemetry tracing** for distributed traces in OTLP-compatible observability backends.
+
+### Database-Backed LLM Traces
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ATULYA_API_LLM_TRACE_ENABLED` | Store bank-scoped LLM request traces in the database for the control-plane LLM Traces page | `false` |
+| `ATULYA_API_LLM_TRACE_MAX_PAYLOAD_CHARS` | Maximum serialized size stored for input/output/error payloads. Larger payloads are truncated before insert. | `50000` |
+
+```bash
+export ATULYA_API_LLM_TRACE_ENABLED=true
+export ATULYA_API_LLM_TRACE_MAX_PAYLOAD_CHARS=50000
+```
+
+LLM trace rows include provider/model, operation, scope, prompt payload, output payload, error payload, token usage, latency, and operation metadata. Trace writes are best-effort so observability does not break retain, consolidation, reflect, or other user workflows.
+
+See [LLM Traces](./api/llm-traces) for the API endpoints and control-plane workflow.
 
 ### OpenTelemetry Tracing
 

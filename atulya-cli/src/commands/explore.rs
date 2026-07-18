@@ -343,6 +343,8 @@ impl App {
                             budget: Some(query_budget),
                             max_tokens: Some(query_max_tokens),
                             trace: Some(false),
+                            min_score: None,
+                            prefer_observations: None,
                             query_timestamp: None,
                             include: None,
                             tags: None,

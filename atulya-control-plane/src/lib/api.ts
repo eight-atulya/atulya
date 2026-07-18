@@ -748,11 +748,11 @@ export interface LLMRequestRow {
   output_tokens: number | null;
   cached_tokens: number | null;
   total_tokens: number | null;
-  input: unknown;
-  output: unknown;
-  error: unknown;
-  llm_info: unknown;
-  metadata: unknown;
+  input: Record<string, unknown> | null;
+  output: Record<string, unknown> | null;
+  error: Record<string, unknown> | null;
+  llm_info: Record<string, unknown> | null;
+  metadata: Record<string, unknown> | null;
 }
 
 export interface LLMRequestListResponse {

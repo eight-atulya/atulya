@@ -1238,6 +1238,148 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 	return localVarReturnValue, localVarHTTPResponse, nil
 }
 
+type ApiGetLlmRequestStatsRequest struct {
+	ctx context.Context
+	ApiService *MemoryAPIService
+	bankId string
+	periodHours *int32
+	trunc *string
+	authorization *string
+}
+
+// Lookback period in hours
+func (r ApiGetLlmRequestStatsRequest) PeriodHours(periodHours int32) ApiGetLlmRequestStatsRequest {
+	r.periodHours = &periodHours
+	return r
+}
+
+// Time bucket size
+func (r ApiGetLlmRequestStatsRequest) Trunc(trunc string) ApiGetLlmRequestStatsRequest {
+	r.trunc = &trunc
+	return r
+}
+
+func (r ApiGetLlmRequestStatsRequest) Authorization(authorization string) ApiGetLlmRequestStatsRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiGetLlmRequestStatsRequest) Execute() (*LLMRequestStatsResponse, *http.Response, error) {
+	return r.ApiService.GetLlmRequestStatsExecute(r)
+}
+
+/*
+GetLlmRequestStats Get LLM request trace statistics
+
+Return time-bucketed LLM request counts and token totals for one bank.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @return ApiGetLlmRequestStatsRequest
+*/
+func (a *MemoryAPIService) GetLlmRequestStats(ctx context.Context, bankId string) ApiGetLlmRequestStatsRequest {
+	return ApiGetLlmRequestStatsRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+	}
+}
+
+// Execute executes the request
+//  @return LLMRequestStatsResponse
+func (a *MemoryAPIService) GetLlmRequestStatsExecute(r ApiGetLlmRequestStatsRequest) (*LLMRequestStatsResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *LLMRequestStatsResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetLlmRequestStats")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/llm-requests/stats"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.periodHours != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "period_hours", r.periodHours, "form", "")
+	}
+	if r.trunc != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "trunc", r.trunc, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
 type ApiGetMemoryRequest struct {
 	ctx context.Context
 	ApiService *MemoryAPIService
@@ -1893,6 +2035,188 @@ func (a *MemoryAPIService) InvestigateGraphExecute(r ApiInvestigateGraphRequest)
 	}
 	// body params
 	localVarPostBody = r.graphInvestigationRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiListLlmRequestsRequest struct {
+	ctx context.Context
+	ApiService *MemoryAPIService
+	bankId string
+	limit *int32
+	offset *int32
+	traceId *string
+	status *string
+	operation *string
+	provider *string
+	authorization *string
+}
+
+// Maximum trace rows to return
+func (r ApiListLlmRequestsRequest) Limit(limit int32) ApiListLlmRequestsRequest {
+	r.limit = &limit
+	return r
+}
+
+// Rows to skip
+func (r ApiListLlmRequestsRequest) Offset(offset int32) ApiListLlmRequestsRequest {
+	r.offset = &offset
+	return r
+}
+
+// Filter by trace ID
+func (r ApiListLlmRequestsRequest) TraceId(traceId string) ApiListLlmRequestsRequest {
+	r.traceId = &traceId
+	return r
+}
+
+// Filter by status, e.g. success or error
+func (r ApiListLlmRequestsRequest) Status(status string) ApiListLlmRequestsRequest {
+	r.status = &status
+	return r
+}
+
+// Filter by operation, e.g. retain or reflect
+func (r ApiListLlmRequestsRequest) Operation(operation string) ApiListLlmRequestsRequest {
+	r.operation = &operation
+	return r
+}
+
+// Filter by LLM provider
+func (r ApiListLlmRequestsRequest) Provider(provider string) ApiListLlmRequestsRequest {
+	r.provider = &provider
+	return r
+}
+
+func (r ApiListLlmRequestsRequest) Authorization(authorization string) ApiListLlmRequestsRequest {
+	r.authorization = &authorization
+	return r
+}
+
+func (r ApiListLlmRequestsRequest) Execute() (*LLMRequestListResponse, *http.Response, error) {
+	return r.ApiService.ListLlmRequestsExecute(r)
+}
+
+/*
+ListLlmRequests List LLM request traces
+
+List database-backed LLM request traces for one bank.
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @param bankId
+ @return ApiListLlmRequestsRequest
+*/
+func (a *MemoryAPIService) ListLlmRequests(ctx context.Context, bankId string) ApiListLlmRequestsRequest {
+	return ApiListLlmRequestsRequest{
+		ApiService: a,
+		ctx: ctx,
+		bankId: bankId,
+	}
+}
+
+// Execute executes the request
+//  @return LLMRequestListResponse
+func (a *MemoryAPIService) ListLlmRequestsExecute(r ApiListLlmRequestsRequest) (*LLMRequestListResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodGet
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *LLMRequestListResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.ListLlmRequests")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/v1/default/banks/{bank_id}/llm-requests"
+	localVarPath = strings.Replace(localVarPath, "{"+"bank_id"+"}", url.PathEscape(parameterValueToString(r.bankId, "bankId")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+
+	if r.limit != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	}
+	if r.offset != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	}
+	if r.traceId != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "trace_id", r.traceId, "form", "")
+	}
+	if r.status != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "status", r.status, "form", "")
+	}
+	if r.operation != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "operation", r.operation, "form", "")
+	}
+	if r.provider != nil {
+		parameterAddToHeaderOrQuery(localVarQueryParams, "provider", r.provider, "form", "")
+	}
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	if r.authorization != nil {
+		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
+	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
