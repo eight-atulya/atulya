@@ -113,6 +113,50 @@ function payloadSummary(value: unknown): string {
   return typeof value;
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : null;
+}
+
+function parseJsonString(value: unknown): unknown {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}
+
+type TraceMessage = {
+  role: string;
+  content: unknown;
+  index: number;
+};
+
+function extractMessages(value: unknown): TraceMessage[] {
+  const parsed = parseJsonString(value);
+  const source = asRecord(parsed)?.messages ?? parsed;
+  if (!Array.isArray(source)) return [];
+
+  return source.flatMap((item, index) => {
+    const record = asRecord(item);
+    if (!record || !("content" in record)) return [];
+    return [
+      {
+        role: typeof record.role === "string" && record.role ? record.role : `message ${index + 1}`,
+        content: record.content,
+        index,
+      },
+    ];
+  });
+}
+
+function textFromContent(value: unknown): string {
+  if (typeof value === "string") return value;
+  return formatJson(value);
+}
+
 function statusClass(status: string) {
   if (status === "success") {
     return "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
@@ -162,6 +206,78 @@ function JsonPanel({ title, value }: { title: string; value: unknown }) {
       <pre className="max-h-[46vh] overflow-auto whitespace-pre-wrap break-words p-3 font-mono text-xs leading-5 text-foreground">
         {formatted}
       </pre>
+    </div>
+  );
+}
+
+function InputPayloadPanel({ value }: { value: unknown }) {
+  const formatted = useMemo(() => formatJson(value), [value]);
+  const messages = useMemo(() => extractMessages(value), [value]);
+
+  if (!messages.length) {
+    return <JsonPanel title="Input payload" value={value} />;
+  }
+
+  const totalChars = messages.reduce(
+    (sum, message) => sum + textFromContent(message.content).length,
+    0
+  );
+
+  return (
+    <div className="min-h-0 rounded-lg border border-border">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-3 py-2">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium">Input payload</p>
+          <p className="text-xs text-muted-foreground">
+            {messages.length.toLocaleString()} message{messages.length === 1 ? "" : "s"} |{" "}
+            {totalChars.toLocaleString()} chars
+          </p>
+        </div>
+        <CopyButton text={formatted} label="Copy JSON" />
+      </div>
+
+      <div className="max-h-[56vh] space-y-3 overflow-auto p-3">
+        {messages.map((message) => {
+          const contentText = textFromContent(message.content);
+          const isText = typeof message.content === "string";
+
+          return (
+            <section
+              key={`${message.role}-${message.index}`}
+              className="overflow-hidden rounded-md border border-border bg-background"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/30 px-3 py-2">
+                <div className="flex min-w-0 items-center gap-2">
+                  <Badge variant="outline" className="shrink-0 capitalize">
+                    {message.role}
+                  </Badge>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {contentText.length.toLocaleString()} chars
+                  </span>
+                </div>
+                <CopyButton text={contentText} label="Copy text" />
+              </div>
+              <pre
+                className={cn(
+                  "max-h-[40vh] overflow-auto whitespace-pre-wrap break-words p-3 leading-6 text-foreground",
+                  isText ? "font-sans text-sm" : "font-mono text-xs"
+                )}
+              >
+                {contentText}
+              </pre>
+            </section>
+          );
+        })}
+
+        <details className="rounded-md border border-border bg-muted/20">
+          <summary className="cursor-pointer px-3 py-2 text-sm font-medium text-muted-foreground">
+            Raw JSON
+          </summary>
+          <pre className="max-h-[32vh] overflow-auto whitespace-pre-wrap break-words border-t border-border p-3 font-mono text-xs leading-5 text-foreground">
+            {formatted}
+          </pre>
+        </details>
+      </div>
     </div>
   );
 }
@@ -693,7 +809,7 @@ export function LLMTracesView() {
                   <TabsTrigger value="metadata">Metadata</TabsTrigger>
                 </TabsList>
                 <TabsContent value="input" className="min-h-0 flex-1">
-                  <JsonPanel title="Input payload" value={selected.input} />
+                  <InputPayloadPanel value={selected.input} />
                 </TabsContent>
                 <TabsContent value="output" className="min-h-0 flex-1">
                   <JsonPanel title="Output payload" value={selected.output} />
