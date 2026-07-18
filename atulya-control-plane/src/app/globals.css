@@ -82,60 +82,60 @@
 }
 
 .dark {
-  --background: oklch(0.1822 0 0);
+  --background: #000000;
   --foreground: oklch(0.9288 0.0126 255.5078);
-  --card: oklch(0.2046 0 0);
+  --card: #0b0b0c;
   --card-foreground: oklch(0.9288 0.0126 255.5078);
-  --popover: oklch(0.2603 0 0);
+  --popover: #121214;
   --popover-foreground: oklch(0.7348 0 0);
   --primary: oklch(0.58 0.20 25);
   --primary-foreground: oklch(0.98 0.01 25);
   --primary-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
-  --secondary: oklch(0.2603 0 0);
+  --secondary: #151516;
   --secondary-foreground: oklch(0.9851 0 0);
-  --muted: oklch(0.2393 0 0);
+  --muted: #18181a;
   --muted-foreground: oklch(0.7122 0 0);
-  --accent: oklch(0.3132 0 0);
+  --accent: #1f1f22;
   --accent-foreground: oklch(0.9851 0 0);
   --destructive: oklch(0.3123 0.0852 29.7877);
   --destructive-foreground: oklch(0.9368 0.0045 34.3092);
-  --border: oklch(0.2809 0 0);
-  --input: oklch(0.2603 0 0);
+  --border: #27272a;
+  --input: #111113;
   --ring: oklch(0.58 0.20 25);
   --chart-1: oklch(0.58 0.20 25);
   --chart-2: oklch(0.63 0.18 20);
   --chart-3: oklch(0.50 0.15 30);
   --chart-4: oklch(0.68 0.12 35);
   --chart-5: oklch(0.45 0.10 15);
-  --sidebar: oklch(0.1822 0 0);
+  --sidebar: #050505;
   --sidebar-foreground: oklch(0.6301 0 0);
   --sidebar-primary: oklch(0.58 0.20 25);
   --sidebar-primary-foreground: oklch(0.98 0.01 25);
-  --sidebar-accent: oklch(0.3132 0 0);
+  --sidebar-accent: #1a1a1c;
   --sidebar-accent-foreground: oklch(0.9851 0 0);
-  --sidebar-border: oklch(0.2809 0 0);
+  --sidebar-border: #27272a;
   --sidebar-ring: oklch(0.58 0.20 25);
-  --graph-surface-bg: linear-gradient(180deg, rgba(24, 24, 27, 0.96), rgba(15, 23, 42, 0.98));
+  --graph-surface-bg: linear-gradient(180deg, rgba(8, 8, 9, 0.98), rgba(0, 0, 0, 0.98));
   --graph-surface-accent: rgba(239, 68, 68, 0.08);
   --graph-overview-accent: rgba(239, 68, 68, 0.07);
   --graph-dot: rgba(148, 163, 184, 0.16);
   --graph-edge-neutral: rgba(148, 163, 184, 0.4);
   --graph-edge-overview: rgba(148, 163, 184, 0.24);
-  --graph-panel-bg: rgba(24, 24, 27, 0.9);
+  --graph-panel-bg: rgba(12, 12, 13, 0.9);
   --graph-panel-border: rgba(255, 255, 255, 0.08);
   --graph-panel-foreground: oklch(0.82 0 0);
   --graph-chip-bg: rgba(255, 255, 255, 0.06);
   --graph-chip-border: rgba(255, 255, 255, 0.08);
   --graph-chip-foreground: oklch(0.82 0 0);
   --graph-overlay-bg: rgba(9, 9, 11, 0.4);
-  --shell-surface: rgba(24, 24, 27, 0.56);
-  --shell-header-surface: rgba(24, 24, 27, 0.5);
-  --shell-content: rgba(24, 24, 27, 0.72);
-  --shell-border: rgba(255, 255, 255, 0.075);
-  --shell-shadow: 0 18px 44px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.07) inset;
-  --shell-header-shadow: 0 16px 38px rgba(0, 0, 0, 0.24), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  --shell-surface: rgba(8, 8, 9, 0.68);
+  --shell-header-surface: rgba(8, 8, 9, 0.62);
+  --shell-content: rgba(10, 10, 11, 0.82);
+  --shell-border: rgba(255, 255, 255, 0.09);
+  --shell-shadow: 0 18px 44px rgba(0, 0, 0, 0.34), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
+  --shell-header-shadow: 0 16px 38px rgba(0, 0, 0, 0.34), 0 1px 0 rgba(255, 255, 255, 0.09) inset;
   --shell-backdrop:
-    linear-gradient(180deg, rgba(24, 24, 27, 0.98), rgba(15, 15, 16, 0.98));
+    linear-gradient(180deg, #000000, #050505);
 }
 
 @theme inline {
