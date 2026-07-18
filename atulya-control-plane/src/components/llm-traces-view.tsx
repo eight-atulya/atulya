@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type MouseEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   Activity,
   AlertCircle,
@@ -72,6 +72,17 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
+function formatBucketLabel(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString(undefined, {
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function formatNumber(value: number | null | undefined): string {
   if (value === null || value === undefined) return "0";
   return new Intl.NumberFormat().format(value);
@@ -132,6 +143,19 @@ type TraceMessage = {
   role: string;
   content: unknown;
   index: number;
+};
+
+type ActivityHoverHint = {
+  label: string;
+  tone: string;
+  description: string;
+};
+
+type ActivityTooltip = {
+  bucket: string;
+  x: number;
+  y: number;
+  hint?: ActivityHoverHint;
 };
 
 function extractMessages(value: unknown): TraceMessage[] {
@@ -283,10 +307,21 @@ function InputPayloadPanel({ value }: { value: unknown }) {
 }
 
 function TraceTimeline({ buckets }: { buckets: LLMRequestStatsBucket[] }) {
+  const chartRef = useRef<HTMLDivElement | null>(null);
+  const [tooltip, setTooltip] = useState<ActivityTooltip | null>(null);
   const grouped = useMemo(() => {
     const map = new Map<
       string,
-      { bucket: string; success: number; error: number; other: number }
+      {
+        bucket: string;
+        success: number;
+        error: number;
+        other: number;
+        inputTokens: number;
+        outputTokens: number;
+        cachedTokens: number;
+        totalTokens: number;
+      }
     >();
     for (const item of buckets) {
       const current = map.get(item.bucket) ?? {
@@ -294,10 +329,18 @@ function TraceTimeline({ buckets }: { buckets: LLMRequestStatsBucket[] }) {
         success: 0,
         error: 0,
         other: 0,
+        inputTokens: 0,
+        outputTokens: 0,
+        cachedTokens: 0,
+        totalTokens: 0,
       };
       if (item.status === "success") current.success += item.count;
       else if (item.status === "error") current.error += item.count;
       else current.other += item.count;
+      current.inputTokens += item.input_tokens || 0;
+      current.outputTokens += item.output_tokens || 0;
+      current.cachedTokens += item.cached_tokens || 0;
+      current.totalTokens += item.total_tokens || 0;
       map.set(item.bucket, current);
     }
     return Array.from(map.values())
@@ -306,23 +349,78 @@ function TraceTimeline({ buckets }: { buckets: LLMRequestStatsBucket[] }) {
   }, [buckets]);
 
   const maxCount = Math.max(1, ...grouped.map((item) => item.success + item.error + item.other));
+  const maxTokens = Math.max(1, ...grouped.map((item) => item.totalTokens));
+  const activeBucket = tooltip ? grouped.find((item) => item.bucket === tooltip.bucket) : null;
+  const activeTotal = activeBucket
+    ? activeBucket.success + activeBucket.error + activeBucket.other
+    : 0;
+  const activeSuccessPct =
+    activeBucket && activeTotal ? Math.round((activeBucket.success / activeTotal) * 100) : 0;
+  const activeErrorPct =
+    activeBucket && activeTotal ? Math.round((activeBucket.error / activeTotal) * 100) : 0;
+
+  const setTooltipPosition = (
+    bucket: string,
+    rawX: number,
+    rawY: number,
+    hint?: ActivityHoverHint
+  ) => {
+    const rect = chartRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    setTooltip((previous) => {
+      const nextHint = hint ?? (previous?.bucket === bucket ? previous.hint : undefined);
+      const tooltipWidth = 320;
+      const tooltipHeight = 230;
+      const nextX = rawX + 16;
+      const nextY = rawY + 16;
+
+      return {
+        bucket,
+        hint: nextHint,
+        x: Math.min(Math.max(nextX, 12), Math.max(12, rect.width - tooltipWidth - 12)),
+        y: Math.min(Math.max(nextY, 12), Math.max(12, rect.height - tooltipHeight - 12)),
+      };
+    });
+  };
+
+  const showTooltip = (
+    bucket: string,
+    event: MouseEvent<HTMLElement>,
+    hint?: ActivityHoverHint
+  ) => {
+    const rect = chartRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    setTooltipPosition(bucket, event.clientX - rect.left, event.clientY - rect.top, hint);
+  };
+
+  const showTooltipFromElement = (bucket: string, element: HTMLElement) => {
+    const rect = chartRef.current?.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    if (!rect) return;
+    setTooltipPosition(
+      bucket,
+      elementRect.left - rect.left + elementRect.width / 2,
+      elementRect.top - rect.top
+    );
+  };
 
   if (!grouped.length) {
     return (
-      <div className="flex h-24 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
-        No trace activity in this window
+      <div className="flex h-32 items-center justify-center rounded-lg border border-dashed border-border text-sm text-muted-foreground">
+        No LLM calls recorded in this window
       </div>
     );
   }
 
   return (
     <div className="rounded-lg border border-border bg-card/70 p-4">
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold">Activity</p>
-          <p className="text-xs text-muted-foreground">{grouped.length} buckets</p>
+          <p className="text-xs text-muted-foreground">Status by time bucket with token mix</p>
         </div>
-        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-2 text-xs text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-full bg-emerald-500" />
             success
@@ -331,29 +429,272 @@ function TraceTimeline({ buckets }: { buckets: LLMRequestStatsBucket[] }) {
             <span className="h-2 w-2 rounded-full bg-red-500" />
             error
           </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-sky-500" />
+            other
+          </span>
+          <span className="hidden h-4 w-px bg-border sm:inline-block" />
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-amber-500" />
+            input
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-cyan-500" />
+            output
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-zinc-500" />
+            cached
+          </span>
         </div>
       </div>
-      <div className="flex h-28 items-end gap-1.5 overflow-hidden">
-        {grouped.map((item) => {
-          const total = item.success + item.error + item.other;
-          const height = Math.max(8, Math.round((total / maxCount) * 100));
-          const errorPct = total ? Math.round((item.error / total) * 100) : 0;
-          const label = formatDateTime(item.bucket);
-          return (
-            <div key={item.bucket} className="flex min-w-3 flex-1 flex-col items-center gap-1">
-              <div
-                className="flex w-full max-w-5 flex-col justify-end overflow-hidden rounded-sm bg-muted"
-                style={{ height: `${height}%` }}
-                title={`${label}: ${total} calls, ${item.error} errors`}
+
+      <div ref={chartRef} className="relative mt-4 border-t border-border pt-4">
+        <div
+          className="flex h-52 items-end gap-2 overflow-x-auto overflow-y-hidden"
+          onMouseLeave={() => setTooltip(null)}
+        >
+          {grouped.map((item) => {
+            const total = item.success + item.error + item.other;
+            const height = Math.max(16, Math.round((total / maxCount) * 100));
+            const label = formatBucketLabel(item.bucket);
+            const tokenHeight = Math.max(8, Math.round((item.totalTokens / maxTokens) * 100));
+            const tokenRailHeight = Math.max(4, Math.round(tokenHeight / 4));
+            const isActive = item.bucket === activeBucket?.bucket;
+            return (
+              <button
+                type="button"
+                key={item.bucket}
+                className="flex h-full min-w-16 flex-1 flex-col items-center justify-end gap-1.5 rounded-sm bg-transparent p-0 outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={`${label}: ${total} calls, ${item.success} success, ${item.error} error, ${formatNumber(item.totalTokens)} tokens`}
+                onBlur={() => setTooltip(null)}
+                onFocus={(event) => showTooltipFromElement(item.bucket, event.currentTarget)}
+                onMouseEnter={(event) => showTooltip(item.bucket, event)}
+                onMouseMove={(event) => showTooltip(item.bucket, event)}
               >
-                {item.error > 0 && (
-                  <div className="bg-red-500" style={{ height: `${errorPct}%` }} />
-                )}
-                {item.success > 0 && <div className="flex-1 bg-emerald-500" />}
+                <span className="font-mono text-[10px] text-muted-foreground">
+                  {formatNumber(total)} calls
+                </span>
+                <div
+                  className={cn(
+                    "flex w-full min-w-6 max-w-10 flex-col-reverse overflow-hidden rounded-t bg-muted/70 ring-1 transition",
+                    isActive ? "ring-2 ring-primary/70" : "ring-border"
+                  )}
+                  style={{ height: `${height}%` }}
+                >
+                  {item.success > 0 && (
+                    <div
+                      className="min-h-1 bg-emerald-500"
+                      style={{ flex: item.success }}
+                      onMouseEnter={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Success calls",
+                          tone: "text-emerald-600 dark:text-emerald-300",
+                          description:
+                            "Completed normally and produced an output payload you can inspect in the trace drawer.",
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Success calls",
+                          tone: "text-emerald-600 dark:text-emerald-300",
+                          description:
+                            "Completed normally and produced an output payload you can inspect in the trace drawer.",
+                        })
+                      }
+                    />
+                  )}
+                  {item.other > 0 && (
+                    <div
+                      className="min-h-1 bg-sky-500"
+                      style={{ flex: item.other }}
+                      onMouseEnter={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Other status",
+                          tone: "text-sky-600 dark:text-sky-300",
+                          description:
+                            "Neither success nor error, such as in-flight, skipped, or provider states that need separate inspection.",
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Other status",
+                          tone: "text-sky-600 dark:text-sky-300",
+                          description:
+                            "Neither success nor error, such as in-flight, skipped, or provider states that need separate inspection.",
+                        })
+                      }
+                    />
+                  )}
+                  {item.error > 0 && (
+                    <div
+                      className="min-h-1 bg-red-500"
+                      style={{ flex: item.error }}
+                      onMouseEnter={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Errored calls",
+                          tone: "text-red-600 dark:text-red-300",
+                          description:
+                            "Failed before a clean LLM result was recorded. Open a failed row and check the Error tab.",
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Errored calls",
+                          tone: "text-red-600 dark:text-red-300",
+                          description:
+                            "Failed before a clean LLM result was recorded. Open a failed row and check the Error tab.",
+                        })
+                      }
+                    />
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    "flex w-full max-w-14 overflow-hidden rounded-sm bg-muted/50 ring-1 transition",
+                    isActive ? "ring-primary/70" : "ring-border"
+                  )}
+                  style={{ height: `${tokenRailHeight}px` }}
+                >
+                  {item.inputTokens > 0 && (
+                    <div
+                      className="bg-amber-500"
+                      style={{ flex: item.inputTokens }}
+                      onMouseEnter={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Input tokens",
+                          tone: "text-amber-600 dark:text-amber-300",
+                          description:
+                            "Prompt, context, schema, memories, and instructions sent into the model.",
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Input tokens",
+                          tone: "text-amber-600 dark:text-amber-300",
+                          description:
+                            "Prompt, context, schema, memories, and instructions sent into the model.",
+                        })
+                      }
+                    />
+                  )}
+                  {item.outputTokens > 0 && (
+                    <div
+                      className="bg-cyan-500"
+                      style={{ flex: item.outputTokens }}
+                      onMouseEnter={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Output tokens",
+                          tone: "text-cyan-600 dark:text-cyan-300",
+                          description:
+                            "Tokens generated by the model. Higher output means a larger answer or structured result.",
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Output tokens",
+                          tone: "text-cyan-600 dark:text-cyan-300",
+                          description:
+                            "Tokens generated by the model. Higher output means a larger answer or structured result.",
+                        })
+                      }
+                    />
+                  )}
+                  {item.cachedTokens > 0 && (
+                    <div
+                      className="bg-zinc-500"
+                      style={{ flex: item.cachedTokens }}
+                      onMouseEnter={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Cached tokens",
+                          tone: "text-zinc-600 dark:text-zinc-300",
+                          description:
+                            "Prompt tokens the provider reused from cache, which can reduce latency or cost.",
+                        })
+                      }
+                      onMouseMove={(event) =>
+                        showTooltip(item.bucket, event, {
+                          label: "Cached tokens",
+                          tone: "text-zinc-600 dark:text-zinc-300",
+                          description:
+                            "Prompt tokens the provider reused from cache, which can reduce latency or cost.",
+                        })
+                      }
+                    />
+                  )}
+                </div>
+                <span className="w-20 truncate text-center text-[10px] text-muted-foreground">
+                  {label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {tooltip && activeBucket && (
+          <div
+            className="pointer-events-none absolute z-20 w-80 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-xl"
+            style={{ left: tooltip.x, top: tooltip.y }}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="truncate font-mono text-xs font-semibold">
+                  {formatBucketLabel(activeBucket.bucket)}
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatNumber(activeTotal)} calls | {activeSuccessPct}% success | {activeErrorPct}
+                  % error
+                </p>
+              </div>
+              {tooltip.hint && (
+                <span className={cn("shrink-0 text-xs font-medium", tooltip.hint.tone)}>
+                  {tooltip.hint.label}
+                </span>
+              )}
+            </div>
+
+            <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+              <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+                <p className="text-muted-foreground">Success</p>
+                <p className="font-mono font-semibold text-foreground">
+                  {formatNumber(activeBucket.success)}
+                </p>
+              </div>
+              <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+                <p className="text-muted-foreground">Error</p>
+                <p className="font-mono font-semibold text-foreground">
+                  {formatNumber(activeBucket.error)}
+                </p>
+              </div>
+              <div className="rounded border border-border bg-muted/30 px-2 py-1.5">
+                <p className="text-muted-foreground">Other</p>
+                <p className="font-mono font-semibold text-foreground">
+                  {formatNumber(activeBucket.other)}
+                </p>
               </div>
             </div>
-          );
-        })}
+
+            <div className="mt-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Token mix</span>
+                <span className="font-mono text-muted-foreground">
+                  {formatNumber(activeBucket.totalTokens)} total
+                </span>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2 font-mono text-xs text-muted-foreground">
+                <span>{formatNumber(activeBucket.inputTokens)} in</span>
+                <span>{formatNumber(activeBucket.outputTokens)} out</span>
+                <span>{formatNumber(activeBucket.cachedTokens)} cached</span>
+              </div>
+            </div>
+
+            {tooltip.hint && (
+              <p className="mt-3 border-t border-border pt-2 text-xs leading-5 text-muted-foreground">
+                {tooltip.hint.description}
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
