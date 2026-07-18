@@ -34,8 +34,9 @@ from atulya_api.config import (
     get_config,
 )
 from atulya_api.engine.consolidation.consolidator import (
-    _ConsolidationBatchResponse,
+    ConsolidationBatchError,
     _consolidate_batch_with_llm,
+    _ConsolidationBatchResponse,
 )
 from atulya_api.engine.cross_encoder import RemoteTEICrossEncoder, create_cross_encoder_from_env
 
@@ -87,19 +88,21 @@ class TestConsolidationRetryBudget:
         """If the config field is None, the legacy hardcoded budget of 3 applies."""
         call_count = {"n": 0}
 
-        async def fake_call(**kwargs: Any) -> _ConsolidationBatchResponse:
+        async def fake_call(**kwargs: Any) -> tuple[_ConsolidationBatchResponse, None]:
             call_count["n"] += 1
             raise RuntimeError("forced LLM failure")
 
         llm_config = SimpleNamespace(call=AsyncMock(side_effect=fake_call))
-        await _consolidate_batch_with_llm(
-            llm_config=llm_config,
-            memories=[{"id": "m1", "text": "x"}],
-            union_observations=[],
-            union_source_facts={},
-            config=_fake_consolidation_config(),
-            remaining_slots=None,
-        )
+        with pytest.raises(ConsolidationBatchError):
+            await _consolidate_batch_with_llm(
+                bank_id="bank",
+                llm_config=llm_config,
+                memories=[{"id": "m1", "text": "x"}],
+                union_observations=[],
+                union_source_facts={},
+                config=_fake_consolidation_config(),
+                remaining_slots=None,
+            )
         assert call_count["n"] == 3, "Default attempts must be 3 when config is unset"
 
     @pytest.mark.asyncio
@@ -107,19 +110,21 @@ class TestConsolidationRetryBudget:
         """consolidation_max_attempts overrides the legacy default."""
         call_count = {"n": 0}
 
-        async def fake_call(**kwargs: Any) -> _ConsolidationBatchResponse:
+        async def fake_call(**kwargs: Any) -> tuple[_ConsolidationBatchResponse, None]:
             call_count["n"] += 1
             raise RuntimeError("forced LLM failure")
 
         llm_config = SimpleNamespace(call=AsyncMock(side_effect=fake_call))
-        await _consolidate_batch_with_llm(
-            llm_config=llm_config,
-            memories=[{"id": "m1", "text": "x"}],
-            union_observations=[],
-            union_source_facts={},
-            config=_fake_consolidation_config(consolidation_max_attempts=5),
-            remaining_slots=None,
-        )
+        with pytest.raises(ConsolidationBatchError):
+            await _consolidate_batch_with_llm(
+                bank_id="bank",
+                llm_config=llm_config,
+                memories=[{"id": "m1", "text": "x"}],
+                union_observations=[],
+                union_source_facts={},
+                config=_fake_consolidation_config(consolidation_max_attempts=5),
+                remaining_slots=None,
+            )
         assert call_count["n"] == 5
 
     @pytest.mark.asyncio
@@ -127,12 +132,13 @@ class TestConsolidationRetryBudget:
         """consolidation_llm_max_retries is forwarded as max_retries kwarg."""
         captured: dict[str, Any] = {}
 
-        async def fake_call(**kwargs: Any) -> _ConsolidationBatchResponse:
+        async def fake_call(**kwargs: Any) -> tuple[_ConsolidationBatchResponse, None]:
             captured.update(kwargs)
-            return _ConsolidationBatchResponse()
+            return _ConsolidationBatchResponse(), None
 
         llm_config = SimpleNamespace(call=AsyncMock(side_effect=fake_call))
         await _consolidate_batch_with_llm(
+            bank_id="bank",
             llm_config=llm_config,
             memories=[{"id": "m1", "text": "x"}],
             union_observations=[],
@@ -151,12 +157,13 @@ class TestConsolidationRetryBudget:
         """
         captured: dict[str, Any] = {}
 
-        async def fake_call(**kwargs: Any) -> _ConsolidationBatchResponse:
+        async def fake_call(**kwargs: Any) -> tuple[_ConsolidationBatchResponse, None]:
             captured.update(kwargs)
-            return _ConsolidationBatchResponse()
+            return _ConsolidationBatchResponse(), None
 
         llm_config = SimpleNamespace(call=AsyncMock(side_effect=fake_call))
         await _consolidate_batch_with_llm(
+            bank_id="bank",
             llm_config=llm_config,
             memories=[{"id": "m1", "text": "x"}],
             union_observations=[],

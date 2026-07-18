@@ -801,6 +801,7 @@ async def _process_memory_batch(
     # 3. Single LLM call
     t0 = time.time()
     llm_result = await _consolidate_batch_with_llm(
+        bank_id=bank_id,
         llm_config=llm_config,
         memories=memories,
         union_observations=union_observations,
@@ -1452,6 +1453,7 @@ def _build_observations_for_llm(
 
 
 async def _consolidate_batch_with_llm(
+    bank_id: str,
     llm_config: Any,
     memories: list[dict[str, Any]],
     union_observations: "list[MemoryFact]",
@@ -1524,7 +1526,9 @@ async def _consolidate_batch_with_llm(
     call_kwargs: dict[str, Any] = {
         "messages": [{"role": "user", "content": prompt}],
         "response_format": response_model,
-        "max_completion_tokens": config.consolidation_max_completion_tokens if config is not None else 1024,
+        "max_completion_tokens": getattr(config, "consolidation_max_completion_tokens", 1024)
+        if config is not None
+        else 1024,
         "scope": "consolidation",
         "return_usage": True,
     }

@@ -167,9 +167,10 @@ async def test_consolidate_batch_with_llm_passes_max_completion_tokens():
     class _FakeLLM:
         async def call(self, **kwargs):
             captured_kwargs.update(kwargs)
-            return consolidator._ConsolidationBatchResponse()
+            return consolidator._ConsolidationBatchResponse(), None
 
     await consolidator._consolidate_batch_with_llm(
+        bank_id="bank",
         llm_config=_FakeLLM(),
         memories=_make_memories(1),
         union_observations=[],

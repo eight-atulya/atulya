@@ -32,15 +32,15 @@ from pydantic import ValidationError
 
 from atulya_api.engine.consolidation.consolidator import (
     _BatchLLMResult,
-    _ConsolidationBatchResponse,
-    _CreateAction,
-    _DeleteAction,
-    _UpdateAction,
     _build_response_model,
     _consolidate_batch_with_llm,
+    _ConsolidationBatchResponse,
     _count_observations_for_scope,
+    _CreateAction,
+    _DeleteAction,
     _parse_observation_scopes,
     _process_memory_batch,
+    _UpdateAction,
 )
 from atulya_api.engine.consolidation.prompts import build_batch_consolidation_prompt
 from atulya_api.engine.response_models import MemoryFact
@@ -148,14 +148,17 @@ class TestConsolidateBatchWithLLMCap:
     async def test_passes_unconstrained_model_when_no_cap(self) -> None:
         captured: dict[str, Any] = {}
 
-        async def fake_call(*, messages, response_format, scope):
+        async def fake_call(**kwargs):
+            messages = kwargs["messages"]
+            response_format = kwargs["response_format"]
             captured["response_format"] = response_format
             captured["prompt"] = messages[0]["content"]
-            return _ConsolidationBatchResponse()
+            return _ConsolidationBatchResponse(), None
 
         llm_config = SimpleNamespace(call=AsyncMock(side_effect=fake_call))
 
         await _consolidate_batch_with_llm(
+            bank_id="bank",
             llm_config=llm_config,
             memories=[{"id": "m1", "text": "Alice loves coffee."}],
             union_observations=[],
@@ -171,14 +174,17 @@ class TestConsolidateBatchWithLLMCap:
     async def test_zero_slots_emits_max_length_zero_model_and_banner(self) -> None:
         captured: dict[str, Any] = {}
 
-        async def fake_call(*, messages, response_format, scope):
+        async def fake_call(**kwargs):
+            messages = kwargs["messages"]
+            response_format = kwargs["response_format"]
             captured["response_format"] = response_format
             captured["prompt"] = messages[0]["content"]
-            return _ConsolidationBatchResponse()
+            return _ConsolidationBatchResponse(), None
 
         llm_config = SimpleNamespace(call=AsyncMock(side_effect=fake_call))
 
         await _consolidate_batch_with_llm(
+            bank_id="bank",
             llm_config=llm_config,
             memories=[{"id": "m1", "text": "Alice loves coffee."}],
             union_observations=[],
