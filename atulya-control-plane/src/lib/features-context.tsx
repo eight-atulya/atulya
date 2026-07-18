@@ -13,6 +13,7 @@ interface Features {
   brain_runtime: boolean;
   sub_routine: boolean;
   brain_import_export: boolean;
+  llm_trace: boolean;
 }
 
 interface FeaturesContextType {
@@ -31,6 +32,7 @@ const defaultFeatures: Features = {
   brain_runtime: false,
   sub_routine: false,
   brain_import_export: false,
+  llm_trace: false,
 };
 
 const FeaturesContext = createContext<FeaturesContextType | undefined>(undefined);

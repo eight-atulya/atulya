@@ -23,6 +23,7 @@ import { WebhooksView } from "@/components/webhooks-view";
 import { ForgeView } from "@/components/forge-view";
 import { DreamTranceView } from "@/components/dream-trance-view";
 import { EntityTrajectoriesView } from "@/components/entity-trajectories-view";
+import { LLMTracesView } from "@/components/llm-traces-view";
 import { MemoryRepoControls } from "@/components/memory-repo-controls";
 import { useFeatures } from "@/lib/features-context";
 import { useBank } from "@/lib/bank-context";
@@ -57,6 +58,7 @@ type NavItem =
   | "codebases"
   | "entities"
   | "trajectories"
+  | "traces"
   | "forge"
   | "profile";
 type DataSubTab = "world" | "experience" | "observations" | "mental-models";
@@ -109,7 +111,7 @@ export default function BankPage() {
       setCurrentBank(null);
       await loadBanks();
       router.push("/");
-    } catch (error) {
+    } catch {
       // Error toast is shown automatically by the API client interceptor
     } finally {
       setIsDeleting(false);
@@ -126,7 +128,7 @@ export default function BankPage() {
       toast.success("Success", {
         description: result.message || "Observations cleared successfully",
       });
-    } catch (error) {
+    } catch {
       // Error toast is shown automatically by the API client interceptor
     } finally {
       setIsClearingObservations(false);
@@ -152,7 +154,7 @@ export default function BankPage() {
     setIsConsolidating(true);
     try {
       await client.triggerConsolidation(bankId);
-    } catch (error) {
+    } catch {
       // Error toast is shown automatically by the API client interceptor
     } finally {
       setIsConsolidating(false);
@@ -408,6 +410,9 @@ export default function BankPage() {
 
         {/* Codebases Tab */}
         {view === "codebases" && <CodebasesView key={`codebases:${bankViewKey}`} />}
+
+        {/* LLM Traces Tab */}
+        {view === "traces" && <LLMTracesView key={`traces:${bankViewKey}`} />}
 
         {/* Data/Memories Tab */}
         {view === "data" && (

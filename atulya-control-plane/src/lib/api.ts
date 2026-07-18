@@ -730,6 +730,55 @@ export interface OperationResult extends OperationStatus {
   result: ReflectResponse | ForgeJobResult | Record<string, any> | null;
 }
 
+export interface LLMRequestRow {
+  id: string;
+  bank_id: string | null;
+  operation: string | null;
+  scope: string | null;
+  trace_id: string | null;
+  span_id: string | null;
+  parent_span_id: string | null;
+  provider: string | null;
+  model: string | null;
+  status: string;
+  started_at: string;
+  ended_at: string | null;
+  duration_ms: number | null;
+  input_tokens: number | null;
+  output_tokens: number | null;
+  cached_tokens: number | null;
+  total_tokens: number | null;
+  input: unknown;
+  output: unknown;
+  error: unknown;
+  llm_info: unknown;
+  metadata: unknown;
+}
+
+export interface LLMRequestListResponse {
+  items: LLMRequestRow[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+export interface LLMRequestStatsBucket {
+  bucket: string;
+  status: string;
+  count: number;
+  input_tokens: number;
+  output_tokens: number;
+  cached_tokens: number;
+  total_tokens: number;
+}
+
+export interface LLMRequestStatsResponse {
+  bank_id: string;
+  period: string;
+  trunc: string;
+  items: LLMRequestStatsBucket[];
+}
+
 export interface ForgeQualitySummary {
   total: number;
   exportable: number;
@@ -1847,6 +1896,43 @@ export class ControlPlaneClient {
     }>(`/api/operations/${bankId}${query ? `?${query}` : ""}`);
   }
 
+  async listLLMRequests(
+    bankId: string,
+    options?: {
+      limit?: number;
+      offset?: number;
+      trace_id?: string;
+      status?: string;
+      operation?: string;
+      provider?: string;
+    }
+  ) {
+    const params = new URLSearchParams();
+    if (options?.limit) params.append("limit", options.limit.toString());
+    if (options?.offset) params.append("offset", options.offset.toString());
+    if (options?.trace_id) params.append("trace_id", options.trace_id);
+    if (options?.status) params.append("status", options.status);
+    if (options?.operation) params.append("operation", options.operation);
+    if (options?.provider) params.append("provider", options.provider);
+    const query = params.toString();
+    return this.fetchApi<LLMRequestListResponse>(
+      `/api/banks/${encodeURIComponent(bankId)}/llm-requests${query ? `?${query}` : ""}`
+    );
+  }
+
+  async getLLMRequestStats(
+    bankId: string,
+    options?: { period_hours?: number; trunc?: "minute" | "hour" | "day" }
+  ) {
+    const params = new URLSearchParams();
+    if (options?.period_hours) params.append("period_hours", options.period_hours.toString());
+    if (options?.trunc) params.append("trunc", options.trunc);
+    const query = params.toString();
+    return this.fetchApi<LLMRequestStatsResponse>(
+      `/api/banks/${encodeURIComponent(bankId)}/llm-requests/stats${query ? `?${query}` : ""}`
+    );
+  }
+
   /**
    * Cancel a pending operation
    */
@@ -2772,6 +2858,7 @@ export class ControlPlaneClient {
         brain_runtime: boolean;
         sub_routine: boolean;
         brain_import_export: boolean;
+        llm_trace: boolean;
       };
     }>("/api/version");
   }

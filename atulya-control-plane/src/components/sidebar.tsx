@@ -17,6 +17,7 @@ import {
   Settings,
   Layers,
   LineChart,
+  Workflow,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -31,6 +32,7 @@ type NavItem =
   | "codebases"
   | "entities"
   | "trajectories"
+  | "traces"
   | "forge"
   | "profile";
 
@@ -58,6 +60,7 @@ export function Sidebar({ currentTab, onTabChange }: SidebarProps) {
     { id: "codebases" as NavItem, label: "Codebases", icon: FolderGit2 },
     { id: "entities" as NavItem, label: "Entities", icon: Users },
     { id: "trajectories" as NavItem, label: "Trajectories", icon: LineChart },
+    { id: "traces" as NavItem, label: "LLM Traces", icon: Workflow },
     { id: "forge" as NavItem, label: "Data Forge for training models", icon: Layers },
     { id: "profile" as NavItem, label: "Brain Configuration", icon: Settings },
   ];
