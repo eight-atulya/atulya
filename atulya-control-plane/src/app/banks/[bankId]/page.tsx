@@ -46,6 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Brain, Trash2, Loader2, MoreVertical, RotateCcw } from "lucide-react";
 
 type NavItem =
@@ -63,6 +64,29 @@ type NavItem =
   | "profile";
 type DataSubTab = "world" | "experience" | "observations" | "mental-models";
 type BankConfigTab = "general" | "configuration" | "webhooks" | "dreams";
+
+const DATA_SUB_TABS: Array<{ id: DataSubTab; label: string; helper: string }> = [
+  {
+    id: "world",
+    label: "World Facts",
+    helper: "Factual memory retained from documents, sources, and external context.",
+  },
+  {
+    id: "experience",
+    label: "Experience",
+    helper: "First-person actions, interactions, and events from this bank.",
+  },
+  {
+    id: "observations",
+    label: "Observations",
+    helper: "Synthesized patterns Atulya has consolidated from supporting facts.",
+  },
+  {
+    id: "mental-models",
+    label: "Mental Models",
+    helper: "Reusable summaries that help reflection answer recurring questions faster.",
+  },
+];
 
 export default function BankPage() {
   const router = useRouter();
@@ -417,80 +441,46 @@ export default function BankPage() {
         {/* Data/Memories Tab */}
         {view === "data" && (
           <div>
-            <h1 className="text-3xl font-bold mb-2 text-foreground">Explore Memory Intelligence</h1>
-            <p className="text-muted-foreground mb-6">
-              Explore facts, observations, and mental models. Use State Graph to see what changed
-              and Evidence Graph to inspect the supporting memories.
-            </p>
+            <h1 className="mb-4 text-3xl font-bold text-foreground">
+              Visualise past memories that matters
+            </h1>
 
-            <div className="mb-6 border-b border-border">
-              <div className="flex gap-1">
-                <button
-                  onClick={() => handleDataSubTabChange("world")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                    subTab === "world"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  World Facts
-                  {subTab === "world" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleDataSubTabChange("experience")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                    subTab === "experience"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Experience
-                  {subTab === "experience" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleDataSubTabChange("observations")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                    subTab === "observations"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Observations
-                  {!observationsEnabled && (
-                    <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                      Off
-                    </span>
-                  )}
-                  {subTab === "observations" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleDataSubTabChange("mental-models")}
-                  className={`px-6 py-3 font-semibold text-sm transition-all relative ${
-                    subTab === "mental-models"
-                      ? "text-primary"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Mental Models
-                  {subTab === "mental-models" && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
-                  )}
-                </button>
+            <div className="mb-6 rounded-lg border border-border bg-card p-1 shadow-sm">
+              <div className="grid gap-1 sm:grid-cols-2 xl:grid-cols-4">
+                {DATA_SUB_TABS.map((tab) => (
+                  <Tooltip key={tab.id}>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() => handleDataSubTabChange(tab.id)}
+                        className={`inline-flex min-h-9 items-center justify-center whitespace-nowrap rounded-md px-3 py-2 text-xs font-semibold transition-all ${
+                          subTab === tab.id
+                            ? "bg-background text-primary shadow-sm ring-1 ring-border"
+                            : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        }`}
+                      >
+                        {tab.label}
+                        {tab.id === "observations" && !observationsEnabled && (
+                          <span className="ml-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                            Off
+                          </span>
+                        )}
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="bottom"
+                      align="center"
+                      className="max-w-64 border border-border bg-popover px-3 py-2 text-left text-xs leading-5 text-popover-foreground shadow-lg"
+                    >
+                      {tab.helper}
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
               </div>
             </div>
 
             <div>
               {subTab === "world" && (
                 <div>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Objective facts about the world received from external sources.
-                  </p>
                   <DataView key={`world:${bankViewKey}`} factType="world" />
                 </div>
               )}

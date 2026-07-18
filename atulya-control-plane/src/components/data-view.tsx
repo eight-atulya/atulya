@@ -99,7 +99,7 @@ export function DataView({ factType }: DataViewProps) {
   const { currentBank } = useBank();
   const { features } = useFeatures();
   const [isCompactGraphLayout, setIsCompactGraphLayout] = useState(false);
-  const [viewMode, setViewMode] = useState<ViewMode>("constellation");
+  const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [data, setData] = useState<any>(null);
   const [timelineData, setTimelineData] = useState<TimelineResponse | null>(null);
   const [loading, setLoading] = useState(false);
@@ -1572,12 +1572,13 @@ export function DataView({ factType }: DataViewProps) {
                   className={
                     isCompactGraphLayout
                       ? "mt-4 w-full overflow-hidden rounded-xl border border-border bg-card"
-                      : `${showControlPanel ? "w-80" : "w-0"} transition-all duration-300 overflow-hidden flex-shrink-0`
+                      : `${showControlPanel ? "w-80 border border-border bg-card" : "w-0 border-0"} flex-shrink-0 overflow-hidden rounded-xl transition-all duration-300`
                   }
+                  style={{ height: isCompactGraphLayout ? undefined : graphCanvasHeight }}
                 >
                   <div
-                    className={`${isCompactGraphLayout ? "w-full border-t" : "w-80 border-l"} bg-card border-border overflow-y-auto`}
-                    style={{ height: graphCanvasHeight }}
+                    className={`${isCompactGraphLayout ? "w-full" : "h-full w-80"} overflow-y-auto bg-card`}
+                    style={{ height: isCompactGraphLayout ? graphCanvasHeight : undefined }}
                   >
                     {graphSurfaceMode === "state" ? (
                       <div className="p-4 space-y-5">

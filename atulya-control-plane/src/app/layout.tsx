@@ -3,6 +3,7 @@ import "./globals.css";
 import { BankProvider } from "@/lib/bank-context";
 import { FeaturesProvider } from "@/lib/features-context";
 import { ThemeProvider } from "@/lib/theme-context";
+import { ScrollbarActivity } from "@/components/scrollbar-activity";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -22,6 +23,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="bg-background text-foreground">
+        <ScrollbarActivity />
         <ThemeProvider>
           <FeaturesProvider>
             <TooltipProvider delayDuration={300}>
