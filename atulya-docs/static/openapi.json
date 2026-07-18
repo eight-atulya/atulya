@@ -1428,6 +1428,254 @@
         }
       }
     },
+    "/v1/default/banks/{bank_id}/llm-requests": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "List LLM request traces",
+        "description": "List database-backed LLM request traces for one bank.",
+        "operationId": "list_llm_requests",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "description": "Maximum trace rows to return",
+              "default": 100,
+              "title": "Limit"
+            },
+            "description": "Maximum trace rows to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Rows to skip",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Rows to skip"
+          },
+          {
+            "name": "trace_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by trace ID",
+              "title": "Trace Id"
+            },
+            "description": "Filter by trace ID"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status, e.g. success or error",
+              "title": "Status"
+            },
+            "description": "Filter by status, e.g. success or error"
+          },
+          {
+            "name": "operation",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation, e.g. retain or reflect",
+              "title": "Operation"
+            },
+            "description": "Filter by operation, e.g. retain or reflect"
+          },
+          {
+            "name": "provider",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by LLM provider",
+              "title": "Provider"
+            },
+            "description": "Filter by LLM provider"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMRequestListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/llm-requests/stats": {
+      "get": {
+        "tags": [
+          "Memory"
+        ],
+        "summary": "Get LLM request trace statistics",
+        "description": "Return time-bucketed LLM request counts and token totals for one bank.",
+        "operationId": "get_llm_request_stats",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "period_hours",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2160,
+              "minimum": 1,
+              "description": "Lookback period in hours",
+              "default": 24,
+              "title": "Period Hours"
+            },
+            "description": "Lookback period in hours"
+          },
+          {
+            "name": "trunc",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "minute",
+                "hour",
+                "day"
+              ],
+              "type": "string",
+              "description": "Time bucket size",
+              "default": "hour",
+              "title": "Trunc"
+            },
+            "description": "Time bucket size"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LLMRequestStatsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v1/default/banks/{bank_id}/reflect": {
       "post": {
         "tags": [
@@ -4635,6 +4883,192 @@
                 "schema": {
                   "$ref": "#/components/schemas/ChunkResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/documents/{document_id}/chunks": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "List chunks for a document",
+        "description": "List all chunks IDs and metadata associated with a specific document.",
+        "operationId": "api_list_chunks_for_document_v1_default_banks__bank_id__documents__document_id__chunks_get",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Maximum number of chunks to return",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "Maximum number of chunks to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of chunks to skip for pagination",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of chunks to skip for pagination"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/default/banks/{bank_id}/documents/{document_id}/memories": {
+      "get": {
+        "tags": [
+          "Documents"
+        ],
+        "summary": "List memory units for a document",
+        "description": "List all memory units and observations associated with a specific document.",
+        "operationId": "api_list_document_memories_v1_default_banks__bank_id__documents__document_id__memories_get",
+        "parameters": [
+          {
+            "name": "bank_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bank Id"
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "Maximum number of memory units to return",
+              "default": 200,
+              "title": "Limit"
+            },
+            "description": "Maximum number of memory units to return"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of memory units to skip for pagination",
+              "default": 0,
+              "title": "Offset"
+            },
+            "description": "Number of memory units to skip for pagination"
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -17464,6 +17898,11 @@
             "type": "boolean",
             "title": "Brain Import Export",
             "description": "Whether .brain import/export APIs are enabled"
+          },
+          "llm_trace": {
+            "type": "boolean",
+            "title": "Llm Trace",
+            "description": "Whether Database LLM trace capture is enabled (per bank configurable)"
           }
         },
         "type": "object",
@@ -17476,7 +17915,8 @@
           "file_upload_api",
           "brain_runtime",
           "sub_routine",
-          "brain_import_export"
+          "brain_import_export",
+          "llm_trace"
         ],
         "title": "FeaturesInfo",
         "description": "Feature flags indicating which capabilities are enabled."
@@ -18988,6 +19428,337 @@
         "title": "InternetResearchResponse",
         "description": "Answer from the internet research agent. Nothing is written to the memory bank."
       },
+      "LLMRequestListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LLMRequestRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "LLMRequestListResponse",
+        "description": "Response model for listing LLM request traces."
+      },
+      "LLMRequestRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "bank_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bank Id"
+          },
+          "operation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation"
+          },
+          "scope": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scope"
+          },
+          "trace_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trace Id"
+          },
+          "span_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Span Id"
+          },
+          "parent_span_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Span Id"
+          },
+          "provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "input_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Tokens"
+          },
+          "cached_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cached Tokens"
+          },
+          "total_tokens": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Tokens"
+          },
+          "input": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input"
+          },
+          "output": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output"
+          },
+          "error": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "llm_info": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Info"
+          },
+          "metadata": {
+            "anyOf": [
+              {},
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "started_at"
+        ],
+        "title": "LLMRequestRow",
+        "description": "A single row in an LLM request trace."
+      },
+      "LLMRequestStatsBucket": {
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "title": "Bucket"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens",
+            "default": 0
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens",
+            "default": 0
+          },
+          "cached_tokens": {
+            "type": "integer",
+            "title": "Cached Tokens",
+            "default": 0
+          },
+          "total_tokens": {
+            "type": "integer",
+            "title": "Total Tokens",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "bucket",
+          "status",
+          "count"
+        ],
+        "title": "LLMRequestStatsBucket",
+        "description": "A single bucket of LLM request statistics."
+      },
+      "LLMRequestStatsResponse": {
+        "properties": {
+          "bank_id": {
+            "type": "string",
+            "title": "Bank Id"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "trunc": {
+            "type": "string",
+            "title": "Trunc"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/LLMRequestStatsBucket"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bank_id",
+          "period",
+          "trunc",
+          "items"
+        ],
+        "title": "LLMRequestStatsResponse",
+        "description": "Response model for LLM request statistics."
+      },
       "ListDocumentsResponse": {
         "properties": {
           "items": {
@@ -19990,6 +20761,61 @@
         "title": "MentalModelTrigger",
         "description": "Trigger settings for a mental model."
       },
+      "MinScores": {
+        "properties": {
+          "semantic": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Semantic",
+            "description": "Restrival-level: minimum vector similarity score (0-1)"
+          },
+          "keyword": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Keyword",
+            "description": "Retrieval-level: minimum BM25/keyword match score (0-1)"
+          },
+          "reranker": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reranker",
+            "description": "Post-reranking minimum reranker score (0-1)"
+          },
+          "final": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final",
+            "description": "Post-reranking: minimum final ranking score (0-1)"
+          }
+        },
+        "type": "object",
+        "title": "MinScores",
+        "description": "Minimum scores for filtering recall results (all inclusive, AND-ed)."
+      },
       "OperationProgressResponse": {
         "properties": {
           "current": {
@@ -20712,6 +21538,23 @@
             ],
             "title": "Tag Groups",
             "description": "Compound boolean tag predicates. Each entry is a leaf (``{\"tags\": [...], \"match\": \"any|all|any_strict|all_strict\"}``) or a nested group (``{\"and\": [...]}``, ``{\"or\": [...]}``, ``{\"not\": {...}}``). Top-level entries are AND-ed together. Mutually exclusive with `tags`."
+          },
+          "prefer_observations": {
+            "type": "boolean",
+            "title": "Prefer Observations",
+            "description": "Prefer observation results during recall ranking.",
+            "default": false
+          },
+          "min_score": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MinScores"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional minimum score filters."
           }
         },
         "type": "object",
@@ -23080,6 +23923,7 @@
             "brain_import_export": false,
             "brain_runtime": true,
             "file_upload_api": true,
+            "llm_trace": false,
             "mcp": true,
             "observations": false,
             "sub_routine": true,

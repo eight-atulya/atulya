@@ -541,32 +541,86 @@ class LLMProvider:
             OutputTooLongError: If output exceeds token limits.
             Exception: Re-raises API errors after retries exhausted.
         """
-        async with _global_llm_semaphore:
-            # Delegate to provider implementation
-            result = await self._provider_impl.call(
-                messages=messages,
-                response_format=response_format,
-                max_completion_tokens=max_completion_tokens,
-                temperature=temperature,
+        from .llm_trace import record_llm_call, utcnow
+
+        started_at = utcnow()
+        try:
+            async with _global_llm_semaphore:
+                # Delegate to provider implementation
+                result = await self._provider_impl.call(
+                    messages=messages,
+                    response_format=response_format,
+                    max_completion_tokens=max_completion_tokens,
+                    temperature=temperature,
+                    scope=scope,
+                    max_retries=max_retries,
+                    initial_backoff=initial_backoff,
+                    max_backoff=max_backoff,
+                    skip_validation=skip_validation,
+                    strict_schema=strict_schema,
+                    return_usage=return_usage,
+                )
+
+                # Backward compatibility: Update mock call tracking for mock provider
+                # This allows existing tests using LLMProvider._mock_calls to continue working
+                if self.provider == "mock":
+                    from .providers.mock_llm import MockLLM
+
+                    if isinstance(self._provider_impl, MockLLM):
+                        # Sync the mock calls from provider implementation to wrapper
+                        self._mock_calls = self._provider_impl.get_mock_calls()
+
+            output_payload = result
+            usage = None
+            if return_usage and isinstance(result, tuple) and len(result) == 2:
+                output_payload, usage = result
+            record_llm_call(
+                provider=self.provider,
+                model=self.model,
                 scope=scope,
-                max_retries=max_retries,
-                initial_backoff=initial_backoff,
-                max_backoff=max_backoff,
-                skip_validation=skip_validation,
-                strict_schema=strict_schema,
-                return_usage=return_usage,
+                started_at=started_at,
+                ended_at=utcnow(),
+                status="success",
+                input_messages=messages,
+                output_payload=output_payload,
+                usage=usage,
+                llm_info={
+                    "response_format": getattr(response_format, "__name__", str(response_format))
+                    if response_format is not None
+                    else None,
+                    "max_completion_tokens": max_completion_tokens,
+                    "temperature": temperature,
+                    "max_retries": max_retries,
+                    "strict_schema": strict_schema,
+                    "skip_validation": skip_validation,
+                    "return_usage": return_usage,
+                },
             )
-
-            # Backward compatibility: Update mock call tracking for mock provider
-            # This allows existing tests using LLMProvider._mock_calls to continue working
-            if self.provider == "mock":
-                from .providers.mock_llm import MockLLM
-
-                if isinstance(self._provider_impl, MockLLM):
-                    # Sync the mock calls from provider implementation to wrapper
-                    self._mock_calls = self._provider_impl.get_mock_calls()
-
             return result
+        except Exception as exc:
+            record_llm_call(
+                provider=self.provider,
+                model=self.model,
+                scope=scope,
+                started_at=started_at,
+                ended_at=utcnow(),
+                status="error",
+                input_messages=messages,
+                output_payload=None,
+                error={"type": type(exc).__name__, "message": str(exc)},
+                llm_info={
+                    "response_format": getattr(response_format, "__name__", str(response_format))
+                    if response_format is not None
+                    else None,
+                    "max_completion_tokens": max_completion_tokens,
+                    "temperature": temperature,
+                    "max_retries": max_retries,
+                    "strict_schema": strict_schema,
+                    "skip_validation": skip_validation,
+                    "return_usage": return_usage,
+                },
+            )
+            raise
 
     async def call_with_tools(
         self,
@@ -597,30 +651,82 @@ class LLMProvider:
         Returns:
             LLMToolCallResult with content and/or tool_calls.
         """
-        async with _global_llm_semaphore:
-            # Delegate to provider implementation
-            result = await self._provider_impl.call_with_tools(
-                messages=messages,
-                tools=tools,
-                max_completion_tokens=max_completion_tokens,
-                temperature=temperature,
+        from .llm_trace import record_llm_call, utcnow
+
+        started_at = utcnow()
+        tool_names = [
+            tool.get("function", {}).get("name")
+            for tool in tools
+            if isinstance(tool, dict) and isinstance(tool.get("function"), dict)
+        ]
+        input_payload = {"messages": messages, "tools": tools, "tool_choice": tool_choice}
+        try:
+            async with _global_llm_semaphore:
+                # Delegate to provider implementation
+                result = await self._provider_impl.call_with_tools(
+                    messages=messages,
+                    tools=tools,
+                    max_completion_tokens=max_completion_tokens,
+                    temperature=temperature,
+                    scope=scope,
+                    max_retries=max_retries,
+                    initial_backoff=initial_backoff,
+                    max_backoff=max_backoff,
+                    tool_choice=tool_choice,
+                )
+
+                # Backward compatibility: Update mock call tracking for mock provider
+                # This allows existing tests using LLMProvider._mock_calls to continue working
+                if self.provider == "mock":
+                    from .providers.mock_llm import MockLLM
+
+                    if isinstance(self._provider_impl, MockLLM):
+                        # Sync the mock calls from provider implementation to wrapper
+                        self._mock_calls = self._provider_impl.get_mock_calls()
+
+            usage = {
+                "input_tokens": getattr(result, "input_tokens", None),
+                "output_tokens": getattr(result, "output_tokens", None),
+            }
+            record_llm_call(
+                provider=self.provider,
+                model=self.model,
                 scope=scope,
-                max_retries=max_retries,
-                initial_backoff=initial_backoff,
-                max_backoff=max_backoff,
-                tool_choice=tool_choice,
+                started_at=started_at,
+                ended_at=utcnow(),
+                status="success",
+                input_messages=input_payload,
+                output_payload=result,
+                usage=usage,
+                llm_info={
+                    "max_completion_tokens": max_completion_tokens,
+                    "temperature": temperature,
+                    "max_retries": max_retries,
+                    "tool_choice": tool_choice,
+                    "tool_names": tool_names,
+                },
             )
-
-            # Backward compatibility: Update mock call tracking for mock provider
-            # This allows existing tests using LLMProvider._mock_calls to continue working
-            if self.provider == "mock":
-                from .providers.mock_llm import MockLLM
-
-                if isinstance(self._provider_impl, MockLLM):
-                    # Sync the mock calls from provider implementation to wrapper
-                    self._mock_calls = self._provider_impl.get_mock_calls()
-
             return result
+        except Exception as exc:
+            record_llm_call(
+                provider=self.provider,
+                model=self.model,
+                scope=scope,
+                started_at=started_at,
+                ended_at=utcnow(),
+                status="error",
+                input_messages=input_payload,
+                output_payload=None,
+                error={"type": type(exc).__name__, "message": str(exc)},
+                llm_info={
+                    "max_completion_tokens": max_completion_tokens,
+                    "temperature": temperature,
+                    "max_retries": max_retries,
+                    "tool_choice": tool_choice,
+                    "tool_names": tool_names,
+                },
+            )
+            raise
 
     def set_response_callback(self, fn: Any) -> None:
         """Set a callback invoked on each call() instead of the fixed mock response."""

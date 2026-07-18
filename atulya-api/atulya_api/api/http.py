@@ -126,6 +126,24 @@ class IncludeOptions(BaseModel):
     )
 
 
+class RecallScore(BaseModel):
+    """Per-recall score for a better pipeline and intelligence."""
+
+    semantic: float | None = None
+    keyword: float | None = None
+    reranker: float | None = None
+    final: float
+
+
+class MinScores(BaseModel):
+    """Minimum scores for filtering recall results (all inclusive, AND-ed)."""
+
+    semantic: float | None = Field(default=None, description="Restrival-level: minimum vector similarity score (0-1)")
+    keyword: float | None = Field(default=None, description="Retrieval-level: minimum BM25/keyword match score (0-1)")
+    reranker: float | None = Field(default=None, description="Post-reranking minimum reranker score (0-1)")
+    final: float | None = Field(default=None, description="Post-reranking: minimum final ranking score (0-1)")
+
+
 class RecallRequest(BaseModel):
     """Request model for recall endpoint."""
 
@@ -182,6 +200,8 @@ class RecallRequest(BaseModel):
             "Top-level entries are AND-ed together. Mutually exclusive with `tags`."
         ),
     )
+    prefer_observations: bool = Field(default=False, description="Prefer observation results during recall ranking.")
+    min_score: MinScores | None = Field(default=None, description="Optional minimum score filters.")
 
     @model_validator(mode="after")
     def _validate_tag_inputs(self) -> "RecallRequest":
@@ -2895,6 +2915,64 @@ class FeaturesInfo(BaseModel):
     brain_runtime: bool = Field(description="Whether atulya-brain runtime is enabled")
     sub_routine: bool = Field(description="Whether sub_routine operations are enabled")
     brain_import_export: bool = Field(description="Whether .brain import/export APIs are enabled")
+    llm_trace: bool = Field(description="Whether Database LLM trace capture is enabled (per bank configurable)")
+
+
+class LLMRequestRow(BaseModel):
+    """A single row in an LLM request trace."""
+
+    id: str
+    bank_id: str | None = None
+    operation: str | None = None
+    scope: str | None = None
+    trace_id: str | None = None
+    span_id: str | None = None
+    parent_span_id: str | None = None
+    provider: str | None = None
+    model: str | None = None
+    status: str
+    started_at: str
+    ended_at: str | None = None
+    duration_ms: int | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    cached_tokens: int | None = None
+    total_tokens: int | None = None
+    input: Any | None = None
+    output: Any | None = None
+    error: Any | None = None
+    llm_info: Any | None = None
+    metadata: Any | None = None
+
+
+class LLMRequestListResponse(BaseModel):
+    """Response model for listing LLM request traces."""
+
+    items: list[LLMRequestRow]
+    total: int
+    limit: int
+    offset: int
+
+
+class LLMRequestStatsBucket(BaseModel):
+    """A single bucket of LLM request statistics."""
+
+    bucket: str
+    status: str
+    count: int
+    input_tokens: int = 0
+    output_tokens: int = 0
+    cached_tokens: int = 0
+    total_tokens: int = 0
+
+
+class LLMRequestStatsResponse(BaseModel):
+    """Response model for LLM request statistics."""
+
+    bank_id: str
+    period: str
+    trunc: str
+    items: list[LLMRequestStatsBucket]
 
 
 class VersionResponse(BaseModel):
@@ -2914,6 +2992,7 @@ class VersionResponse(BaseModel):
                     "brain_runtime": True,
                     "sub_routine": True,
                     "brain_import_export": False,
+                    "llm_trace": False,
                 },
             }
         }
@@ -3400,6 +3479,30 @@ def create_app(
 def _register_routes(app: FastAPI):
     """Register all API routes on the given app instance."""
 
+    def _normalize_llm_request_row(raw_row: dict[str, Any]) -> LLMRequestRow:
+        """Normalize raw LLM request row from DB to LLMRequestRow model."""
+        row = dict(raw_row)  # Make a copy to avoid mutating the original
+        if isinstance(row.get("id"), uuid.UUID):
+            row["id"] = str(row["id"])
+        for key in ("started_at", "ended_at"):
+            value = row.get(key)
+            if isinstance(value, datetime):
+                row[key] = value.replace(tzinfo=timezone.utc).isoformat()
+        return LLMRequestRow(**row)
+
+    def _normalize_llm_request_stats_bucket(raw_row: dict[str, Any]) -> LLMRequestStatsBucket:
+        """Normalize raw LLM request stats bucket from DB."""
+        row = dict(raw_row)
+        value = row.get("bucket")
+        if isinstance(value, datetime):
+            row["bucket"] = value.replace(tzinfo=timezone.utc).isoformat()
+        return LLMRequestStatsBucket(**row)
+
+    def _raise_logged_500(context: str, exc: Exception) -> None:
+        """Log the exception with context and raise HTTP 500."""
+        logger.error("Error in %s", context, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
+
     def get_request_context(authorization: str | None = Header(default=None)) -> RequestContext:
         """
         Extract request context from Authorization header.
@@ -3496,6 +3599,7 @@ def _register_routes(app: FastAPI):
                 brain_runtime=config.brain_enabled,
                 sub_routine=config.brain_enabled,
                 brain_import_export=config.brain_enabled and config.brain_import_export_enabled,
+                llm_trace=config.llm_trace_enabled,
             ),
         )
 
@@ -3990,6 +4094,8 @@ def _register_routes(app: FastAPI):
                     max_tokens=request.max_tokens,
                     enable_trace=request.trace,
                     fact_type=fact_types,
+                    prefer_observations=request.prefer_observations,
+                    min_score=request.min_score.model_dump() if request.min_score else None,
                     question_date=question_date,
                     include_entities=include_entities,
                     max_entity_tokens=max_entity_tokens,
@@ -4099,6 +4205,84 @@ def _register_routes(app: FastAPI):
                 f"[RECALL ERROR] bank={bank_id} handler_duration={handler_duration:.3f}s error={str(e)}\n{error_detail}"
             )
             raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/llm-requests",
+        response_model=LLMRequestListResponse,
+        summary="List LLM request traces",
+        description="List database-backed LLM request traces for one bank.",
+        operation_id="list_llm_requests",
+        tags=["Memory"],
+    )
+    async def api_list_llm_requests(
+        bank_id: str,
+        limit: int = Query(100, ge=1, le=500, description="Maximum trace rows to return"),
+        offset: int = Query(0, ge=0, description="Rows to skip"),
+        trace_id: str | None = Query(default=None, description="Filter by trace ID"),
+        status: str | None = Query(default=None, description="Filter by status, e.g. success or error"),
+        operation: str | None = Query(default=None, description="Filter by operation, e.g. retain or reflect"),
+        provider: str | None = Query(default=None, description="Filter by LLM provider"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.list_llm_requests(
+                bank_id=bank_id,
+                request_context=request_context,
+                limit=limit,
+                offset=offset,
+                trace_id=trace_id,
+                status=status,
+                operation=operation,
+                provider=provider,
+            )
+            return LLMRequestListResponse(
+                items=[_normalize_llm_request_row(row) for row in result["items"]],
+                total=result["total"],
+                limit=result["limit"],
+                offset=result["offset"],
+            )
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            _raise_logged_500(f"/v1/default/banks/{bank_id}/llm-requests", e)
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/llm-requests/stats",
+        response_model=LLMRequestStatsResponse,
+        summary="Get LLM request trace statistics",
+        description="Return time-bucketed LLM request counts and token totals for one bank.",
+        operation_id="get_llm_request_stats",
+        tags=["Memory"],
+    )
+    async def api_get_llm_request_stats(
+        bank_id: str,
+        period_hours: int = Query(24, ge=1, le=24 * 90, description="Lookback period in hours"),
+        trunc: Literal["minute", "hour", "day"] = Query("hour", description="Time bucket size"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.get_llm_request_stats(
+                bank_id=bank_id,
+                request_context=request_context,
+                period_hours=period_hours,
+                trunc=trunc,
+            )
+            return LLMRequestStatsResponse(
+                bank_id=result["bank_id"],
+                period=result["period"],
+                trunc=result["trunc"],
+                items=[_normalize_llm_request_stats_bucket(row) for row in result["items"]],
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            _raise_logged_500(f"/v1/default/banks/{bank_id}/llm-requests/stats", e)
 
     @app.post(
         "/v1/default/banks/{bank_id}/reflect",
@@ -5698,8 +5882,74 @@ def _register_routes(app: FastAPI):
             logger.error(f"Error in /v1/default/chunks/{chunk_id}: {error_detail}")
             raise HTTPException(status_code=500, detail=str(e))
 
+    @app.get(
+        "/v1/default/banks/{bank_id}/documents/{document_id:path}/chunks",
+        summary="List chunks for a document",
+        description="List all chunks IDs and metadata associated with a specific document.",
+        tags=["Documents"],
+    )
+    async def api_list_chunks_for_document(
+        bank_id: str,
+        document_id: str,
+        limit: int = Query(200, ge=1, le=1000, description="Maximum number of chunks to return"),
+        offset: int = Query(0, ge=0, description="Number of chunks to skip for pagination"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.list_document_chunks(
+                bank_id, document_id, limit=limit, offset=offset, request_context=request_context
+            )
+            if result is None:
+                raise HTTPException(status_code=404, detail="Document not found")
+            return result
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/documents/{document_id}/chunks: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get(
+        "/v1/default/banks/{bank_id}/documents/{document_id:path}/memories",
+        summary="List memory units for a document",
+        description="List all memory units and observations associated with a specific document.",
+        tags=["Documents"],
+    )
+    async def api_list_document_memories(
+        bank_id: str,
+        document_id: str,
+        limit: int = Query(200, ge=1, le=1000, description="Maximum number of memory units to return"),
+        offset: int = Query(0, ge=0, description="Number of memory units to skip for pagination"),
+        request_context: RequestContext = Depends(get_request_context),
+    ):
+        try:
+            result = await app.state.memory.list_document_memories(
+                bank_id,
+                document_id,
+                limit=limit,
+                offset=offset,
+                request_context=request_context,
+            )
+            if result is None:
+                raise HTTPException(status_code=404, detail="Document not found")
+            return result
+        except OperationValidationError as e:
+            raise HTTPException(status_code=e.status_code, detail=e.reason)
+        except (AuthenticationError, HTTPException):
+            raise
+        except Exception as e:
+            import traceback
+
+            error_detail = f"{str(e)}\n\nTraceback:\n{traceback.format_exc()}"
+            logger.error(f"Error in /v1/default/banks/{bank_id}/documents/{document_id}/memories: {error_detail}")
+            raise HTTPException(status_code=500, detail=str(e))
+
     @app.delete(
-        "/v1/default/banks/{bank_id}/documents/{document_id:path}",
+        "/v1/default/banks/{bank_id}/documents/{document_id}",
         response_model=DeleteDocumentResponse,
         summary="Delete a document",
         description="Delete a document and all its associated memory units and links.\n\n"

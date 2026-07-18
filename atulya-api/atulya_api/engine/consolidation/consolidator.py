@@ -31,7 +31,7 @@ from pydantic import BaseModel, field_validator
 from ...config import get_config
 from ..embedding_similarity import cosine_similarity, parse_embedding_text
 from ..llm_wrapper import sanitize_llm_output
-from ..memory_engine import fq_table
+from ..memory_engine import fq_table, get_current_schema
 from ..retain import embedding_utils
 from ..temporal import classify_fact_temporal_metadata
 from .prompts import build_batch_consolidation_prompt
@@ -1526,6 +1526,7 @@ async def _consolidate_batch_with_llm(
         "response_format": response_model,
         "max_completion_tokens": config.consolidation_max_completion_tokens if config is not None else 1024,
         "scope": "consolidation",
+        "return_usage": True,
     }
     if config is not None and getattr(config, "consolidation_llm_max_retries", None) is not None:
         call_kwargs["max_retries"] = config.consolidation_llm_max_retries
@@ -1543,7 +1544,27 @@ async def _consolidate_batch_with_llm(
     last_exc: Exception | None = None
     for attempt in range(1, max_attempts + 1):
         try:
-            response: _ConsolidationBatchResponse = await llm_config.call(**call_kwargs)
+            from ..llm_trace import trace_operation
+
+            with trace_operation(
+                enabled=bool(getattr(config, "llm_trace_enabled", False)),
+                bank_id=bank_id,
+                operation="consolidation",
+                schema=get_current_schema(),
+                metadata={
+                    "attempt": attempt,
+                    "max_attempts": max_attempts,
+                    "memory_ids": memory_ids,
+                    "memory_count": len(memory_ids),
+                    "union_observation_count": len(union_observations),
+                },
+                max_payload_chars=getattr(config, "llm_trace_max_payload_chars", None),
+            ):
+                response, _usage = await llm_config.call(**call_kwargs)
+            if isinstance(response, dict):
+                # Defensive: if the LLM returns a raw dict (e.g. from a schema
+                # validation failure), try to coerce it into a typed response.
+                response = _ConsolidationBatchResponse.model_validate(response)
             return _BatchLLMResult(
                 creates=response.creates,
                 updates=response.updates,

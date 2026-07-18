@@ -95,6 +95,9 @@ async def retrieve_semantic_bm25_combined(
     tags: list[str] | None = None,
     tags_match: TagsMatch = "any",
     tag_groups: list[TagGroup] | None = None,
+    *,
+    min_semantic: float | None = None,
+    min_keyword: float | None = None,
 ) -> dict[str, tuple[list[RetrievalResult], list[RetrievalResult]]]:
     """
     Combined semantic + BM25 retrieval for multiple fact types in a single query.
@@ -119,10 +122,12 @@ async def retrieve_semantic_bm25_combined(
     sanitized_text = re.sub(r"[^\w\s]", " ", query_text.lower())
     tokens = [token for token in sanitized_text.split() if token]
 
+    semantic_min = 0.3 if min_semantic is None else float(min_semantic)
+
     # If no valid tokens for BM25, just run semantic
     if not tokens:
-        tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=5)
-        params = [query_emb_str, bank_id, fact_types, limit]
+        tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=6)
+        params = [query_emb_str, bank_id, fact_types, limit, semantic_min]
         params.extend(tag_params)
         results = await conn.fetch(
             f"""
@@ -136,7 +141,7 @@ async def retrieve_semantic_bm25_combined(
                 WHERE bank_id = $2
                   AND embedding IS NOT NULL
                   AND fact_type = ANY($3)
-                  AND (1 - (embedding <=> $1::vector)) >= 0.3
+                  AND (1 - (embedding <=> $1::vector)) >= $5
                   {tags_clause}
             )
             SELECT id, text, context, event_date, occurred_start, occurred_end, mentioned_at, fact_type, document_id, chunk_id, tags, proof_count,
@@ -161,8 +166,10 @@ async def retrieve_semantic_bm25_combined(
     # Build BM25 query based on text search backend
     config = get_config()
 
-    # Build combined tags + tag_groups clause - starts at param 6
-    tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=6)
+    # Build combined tags + tag_groups clause - starts at param 8
+    # Parameter layout:(token representation)
+    # $1=embedding, $2=bank_id, $3=fact_types, $4=limit, $5=query_text, $6=semantic_min, $7=keyword_min (nullable)
+    tags_clause, tag_params, _ = build_combined_tag_filter(tags, tags_match, tag_groups, param_offset=8)
 
     # Build backend-specific BM25 parts
     if config.text_search_extension == "vchord":
@@ -171,7 +178,15 @@ async def retrieve_semantic_bm25_combined(
         bm25_score_expr = "search_vector <&> to_bm25query('idx_memory_units_text_search', tokenize($5, 'llmlingua2'))"
         bm25_order_by = f"{bm25_score_expr} DESC"
         bm25_where_filter = ""  # No additional WHERE filter for vchord
-        params = [query_emb_str, bank_id, fact_types, limit, query_text]  # Pass raw query_text for tokenization
+        params = [
+            query_emb_str,
+            bank_id,
+            fact_types,
+            limit,
+            query_text,
+            semantic_min,
+            min_keyword,
+        ]  # Pass raw query_text for tokenization
     elif config.text_search_extension == "pg_textsearch":
         # Timescale pg_textsearch: use <@> operator with to_bm25query
         # Note: pg_textsearch scores are negative (lower/more negative = better, so -10 > -1)
@@ -179,14 +194,22 @@ async def retrieve_semantic_bm25_combined(
         bm25_score_expr = "-(text <@> to_bm25query($5, 'idx_memory_units_text_search'))"
         bm25_order_by = "text <@> to_bm25query($5, 'idx_memory_units_text_search') ASC"
         bm25_where_filter = ""  # No additional WHERE filter for pg_textsearch
-        params = [query_emb_str, bank_id, fact_types, limit, query_text]
+        params = [
+            query_emb_str,
+            bank_id,
+            fact_types,
+            limit,
+            query_text,
+            semantic_min,
+            min_keyword,
+        ]  # Pass raw query_text for to_bm25query
     else:  # native
         # Native PostgreSQL: use ts_rank_cd with to_tsquery
         query_tsquery = " | ".join(tokens)
         bm25_score_expr = "ts_rank_cd(search_vector, to_tsquery('english', $5))"
         bm25_order_by = f"{bm25_score_expr} DESC"
         bm25_where_filter = "AND search_vector @@ to_tsquery('english', $5)"
-        params = [query_emb_str, bank_id, fact_types, limit, query_tsquery]
+        params = [query_emb_str, bank_id, fact_types, limit, query_tsquery, semantic_min, min_keyword]
 
     params.extend(tag_params)
 
@@ -202,7 +225,7 @@ async def retrieve_semantic_bm25_combined(
             WHERE bank_id = $2
               AND embedding IS NOT NULL
               AND fact_type = ANY($3)
-              AND (1 - (embedding <=> $1::vector)) >= 0.3
+              AND (1 - (embedding <=> $1::vector)) >= $6
               {tags_clause}
         ),
         bm25_ranked AS (
@@ -215,6 +238,7 @@ async def retrieve_semantic_bm25_combined(
             WHERE bank_id = $2
               AND fact_type = ANY($3)
               {bm25_where_filter}
+              AND ($7::double precision IS NULL OR {bm25_score_expr} >= $7::double precision)
               {tags_clause}
         ),
         semantic AS (
@@ -522,6 +546,7 @@ async def retrieve_all_fact_types_parallel(
     tags: list[str] | None = None,
     tags_match: TagsMatch = "any",
     tag_groups: list[TagGroup] | None = None,
+    min_scores=None,
 ) -> MultiFactTypeRetrievalResult:
     """
     Optimized retrieval for multiple fact types using batched queries.
@@ -580,6 +605,16 @@ async def retrieve_all_fact_types_parallel(
             tags=tags,
             tags_match=tags_match,
             tag_groups=tag_groups,
+            min_semantic=(
+                min_scores.get("semantic") if isinstance(min_scores, dict) else getattr(min_scores, "semantic", None)
+            )
+            if min_scores
+            else None,
+            min_keyword=(
+                min_scores.get("keyword") if isinstance(min_scores, dict) else getattr(min_scores, "keyword", None)
+            )
+            if min_scores
+            else None,
         )
         semantic_bm25_time = time.time() - semantic_bm25_start
 

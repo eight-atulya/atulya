@@ -3737,13 +3737,28 @@ class MemoryEngine(MemoryEngineInterface):
         usage_out = 0
         try:
             llm = self._reflect_llm_config.with_config(resolved)
-            llm_result, usage = await llm.call(
-                messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
-                response_format=DreamLLMOutput,
-                max_completion_tokens=int(settings["max_output_tokens"]),
-                return_usage=True,
-                scope="dream",
-            )
+            from .llm_trace import trace_operation
+
+            with trace_operation(
+                enabled=bool(getattr(resolved, "llm_trace_enabled", False)),
+                bank_id=bank_id,
+                operation="dream",
+                schema=get_current_schema(),
+                metadata={
+                    "run_type": run_type,
+                    "trigger_source": trigger_source,
+                    "top_k_used": len(top_results),
+                    "maturity_tier": maturity_tier,
+                },
+                max_payload_chars=getattr(resolved, "llm_trace_max_payload_chars", None),
+            ):
+                llm_result, usage = await llm.call(
+                    messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": user_prompt}],
+                    response_format=DreamLLMOutput,
+                    max_completion_tokens=int(settings["max_output_tokens"]),
+                    return_usage=True,
+                    scope="dream",
+                )
             llm_output = self._coerce_dream_output(llm_result)
             usage_in = usage.input_tokens
             usage_out = usage.output_tokens
@@ -4506,14 +4521,28 @@ class MemoryEngine(MemoryEngineInterface):
                 )
                 if not row:
                     continue
-                await EntityTrajectoryService.compute_and_persist(
-                    conn,
+                from .llm_trace import trace_operation
+
+                with trace_operation(
+                    enabled=bool(getattr(resolved, "llm_trace_enabled", False)),
                     bank_id=bank_id,
-                    entity_id=str(eid),
-                    entity_canonical_name=str(row["canonical_name"]),
-                    llm_config=llm,
-                    resolved_config=resolved,
-                )
+                    operation="entity_trajectory",
+                    schema=get_current_schema(),
+                    metadata={
+                        "task_type": "entity_trajectory_recompute",
+                        "entity_id": str(eid),
+                        "entity_canonical_name": str(row["canonical_name"]),
+                    },
+                    max_payload_chars=getattr(resolved, "llm_trace_max_payload_chars", None),
+                ):
+                    await EntityTrajectoryService.compute_and_persist(
+                        conn,
+                        bank_id=bank_id,
+                        entity_id=str(eid),
+                        entity_canonical_name=str(row["canonical_name"]),
+                        llm_config=llm,
+                        resolved_config=resolved,
+                    )
 
     async def _handle_entity_intelligence_recompute(self, task_dict: dict[str, Any]) -> None:
         """Background recompute of the bank-level entity intelligence artifact."""
@@ -4533,12 +4562,22 @@ class MemoryEngine(MemoryEngineInterface):
         llm = self._entity_intelligence_llm_config.with_config(resolved)
         pool = await self._get_pool()
         async with acquire_with_retry(pool) as conn:
-            await EntityIntelligenceService.compute_and_persist(
-                conn,
+            from .llm_trace import trace_operation
+
+            with trace_operation(
+                enabled=bool(getattr(resolved, "llm_trace_enabled", False)),
                 bank_id=bank_id,
-                llm_config=llm,
-                resolved_config=resolved,
-            )
+                operation="entity_intelligence",
+                schema=get_current_schema(),
+                metadata={"task_type": "entity_intelligence_recompute"},
+                max_payload_chars=getattr(resolved, "llm_trace_max_payload_chars", None),
+            ):
+                await EntityIntelligenceService.compute_and_persist(
+                    conn,
+                    bank_id=bank_id,
+                    llm_config=llm,
+                    resolved_config=resolved,
+                )
 
     async def execute_task(self, task_dict: dict[str, Any]):
         """
@@ -5554,6 +5593,9 @@ class MemoryEngine(MemoryEngineInterface):
             timeout=self._db_acquire_timeout,  # Connection acquisition timeout (seconds)
             init=_init_conn,
         )
+        from .llm_trace import init_llm_trace
+
+        init_llm_trace(self._pool)
 
         # Initialize entity resolver with pool and configured lookup strategy
         self.entity_resolver = EntityResolver(
@@ -6093,25 +6135,41 @@ class MemoryEngine(MemoryEngineInterface):
 
             # Create parent span for retain operation
             with create_operation_span("retain", bank_id):
-                return await orchestrator.retain_batch(
-                    pool=pool,
-                    embeddings_model=self.embeddings,
-                    llm_config=self._retain_llm_config.with_config(resolved_config),
-                    entity_resolver=self.entity_resolver,
-                    format_date_fn=self._format_readable_date,
+                from .llm_trace import trace_operation
+
+                with trace_operation(
+                    enabled=bool(getattr(resolved_config, "llm_trace_enabled", False)),
                     bank_id=bank_id,
-                    contents_dicts=contents,
-                    document_id=document_id,
-                    is_first_batch=is_first_batch,
-                    fact_type_override=fact_type_override,
-                    confidence_score=confidence_score,
-                    document_tags=document_tags,
-                    config=resolved_config,
-                    operation_id=operation_id,
-                    schema=request_context.tenant_id if request_context else None,
-                    outbox_callback=outbox_callback,
-                    progress_callback=self._build_operation_stage_callback(operation_id),
-                )
+                    operation="retain",
+                    schema=get_current_schema(),
+                    metadata={
+                        "document_id": document_id,
+                        "content_count": len(contents),
+                        "is_first_batch": is_first_batch,
+                        "operation_id": operation_id,
+                        "fact_type_override": fact_type_override,
+                    },
+                    max_payload_chars=getattr(resolved_config, "llm_trace_max_payload_chars", None),
+                ):
+                    return await orchestrator.retain_batch(
+                        pool=pool,
+                        embeddings_model=self.embeddings,
+                        llm_config=self._retain_llm_config.with_config(resolved_config),
+                        entity_resolver=self.entity_resolver,
+                        format_date_fn=self._format_readable_date,
+                        bank_id=bank_id,
+                        contents_dicts=contents,
+                        document_id=document_id,
+                        is_first_batch=is_first_batch,
+                        fact_type_override=fact_type_override,
+                        confidence_score=confidence_score,
+                        document_tags=document_tags,
+                        config=resolved_config,
+                        operation_id=operation_id,
+                        schema=request_context.tenant_id if request_context else None,
+                        outbox_callback=outbox_callback,
+                        progress_callback=self._build_operation_stage_callback(operation_id),
+                    )
 
     def recall(
         self,
@@ -6176,6 +6234,8 @@ class MemoryEngine(MemoryEngineInterface):
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
         tag_groups: list[TagGroup] | None = None,
+        prefer_observations: bool = False,
+        min_score: dict[str, float | None] | None = None,
         _connection_budget: int | None = None,
         _quiet: bool = False,
         _record_access_telemetry: bool = True,
@@ -6316,6 +6376,8 @@ class MemoryEngine(MemoryEngineInterface):
                             tags=tags,
                             tags_match=tags_match,
                             tag_groups=tag_groups,
+                            prefer_observations=prefer_observations,
+                            min_score=min_score,
                             connection_budget=_connection_budget,
                             quiet=_quiet,
                             include_source_facts=include_source_facts,
@@ -6662,6 +6724,8 @@ class MemoryEngine(MemoryEngineInterface):
         tags: list[str] | None = None,
         tags_match: TagsMatch = "any",
         tag_groups: list[TagGroup] | None = None,
+        prefer_observations: bool = False,
+        min_score: dict[str, float | None] | None = None,
         connection_budget: int | None = None,
         quiet: bool = False,
         include_source_facts: bool = False,
@@ -6786,6 +6850,7 @@ class MemoryEngine(MemoryEngineInterface):
                         tags=tags,
                         tags_match=tags_match,
                         tag_groups=tag_groups,
+                        min_scores=min_score,
                     )
                     parallel_duration = time.time() - parallel_start
             finally:
@@ -7056,6 +7121,20 @@ class MemoryEngine(MemoryEngineInterface):
             # See apply_combined_scoring for the full rationale and formula.
             if scored_results:
                 apply_combined_scoring(scored_results, now=utcnow())
+                if prefer_observations:
+                    for scored in scored_results:
+                        if scored.retrieval.fact_type == "observation":
+                            scored.weight *= 1.05
+                            scored.combined_score = scored.weight
+                if min_score:
+                    reranker_min = min_score.get("reranker")
+                    final_min = min_score.get("final")
+                    if reranker_min is not None:
+                        scored_results = [
+                            scored for scored in scored_results if scored.cross_encoder_score_normalized >= reranker_min
+                        ]
+                    if final_min is not None:
+                        scored_results = [scored for scored in scored_results if scored.weight >= final_min]
                 scored_results.sort(key=lambda x: x.weight, reverse=True)
                 log_buffer.append("  [4.6] Combined scoring: ce * recency_boost(0.2) * temporal_boost(0.2)")
 
@@ -10042,7 +10121,23 @@ class MemoryEngine(MemoryEngineInterface):
             ctx = BankWriteContext(bank_id=bank_id, operation="merge_bank_mission", request_context=request_context)
             await self._validate_operation(self._operation_validator.validate_bank_write(ctx))
         pool = await self._get_pool()
-        return await bank_utils.merge_bank_mission(pool, self._reflect_llm_config, bank_id, new_info)
+        resolved = await self._config_resolver.resolve_full_config(bank_id, request_context)
+        from .llm_trace import trace_operation
+
+        with trace_operation(
+            enabled=bool(getattr(resolved, "llm_trace_enabled", False)),
+            bank_id=bank_id,
+            operation="merge_bank_mission",
+            schema=get_current_schema(),
+            metadata={"new_info_chars": len(new_info)},
+            max_payload_chars=getattr(resolved, "llm_trace_max_payload_chars", None),
+        ):
+            return await bank_utils.merge_bank_mission(
+                pool,
+                self._reflect_llm_config.with_config(resolved),
+                bank_id,
+                new_info,
+            )
 
     async def list_banks(
         self,
@@ -10577,24 +10672,41 @@ class MemoryEngine(MemoryEngineInterface):
             span_context = None
 
         try:
-            agent_result = await run_reflect_agent(
-                llm_config=self._reflect_llm_config.with_config(resolved_reflect_config),
+            from .llm_trace import trace_operation
+
+            with trace_operation(
+                enabled=bool(getattr(resolved_reflect_config, "llm_trace_enabled", False)),
                 bank_id=bank_id,
-                query=query,
-                bank_profile=profile,
-                search_mental_models_fn=search_mental_models_fn,
-                search_observations_fn=search_observations_fn,
-                recall_fn=recall_fn,
-                expand_fn=expand_fn,
-                context=context,
-                max_iterations=max_iterations,
-                max_tokens=max_tokens,
-                response_schema=response_schema,
-                directives=directives,
-                has_mental_models=has_mental_models,
-                budget=effective_budget,
-                max_context_tokens=max_context_tokens,
-            )
+                operation="reflect",
+                schema=get_current_schema(),
+                metadata={
+                    "branch_name": branch_name,
+                    "budget": effective_budget.value if hasattr(effective_budget, "value") else str(effective_budget),
+                    "tags": tags,
+                    "tags_match": tags_match,
+                    "max_iterations": max_iterations,
+                    "max_tokens": max_tokens,
+                },
+                max_payload_chars=getattr(resolved_reflect_config, "llm_trace_max_payload_chars", None),
+            ):
+                agent_result = await run_reflect_agent(
+                    llm_config=self._reflect_llm_config.with_config(resolved_reflect_config),
+                    bank_id=bank_id,
+                    query=query,
+                    bank_profile=profile,
+                    search_mental_models_fn=search_mental_models_fn,
+                    search_observations_fn=search_observations_fn,
+                    recall_fn=recall_fn,
+                    expand_fn=expand_fn,
+                    context=context,
+                    max_iterations=max_iterations,
+                    max_tokens=max_tokens,
+                    response_schema=response_schema,
+                    directives=directives,
+                    has_mental_models=has_mental_models,
+                    budget=effective_budget,
+                    max_context_tokens=max_context_tokens,
+                )
 
             total_time = time.time() - reflect_start
             logger.info(
@@ -10837,14 +10949,28 @@ class MemoryEngine(MemoryEngineInterface):
                     "Start the optional internet stack or set ATULYA_API_CORTEX_SEARXNG_BASE_URL.",
                     status_code=503,
                 )
-            agent_result = await run_internet_research_agent(
-                llm,
-                query=query.strip(),
-                stack=stack,
-                http_client=client,
-                max_iterations=max_iterations,
-                max_completion_tokens=max_tokens,
-            )
+            from .llm_trace import trace_operation
+
+            with trace_operation(
+                enabled=bool(getattr(resolved, "llm_trace_enabled", False)),
+                bank_id=bank_id,
+                operation="internet_research",
+                schema=get_current_schema(),
+                metadata={
+                    "budget": effective_budget.value if hasattr(effective_budget, "value") else str(effective_budget),
+                    "max_iterations": max_iterations,
+                    "max_tokens": max_tokens,
+                },
+                max_payload_chars=getattr(resolved, "llm_trace_max_payload_chars", None),
+            ):
+                agent_result = await run_internet_research_agent(
+                    llm,
+                    query=query.strip(),
+                    stack=stack,
+                    http_client=client,
+                    max_iterations=max_iterations,
+                    max_completion_tokens=max_tokens,
+                )
 
         tool_traces: list[ToolCallTrace] = []
         if include_tool_calls:
@@ -11178,6 +11304,119 @@ class MemoryEngine(MemoryEngineInterface):
                 "pending_consolidation": consolidation_row["pending"] if consolidation_row else 0,
                 "total_observations": node_counts.get("observation", 0),
             }
+
+    async def list_llm_requests(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+        limit: int = 100,
+        offset: int = 0,
+        trace_id: str | None = None,
+        status: str | None = None,
+        operation: str | None = None,
+        provider: str | None = None,
+    ) -> dict[str, Any]:
+        """List database-backed LLM trace rows for a bank."""
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="list_llm_requests", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        clauses = ["bank_id = $1"]
+        params: list[Any] = [bank_id]
+        for column, value in (
+            ("trace_id", trace_id),
+            ("status", status),
+            ("operation", operation),
+            ("provider", provider),
+        ):
+            if value is not None:
+                params.append(value)
+                clauses.append(f"{column} = ${len(params)}")
+
+        where_sql = " AND ".join(clauses)
+        params_with_pagination = [*params, limit, offset]
+        limit_param = len(params) + 1
+        offset_param = len(params) + 2
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            total = await conn.fetchval(
+                f"SELECT COUNT(*) FROM {fq_table('llm_requests')} WHERE {where_sql}",
+                *params,
+            )
+            rows = await conn.fetch(
+                f"""
+                SELECT id, bank_id, operation, scope, trace_id, span_id, parent_span_id,
+                       provider, model, status, started_at, ended_at, duration_ms,
+                       input_tokens, output_tokens, cached_tokens, total_tokens,
+                       input, output, error, llm_info, metadata
+                FROM {fq_table("llm_requests")}
+                WHERE {where_sql}
+                ORDER BY started_at DESC
+                LIMIT ${limit_param} OFFSET ${offset_param}
+                """,
+                *params_with_pagination,
+            )
+
+        return {
+            "items": [dict(row) for row in rows],
+            "total": int(total or 0),
+            "limit": limit,
+            "offset": offset,
+        }
+
+    async def get_llm_request_stats(
+        self,
+        bank_id: str,
+        *,
+        request_context: "RequestContext",
+        period_hours: int = 24,
+        trunc: str = "hour",
+    ) -> dict[str, Any]:
+        """Return time-bucketed LLM trace stats for a bank."""
+
+        await self._authenticate_tenant(request_context)
+        if self._operation_validator:
+            from atulya_api.extensions import BankReadContext
+
+            ctx = BankReadContext(bank_id=bank_id, operation="get_llm_request_stats", request_context=request_context)
+            await self._validate_operation(self._operation_validator.validate_bank_read(ctx))
+
+        if trunc not in {"minute", "hour", "day"}:
+            raise ValueError("trunc must be one of: minute, hour, day")
+
+        pool = await self._get_pool()
+        async with acquire_with_retry(pool) as conn:
+            rows = await conn.fetch(
+                f"""
+                SELECT date_trunc($2, started_at) AS bucket,
+                       status,
+                       COUNT(*) AS count,
+                       COALESCE(SUM(input_tokens), 0) AS input_tokens,
+                       COALESCE(SUM(output_tokens), 0) AS output_tokens,
+                       COALESCE(SUM(cached_tokens), 0) AS cached_tokens,
+                       COALESCE(SUM(total_tokens), 0) AS total_tokens
+                FROM {fq_table("llm_requests")}
+                WHERE bank_id = $1
+                  AND started_at >= NOW() - ($3::int * INTERVAL '1 hour')
+                GROUP BY bucket, status
+                ORDER BY bucket DESC, status
+                """,
+                bank_id,
+                trunc,
+                period_hours,
+            )
+
+        return {
+            "bank_id": bank_id,
+            "period": f"{period_hours}h",
+            "trunc": trunc,
+            "items": [dict(row) for row in rows],
+        }
 
     async def get_entity(
         self,
@@ -11959,6 +12198,7 @@ class MemoryEngine(MemoryEngineInterface):
         working document with the empty string.
         """
         await self._authenticate_tenant(request_context)
+        resolved_config = await self._config_resolver.resolve_full_config(bank_id, request_context)
 
         # Get the current mental model
         mental_model = await self.get_mental_model(bank_id, mental_model_id, request_context=request_context)
@@ -12098,14 +12338,29 @@ class MemoryEngine(MemoryEngineInterface):
                     # Text-mode call (no response_format): Gemini rejects the
                     # discriminated-union schema Pydantic emits, so we parse
                     # and validate the JSON ourselves.
-                    delta_text = await self._reflect_llm_config.call(
-                        messages=[
-                            {"role": "system", "content": STRUCTURED_DELTA_SYSTEM_PROMPT},
-                            {"role": "user", "content": user_prompt},
-                        ],
-                        max_completion_tokens=delta_max_tokens,
-                        scope="mental_model_delta",
-                    )
+                    from .llm_trace import trace_operation
+
+                    with trace_operation(
+                        enabled=bool(getattr(resolved_config, "llm_trace_enabled", False)),
+                        bank_id=bank_id,
+                        operation="mental_model_refresh",
+                        schema=get_current_schema(),
+                        metadata={
+                            "mental_model_id": mental_model_id,
+                            "refresh_mode": refresh_mode,
+                            "use_delta": use_delta,
+                            "delta_max_tokens": delta_max_tokens,
+                        },
+                        max_payload_chars=getattr(resolved_config, "llm_trace_max_payload_chars", None),
+                    ):
+                        delta_text = await self._reflect_llm_config.with_config(resolved_config).call(
+                            messages=[
+                                {"role": "system", "content": STRUCTURED_DELTA_SYSTEM_PROMPT},
+                                {"role": "user", "content": user_prompt},
+                            ],
+                            max_completion_tokens=delta_max_tokens,
+                            scope="mental_model_delta",
+                        )
                     if not isinstance(delta_text, str):
                         raise TypeError(f"delta LLM returned non-string: {type(delta_text).__name__}")
 

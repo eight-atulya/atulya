@@ -130,10 +130,14 @@ ENV_LLM_MAX_BACKOFF = "ATULYA_API_LLM_MAX_BACKOFF"
 ENV_LLM_TIMEOUT = "ATULYA_API_LLM_TIMEOUT"
 ENV_LLM_GROQ_SERVICE_TIER = "ATULYA_API_LLM_GROQ_SERVICE_TIER"
 ENV_LLM_OPENAI_SERVICE_TIER = "ATULYA_API_LLM_OPENAI_SERVICE_TIER"
+ENV_LLM_TRACE_ENABLED = "ATULYA_API_LLM_TRACE_ENABLED"
+ENV_LLM_TRACE_MAX_PAYLOAD_CHARS = "ATULYA_API_LLM_TRACE_MAX_PAYLOAD_CHARS"
 
 # Defaults for service tiers
 DEFAULT_LLM_GROQ_SERVICE_TIER = "auto"  # "on_demand", "flex", or "auto"
 DEFAULT_LLM_OPENAI_SERVICE_TIER = None  # None (default) or "flex" (50% cheaper)
+DEFAULT_LLM_TRACE_ENABLED = False
+DEFAULT_LLM_TRACE_MAX_PAYLOAD_CHARS = 200_000
 
 # Per-operation LLM configuration (optional, falls back to global LLM config)
 ENV_RETAIN_LLM_PROVIDER = "ATULYA_API_RETAIN_LLM_PROVIDER"
@@ -775,6 +779,8 @@ class AtulyaConfig:
     llm_timeout: float
     llm_groq_service_tier: str  # Groq: "on_demand", "flex", or "auto"
     llm_openai_service_tier: str | None  # OpenAI: None (default) or "flex" (50% cheaper)
+    llm_trace_enabled: bool
+    llm_trace_max_payload_chars: int
 
     # Vertex AI configuration
     llm_vertexai_project_id: str | None
@@ -1132,6 +1138,9 @@ class AtulyaConfig:
         "disposition_empathy",
         # Gemini safety settings (controls content filtering for Gemini/VertexAI providers)
         "llm_gemini_safety_settings",
+        # DB-backed LLM trace capture
+        "llm_trace_enabled",
+        "llm_trace_max_payload_chars",
     }
 
     @property
@@ -1269,6 +1278,8 @@ class AtulyaConfig:
             raise ValueError("entity_intelligence_max_completion_tokens must be >= 512")
         if self.consolidation_max_completion_tokens < 256:
             raise ValueError("consolidation_max_completion_tokens must be >= 256")
+        if self.llm_trace_max_payload_chars < 0:
+            raise ValueError("llm_trace_max_payload_chars must be >= 0")
 
     @classmethod
     def from_env(cls) -> "AtulyaConfig":
@@ -1295,6 +1306,11 @@ class AtulyaConfig:
             llm_timeout=float(os.getenv(ENV_LLM_TIMEOUT, str(DEFAULT_LLM_TIMEOUT))),
             llm_groq_service_tier=os.getenv(ENV_LLM_GROQ_SERVICE_TIER, DEFAULT_LLM_GROQ_SERVICE_TIER),
             llm_openai_service_tier=os.getenv(ENV_LLM_OPENAI_SERVICE_TIER, DEFAULT_LLM_OPENAI_SERVICE_TIER),
+            llm_trace_enabled=os.getenv(ENV_LLM_TRACE_ENABLED, str(DEFAULT_LLM_TRACE_ENABLED)).lower()
+            in ("1", "true", "yes"),
+            llm_trace_max_payload_chars=int(
+                os.getenv(ENV_LLM_TRACE_MAX_PAYLOAD_CHARS, str(DEFAULT_LLM_TRACE_MAX_PAYLOAD_CHARS))
+            ),
             # Vertex AI
             llm_vertexai_project_id=os.getenv(ENV_LLM_VERTEXAI_PROJECT_ID) or DEFAULT_LLM_VERTEXAI_PROJECT_ID,
             llm_vertexai_region=os.getenv(ENV_LLM_VERTEXAI_REGION, DEFAULT_LLM_VERTEXAI_REGION),

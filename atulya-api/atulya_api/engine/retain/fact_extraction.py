@@ -1019,18 +1019,34 @@ async def _extract_facts_from_chunk(
                 config.retain_llm_max_backoff if config.retain_llm_max_backoff is not None else config.llm_max_backoff
             )
 
-            extraction_response_json, call_usage = await llm_config.call(
-                messages=[{"role": "system", "content": prompt}, {"role": "user", "content": user_message}],
-                response_format=response_schema,
-                scope="retain_extract_facts",
-                temperature=0.1,
-                max_completion_tokens=config.retain_max_completion_tokens,
-                max_retries=llm_max_retries,
-                initial_backoff=initial_backoff,
-                max_backoff=max_backoff,
-                skip_validation=True,  # Get raw JSON, we'll validate leniently
-                return_usage=True,
+            from ..llm_trace import reset_request_context, set_request_context
+
+            trace_token = set_request_context(
+                {
+                    "chunk_index": chunk_index,
+                    "total_chunks": total_chunks,
+                    "chunk_chars": len(chunk),
+                    "event_date": event_date.isoformat() if event_date else None,
+                    "context_chars": len(context or ""),
+                    "metadata": metadata or {},
+                    "attempt": attempt + 1,
+                }
             )
+            try:
+                extraction_response_json, call_usage = await llm_config.call(
+                    messages=[{"role": "system", "content": prompt}, {"role": "user", "content": user_message}],
+                    response_format=response_schema,
+                    scope="retain_extract_facts",
+                    temperature=0.1,
+                    max_completion_tokens=config.retain_max_completion_tokens,
+                    max_retries=llm_max_retries,
+                    initial_backoff=initial_backoff,
+                    max_backoff=max_backoff,
+                    skip_validation=True,  # Get raw JSON, we'll validate leniently
+                    return_usage=True,
+                )
+            finally:
+                reset_request_context(trace_token)
             usage = usage + call_usage  # Aggregate usage across retries
 
             # Lenient parsing of facts from raw JSON
@@ -1653,6 +1669,10 @@ async def extract_facts_from_contents_batch_api(
     if not batch_requests and not batch_id:  # No requests and not resuming
         return [], [], TokenUsage()
 
+    from ..llm_trace import record_llm_call, utcnow
+
+    batch_trace_started_at = utcnow()
+
     # Step 2: Submit batch (skip if resuming)
     if not batch_id:
         if progress_callback is not None:
@@ -1667,7 +1687,22 @@ async def extract_facts_from_contents_batch_api(
             )
         logger.info(f"Submitting batch with {len(batch_requests)} chunk requests")
 
-        batch_metadata = await llm_config._provider_impl.submit_batch(batch_requests)
+        try:
+            batch_metadata = await llm_config._provider_impl.submit_batch(batch_requests)
+        except Exception as exc:
+            record_llm_call(
+                provider=llm_config.provider,
+                model=llm_config.model,
+                scope="retain_extract_facts_batch",
+                started_at=batch_trace_started_at,
+                ended_at=utcnow(),
+                status="error",
+                input_messages=batch_requests,
+                output_payload=None,
+                error={"type": type(exc).__name__, "message": str(exc), "stage": "submit_batch"},
+                llm_info={"batch_request_count": len(batch_requests), "operation_id": operation_id},
+            )
+            raise
         batch_id = batch_metadata["batch_id"]
 
         logger.info(f"Batch submitted: {batch_id}, polling every {config.retain_batch_poll_interval_seconds}s")
@@ -1730,6 +1765,22 @@ async def extract_facts_from_contents_batch_api(
             break
         elif status in ("failed", "expired", "cancelled"):
             error_msg = status_info.get("errors", "Unknown error")
+            record_llm_call(
+                provider=llm_config.provider,
+                model=llm_config.model,
+                scope="retain_extract_facts_batch",
+                started_at=batch_trace_started_at,
+                ended_at=utcnow(),
+                status="error",
+                input_messages=batch_requests,
+                output_payload=status_info,
+                error={"type": "BatchFailed", "message": str(error_msg), "stage": "poll_batch", "batch_id": batch_id},
+                llm_info={
+                    "batch_id": batch_id,
+                    "batch_request_count": len(batch_requests),
+                    "operation_id": operation_id,
+                },
+            )
             raise RuntimeError(f"Batch {batch_id} failed with status {status}: {error_msg}")
 
         # Wait before polling again
@@ -1738,7 +1789,22 @@ async def extract_facts_from_contents_batch_api(
     logger.info(f"Batch {batch_id} completed in {elapsed:.0f}s, retrieving results")
 
     # Step 4: Retrieve results
-    batch_results = await llm_config._provider_impl.retrieve_batch_results(batch_id)
+    try:
+        batch_results = await llm_config._provider_impl.retrieve_batch_results(batch_id)
+    except Exception as exc:
+        record_llm_call(
+            provider=llm_config.provider,
+            model=llm_config.model,
+            scope="retain_extract_facts_batch",
+            started_at=batch_trace_started_at,
+            ended_at=utcnow(),
+            status="error",
+            input_messages=batch_requests,
+            output_payload={"batch_id": batch_id},
+            error={"type": type(exc).__name__, "message": str(exc), "stage": "retrieve_batch_results"},
+            llm_info={"batch_id": batch_id, "batch_request_count": len(batch_requests), "operation_id": operation_id},
+        )
+        raise
 
     # Map results by custom_id
     results_by_id = {result["custom_id"]: result for result in batch_results}
@@ -2056,6 +2122,24 @@ async def extract_facts_from_contents_batch_api(
     _inject_label_tags(extracted_facts, config)
 
     logger.info(f"Batch API extracted {len(extracted_facts)} facts from {len(all_chunks_info)} chunks")
+    record_llm_call(
+        provider=llm_config.provider,
+        model=llm_config.model,
+        scope="retain_extract_facts_batch",
+        started_at=batch_trace_started_at,
+        ended_at=utcnow(),
+        status="success",
+        input_messages=batch_requests,
+        output_payload=batch_results,
+        usage=total_usage,
+        llm_info={
+            "batch_id": batch_id,
+            "batch_request_count": len(batch_requests),
+            "operation_id": operation_id,
+            "chunk_count": len(all_chunks_info),
+            "fact_count": len(extracted_facts),
+        },
+    )
 
     return extracted_facts, chunks_metadata, total_usage
 
