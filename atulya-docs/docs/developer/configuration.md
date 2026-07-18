@@ -1154,11 +1154,22 @@ See [Control Plane Graph Intelligence](./control-plane-graph-intelligence) for t
 |----------|-------------|---------|
 | `ATULYA_CP_DATAPLANE_API_URL` | URL of the API service | `http://localhost:8888` |
 | `NEXT_PUBLIC_BASE_PATH` | Base path for Control Plane UI when behind reverse proxy (e.g., `/atulya`) | `""` (root) |
+| `NEXT_PUBLIC_ATULYA_CP_BRAND_LOGO_SRC` | Optional compact customer/company logo shown beside the Atulya logo in the Control Plane header. Use a public path such as `/branding/customer-mark.svg`. | unset |
+| `NEXT_PUBLIC_ATULYA_CP_BRAND_LOGO_EXTENDED_SRC` | Optional wider customer/company wordmark used when the logo variant is `extended`. | unset |
+| `NEXT_PUBLIC_ATULYA_CP_BRAND_LOGO_ALT` | Accessible label for the configured customer/company logo. | `Partner brand` |
+| `NEXT_PUBLIC_ATULYA_CP_BRAND_LOGO_VARIANT` | Header co-branding mode: `compact` or `extended`. Compact is the default and keeps the logo small. | `compact` |
 
 ```bash
 # Point Control Plane to a remote API service
 export ATULYA_CP_DATAPLANE_API_URL=http://api.example.com:8888
+
+# Optional co-branding
+export NEXT_PUBLIC_ATULYA_CP_BRAND_LOGO_SRC=/branding/customer-mark.svg
+export NEXT_PUBLIC_ATULYA_CP_BRAND_LOGO_ALT="Customer name"
 ```
+
+For file-based branding, place assets under `atulya-control-plane/public/branding/`.
+If no customer logo is configured, the header shows only the default Atulya logo.
 
 ### Hierarchical Configuration
 

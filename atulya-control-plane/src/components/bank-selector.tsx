@@ -42,7 +42,6 @@ import {
   UserCircle,
 } from "lucide-react";
 import { useTheme } from "@/lib/theme-context";
-import Image from "next/image";
 import Link from "next/link";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -59,6 +58,7 @@ import { useSpeechRecognition } from "@/hooks/use-speech-recognition";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { MemoryRepoControls } from "@/components/memory-repo-controls";
 import { UserSettingsDialog } from "@/components/user-settings-dialog";
+import { HeaderBrandLockup } from "@/components/header-brand-lockup";
 
 function BankSelectorInner() {
   const router = useRouter();
@@ -468,14 +468,7 @@ function BankSelectorInner() {
           }}
           className="inline-flex cursor-pointer rounded transition-opacity hover:opacity-80"
         >
-          <Image
-            src="/logo.png"
-            alt="Atulya"
-            width={34}
-            height={34}
-            className="h-[34px] w-auto"
-            unoptimized
-          />
+          <HeaderBrandLockup />
         </button>
 
         {/* Separator */}
@@ -1222,14 +1215,7 @@ export function BankSelector() {
               aria-label="Go to dashboard"
               className="inline-flex cursor-pointer rounded transition-opacity hover:opacity-80"
             >
-              <Image
-                src="/logo.png"
-                alt="Atulya"
-                width={34}
-                height={34}
-                className="h-[34px] w-auto"
-                unoptimized
-              />
+              <HeaderBrandLockup />
             </Link>
             <div className="h-6 w-px bg-border" />
             <Button
