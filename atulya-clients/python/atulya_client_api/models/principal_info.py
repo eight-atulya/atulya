@@ -17,30 +17,28 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr
+from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class ApiKeyResponse(BaseModel):
+class PrincipalInfo(BaseModel):
     """
-    ApiKeyResponse
+    PrincipalInfo
     """ # noqa: E501
-    id: StrictStr
-    name: StrictStr
-    role: StrictStr
+    org_id: Optional[StrictStr]
+    org_slug: Optional[StrictStr] = None
     schema_name: StrictStr
-    allowed_bank_ids: Optional[List[StrictStr]]
-    created_at: StrictStr
-    expires_at: Optional[StrictStr]
-    revoked_at: Optional[StrictStr]
-    principal_id: Optional[StrictStr] = None
-    key_prefix: Optional[StrictStr] = None
-    last_used_at: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
-    raw_key: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["id", "name", "role", "schema_name", "allowed_bank_ids", "created_at", "expires_at", "revoked_at", "principal_id", "key_prefix", "last_used_at", "description", "raw_key"]
+    principal_id: Optional[StrictStr]
+    email: Optional[StrictStr]
+    display_name: Optional[StrictStr]
+    principal_type: Optional[StrictStr]
+    role: StrictStr
+    allowed_actions: Optional[List[StrictStr]]
+    action_scopes: Optional[Dict[str, List[StrictStr]]]
+    is_superuser: Optional[StrictBool] = None
+    __properties: ClassVar[List[str]] = ["org_id", "org_slug", "schema_name", "principal_id", "email", "display_name", "principal_type", "role", "allowed_actions", "action_scopes", "is_superuser"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -60,7 +58,7 @@ class ApiKeyResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiKeyResponse from a JSON string"""
+        """Create an instance of PrincipalInfo from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -81,51 +79,51 @@ class ApiKeyResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if allowed_bank_ids (nullable) is None
+        # set to None if org_id (nullable) is None
         # and model_fields_set contains the field
-        if self.allowed_bank_ids is None and "allowed_bank_ids" in self.model_fields_set:
-            _dict['allowed_bank_ids'] = None
+        if self.org_id is None and "org_id" in self.model_fields_set:
+            _dict['org_id'] = None
 
-        # set to None if expires_at (nullable) is None
+        # set to None if org_slug (nullable) is None
         # and model_fields_set contains the field
-        if self.expires_at is None and "expires_at" in self.model_fields_set:
-            _dict['expires_at'] = None
-
-        # set to None if revoked_at (nullable) is None
-        # and model_fields_set contains the field
-        if self.revoked_at is None and "revoked_at" in self.model_fields_set:
-            _dict['revoked_at'] = None
+        if self.org_slug is None and "org_slug" in self.model_fields_set:
+            _dict['org_slug'] = None
 
         # set to None if principal_id (nullable) is None
         # and model_fields_set contains the field
         if self.principal_id is None and "principal_id" in self.model_fields_set:
             _dict['principal_id'] = None
 
-        # set to None if key_prefix (nullable) is None
+        # set to None if email (nullable) is None
         # and model_fields_set contains the field
-        if self.key_prefix is None and "key_prefix" in self.model_fields_set:
-            _dict['key_prefix'] = None
+        if self.email is None and "email" in self.model_fields_set:
+            _dict['email'] = None
 
-        # set to None if last_used_at (nullable) is None
+        # set to None if display_name (nullable) is None
         # and model_fields_set contains the field
-        if self.last_used_at is None and "last_used_at" in self.model_fields_set:
-            _dict['last_used_at'] = None
+        if self.display_name is None and "display_name" in self.model_fields_set:
+            _dict['display_name'] = None
 
-        # set to None if description (nullable) is None
+        # set to None if principal_type (nullable) is None
         # and model_fields_set contains the field
-        if self.description is None and "description" in self.model_fields_set:
-            _dict['description'] = None
+        if self.principal_type is None and "principal_type" in self.model_fields_set:
+            _dict['principal_type'] = None
 
-        # set to None if raw_key (nullable) is None
+        # set to None if allowed_actions (nullable) is None
         # and model_fields_set contains the field
-        if self.raw_key is None and "raw_key" in self.model_fields_set:
-            _dict['raw_key'] = None
+        if self.allowed_actions is None and "allowed_actions" in self.model_fields_set:
+            _dict['allowed_actions'] = None
+
+        # set to None if action_scopes (nullable) is None
+        # and model_fields_set contains the field
+        if self.action_scopes is None and "action_scopes" in self.model_fields_set:
+            _dict['action_scopes'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiKeyResponse from a dict"""
+        """Create an instance of PrincipalInfo from a dict"""
         if obj is None:
             return None
 
@@ -133,20 +131,16 @@ class ApiKeyResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "id": obj.get("id"),
-            "name": obj.get("name"),
-            "role": obj.get("role"),
+            "org_id": obj.get("org_id"),
+            "org_slug": obj.get("org_slug"),
             "schema_name": obj.get("schema_name"),
-            "allowed_bank_ids": obj.get("allowed_bank_ids"),
-            "created_at": obj.get("created_at"),
-            "expires_at": obj.get("expires_at"),
-            "revoked_at": obj.get("revoked_at"),
             "principal_id": obj.get("principal_id"),
-            "key_prefix": obj.get("key_prefix"),
-            "last_used_at": obj.get("last_used_at"),
-            "description": obj.get("description"),
-            "raw_key": obj.get("raw_key")
+            "email": obj.get("email"),
+            "display_name": obj.get("display_name"),
+            "principal_type": obj.get("principal_type"),
+            "role": obj.get("role"),
+            "allowed_actions": obj.get("allowed_actions"),
+            "action_scopes": obj.get("action_scopes"),
+            "is_superuser": obj.get("is_superuser")
         })
         return _obj
-
-

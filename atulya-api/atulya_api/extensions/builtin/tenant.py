@@ -1,5 +1,6 @@
 """Built-in tenant extension implementations."""
 
+from atulya_api.auth import fq, hash_secret, normalize_action_scopes
 from atulya_api.config import get_config
 from atulya_api.extensions.tenant import AuthenticationError, Tenant, TenantContext, TenantExtension
 from atulya_api.models import RequestContext
@@ -111,6 +112,7 @@ class ApiKeyTenantExtension(TenantExtension):
 # ---------------------------------------------------------------------------
 
 import hmac
+import uuid
 
 
 class SuperuserTenantExtension(TenantExtension):
@@ -265,9 +267,33 @@ class DbApiKeyTenantExtension(TenantExtension):
         return self._cache_lock
 
     def _hash_key(self, raw_key: str) -> str:
-        import hashlib
+        return hash_secret(raw_key, version=2)
 
-        return hashlib.sha256(raw_key.encode("utf-8")).hexdigest()
+    async def _load_action_scopes(
+        self,
+        pool: "asyncpg.Pool",
+        *,
+        org_id: str | None,
+        principal_id: str | None,
+        role: str,
+    ) -> dict[str, list[str]]:
+        if not org_id:
+            return {}
+        rows = await pool.fetch(
+            f"""
+            SELECT action, scope_type, scope_id
+            FROM {fq("access_grants", self._schema)}
+            WHERE org_id = $1
+              AND (
+                (subject_type = 'principal' AND subject_id = $2)
+                OR (subject_type = 'role' AND subject_id = $3)
+              )
+            """,
+            org_id,
+            principal_id or "",
+            role,
+        )
+        return normalize_action_scopes(list(rows))
 
     async def _get_db_pool(self) -> "asyncpg.Pool":
         if self._pool is not None:
@@ -296,34 +322,132 @@ class DbApiKeyTenantExtension(TenantExtension):
                 # Expired — evict
                 del self._cache[key_hash]
 
-        # Slow path: DB lookup
+        # Slow path: DB lookup. Session tokens and service API keys resolve into
+        # the same TenantContext envelope.
         pool = await self._get_db_pool()
-        row = await pool.fetchrow(
-            f"""
-            SELECT role, schema_name, allowed_bank_ids, expires_at, revoked_at
-            FROM {self._schema}.api_keys
-            WHERE key_hash = $1
-            """,
-            key_hash,
-        )
+        if context.api_key.startswith("atulya_sess_"):
+            row = await pool.fetchrow(
+                f"""
+                SELECT
+                    s.id::text AS session_id,
+                    s.expires_at,
+                    s.revoked_at,
+                    p.id::text AS principal_id,
+                    p.email,
+                    p.display_name,
+                    p.principal_type,
+                    p.role,
+                    p.status AS principal_status,
+                    o.id::text AS org_id,
+                    o.schema_name,
+                    o.status AS org_status
+                FROM {fq("principal_sessions", self._schema)} s
+                JOIN {fq("principals", self._schema)} p ON p.id = s.principal_id
+                JOIN {fq("orgs", self._schema)} o ON o.id = p.org_id
+                WHERE s.token_hash = $1
+                """,
+                key_hash,
+            )
+            if row is None:
+                raise AuthenticationError("Invalid session")
+            if row["revoked_at"] is not None:
+                raise AuthenticationError("Session has been revoked")
+            if row["principal_status"] != "active":
+                raise AuthenticationError("Principal is disabled")
+            if row["org_status"] != "active":
+                raise AuthenticationError("Organization is disabled")
+            if row["expires_at"] is not None:
+                from datetime import datetime, timezone
 
-        if row is None:
-            raise AuthenticationError("Invalid API key")
+                if datetime.now(timezone.utc) > row["expires_at"].replace(tzinfo=timezone.utc):
+                    raise AuthenticationError("Session has expired")
+            await pool.execute(
+                f"UPDATE {fq('principal_sessions', self._schema)} SET last_used_at = NOW() WHERE id = $1",
+                uuid.UUID(row["session_id"]),
+            )
+            action_scopes = await self._load_action_scopes(
+                pool,
+                org_id=row["org_id"],
+                principal_id=row["principal_id"],
+                role=row["role"],
+            )
+            tenant_ctx = TenantContext(
+                schema_name=row["schema_name"],
+                role=row["role"],
+                allowed_bank_ids=None,
+                org_id=row["org_id"],
+                principal_id=row["principal_id"],
+                principal_type=row["principal_type"],
+                display_name=row["display_name"],
+                email=row["email"],
+                action_scopes=action_scopes,
+            )
+            context.tenant_id = row["org_id"]
+        else:
+            row = await pool.fetchrow(
+                f"""
+                SELECT
+                    k.id::text AS api_key_id,
+                    k.role,
+                    k.schema_name,
+                    k.allowed_bank_ids,
+                    k.expires_at,
+                    k.revoked_at,
+                    k.principal_id::text AS principal_id,
+                    p.email,
+                    p.display_name,
+                    p.principal_type,
+                    p.status AS principal_status,
+                    o.id::text AS org_id,
+                    o.status AS org_status
+                FROM {fq("api_keys", self._schema)} k
+                LEFT JOIN {fq("principals", self._schema)} p ON p.id = k.principal_id
+                LEFT JOIN {fq("orgs", self._schema)} o ON o.id = p.org_id
+                WHERE k.key_hash = $1 OR k.key_hash = $2
+                """,
+                key_hash,
+                hash_secret(context.api_key, version=1),
+            )
 
-        if row["revoked_at"] is not None:
-            raise AuthenticationError("API key has been revoked")
+            if row is None:
+                raise AuthenticationError("Invalid API key")
 
-        if row["expires_at"] is not None:
-            from datetime import datetime, timezone
+            if row["revoked_at"] is not None:
+                raise AuthenticationError("API key has been revoked")
 
-            if datetime.now(timezone.utc) > row["expires_at"].replace(tzinfo=timezone.utc):
-                raise AuthenticationError("API key has expired")
+            if row["principal_status"] is not None and row["principal_status"] != "active":
+                raise AuthenticationError("Principal is disabled")
+            if row["org_status"] is not None and row["org_status"] != "active":
+                raise AuthenticationError("Organization is disabled")
 
-        tenant_ctx = TenantContext(
-            schema_name=row["schema_name"],
-            role=row["role"],
-            allowed_bank_ids=list(row["allowed_bank_ids"]) if row["allowed_bank_ids"] else None,
-        )
+            if row["expires_at"] is not None:
+                from datetime import datetime, timezone
+
+                if datetime.now(timezone.utc) > row["expires_at"].replace(tzinfo=timezone.utc):
+                    raise AuthenticationError("API key has expired")
+            await pool.execute(
+                f"UPDATE {fq('api_keys', self._schema)} SET last_used_at = NOW() WHERE id = $1",
+                uuid.UUID(row["api_key_id"]),
+            )
+            action_scopes = await self._load_action_scopes(
+                pool,
+                org_id=row["org_id"],
+                principal_id=row["principal_id"],
+                role=row["role"],
+            )
+            tenant_ctx = TenantContext(
+                schema_name=row["schema_name"],
+                role=row["role"],
+                allowed_bank_ids=list(row["allowed_bank_ids"]) if row["allowed_bank_ids"] else None,
+                org_id=row["org_id"],
+                principal_id=row["principal_id"],
+                principal_type=row["principal_type"],
+                display_name=row["display_name"],
+                email=row["email"],
+                action_scopes=action_scopes,
+            )
+            context.api_key_id = row["api_key_id"]
+            context.tenant_id = row["org_id"]
 
         # Populate cache
         async with lock:
@@ -334,8 +458,15 @@ class DbApiKeyTenantExtension(TenantExtension):
         return tenant_ctx
 
     async def list_tenants(self) -> list[Tenant]:
-        """Return configured schema as a single tenant (multi-schema support via future extension)."""
-        return [Tenant(schema=self._schema)]
+        """Return active org schemas, falling back to the auth schema before migration."""
+        try:
+            pool = await self._get_db_pool()
+            rows = await pool.fetch(
+                f"SELECT schema_name FROM {fq('orgs', self._schema)} WHERE status = 'active' ORDER BY schema_name"
+            )
+            return [Tenant(schema=r["schema_name"]) for r in rows] or [Tenant(schema=self._schema)]
+        except Exception:
+            return [Tenant(schema=self._schema)]
 
     async def on_startup(self) -> None:
         """Prime DB pool reference at startup rather than waiting for first request."""

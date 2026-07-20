@@ -20,9 +20,18 @@ class RequestContext:
     api_key: str | None = None
     api_key_id: str | None = None  # UUID of the API key used for authentication
     tenant_id: str | None = None  # Tenant identifier (set by extension after auth)
+    org_id: str | None = None
+    principal_id: str | None = None
+    principal_type: str | None = None
+    display_name: str | None = None
+    email: str | None = None
+    role: str = "user"
+    schema_name: str | None = None
     internal: bool = False  # True for background/internal operations (skips extension auth)
     user_initiated: bool = False  # True for async operations that originated from a user request
     allowed_bank_ids: list[str] | None = None  # None = unrestricted (all banks)
+    allowed_actions: list[str] | None = None
+    action_scopes: dict[str, list[str]] | None = None
 
 
 from pgvector.sqlalchemy import Vector

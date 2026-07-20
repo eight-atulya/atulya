@@ -29,6 +29,10 @@ type ApiKeyResponse struct {
 	CreatedAt string `json:"created_at"`
 	ExpiresAt NullableString `json:"expires_at"`
 	RevokedAt NullableString `json:"revoked_at"`
+	PrincipalId NullableString `json:"principal_id,omitempty"`
+	KeyPrefix NullableString `json:"key_prefix,omitempty"`
+	LastUsedAt NullableString `json:"last_used_at,omitempty"`
+	Description NullableString `json:"description,omitempty"`
 	RawKey NullableString `json:"raw_key,omitempty"`
 }
 
@@ -257,6 +261,174 @@ func (o *ApiKeyResponse) SetRevokedAt(v string) {
 	o.RevokedAt.Set(&v)
 }
 
+// GetPrincipalId returns the PrincipalId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ApiKeyResponse) GetPrincipalId() string {
+	if o == nil || IsNil(o.PrincipalId.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.PrincipalId.Get()
+}
+
+// GetPrincipalIdOk returns a tuple with the PrincipalId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ApiKeyResponse) GetPrincipalIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PrincipalId.Get(), o.PrincipalId.IsSet()
+}
+
+// HasPrincipalId returns a boolean if a field has been set.
+func (o *ApiKeyResponse) HasPrincipalId() bool {
+	if o != nil && o.PrincipalId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPrincipalId gets a reference to the given NullableString and assigns it to the PrincipalId field.
+func (o *ApiKeyResponse) SetPrincipalId(v string) {
+	o.PrincipalId.Set(&v)
+}
+// SetPrincipalIdNil sets the value for PrincipalId to be an explicit nil
+func (o *ApiKeyResponse) SetPrincipalIdNil() {
+	o.PrincipalId.Set(nil)
+}
+
+// UnsetPrincipalId ensures that no value is present for PrincipalId, not even an explicit nil
+func (o *ApiKeyResponse) UnsetPrincipalId() {
+	o.PrincipalId.Unset()
+}
+
+// GetKeyPrefix returns the KeyPrefix field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ApiKeyResponse) GetKeyPrefix() string {
+	if o == nil || IsNil(o.KeyPrefix.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.KeyPrefix.Get()
+}
+
+// GetKeyPrefixOk returns a tuple with the KeyPrefix field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ApiKeyResponse) GetKeyPrefixOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.KeyPrefix.Get(), o.KeyPrefix.IsSet()
+}
+
+// HasKeyPrefix returns a boolean if a field has been set.
+func (o *ApiKeyResponse) HasKeyPrefix() bool {
+	if o != nil && o.KeyPrefix.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetKeyPrefix gets a reference to the given NullableString and assigns it to the KeyPrefix field.
+func (o *ApiKeyResponse) SetKeyPrefix(v string) {
+	o.KeyPrefix.Set(&v)
+}
+// SetKeyPrefixNil sets the value for KeyPrefix to be an explicit nil
+func (o *ApiKeyResponse) SetKeyPrefixNil() {
+	o.KeyPrefix.Set(nil)
+}
+
+// UnsetKeyPrefix ensures that no value is present for KeyPrefix, not even an explicit nil
+func (o *ApiKeyResponse) UnsetKeyPrefix() {
+	o.KeyPrefix.Unset()
+}
+
+// GetLastUsedAt returns the LastUsedAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ApiKeyResponse) GetLastUsedAt() string {
+	if o == nil || IsNil(o.LastUsedAt.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.LastUsedAt.Get()
+}
+
+// GetLastUsedAtOk returns a tuple with the LastUsedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ApiKeyResponse) GetLastUsedAtOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.LastUsedAt.Get(), o.LastUsedAt.IsSet()
+}
+
+// HasLastUsedAt returns a boolean if a field has been set.
+func (o *ApiKeyResponse) HasLastUsedAt() bool {
+	if o != nil && o.LastUsedAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetLastUsedAt gets a reference to the given NullableString and assigns it to the LastUsedAt field.
+func (o *ApiKeyResponse) SetLastUsedAt(v string) {
+	o.LastUsedAt.Set(&v)
+}
+// SetLastUsedAtNil sets the value for LastUsedAt to be an explicit nil
+func (o *ApiKeyResponse) SetLastUsedAtNil() {
+	o.LastUsedAt.Set(nil)
+}
+
+// UnsetLastUsedAt ensures that no value is present for LastUsedAt, not even an explicit nil
+func (o *ApiKeyResponse) UnsetLastUsedAt() {
+	o.LastUsedAt.Unset()
+}
+
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ApiKeyResponse) GetDescription() string {
+	if o == nil || IsNil(o.Description.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Description.Get()
+}
+
+// GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ApiKeyResponse) GetDescriptionOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Description.Get(), o.Description.IsSet()
+}
+
+// HasDescription returns a boolean if a field has been set.
+func (o *ApiKeyResponse) HasDescription() bool {
+	if o != nil && o.Description.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
+func (o *ApiKeyResponse) SetDescription(v string) {
+	o.Description.Set(&v)
+}
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *ApiKeyResponse) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *ApiKeyResponse) UnsetDescription() {
+	o.Description.Unset()
+}
+
 // GetRawKey returns the RawKey field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ApiKeyResponse) GetRawKey() string {
 	if o == nil || IsNil(o.RawKey.Get()) {
@@ -319,6 +491,18 @@ func (o ApiKeyResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["created_at"] = o.CreatedAt
 	toSerialize["expires_at"] = o.ExpiresAt.Get()
 	toSerialize["revoked_at"] = o.RevokedAt.Get()
+	if o.PrincipalId.IsSet() {
+		toSerialize["principal_id"] = o.PrincipalId.Get()
+	}
+	if o.KeyPrefix.IsSet() {
+		toSerialize["key_prefix"] = o.KeyPrefix.Get()
+	}
+	if o.LastUsedAt.IsSet() {
+		toSerialize["last_used_at"] = o.LastUsedAt.Get()
+	}
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
+	}
 	if o.RawKey.IsSet() {
 		toSerialize["raw_key"] = o.RawKey.Get()
 	}

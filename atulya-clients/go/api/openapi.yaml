@@ -7385,6 +7385,489 @@ paths:
       tags:
       - Admin
       - Admin
+  /v1/admin/orgs:
+    get:
+      operationId: admin_list_orgs
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/OrgResponse"
+                title: Response Admin List Orgs
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin List Orgs
+      tags:
+      - Admin
+      - Admin
+    post:
+      operationId: admin_create_org
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OrgResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin Create Org
+      tags:
+      - Admin
+      - Admin
+  /v1/admin/principals:
+    get:
+      operationId: admin_list_principals
+      parameters:
+      - explode: true
+        in: query
+        name: org_id
+        required: true
+        schema:
+          title: Org Id
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/PrincipalResponse"
+                title: Response Admin List Principals
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin List Principals
+      tags:
+      - Admin
+      - Admin
+    post:
+      operationId: admin_create_principal
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PrincipalCreateRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipalResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin Create Principal
+      tags:
+      - Admin
+      - Admin
+  /v1/admin/principals/{principal_id}:
+    patch:
+      operationId: admin_update_principal
+      parameters:
+      - explode: false
+        in: path
+        name: principal_id
+        required: true
+        schema:
+          title: Principal Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: role
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipalResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin Update Principal
+      tags:
+      - Admin
+      - Admin
+  /v1/admin/principals/{principal_id}/password:
+    post:
+      operationId: admin_reset_principal_password
+      parameters:
+      - explode: false
+        in: path
+        name: principal_id
+        required: true
+        schema:
+          title: Principal Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PasswordResetRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  nullable: true
+                  type: string
+                title: Response Admin Reset Principal Password
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin Reset Principal Password
+      tags:
+      - Admin
+      - Admin
+  /v1/admin/access-grants:
+    get:
+      operationId: admin_list_access_grants
+      parameters:
+      - explode: true
+        in: query
+        name: org_id
+        required: true
+        schema:
+          title: Org Id
+          type: string
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/AccessGrantResponse"
+                title: Response Admin List Access Grants
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin List Access Grants
+      tags:
+      - Admin
+      - Admin
+    post:
+      operationId: admin_create_access_grant
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessGrantRequest"
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessGrantResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin Create Access Grant
+      tags:
+      - Admin
+      - Admin
+  /v1/admin/access-grants/{grant_id}:
+    delete:
+      operationId: admin_delete_access_grant
+      parameters:
+      - explode: false
+        in: path
+        name: grant_id
+        required: true
+        schema:
+          title: Grant Id
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  nullable: true
+                  type: string
+                title: Response Admin Delete Access Grant
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin Delete Access Grant
+      tags:
+      - Admin
+      - Admin
+  /v1/admin/audit-events:
+    get:
+      operationId: admin_list_audit_events
+      parameters:
+      - explode: true
+        in: query
+        name: org_id
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          maximum: 500
+          minimum: 1
+          title: Limit
+          type: integer
+        style: form
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      - explode: false
+        in: header
+        name: x-api-key
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/AuditEventResponse"
+                title: Response Admin List Audit Events
+                type: array
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Admin List Audit Events
+      tags:
+      - Admin
+      - Admin
   /v1/admin/tenants:
     get:
       description: Returns all tenants known to the tenant extension with bank counts.
@@ -7922,8 +8405,217 @@ paths:
       tags:
       - Admin
       - Admin
+  /v1/auth/signup-state:
+    get:
+      operationId: auth_signup_state
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SignupStateResponse"
+          description: Successful Response
+      summary: Signup State
+      tags:
+      - Auth
+      - Auth
+  /v1/auth/signup:
+    post:
+      operationId: auth_signup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Signup
+      tags:
+      - Auth
+      - Auth
+  /v1/auth/login:
+    post:
+      operationId: auth_login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Login
+      tags:
+      - Auth
+      - Auth
+  /v1/auth/logout:
+    post:
+      operationId: auth_logout
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  nullable: true
+                  type: boolean
+                title: Response Auth Logout
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Logout
+      tags:
+      - Auth
+      - Auth
+  /v1/auth/me:
+    get:
+      operationId: auth_me
+      parameters:
+      - explode: false
+        in: header
+        name: authorization
+        required: false
+        schema:
+          nullable: true
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PrincipalInfo"
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HTTPValidationError"
+          description: Validation Error
+      summary: Me
+      tags:
+      - Auth
+      - Auth
 components:
   schemas:
+    AccessGrantRequest:
+      example:
+        subject_id: subject_id
+        subject_type: subject_type
+        scope_id: scope_id
+        org_id: org_id
+        action: action
+        scope_type: scope_type
+      properties:
+        org_id:
+          title: AccessGrantRequestOrgId
+          type: string
+        subject_type:
+          description: principal | role
+          title: AccessGrantRequestSubjectType
+          type: string
+        subject_id:
+          title: AccessGrantRequestSubjectId
+          type: string
+        action:
+          title: AccessGrantRequestAction
+          type: string
+        scope_type:
+          description: org | bank | system
+          title: AccessGrantRequestScopeType
+          type: string
+        scope_id:
+          title: AccessGrantRequestScopeId
+          type: string
+      required:
+      - action
+      - org_id
+      - scope_id
+      - scope_type
+      - subject_id
+      - subject_type
+      title: AccessGrantRequest
+    AccessGrantResponse:
+      example:
+        subject_id: subject_id
+        subject_type: subject_type
+        scope_id: scope_id
+        org_id: org_id
+        action: action
+        created_at: created_at
+        id: id
+        scope_type: scope_type
+      properties:
+        id:
+          title: AccessGrantResponseId
+          type: string
+        org_id:
+          title: AccessGrantResponseOrgId
+          type: string
+        subject_type:
+          title: AccessGrantResponseSubjectType
+          type: string
+        subject_id:
+          title: AccessGrantResponseSubjectId
+          type: string
+        action:
+          title: AccessGrantResponseAction
+          type: string
+        scope_type:
+          title: AccessGrantResponseScopeType
+          type: string
+        scope_id:
+          title: AccessGrantResponseScopeId
+          type: string
+        created_at:
+          title: AccessGrantResponseCreatedAt
+          type: string
+      required:
+      - action
+      - created_at
+      - id
+      - org_id
+      - scope_id
+      - scope_type
+      - subject_id
+      - subject_type
+      title: AccessGrantResponse
     AddBackgroundRequest:
       description: "Request model for adding/merging background information. Deprecated:\
         \ use SetMissionRequest instead."
@@ -8283,8 +8975,10 @@ components:
         - allowed_bank_ids
         - allowed_bank_ids
         name: name
+        description: description
         schema_name: schema_name
         expires_days: 0
+        principal_id: principal_id
       properties:
         name:
           description: Human-readable label for this key
@@ -8306,6 +9000,12 @@ components:
         expires_days:
           nullable: true
           type: integer
+        principal_id:
+          nullable: true
+          type: string
+        description:
+          nullable: true
+          type: string
       required:
       - name
       title: ApiKeyCreateRequest
@@ -8315,13 +9015,17 @@ components:
         allowed_bank_ids:
         - allowed_bank_ids
         - allowed_bank_ids
+        created_at: created_at
+        description: description
+        schema_name: schema_name
+        principal_id: principal_id
+        raw_key: raw_key
+        last_used_at: last_used_at
         expires_at: expires_at
         revoked_at: revoked_at
+        key_prefix: key_prefix
         name: name
-        created_at: created_at
         id: id
-        schema_name: schema_name
-        raw_key: raw_key
       properties:
         id:
           title: ApiKeyResponseId
@@ -8347,6 +9051,18 @@ components:
           nullable: true
           type: string
         revoked_at:
+          nullable: true
+          type: string
+        principal_id:
+          nullable: true
+          type: string
+        key_prefix:
+          nullable: true
+          type: string
+        last_used_at:
+          nullable: true
+          type: string
+        description:
           nullable: true
           type: string
         raw_key:
@@ -8398,6 +9114,58 @@ components:
       - operation_id
       - status
       title: AsyncOperationSubmitResponse
+    AuditEventResponse:
+      example:
+        result: result
+        metadata:
+          key: ""
+        org_id: org_id
+        target_type: target_type
+        action: action
+        created_at: created_at
+        target_id: target_id
+        id: id
+        actor_principal_id: actor_principal_id
+      properties:
+        id:
+          title: AuditEventResponseId
+          type: string
+        org_id:
+          nullable: true
+          type: string
+        actor_principal_id:
+          nullable: true
+          type: string
+        action:
+          title: AuditEventResponseAction
+          type: string
+        target_type:
+          nullable: true
+          type: string
+        target_id:
+          nullable: true
+          type: string
+        result:
+          title: AuditEventResponseResult
+          type: string
+        metadata:
+          additionalProperties: true
+          title: AuditEventResponseMetadata
+          type: object
+        created_at:
+          title: AuditEventResponseCreatedAt
+          type: string
+      required:
+      - action
+      - actor_principal_id
+      - created_at
+      - id
+      - metadata
+      - org_id
+      - result
+      - target_id
+      - target_type
+      title: AuditEventResponse
     BackgroundResponse:
       description: "Response model for background update. Deprecated: use MissionResponse\
         \ instead."
@@ -14092,6 +14860,60 @@ components:
       - offset
       - total
       title: ListTagsResponse
+    LoginRequest:
+      example:
+        password: password
+        org: org
+        email: email
+      properties:
+        org:
+          nullable: true
+          type: string
+        email:
+          title: LoginRequestEmail
+          type: string
+        password:
+          title: LoginRequestPassword
+          type: string
+      required:
+      - email
+      - password
+      title: LoginRequest
+    LoginResponse:
+      example:
+        principal:
+          action_scopes:
+            key:
+            - action_scopes
+            - action_scopes
+          role: role
+          allowed_actions:
+          - allowed_actions
+          - allowed_actions
+          is_superuser: true
+          org_id: org_id
+          org_slug: org_slug
+          schema_name: schema_name
+          display_name: display_name
+          principal_type: principal_type
+          principal_id: principal_id
+          email: email
+        expires_at: expires_at
+        token: token
+      properties:
+        token:
+          title: LoginResponseToken
+          type: string
+        expires_at:
+          title: LoginResponseExpiresAt
+          type: string
+        principal:
+          $ref: "#/components/schemas/PrincipalInfo"
+      required:
+      - expires_at
+      - principal
+      - token
+      title: LoginResponse
     MemoryItem:
       description: Single memory item for retain.
       example:
@@ -14969,6 +15791,82 @@ components:
       - operations
       - total
       title: OperationsListResponse
+    OrgCreateRequest:
+      example:
+        owner_email: owner_email
+        owner_password: owner_password
+        owner_name: owner_name
+        name: name
+        slug: slug
+      properties:
+        slug:
+          title: OrgCreateRequestSlug
+          type: string
+        name:
+          title: OrgCreateRequestName
+          type: string
+        owner_email:
+          title: OrgCreateRequestOwnerEmail
+          type: string
+        owner_password:
+          minLength: 12
+          title: OrgCreateRequestOwnerPassword
+          type: string
+        owner_name:
+          nullable: true
+          type: string
+      required:
+      - name
+      - owner_email
+      - owner_password
+      - slug
+      title: OrgCreateRequest
+    OrgResponse:
+      example:
+        name: name
+        created_at: created_at
+        id: id
+        schema_name: schema_name
+        slug: slug
+        status: status
+      properties:
+        id:
+          title: OrgResponseId
+          type: string
+        slug:
+          title: OrgResponseSlug
+          type: string
+        name:
+          title: OrgResponseName
+          type: string
+        schema_name:
+          title: OrgResponseSchemaName
+          type: string
+        status:
+          title: OrgResponseStatus
+          type: string
+        created_at:
+          title: OrgResponseCreatedAt
+          type: string
+      required:
+      - created_at
+      - id
+      - name
+      - schema_name
+      - slug
+      - status
+      title: OrgResponse
+    PasswordResetRequest:
+      example:
+        password: password
+      properties:
+        password:
+          minLength: 12
+          title: PasswordResetRequestPassword
+          type: string
+      required:
+      - password
+      title: PasswordResetRequest
     PredictionPoint:
       example:
         hour_utc: 6
@@ -14984,6 +15882,152 @@ components:
       - hour_utc
       - score
       title: PredictionPoint
+    PrincipalCreateRequest:
+      example:
+        password: password
+        role: role
+        org_id: org_id
+        display_name: display_name
+        principal_type: principal_type
+        email: email
+      properties:
+        org_id:
+          title: PrincipalCreateRequestOrgId
+          type: string
+        email:
+          nullable: true
+          type: string
+        display_name:
+          title: PrincipalCreateRequestDisplayName
+          type: string
+        principal_type:
+          description: user | service
+          title: PrincipalCreateRequestPrincipalType
+          type: string
+        role:
+          description: owner | admin | operator | viewer | service
+          title: PrincipalCreateRequestRole
+          type: string
+        password:
+          minLength: 12
+          nullable: true
+          type: string
+      required:
+      - display_name
+      - org_id
+      title: PrincipalCreateRequest
+    PrincipalInfo:
+      example:
+        action_scopes:
+          key:
+          - action_scopes
+          - action_scopes
+        role: role
+        allowed_actions:
+        - allowed_actions
+        - allowed_actions
+        is_superuser: true
+        org_id: org_id
+        org_slug: org_slug
+        schema_name: schema_name
+        display_name: display_name
+        principal_type: principal_type
+        principal_id: principal_id
+        email: email
+      properties:
+        org_id:
+          nullable: true
+          type: string
+        org_slug:
+          nullable: true
+          type: string
+        schema_name:
+          title: PrincipalInfoSchemaName
+          type: string
+        principal_id:
+          nullable: true
+          type: string
+        email:
+          nullable: true
+          type: string
+        display_name:
+          nullable: true
+          type: string
+        principal_type:
+          nullable: true
+          type: string
+        role:
+          title: PrincipalInfoRole
+          type: string
+        allowed_actions:
+          items:
+            type: string
+          nullable: true
+          type: array
+        action_scopes:
+          additionalProperties:
+            items:
+              type: string
+          nullable: true
+        is_superuser:
+          title: PrincipalInfoIsSuperuser
+          type: boolean
+      required:
+      - action_scopes
+      - allowed_actions
+      - display_name
+      - email
+      - org_id
+      - principal_id
+      - principal_type
+      - role
+      - schema_name
+      title: PrincipalInfo
+    PrincipalResponse:
+      example:
+        role: role
+        org_id: org_id
+        created_at: created_at
+        id: id
+        display_name: display_name
+        principal_type: principal_type
+        email: email
+        status: status
+      properties:
+        id:
+          title: PrincipalResponseId
+          type: string
+        org_id:
+          title: PrincipalResponseOrgId
+          type: string
+        email:
+          nullable: true
+          type: string
+        display_name:
+          title: PrincipalResponseDisplayName
+          type: string
+        principal_type:
+          title: PrincipalResponsePrincipalType
+          type: string
+        role:
+          title: PrincipalResponseRole
+          type: string
+        status:
+          title: PrincipalResponseStatus
+          type: string
+        created_at:
+          title: PrincipalResponseCreatedAt
+          type: string
+      required:
+      - created_at
+      - display_name
+      - email
+      - id
+      - org_id
+      - principal_type
+      - role
+      - status
+      title: PrincipalResponse
     RecallRequest:
       description: Request model for recall endpoint.
       example:
@@ -15594,6 +16638,60 @@ components:
       - retried_from_operation_id
       - success
       title: RetryOperationResponse
+    SignupRequest:
+      example:
+        owner_email: owner_email
+        owner_password: owner_password
+        owner_name: owner_name
+        org_slug: org_slug
+        org_name: org_name
+      properties:
+        org_slug:
+          maxLength: 64
+          minLength: 2
+          title: SignupRequestOrgSlug
+          type: string
+        org_name:
+          maxLength: 160
+          minLength: 2
+          title: SignupRequestOrgName
+          type: string
+        owner_email:
+          title: SignupRequestOwnerEmail
+          type: string
+        owner_name:
+          nullable: true
+          type: string
+        owner_password:
+          minLength: 12
+          title: SignupRequestOwnerPassword
+          type: string
+      required:
+      - org_name
+      - org_slug
+      - owner_email
+      - owner_password
+      title: SignupRequest
+    SignupStateResponse:
+      example:
+        mode: mode
+        org_count: 0
+        available: true
+      properties:
+        mode:
+          title: SignupStateResponseMode
+          type: string
+        available:
+          title: SignupStateResponseAvailable
+          type: boolean
+        org_count:
+          title: SignupStateResponseOrgCount
+          type: integer
+      required:
+      - available
+      - mode
+      - org_count
+      title: SignupStateResponse
     SourceFactsIncludeOptions:
       description: Options for including source facts for observation-type results.
       properties:

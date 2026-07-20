@@ -60,6 +60,7 @@ dependencies = [
     "cryptography>=46.0.5", # Subgroup attack vulnerability fix
     "filelock>=3.20.1", # TOCTOU race condition fix
     "authlib>=1.6.6", # Account takeover vulnerability fix
+    "argon2-cffi>=25.1.0", # Password hashing for first-party control-plane login
     "aiohttp>=3.13.3", # Multiple DoS vulnerabilities
     "claude-agent-sdk>=0.1.27",
     "einops>=0.8.2",

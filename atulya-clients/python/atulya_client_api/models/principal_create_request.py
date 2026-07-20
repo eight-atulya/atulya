@@ -17,24 +17,24 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class ApiKeyCreateRequest(BaseModel):
+class PrincipalCreateRequest(BaseModel):
     """
-    ApiKeyCreateRequest
+    PrincipalCreateRequest
     """ # noqa: E501
-    name: StrictStr = Field(description="Human-readable label for this key")
-    role: Optional[StrictStr] = Field(default=None, description="Role: superuser | admin | user")
-    schema_name: Optional[StrictStr] = Field(default=None, description="PostgreSQL schema this key operates in")
-    allowed_bank_ids: Optional[List[StrictStr]] = None
-    expires_days: Optional[StrictInt] = None
-    principal_id: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["name", "role", "schema_name", "allowed_bank_ids", "expires_days", "principal_id", "description"]
+    org_id: StrictStr
+    email: Optional[StrictStr] = None
+    display_name: StrictStr
+    principal_type: Optional[StrictStr] = Field(default=None, description="user | service")
+    role: Optional[StrictStr] = Field(default=None, description="owner | admin | operator | viewer | service")
+    password: Optional[Annotated[str, Field(min_length=12, strict=True)]] = None
+    __properties: ClassVar[List[str]] = ["org_id", "email", "display_name", "principal_type", "role", "password"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -54,7 +54,7 @@ class ApiKeyCreateRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiKeyCreateRequest from a JSON string"""
+        """Create an instance of PrincipalCreateRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,31 +75,21 @@ class ApiKeyCreateRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if allowed_bank_ids (nullable) is None
+        # set to None if email (nullable) is None
         # and model_fields_set contains the field
-        if self.allowed_bank_ids is None and "allowed_bank_ids" in self.model_fields_set:
-            _dict['allowed_bank_ids'] = None
+        if self.email is None and "email" in self.model_fields_set:
+            _dict['email'] = None
 
-        # set to None if expires_days (nullable) is None
+        # set to None if password (nullable) is None
         # and model_fields_set contains the field
-        if self.expires_days is None and "expires_days" in self.model_fields_set:
-            _dict['expires_days'] = None
-
-        # set to None if principal_id (nullable) is None
-        # and model_fields_set contains the field
-        if self.principal_id is None and "principal_id" in self.model_fields_set:
-            _dict['principal_id'] = None
-
-        # set to None if description (nullable) is None
-        # and model_fields_set contains the field
-        if self.description is None and "description" in self.model_fields_set:
-            _dict['description'] = None
+        if self.password is None and "password" in self.model_fields_set:
+            _dict['password'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiKeyCreateRequest from a dict"""
+        """Create an instance of PrincipalCreateRequest from a dict"""
         if obj is None:
             return None
 
@@ -107,14 +97,11 @@ class ApiKeyCreateRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
+            "org_id": obj.get("org_id"),
+            "email": obj.get("email"),
+            "display_name": obj.get("display_name"),
+            "principal_type": obj.get("principal_type"),
             "role": obj.get("role"),
-            "schema_name": obj.get("schema_name"),
-            "allowed_bank_ids": obj.get("allowed_bank_ids"),
-            "expires_days": obj.get("expires_days"),
-            "principal_id": obj.get("principal_id"),
-            "description": obj.get("description")
+            "password": obj.get("password")
         })
         return _obj
-
-

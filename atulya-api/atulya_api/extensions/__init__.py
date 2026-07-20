@@ -22,6 +22,7 @@ from atulya_api.extensions.http import HttpExtension
 from atulya_api.extensions.loader import load_extension
 from atulya_api.extensions.mcp import MCPExtension
 from atulya_api.extensions.operation_validator import (
+    AccessControlOperationValidator,
     # Bank Management operations
     BankListContext,
     BankListResult,
@@ -70,6 +71,7 @@ __all__ = [
     # Operation Validator - Core
     "OperationValidationError",
     "OperationValidatorExtension",
+    "AccessControlOperationValidator",
     "RecallContext",
     "RecallResult",
     "ReflectContext",

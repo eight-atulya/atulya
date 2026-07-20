@@ -12,9 +12,9 @@ from atulya_api.models import RequestContext
 # Extend here if new roles are needed; consumers use TenantContext.is_superuser
 # or TenantContext.role directly — no scattered string comparisons.
 # ---------------------------------------------------------------------------
-Role = Literal["superuser", "admin", "user"]
+Role = Literal["superuser", "owner", "admin", "operator", "viewer", "service", "user"]
 
-ROLES_ORDERED: list[Role] = ["superuser", "admin", "user"]  # descending privilege
+ROLES_ORDERED: list[Role] = ["superuser", "owner", "admin", "operator", "viewer", "service", "user"]
 
 
 class AuthenticationError(Exception):
@@ -55,6 +55,13 @@ class TenantContext:
     schema_name: str
     role: Role = "user"
     allowed_bank_ids: list[str] | None = None
+    org_id: str | None = None
+    principal_id: str | None = None
+    principal_type: str | None = None
+    display_name: str | None = None
+    email: str | None = None
+    allowed_actions: list[str] | None = None
+    action_scopes: dict[str, list[str]] | None = None
     # Derived field — never pass in constructor; always computed from role.
     is_superuser: bool = field(init=False, repr=False)
 
@@ -79,6 +86,20 @@ class TenantContext:
         if self.allowed_bank_ids is None:
             return True
         return bank_id in self.allowed_bank_ids
+
+    def apply_to_request_context(self, request_context: RequestContext) -> None:
+        """Copy resolved auth identity onto the mutable request context."""
+
+        request_context.schema_name = self.schema_name
+        request_context.role = self.role
+        request_context.allowed_bank_ids = self.allowed_bank_ids
+        request_context.org_id = self.org_id
+        request_context.principal_id = self.principal_id
+        request_context.principal_type = self.principal_type
+        request_context.display_name = self.display_name
+        request_context.email = self.email
+        request_context.allowed_actions = self.allowed_actions
+        request_context.action_scopes = self.action_scopes
 
 
 @dataclass

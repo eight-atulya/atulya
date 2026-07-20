@@ -19,6 +19,7 @@ __version__ = "0.8.7"
 # Define package exports
 __all__ = [
     "AdminApi",
+    "AuthApi",
     "BanksApi",
     "CodebasesApi",
     "DirectivesApi",
@@ -42,6 +43,8 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
+    "AccessGrantRequest",
+    "AccessGrantResponse",
     "AddBackgroundRequest",
     "AnomalyCorrectionResponse",
     "AnomalyEventResponse",
@@ -52,6 +55,7 @@ __all__ = [
     "ApiKeyResponse",
     "ApiKeyUpdateRequest",
     "AsyncOperationSubmitResponse",
+    "AuditEventResponse",
     "BackgroundResponse",
     "BankConfigResponse",
     "BankConfigUpdate",
@@ -176,6 +180,8 @@ __all__ = [
     "ListDocumentsResponse",
     "ListMemoryUnitsResponse",
     "ListTagsResponse",
+    "LoginRequest",
+    "LoginResponse",
     "MemoryItem",
     "MemoryItemObservationScopes",
     "MemoryItemTimestamp",
@@ -205,7 +211,13 @@ __all__ = [
     "OperationStatusResponse",
     "OperationSummaryResponse",
     "OperationsListResponse",
+    "OrgCreateRequest",
+    "OrgResponse",
+    "PasswordResetRequest",
     "PredictionPoint",
+    "PrincipalCreateRequest",
+    "PrincipalInfo",
+    "PrincipalResponse",
     "RecallRequest",
     "RecallRequestTagGroupsInner",
     "RecallResponse",
@@ -223,6 +235,8 @@ __all__ = [
     "RetainRequest",
     "RetainResponse",
     "RetryOperationResponse",
+    "SignupRequest",
+    "SignupStateResponse",
     "SourceFactsIncludeOptions",
     "SubRoutineHistogramResponse",
     "SubRoutinePredictionResponse",
@@ -267,6 +281,7 @@ __all__ = [
 
 # import apis into sdk package
 from atulya_client_api.api.admin_api import AdminApi as AdminApi
+from atulya_client_api.api.auth_api import AuthApi as AuthApi
 from atulya_client_api.api.banks_api import BanksApi as BanksApi
 from atulya_client_api.api.codebases_api import CodebasesApi as CodebasesApi
 from atulya_client_api.api.directives_api import DirectivesApi as DirectivesApi
@@ -294,6 +309,8 @@ from atulya_client_api.exceptions import ApiAttributeError as ApiAttributeError
 from atulya_client_api.exceptions import ApiException as ApiException
 
 # import models into sdk package
+from atulya_client_api.models.access_grant_request import AccessGrantRequest as AccessGrantRequest
+from atulya_client_api.models.access_grant_response import AccessGrantResponse as AccessGrantResponse
 from atulya_client_api.models.add_background_request import AddBackgroundRequest as AddBackgroundRequest
 from atulya_client_api.models.anomaly_correction_response import AnomalyCorrectionResponse as AnomalyCorrectionResponse
 from atulya_client_api.models.anomaly_event_response import AnomalyEventResponse as AnomalyEventResponse
@@ -304,6 +321,7 @@ from atulya_client_api.models.api_key_create_request import ApiKeyCreateRequest 
 from atulya_client_api.models.api_key_response import ApiKeyResponse as ApiKeyResponse
 from atulya_client_api.models.api_key_update_request import ApiKeyUpdateRequest as ApiKeyUpdateRequest
 from atulya_client_api.models.async_operation_submit_response import AsyncOperationSubmitResponse as AsyncOperationSubmitResponse
+from atulya_client_api.models.audit_event_response import AuditEventResponse as AuditEventResponse
 from atulya_client_api.models.background_response import BackgroundResponse as BackgroundResponse
 from atulya_client_api.models.bank_config_response import BankConfigResponse as BankConfigResponse
 from atulya_client_api.models.bank_config_update import BankConfigUpdate as BankConfigUpdate
@@ -428,6 +446,8 @@ from atulya_client_api.models.llm_request_stats_response import LLMRequestStatsR
 from atulya_client_api.models.list_documents_response import ListDocumentsResponse as ListDocumentsResponse
 from atulya_client_api.models.list_memory_units_response import ListMemoryUnitsResponse as ListMemoryUnitsResponse
 from atulya_client_api.models.list_tags_response import ListTagsResponse as ListTagsResponse
+from atulya_client_api.models.login_request import LoginRequest as LoginRequest
+from atulya_client_api.models.login_response import LoginResponse as LoginResponse
 from atulya_client_api.models.memory_item import MemoryItem as MemoryItem
 from atulya_client_api.models.memory_item_observation_scopes import MemoryItemObservationScopes as MemoryItemObservationScopes
 from atulya_client_api.models.memory_item_timestamp import MemoryItemTimestamp as MemoryItemTimestamp
@@ -457,7 +477,13 @@ from atulya_client_api.models.operation_result_response_result import OperationR
 from atulya_client_api.models.operation_status_response import OperationStatusResponse as OperationStatusResponse
 from atulya_client_api.models.operation_summary_response import OperationSummaryResponse as OperationSummaryResponse
 from atulya_client_api.models.operations_list_response import OperationsListResponse as OperationsListResponse
+from atulya_client_api.models.org_create_request import OrgCreateRequest as OrgCreateRequest
+from atulya_client_api.models.org_response import OrgResponse as OrgResponse
+from atulya_client_api.models.password_reset_request import PasswordResetRequest as PasswordResetRequest
 from atulya_client_api.models.prediction_point import PredictionPoint as PredictionPoint
+from atulya_client_api.models.principal_create_request import PrincipalCreateRequest as PrincipalCreateRequest
+from atulya_client_api.models.principal_info import PrincipalInfo as PrincipalInfo
+from atulya_client_api.models.principal_response import PrincipalResponse as PrincipalResponse
 from atulya_client_api.models.recall_request import RecallRequest as RecallRequest
 from atulya_client_api.models.recall_request_tag_groups_inner import RecallRequestTagGroupsInner as RecallRequestTagGroupsInner
 from atulya_client_api.models.recall_response import RecallResponse as RecallResponse
@@ -475,6 +501,8 @@ from atulya_client_api.models.reflect_trace import ReflectTrace as ReflectTrace
 from atulya_client_api.models.retain_request import RetainRequest as RetainRequest
 from atulya_client_api.models.retain_response import RetainResponse as RetainResponse
 from atulya_client_api.models.retry_operation_response import RetryOperationResponse as RetryOperationResponse
+from atulya_client_api.models.signup_request import SignupRequest as SignupRequest
+from atulya_client_api.models.signup_state_response import SignupStateResponse as SignupStateResponse
 from atulya_client_api.models.source_facts_include_options import SourceFactsIncludeOptions as SourceFactsIncludeOptions
 from atulya_client_api.models.sub_routine_histogram_response import SubRoutineHistogramResponse as SubRoutineHistogramResponse
 from atulya_client_api.models.sub_routine_prediction_response import SubRoutinePredictionResponse as SubRoutinePredictionResponse

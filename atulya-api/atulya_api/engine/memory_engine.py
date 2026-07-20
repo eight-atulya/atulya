@@ -956,6 +956,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         # Authenticate through tenant extension (always set, may be default no-auth extension)
         tenant_context = await self._tenant_extension.authenticate(request_context)
+        tenant_context.apply_to_request_context(request_context)
 
         _current_schema.set(tenant_context.schema_name)
         return tenant_context.schema_name

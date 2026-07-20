@@ -17,24 +17,23 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class ApiKeyCreateRequest(BaseModel):
+class OrgCreateRequest(BaseModel):
     """
-    ApiKeyCreateRequest
+    OrgCreateRequest
     """ # noqa: E501
-    name: StrictStr = Field(description="Human-readable label for this key")
-    role: Optional[StrictStr] = Field(default=None, description="Role: superuser | admin | user")
-    schema_name: Optional[StrictStr] = Field(default=None, description="PostgreSQL schema this key operates in")
-    allowed_bank_ids: Optional[List[StrictStr]] = None
-    expires_days: Optional[StrictInt] = None
-    principal_id: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["name", "role", "schema_name", "allowed_bank_ids", "expires_days", "principal_id", "description"]
+    slug: StrictStr
+    name: StrictStr
+    owner_email: StrictStr
+    owner_password: Annotated[str, Field(min_length=12, strict=True)]
+    owner_name: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["slug", "name", "owner_email", "owner_password", "owner_name"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -54,7 +53,7 @@ class ApiKeyCreateRequest(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of ApiKeyCreateRequest from a JSON string"""
+        """Create an instance of OrgCreateRequest from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -75,31 +74,16 @@ class ApiKeyCreateRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if allowed_bank_ids (nullable) is None
+        # set to None if owner_name (nullable) is None
         # and model_fields_set contains the field
-        if self.allowed_bank_ids is None and "allowed_bank_ids" in self.model_fields_set:
-            _dict['allowed_bank_ids'] = None
-
-        # set to None if expires_days (nullable) is None
-        # and model_fields_set contains the field
-        if self.expires_days is None and "expires_days" in self.model_fields_set:
-            _dict['expires_days'] = None
-
-        # set to None if principal_id (nullable) is None
-        # and model_fields_set contains the field
-        if self.principal_id is None and "principal_id" in self.model_fields_set:
-            _dict['principal_id'] = None
-
-        # set to None if description (nullable) is None
-        # and model_fields_set contains the field
-        if self.description is None and "description" in self.model_fields_set:
-            _dict['description'] = None
+        if self.owner_name is None and "owner_name" in self.model_fields_set:
+            _dict['owner_name'] = None
 
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of ApiKeyCreateRequest from a dict"""
+        """Create an instance of OrgCreateRequest from a dict"""
         if obj is None:
             return None
 
@@ -107,14 +91,10 @@ class ApiKeyCreateRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
+            "slug": obj.get("slug"),
             "name": obj.get("name"),
-            "role": obj.get("role"),
-            "schema_name": obj.get("schema_name"),
-            "allowed_bank_ids": obj.get("allowed_bank_ids"),
-            "expires_days": obj.get("expires_days"),
-            "principal_id": obj.get("principal_id"),
-            "description": obj.get("description")
+            "owner_email": obj.get("owner_email"),
+            "owner_password": obj.get("owner_password"),
+            "owner_name": obj.get("owner_name")
         })
         return _obj
-
-

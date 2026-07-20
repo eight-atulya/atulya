@@ -29,6 +29,8 @@ type ApiKeyCreateRequest struct {
 	SchemaName *string `json:"schema_name,omitempty"`
 	AllowedBankIds []string `json:"allowed_bank_ids,omitempty"`
 	ExpiresDays NullableInt32 `json:"expires_days,omitempty"`
+	PrincipalId NullableString `json:"principal_id,omitempty"`
+	Description NullableString `json:"description,omitempty"`
 }
 
 type _ApiKeyCreateRequest ApiKeyCreateRequest
@@ -214,6 +216,90 @@ func (o *ApiKeyCreateRequest) UnsetExpiresDays() {
 	o.ExpiresDays.Unset()
 }
 
+// GetPrincipalId returns the PrincipalId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ApiKeyCreateRequest) GetPrincipalId() string {
+	if o == nil || IsNil(o.PrincipalId.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.PrincipalId.Get()
+}
+
+// GetPrincipalIdOk returns a tuple with the PrincipalId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ApiKeyCreateRequest) GetPrincipalIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.PrincipalId.Get(), o.PrincipalId.IsSet()
+}
+
+// HasPrincipalId returns a boolean if a field has been set.
+func (o *ApiKeyCreateRequest) HasPrincipalId() bool {
+	if o != nil && o.PrincipalId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetPrincipalId gets a reference to the given NullableString and assigns it to the PrincipalId field.
+func (o *ApiKeyCreateRequest) SetPrincipalId(v string) {
+	o.PrincipalId.Set(&v)
+}
+// SetPrincipalIdNil sets the value for PrincipalId to be an explicit nil
+func (o *ApiKeyCreateRequest) SetPrincipalIdNil() {
+	o.PrincipalId.Set(nil)
+}
+
+// UnsetPrincipalId ensures that no value is present for PrincipalId, not even an explicit nil
+func (o *ApiKeyCreateRequest) UnsetPrincipalId() {
+	o.PrincipalId.Unset()
+}
+
+// GetDescription returns the Description field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *ApiKeyCreateRequest) GetDescription() string {
+	if o == nil || IsNil(o.Description.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.Description.Get()
+}
+
+// GetDescriptionOk returns a tuple with the Description field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *ApiKeyCreateRequest) GetDescriptionOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Description.Get(), o.Description.IsSet()
+}
+
+// HasDescription returns a boolean if a field has been set.
+func (o *ApiKeyCreateRequest) HasDescription() bool {
+	if o != nil && o.Description.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDescription gets a reference to the given NullableString and assigns it to the Description field.
+func (o *ApiKeyCreateRequest) SetDescription(v string) {
+	o.Description.Set(&v)
+}
+// SetDescriptionNil sets the value for Description to be an explicit nil
+func (o *ApiKeyCreateRequest) SetDescriptionNil() {
+	o.Description.Set(nil)
+}
+
+// UnsetDescription ensures that no value is present for Description, not even an explicit nil
+func (o *ApiKeyCreateRequest) UnsetDescription() {
+	o.Description.Unset()
+}
+
 func (o ApiKeyCreateRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -236,6 +322,12 @@ func (o ApiKeyCreateRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if o.ExpiresDays.IsSet() {
 		toSerialize["expires_days"] = o.ExpiresDays.Get()
+	}
+	if o.PrincipalId.IsSet() {
+		toSerialize["principal_id"] = o.PrincipalId.Get()
+	}
+	if o.Description.IsSet() {
+		toSerialize["description"] = o.Description.Get()
 	}
 	return toSerialize, nil
 }

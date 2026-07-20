@@ -5,6 +5,78 @@ export type ClientOptions = {
 };
 
 /**
+ * AccessGrantRequest
+ */
+export type AccessGrantRequest = {
+    /**
+     * AccessGrantRequestOrgId
+     */
+    org_id: string;
+    /**
+     * AccessGrantRequestSubjectType
+     *
+     * principal | role
+     */
+    subject_type: string;
+    /**
+     * AccessGrantRequestSubjectId
+     */
+    subject_id: string;
+    /**
+     * AccessGrantRequestAction
+     */
+    action: string;
+    /**
+     * AccessGrantRequestScopeType
+     *
+     * org | bank | system
+     */
+    scope_type: string;
+    /**
+     * AccessGrantRequestScopeId
+     */
+    scope_id: string;
+};
+
+/**
+ * AccessGrantResponse
+ */
+export type AccessGrantResponse = {
+    /**
+     * AccessGrantResponseId
+     */
+    id: string;
+    /**
+     * AccessGrantResponseOrgId
+     */
+    org_id: string;
+    /**
+     * AccessGrantResponseSubjectType
+     */
+    subject_type: string;
+    /**
+     * AccessGrantResponseSubjectId
+     */
+    subject_id: string;
+    /**
+     * AccessGrantResponseAction
+     */
+    action: string;
+    /**
+     * AccessGrantResponseScopeType
+     */
+    scope_type: string;
+    /**
+     * AccessGrantResponseScopeId
+     */
+    scope_id: string;
+    /**
+     * AccessGrantResponseCreatedAt
+     */
+    created_at: string;
+};
+
+/**
  * AddBackgroundRequest
  *
  * Request model for adding/merging background information. Deprecated: use SetMissionRequest instead.
@@ -233,6 +305,14 @@ export type ApiKeyCreateRequest = {
      * Days until key expires. None = never expires.
      */
     expires_days?: number | null;
+    /**
+     * ApiKeyCreateRequestPrincipalId
+     */
+    principal_id?: string | null;
+    /**
+     * ApiKeyCreateRequestDescription
+     */
+    description?: string | null;
 };
 
 /**
@@ -272,6 +352,22 @@ export type ApiKeyResponse = {
      */
     revoked_at: string | null;
     /**
+     * ApiKeyResponsePrincipalId
+     */
+    principal_id?: string | null;
+    /**
+     * ApiKeyResponseKeyPrefix
+     */
+    key_prefix?: string | null;
+    /**
+     * ApiKeyResponseLastUsedAt
+     */
+    last_used_at?: string | null;
+    /**
+     * ApiKeyResponseDescription
+     */
+    description?: string | null;
+    /**
      * ApiKeyResponseRawKey
      */
     raw_key?: string | null;
@@ -309,6 +405,50 @@ export type AsyncOperationSubmitResponse = {
      * AsyncOperationSubmitResponseStatus
      */
     status: string;
+};
+
+/**
+ * AuditEventResponse
+ */
+export type AuditEventResponse = {
+    /**
+     * AuditEventResponseId
+     */
+    id: string;
+    /**
+     * AuditEventResponseOrgId
+     */
+    org_id: string | null;
+    /**
+     * AuditEventResponseActorPrincipalId
+     */
+    actor_principal_id: string | null;
+    /**
+     * AuditEventResponseAction
+     */
+    action: string;
+    /**
+     * AuditEventResponseTargetType
+     */
+    target_type: string | null;
+    /**
+     * AuditEventResponseTargetId
+     */
+    target_id: string | null;
+    /**
+     * AuditEventResponseResult
+     */
+    result: string;
+    /**
+     * AuditEventResponseMetadata
+     */
+    metadata: {
+        [key: string]: unknown;
+    };
+    /**
+     * AuditEventResponseCreatedAt
+     */
+    created_at: string;
 };
 
 /**
@@ -4659,6 +4799,41 @@ export type ListTagsResponse = {
 };
 
 /**
+ * LoginRequest
+ */
+export type LoginRequest = {
+    /**
+     * LoginRequestOrg
+     *
+     * Organization slug; required only when email belongs to many orgs
+     */
+    org?: string | null;
+    /**
+     * LoginRequestEmail
+     */
+    email: string;
+    /**
+     * LoginRequestPassword
+     */
+    password: string;
+};
+
+/**
+ * LoginResponse
+ */
+export type LoginResponse = {
+    /**
+     * LoginResponseToken
+     */
+    token: string;
+    /**
+     * LoginResponseExpiresAt
+     */
+    expires_at: string;
+    principal: PrincipalInfo;
+};
+
+/**
  * MemoryItem
  *
  * Single memory item for retain.
@@ -5450,6 +5625,72 @@ export type OperationsListResponse = {
 };
 
 /**
+ * OrgCreateRequest
+ */
+export type OrgCreateRequest = {
+    /**
+     * OrgCreateRequestSlug
+     */
+    slug: string;
+    /**
+     * OrgCreateRequestName
+     */
+    name: string;
+    /**
+     * OrgCreateRequestOwnerEmail
+     */
+    owner_email: string;
+    /**
+     * OrgCreateRequestOwnerPassword
+     */
+    owner_password: string;
+    /**
+     * OrgCreateRequestOwnerName
+     */
+    owner_name?: string | null;
+};
+
+/**
+ * OrgResponse
+ */
+export type OrgResponse = {
+    /**
+     * OrgResponseId
+     */
+    id: string;
+    /**
+     * OrgResponseSlug
+     */
+    slug: string;
+    /**
+     * OrgResponseName
+     */
+    name: string;
+    /**
+     * OrgResponseSchemaName
+     */
+    schema_name: string;
+    /**
+     * OrgResponseStatus
+     */
+    status: string;
+    /**
+     * OrgResponseCreatedAt
+     */
+    created_at: string;
+};
+
+/**
+ * PasswordResetRequest
+ */
+export type PasswordResetRequest = {
+    /**
+     * PasswordResetRequestPassword
+     */
+    password: string;
+};
+
+/**
  * PredictionPoint
  */
 export type PredictionPoint = {
@@ -5461,6 +5702,130 @@ export type PredictionPoint = {
      * PredictionPointScore
      */
     score: number;
+};
+
+/**
+ * PrincipalCreateRequest
+ */
+export type PrincipalCreateRequest = {
+    /**
+     * PrincipalCreateRequestOrgId
+     */
+    org_id: string;
+    /**
+     * PrincipalCreateRequestEmail
+     */
+    email?: string | null;
+    /**
+     * PrincipalCreateRequestDisplayName
+     */
+    display_name: string;
+    /**
+     * PrincipalCreateRequestPrincipalType
+     *
+     * user | service
+     */
+    principal_type?: string;
+    /**
+     * PrincipalCreateRequestRole
+     *
+     * owner | admin | operator | viewer | service
+     */
+    role?: string;
+    /**
+     * PrincipalCreateRequestPassword
+     */
+    password?: string | null;
+};
+
+/**
+ * PrincipalInfo
+ */
+export type PrincipalInfo = {
+    /**
+     * PrincipalInfoOrgId
+     */
+    org_id: string | null;
+    /**
+     * PrincipalInfoOrgSlug
+     */
+    org_slug?: string | null;
+    /**
+     * PrincipalInfoSchemaName
+     */
+    schema_name: string;
+    /**
+     * PrincipalInfoPrincipalId
+     */
+    principal_id: string | null;
+    /**
+     * PrincipalInfoEmail
+     */
+    email: string | null;
+    /**
+     * PrincipalInfoDisplayName
+     */
+    display_name: string | null;
+    /**
+     * PrincipalInfoPrincipalType
+     */
+    principal_type: string | null;
+    /**
+     * PrincipalInfoRole
+     */
+    role: string;
+    /**
+     * PrincipalInfoAllowedActions
+     */
+    allowed_actions: Array<string> | null;
+    /**
+     * PrincipalInfoActionScopes
+     */
+    action_scopes: {
+        [key: string]: Array<string>;
+    } | null;
+    /**
+     * PrincipalInfoIsSuperuser
+     */
+    is_superuser?: boolean;
+};
+
+/**
+ * PrincipalResponse
+ */
+export type PrincipalResponse = {
+    /**
+     * PrincipalResponseId
+     */
+    id: string;
+    /**
+     * PrincipalResponseOrgId
+     */
+    org_id: string;
+    /**
+     * PrincipalResponseEmail
+     */
+    email: string | null;
+    /**
+     * PrincipalResponseDisplayName
+     */
+    display_name: string;
+    /**
+     * PrincipalResponsePrincipalType
+     */
+    principal_type: string;
+    /**
+     * PrincipalResponseRole
+     */
+    role: string;
+    /**
+     * PrincipalResponseStatus
+     */
+    status: string;
+    /**
+     * PrincipalResponseCreatedAt
+     */
+    created_at: string;
 };
 
 /**
@@ -6037,6 +6402,50 @@ export type RetryOperationResponse = {
      * RetryOperationResponseOperationType
      */
     operation_type?: string | null;
+};
+
+/**
+ * SignupRequest
+ */
+export type SignupRequest = {
+    /**
+     * SignupRequestOrgSlug
+     */
+    org_slug: string;
+    /**
+     * SignupRequestOrgName
+     */
+    org_name: string;
+    /**
+     * SignupRequestOwnerEmail
+     */
+    owner_email: string;
+    /**
+     * SignupRequestOwnerName
+     */
+    owner_name?: string | null;
+    /**
+     * SignupRequestOwnerPassword
+     */
+    owner_password: string;
+};
+
+/**
+ * SignupStateResponse
+ */
+export type SignupStateResponse = {
+    /**
+     * SignupStateResponseMode
+     */
+    mode: string;
+    /**
+     * SignupStateResponseAvailable
+     */
+    available: boolean;
+    /**
+     * SignupStateResponseOrgCount
+     */
+    org_count: number;
 };
 
 /**
@@ -12966,6 +13375,415 @@ export type AdminSystemHealthResponses = {
 
 export type AdminSystemHealthResponse = AdminSystemHealthResponses[keyof AdminSystemHealthResponses];
 
+export type AdminListOrgsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/orgs';
+};
+
+export type AdminListOrgsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListOrgsError = AdminListOrgsErrors[keyof AdminListOrgsErrors];
+
+export type AdminListOrgsResponses = {
+    /**
+     * Response Admin List Orgs
+     *
+     * Successful Response
+     */
+    200: Array<OrgResponse>;
+};
+
+export type AdminListOrgsResponse = AdminListOrgsResponses[keyof AdminListOrgsResponses];
+
+export type AdminCreateOrgData = {
+    body: OrgCreateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/orgs';
+};
+
+export type AdminCreateOrgErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminCreateOrgError = AdminCreateOrgErrors[keyof AdminCreateOrgErrors];
+
+export type AdminCreateOrgResponses = {
+    /**
+     * Successful Response
+     */
+    201: OrgResponse;
+};
+
+export type AdminCreateOrgResponse = AdminCreateOrgResponses[keyof AdminCreateOrgResponses];
+
+export type AdminListPrincipalsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    url: '/v1/admin/principals';
+};
+
+export type AdminListPrincipalsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListPrincipalsError = AdminListPrincipalsErrors[keyof AdminListPrincipalsErrors];
+
+export type AdminListPrincipalsResponses = {
+    /**
+     * Response Admin List Principals
+     *
+     * Successful Response
+     */
+    200: Array<PrincipalResponse>;
+};
+
+export type AdminListPrincipalsResponse = AdminListPrincipalsResponses[keyof AdminListPrincipalsResponses];
+
+export type AdminCreatePrincipalData = {
+    body: PrincipalCreateRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/principals';
+};
+
+export type AdminCreatePrincipalErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminCreatePrincipalError = AdminCreatePrincipalErrors[keyof AdminCreatePrincipalErrors];
+
+export type AdminCreatePrincipalResponses = {
+    /**
+     * Successful Response
+     */
+    201: PrincipalResponse;
+};
+
+export type AdminCreatePrincipalResponse = AdminCreatePrincipalResponses[keyof AdminCreatePrincipalResponses];
+
+export type AdminUpdatePrincipalData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Principal Id
+         */
+        principal_id: string;
+    };
+    query?: {
+        /**
+         * Status
+         */
+        status?: string | null;
+        /**
+         * Role
+         */
+        role?: string | null;
+    };
+    url: '/v1/admin/principals/{principal_id}';
+};
+
+export type AdminUpdatePrincipalErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminUpdatePrincipalError = AdminUpdatePrincipalErrors[keyof AdminUpdatePrincipalErrors];
+
+export type AdminUpdatePrincipalResponses = {
+    /**
+     * Successful Response
+     */
+    200: PrincipalResponse;
+};
+
+export type AdminUpdatePrincipalResponse = AdminUpdatePrincipalResponses[keyof AdminUpdatePrincipalResponses];
+
+export type AdminResetPrincipalPasswordData = {
+    body: PasswordResetRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Principal Id
+         */
+        principal_id: string;
+    };
+    query?: never;
+    url: '/v1/admin/principals/{principal_id}/password';
+};
+
+export type AdminResetPrincipalPasswordErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminResetPrincipalPasswordError = AdminResetPrincipalPasswordErrors[keyof AdminResetPrincipalPasswordErrors];
+
+export type AdminResetPrincipalPasswordResponses = {
+    /**
+     * Response Admin Reset Principal Password
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: string;
+    };
+};
+
+export type AdminResetPrincipalPasswordResponse = AdminResetPrincipalPasswordResponses[keyof AdminResetPrincipalPasswordResponses];
+
+export type AdminListAccessGrantsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query: {
+        /**
+         * Org Id
+         */
+        org_id: string;
+    };
+    url: '/v1/admin/access-grants';
+};
+
+export type AdminListAccessGrantsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListAccessGrantsError = AdminListAccessGrantsErrors[keyof AdminListAccessGrantsErrors];
+
+export type AdminListAccessGrantsResponses = {
+    /**
+     * Response Admin List Access Grants
+     *
+     * Successful Response
+     */
+    200: Array<AccessGrantResponse>;
+};
+
+export type AdminListAccessGrantsResponse = AdminListAccessGrantsResponses[keyof AdminListAccessGrantsResponses];
+
+export type AdminCreateAccessGrantData = {
+    body: AccessGrantRequest;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/admin/access-grants';
+};
+
+export type AdminCreateAccessGrantErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminCreateAccessGrantError = AdminCreateAccessGrantErrors[keyof AdminCreateAccessGrantErrors];
+
+export type AdminCreateAccessGrantResponses = {
+    /**
+     * Successful Response
+     */
+    201: AccessGrantResponse;
+};
+
+export type AdminCreateAccessGrantResponse = AdminCreateAccessGrantResponses[keyof AdminCreateAccessGrantResponses];
+
+export type AdminDeleteAccessGrantData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path: {
+        /**
+         * Grant Id
+         */
+        grant_id: string;
+    };
+    query?: never;
+    url: '/v1/admin/access-grants/{grant_id}';
+};
+
+export type AdminDeleteAccessGrantErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminDeleteAccessGrantError = AdminDeleteAccessGrantErrors[keyof AdminDeleteAccessGrantErrors];
+
+export type AdminDeleteAccessGrantResponses = {
+    /**
+     * Response Admin Delete Access Grant
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: string;
+    };
+};
+
+export type AdminDeleteAccessGrantResponse = AdminDeleteAccessGrantResponses[keyof AdminDeleteAccessGrantResponses];
+
+export type AdminListAuditEventsData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+        /**
+         * X-Api-Key
+         */
+        'x-api-key'?: string | null;
+    };
+    path?: never;
+    query?: {
+        /**
+         * Org Id
+         */
+        org_id?: string | null;
+        /**
+         * Limit
+         */
+        limit?: number;
+    };
+    url: '/v1/admin/audit-events';
+};
+
+export type AdminListAuditEventsErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AdminListAuditEventsError = AdminListAuditEventsErrors[keyof AdminListAuditEventsErrors];
+
+export type AdminListAuditEventsResponses = {
+    /**
+     * Response Admin List Audit Events
+     *
+     * Successful Response
+     */
+    200: Array<AuditEventResponse>;
+};
+
+export type AdminListAuditEventsResponse = AdminListAuditEventsResponses[keyof AdminListAuditEventsResponses];
+
 export type AdminListTenantsData = {
     body?: never;
     headers?: {
@@ -13405,3 +14223,135 @@ export type AdminUpdateApiKeyResponses = {
 };
 
 export type AdminUpdateApiKeyResponse = AdminUpdateApiKeyResponses[keyof AdminUpdateApiKeyResponses];
+
+export type AuthSignupStateData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/v1/auth/signup-state';
+};
+
+export type AuthSignupStateResponses = {
+    /**
+     * Successful Response
+     */
+    200: SignupStateResponse;
+};
+
+export type AuthSignupStateResponse = AuthSignupStateResponses[keyof AuthSignupStateResponses];
+
+export type AuthSignupData = {
+    body: SignupRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/auth/signup';
+};
+
+export type AuthSignupErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AuthSignupError = AuthSignupErrors[keyof AuthSignupErrors];
+
+export type AuthSignupResponses = {
+    /**
+     * Successful Response
+     */
+    200: LoginResponse;
+};
+
+export type AuthSignupResponse = AuthSignupResponses[keyof AuthSignupResponses];
+
+export type AuthLoginData = {
+    body: LoginRequest;
+    path?: never;
+    query?: never;
+    url: '/v1/auth/login';
+};
+
+export type AuthLoginErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AuthLoginError = AuthLoginErrors[keyof AuthLoginErrors];
+
+export type AuthLoginResponses = {
+    /**
+     * Successful Response
+     */
+    200: LoginResponse;
+};
+
+export type AuthLoginResponse = AuthLoginResponses[keyof AuthLoginResponses];
+
+export type AuthLogoutData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/auth/logout';
+};
+
+export type AuthLogoutErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AuthLogoutError = AuthLogoutErrors[keyof AuthLogoutErrors];
+
+export type AuthLogoutResponses = {
+    /**
+     * Response Auth Logout
+     *
+     * Successful Response
+     */
+    200: {
+        [key: string]: boolean;
+    };
+};
+
+export type AuthLogoutResponse = AuthLogoutResponses[keyof AuthLogoutResponses];
+
+export type AuthMeData = {
+    body?: never;
+    headers?: {
+        /**
+         * Authorization
+         */
+        authorization?: string | null;
+    };
+    path?: never;
+    query?: never;
+    url: '/v1/auth/me';
+};
+
+export type AuthMeErrors = {
+    /**
+     * Validation Error
+     */
+    422: HttpValidationError;
+};
+
+export type AuthMeError = AuthMeErrors[keyof AuthMeErrors];
+
+export type AuthMeResponses = {
+    /**
+     * Successful Response
+     */
+    200: PrincipalInfo;
+};
+
+export type AuthMeResponse = AuthMeResponses[keyof AuthMeResponses];

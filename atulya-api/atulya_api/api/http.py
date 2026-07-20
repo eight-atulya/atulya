@@ -3461,6 +3461,10 @@ def create_app(
     else:
         logging.debug("Admin router disabled (set ATULYA_API_ADMIN_ENABLED=true to enable)")
 
+    from atulya_api.api.auth import create_auth_router
+
+    app.include_router(create_auth_router(memory), prefix="/v1/auth", tags=["Auth"])
+
     # Mount HTTP extension router if available
     if http_extension:
         extension_router = http_extension.get_router(memory)

@@ -680,3 +680,50 @@ class OperationValidatorExtension(Extension, ABC):
             BankListResult with the filtered list of banks.
         """
         return BankListResult(banks=ctx.banks)
+
+
+class AccessControlOperationValidator(OperationValidatorExtension):
+    """Built-in RBAC/ABAC validator backed by the resolved RequestContext."""
+
+    def _check(self, request_context: "RequestContext", action: str, bank_id: str | None = None) -> ValidationResult:
+        from atulya_api.auth import can_perform
+
+        if can_perform(request_context, action, bank_id):
+            return ValidationResult.accept()
+        scope = f" on bank '{bank_id}'" if bank_id else ""
+        return ValidationResult.reject(f"Missing permission '{action}'{scope}", status_code=403)
+
+    async def validate_retain(self, ctx: RetainContext) -> ValidationResult:
+        return self._check(ctx.request_context, "memory.retain", ctx.bank_id)
+
+    async def validate_recall(self, ctx: RecallContext) -> ValidationResult:
+        return self._check(ctx.request_context, "memory.recall", ctx.bank_id)
+
+    async def validate_reflect(self, ctx: ReflectContext) -> ValidationResult:
+        return self._check(ctx.request_context, "reflect.run", ctx.bank_id)
+
+    async def validate_consolidate(self, ctx: ConsolidateContext) -> ValidationResult:
+        return self._check(ctx.request_context, "bank.write", ctx.bank_id)
+
+    async def validate_bank_read(self, ctx: BankReadContext) -> ValidationResult:
+        return self._check(ctx.request_context, "bank.read", ctx.bank_id)
+
+    async def validate_bank_write(self, ctx: BankWriteContext) -> ValidationResult:
+        action = "bank.write"
+        if "delete" in ctx.operation:
+            action = "bank.delete"
+        elif "config" in ctx.operation or "disposition" in ctx.operation or "mission" in ctx.operation:
+            action = "bank.config"
+        return self._check(ctx.request_context, action, ctx.bank_id)
+
+    async def validate_mental_model_get(self, ctx: MentalModelGetContext) -> ValidationResult:
+        return self._check(ctx.request_context, "bank.read", ctx.bank_id)
+
+    async def validate_mental_model_refresh(self, ctx: MentalModelRefreshContext) -> ValidationResult:
+        return self._check(ctx.request_context, "bank.write", ctx.bank_id)
+
+    async def filter_bank_list(self, ctx: BankListContext) -> BankListResult:
+        from atulya_api.auth import can_perform
+
+        filtered = [bank for bank in ctx.banks if can_perform(ctx.request_context, "bank.read", bank.get("bank_id"))]
+        return BankListResult(banks=filtered)
