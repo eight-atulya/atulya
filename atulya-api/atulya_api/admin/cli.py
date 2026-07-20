@@ -6,6 +6,7 @@ import asyncio
 import io
 import json
 import logging
+import secrets
 import uuid
 import zipfile
 from datetime import datetime, timezone
@@ -33,6 +34,56 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = typer.Typer(name="atulya-admin", help="Atulya administrative commands")
+
+
+def _new_secret(prefix: str) -> str:
+    return f"{prefix}_{secrets.token_urlsafe(48)}"
+
+
+@app.command(name="generate-auth-env")
+def generate_auth_env(
+    dataplane_url: str = typer.Option(
+        "http://localhost:8888",
+        "--dataplane-url",
+        help="Control-plane URL for the atulya-api service.",
+    ),
+    api_port: int = typer.Option(8888, "--api-port", help="Local API port for the root .env block."),
+    control_plane_port: int = typer.Option(9999, "--control-plane-port", help="Local UI port for the root .env block."),
+    auth_schema: str = typer.Option("public", "--auth-schema", help="Schema that stores org/auth tables."),
+    signup_mode: str = typer.Option(
+        "bootstrap",
+        "--signup-mode",
+        help="Signup mode: disabled, bootstrap, or public.",
+    ),
+):
+    """Generate production-safe auth/admin environment values.
+
+    Paste the root block into the repo-root .env. Paste the UI block into
+    atulya-control-plane/.env.local only when starting Next.js directly from
+    that package instead of using scripts/dev/start-control-plane.sh.
+    """
+    if signup_mode not in {"disabled", "bootstrap", "public"}:
+        typer.echo("Error: --signup-mode must be disabled, bootstrap, or public.", err=True)
+        raise typer.Exit(1)
+
+    superuser_key = _new_secret("atulya_admin")
+    key_hash_pepper = _new_secret("atulya_pepper")
+
+    typer.echo("# Repo-root .env")
+    typer.echo("ATULYA_API_ADMIN_ENABLED=true")
+    typer.echo(f"ATULYA_API_SUPERUSER_KEY={superuser_key}")
+    typer.echo(f"ATULYA_CP_ADMIN_API_KEY={superuser_key}")
+    typer.echo(f"ATULYA_API_KEY_HASH_PEPPER={key_hash_pepper}")
+    typer.echo(f"ATULYA_API_AUTH_SCHEMA={auth_schema}")
+    typer.echo(f"ATULYA_SIGNUP_MODE={signup_mode}")
+    typer.echo(f"ATULYA_API_PORT={api_port}")
+    typer.echo(f"ATULYA_CP_PORT={control_plane_port}")
+    typer.echo(f"ATULYA_CP_DATAPLANE_API_URL={dataplane_url}")
+    typer.echo("")
+    typer.echo("# atulya-control-plane/.env.local, only if running Next.js directly")
+    typer.echo(f"ATULYA_CP_DATAPLANE_API_URL={dataplane_url}")
+    typer.echo(f"ATULYA_CP_ADMIN_API_KEY={superuser_key}")
+
 
 # ---------------------------------------------------------------------------
 # Backup table manifest — complete ordered list of every user-data table.
