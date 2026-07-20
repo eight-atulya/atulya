@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
+import { ATULYA_SESSION_COOKIE } from "@/lib/atulya-client";
+import { getCurrentIdentity } from "@/lib/server-auth";
 
 const DATAPLANE_URL = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
+const ATULYA_LOGGED_OUT_COOKIE = "atulya_logged_out";
 
 function classifyTenantProvider(extension: string) {
   if (!extension) return "default";
@@ -17,18 +20,22 @@ export async function GET() {
   const tenantExtension = process.env.ATULYA_API_TENANT_EXTENSION?.trim() || "";
   const tenantProvider = classifyTenantProvider(tenantExtension);
   const supabaseUrlConfigured = Boolean(process.env.ATULYA_API_TENANT_SUPABASE_URL?.trim());
+  const identity = await getCurrentIdentity();
 
   return NextResponse.json(
     {
       user: {
-        display_name: dataplaneApiKeyConfigured ? "Control Plane Operator" : "Local Operator",
-        role: adminConfigured ? "operator + admin" : "operator",
-        identity_source: "control-plane",
+        display_name:
+          identity?.display_name ||
+          identity?.email ||
+          (dataplaneApiKeyConfigured ? "Control Plane Operator" : "Local Operator"),
+        role: identity?.role || (adminConfigured ? "operator + admin" : "operator"),
+        identity_source: identity ? "session" : "control-plane",
       },
       auth: {
-        mode: dataplaneApiKeyConfigured ? "dataplane_api_key" : "public",
-        configured: dataplaneApiKeyConfigured,
-        logout_mode: "local",
+        mode: identity ? "session" : dataplaneApiKeyConfigured ? "dataplane_api_key" : "public",
+        configured: Boolean(identity) || dataplaneApiKeyConfigured,
+        logout_mode: identity ? "session" : "local",
       },
       tenancy: {
         provider: tenantProvider,
@@ -48,11 +55,13 @@ export async function GET() {
 }
 
 export async function POST() {
-  return NextResponse.json(
-    {
-      ok: true,
-      logout_mode: "local",
-    },
-    { status: 200 }
-  );
+  const response = NextResponse.json({ ok: true, logout_mode: "session" }, { status: 200 });
+  response.cookies.delete(ATULYA_SESSION_COOKIE);
+  response.cookies.set(ATULYA_LOGGED_OUT_COOKIE, "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+  });
+  return response;
 }

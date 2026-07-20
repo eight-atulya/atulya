@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lowLevelClient, sdk } from "@/lib/atulya-client";
+import { createLowLevelClientForRequest, sdk } from "@/lib/atulya-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     const response = await sdk.recallMemories({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       body: {
         query,

@@ -5,8 +5,10 @@
  *
  */
 
+import { redirect } from "next/navigation";
 import { Activity, CheckCircle2, Database, GitBranch, Server, XCircle } from "lucide-react";
 import { adminFetch, SystemHealthResponse } from "@/lib/admin-api";
+import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 function StatCard({
   icon: Icon,
@@ -47,6 +49,9 @@ function StatCard({
 }
 
 export default async function AdminSystemPage() {
+  const identity = await getCurrentIdentity();
+  if (!canUsePlatformAdmin(identity)) redirect("/admin/api-keys");
+
   let health: SystemHealthResponse | null = null;
   let error: string | null = null;
 

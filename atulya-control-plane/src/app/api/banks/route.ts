@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { createLowLevelClientForRequest, sdk } from "@/lib/atulya-client";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const response = await sdk.listBanks({ client: lowLevelClient });
+    const response = await sdk.listBanks({ client: createLowLevelClientForRequest(request) });
 
     // Check if the response has an error or no data
     if (response.error || !response.data) {
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     }
 
     const response = await sdk.createOrUpdateBank({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id },
       body: profile,
     });

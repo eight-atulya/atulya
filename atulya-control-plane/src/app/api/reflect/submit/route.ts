@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { createLowLevelClientForRequest, sdk } from "@/lib/atulya-client";
 
 function extractSdkErrorMessage(error: unknown): string {
   if (!error || typeof error !== "object") return "Request failed";
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const bankId = body.bank_id || body.agent_id || "default";
     const response = await sdk.submitAsyncReflect({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       body: {
         query: body.query,

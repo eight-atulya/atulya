@@ -6,7 +6,9 @@
  */
 
 import { CheckCircle2, Clock, ListOrdered, Loader2, XCircle } from "lucide-react";
+import { PlatformAdminRequired } from "@/components/platform-admin-required";
 import { adminFetch, OperationSummaryResponse } from "@/lib/admin-api";
+import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType }> = {
   pending: { color: "text-yellow-600 dark:text-yellow-400", icon: Clock },
@@ -22,6 +24,9 @@ export default async function AdminOperationsPage({
 }: {
   searchParams: Promise<{ schema?: string; status?: string; limit?: string }>;
 }) {
+  const identity = await getCurrentIdentity();
+  if (!canUsePlatformAdmin(identity)) return <PlatformAdminRequired />;
+
   const { schema: schemaParam, status: statusParam, limit: limitParam } = await searchParams;
   const schema = schemaParam ?? "public";
   const status = statusParam ?? "";

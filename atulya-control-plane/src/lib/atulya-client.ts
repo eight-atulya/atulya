@@ -10,19 +10,44 @@ import {
   createConfig,
   sdk,
 } from "@eight-atulya/atulya-client";
+import type { NextRequest } from "next/server";
 
 export const DATAPLANE_URL = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
 const DATAPLANE_API_KEY = process.env.ATULYA_CP_DATAPLANE_API_KEY || "";
+export const ATULYA_SESSION_COOKIE = "atulya_session";
+
+function authHeaderForToken(token?: string | null): Record<string, string> {
+  const resolved = token || DATAPLANE_API_KEY;
+  return resolved ? { Authorization: `Bearer ${resolved}` } : {};
+}
 
 /**
  * Auth headers for direct fetch calls to the dataplane API.
  */
 export function getDataplaneHeaders(extra?: Record<string, string>): Record<string, string> {
-  const headers: Record<string, string> = { ...extra };
-  if (DATAPLANE_API_KEY) {
-    headers["Authorization"] = `Bearer ${DATAPLANE_API_KEY}`;
-  }
-  return headers;
+  return { ...authHeaderForToken(), ...extra };
+}
+
+export function getDataplaneHeadersForRequest(
+  request: Request | NextRequest,
+  extra?: Record<string, string>
+): Record<string, string> {
+  const cookieHeader = request.headers.get("cookie") || "";
+  const token = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${ATULYA_SESSION_COOKIE}=`))
+    ?.slice(ATULYA_SESSION_COOKIE.length + 1);
+  return { ...authHeaderForToken(token ? decodeURIComponent(token) : undefined), ...extra };
+}
+
+export function createLowLevelClientForRequest(request: Request | NextRequest) {
+  return createClient(
+    createConfig({
+      baseUrl: DATAPLANE_URL,
+      headers: getDataplaneHeadersForRequest(request),
+    })
+  );
 }
 
 /**

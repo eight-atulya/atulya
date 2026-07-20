@@ -5,9 +5,14 @@
 
 import Link from "next/link";
 import { ArrowRight, Building2, XCircle } from "lucide-react";
+import { PlatformAdminRequired } from "@/components/platform-admin-required";
 import { adminFetch, TenantSummaryResponse } from "@/lib/admin-api";
+import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 export default async function AdminTenantsPage() {
+  const identity = await getCurrentIdentity();
+  if (!canUsePlatformAdmin(identity)) return <PlatformAdminRequired />;
+
   let tenants: TenantSummaryResponse[] = [];
   let error: string | null = null;
 

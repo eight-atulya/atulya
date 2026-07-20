@@ -37,7 +37,7 @@ type SessionInfo = {
   auth: {
     mode: string;
     configured: boolean;
-    logout_mode: "local";
+    logout_mode: "session" | "local";
   };
   tenancy: {
     provider: string;
@@ -119,7 +119,8 @@ export function UserSettingsDialog() {
   const handleLogout = async () => {
     setLoggingOut(true);
     try {
-      await fetch("/api/session", { method: "POST" });
+      const response = await fetch("/api/auth/logout", { method: "POST" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
       setCurrentBank(null);
       for (const key of Object.keys(window.localStorage)) {
         if (key.startsWith("retain:draft:pending:")) {
@@ -127,10 +128,11 @@ export function UserSettingsDialog() {
         }
       }
       setOpen(false);
-      router.push("/dashboard");
-      toast.success("Local control-plane session cleared");
+      toast.success("Signed out");
+      router.replace("/login");
+      router.refresh();
     } catch {
-      toast.error("Could not clear session");
+      toast.error("Could not sign out");
     } finally {
       setLoggingOut(false);
     }
@@ -158,7 +160,7 @@ export function UserSettingsDialog() {
             <div className="min-w-0">
               <DialogTitle className="text-xl">Profile & Settings</DialogTitle>
               <DialogDescription className="mt-1">
-                Control-plane profile, environment status, and local session controls.
+                Control-plane profile, environment status, and session controls.
               </DialogDescription>
             </div>
           </div>
@@ -207,7 +209,12 @@ export function UserSettingsDialog() {
                     label="Admin"
                     value={session?.admin.configured ? "Configured" : "Not configured"}
                   />
-                  <InfoRow label="Logout" value="Local session reset" />
+                  <InfoRow
+                    label="Logout"
+                    value={
+                      session?.auth.logout_mode === "session" ? "Session sign out" : "Local reset"
+                    }
+                  />
                 </div>
 
                 <div className="rounded-lg border border-border/80 bg-card/55 p-4">
@@ -269,7 +276,7 @@ export function UserSettingsDialog() {
                   className="gap-2"
                 >
                   <LogOut className="h-4 w-4" />
-                  {loggingOut ? "Logging out..." : "Logout"}
+                  {loggingOut ? "Signing out..." : "Sign out"}
                 </Button>
               </div>
             </div>

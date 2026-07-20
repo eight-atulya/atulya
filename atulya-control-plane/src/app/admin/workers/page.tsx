@@ -7,13 +7,18 @@
  */
 
 import { AlertTriangle, CheckCircle2, Clock, Cpu, XCircle } from "lucide-react";
+import { PlatformAdminRequired } from "@/components/platform-admin-required";
 import { adminFetch, WorkerStatusResponse } from "@/lib/admin-api";
+import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 export default async function AdminWorkersPage({
   searchParams,
 }: {
   searchParams: Promise<{ schema?: string }>;
 }) {
+  const identity = await getCurrentIdentity();
+  if (!canUsePlatformAdmin(identity)) return <PlatformAdminRequired />;
+
   const { schema: schemaParam } = await searchParams;
   const schema = schemaParam ?? "public";
   let workers: WorkerStatusResponse[] = [];

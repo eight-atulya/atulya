@@ -14,6 +14,12 @@ const ADMIN_KEY = process.env.ATULYA_CP_ADMIN_API_KEY || "";
  * Throws on non-2xx responses with the server's error detail.
  */
 export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const { canUseAdminConsole, getCurrentIdentity } = await import("@/lib/server-auth");
+  const identity = await getCurrentIdentity();
+  if (!canUseAdminConsole(identity)) {
+    throw new Error("Access denied: missing admin.* or system.admin");
+  }
+
   const url = `${DATAPLANE_URL}/v1/admin${path}`;
   const res = await fetch(url, {
     ...init,
@@ -32,6 +38,10 @@ export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T
       detail = body?.detail ?? detail;
     } catch {
       /* ignore parse error */
+    }
+    if (res.status === 404 && detail === "Not Found") {
+      detail =
+        "Dataplane admin routes are not mounted. Set ATULYA_API_ADMIN_ENABLED=true and ATULYA_API_SUPERUSER_KEY on the API, then restart the API process.";
     }
     throw new Error(`Admin API error (${path}): ${detail}`);
   }
@@ -65,6 +75,49 @@ export interface TenantSummaryResponse {
   bank_count: number;
 }
 
+export interface OrgResponse {
+  id: string;
+  slug: string;
+  name: string;
+  schema_name: string;
+  status: string;
+  created_at: string;
+}
+
+export interface PrincipalResponse {
+  id: string;
+  org_id: string;
+  email: string | null;
+  display_name: string;
+  principal_type: string;
+  role: string;
+  status: string;
+  created_at: string;
+}
+
+export interface AccessGrantResponse {
+  id: string;
+  org_id: string;
+  subject_type: string;
+  subject_id: string;
+  action: string;
+  scope_type: string;
+  scope_id: string;
+  created_at: string;
+}
+
+export interface AuditEventResponse {
+  id: string;
+  org_id: string | null;
+  actor_principal_id: string | null;
+  action: string;
+  target_type: string | null;
+  target_id: string | null;
+  result: string;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
 export interface WorkerStatusResponse {
   worker_id: string;
   schema_name: string;
@@ -94,5 +147,9 @@ export interface ApiKeyResponse {
   created_at: string;
   expires_at: string | null;
   revoked_at: string | null;
+  principal_id?: string | null;
+  key_prefix?: string | null;
+  last_used_at?: string | null;
+  description?: string | null;
   raw_key?: string; // Only present on creation
 }

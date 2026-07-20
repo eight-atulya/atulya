@@ -4,7 +4,9 @@
  */
 
 import Link from "next/link";
+import { PlatformAdminRequired } from "@/components/platform-admin-required";
 import { adminFetch } from "@/lib/admin-api";
+import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 interface BankRow {
   bank_id: string;
@@ -18,6 +20,9 @@ export default async function AdminTenantBanksPage({
 }: {
   params: Promise<{ schema: string }>;
 }) {
+  const identity = await getCurrentIdentity();
+  if (!canUsePlatformAdmin(identity)) return <PlatformAdminRequired />;
+
   const { schema } = await params;
   let banks: BankRow[] = [];
   let error: string | null = null;
