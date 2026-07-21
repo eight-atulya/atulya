@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &BankProfileResponse{}
 
 // BankProfileResponse Response model for bank profile.
 type BankProfileResponse struct {
-	BankId string `json:"bank_id"`
-	Name string `json:"name"`
+	BankId      string            `json:"bank_id"`
+	Name        string            `json:"name"`
 	Disposition DispositionTraits `json:"disposition"`
 	// The agent's mission - who they are and what they're trying to accomplish
-	Mission string `json:"mission"`
+	Mission    string         `json:"mission"`
 	Background NullableString `json:"background,omitempty"`
 }
 
@@ -180,6 +180,7 @@ func (o *BankProfileResponse) HasBackground() bool {
 func (o *BankProfileResponse) SetBackground(v string) {
 	o.Background.Set(&v)
 }
+
 // SetBackgroundNil sets the value for Background to be an explicit nil
 func (o *BankProfileResponse) SetBackgroundNil() {
 	o.Background.Set(nil)
@@ -191,7 +192,7 @@ func (o *BankProfileResponse) UnsetBackground() {
 }
 
 func (o BankProfileResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -226,10 +227,10 @@ func (o *BankProfileResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -285,5 +286,3 @@ func (v *NullableBankProfileResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function POST(
   request: Request,
@@ -12,7 +12,7 @@ export async function POST(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/dreams/proposals/${proposalId}/review`,
       {
         method: "POST",
-        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
         body: JSON.stringify(body || {}),
       }
     );

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -23,7 +23,7 @@ var _ MappedNullable = &RetainRequest{}
 type RetainRequest struct {
 	Items []MemoryItem `json:"items"`
 	// If true, process asynchronously in background. If false, wait for completion (default: false)
-	Async *bool `json:"async,omitempty"`
+	Async        *bool    `json:"async,omitempty"`
 	DocumentTags []string `json:"document_tags,omitempty"`
 }
 
@@ -36,6 +36,8 @@ type _RetainRequest RetainRequest
 func NewRetainRequest(items []MemoryItem) *RetainRequest {
 	this := RetainRequest{}
 	this.Items = items
+	var async bool = false
+	this.Async = &async
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewRetainRequest(items []MemoryItem) *RetainRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewRetainRequestWithDefaults() *RetainRequest {
 	this := RetainRequest{}
+	var async bool = false
+	this.Async = &async
 	return &this
 }
 
@@ -137,7 +141,7 @@ func (o *RetainRequest) SetDocumentTags(v []string) {
 }
 
 func (o RetainRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -169,10 +173,10 @@ func (o *RetainRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -228,5 +232,3 @@ func (v *NullableRetainRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

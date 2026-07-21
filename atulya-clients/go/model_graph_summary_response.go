@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,16 +21,16 @@ var _ MappedNullable = &GraphSummaryResponse{}
 
 // GraphSummaryResponse struct for GraphSummaryResponse
 type GraphSummaryResponse struct {
-	Surface string `json:"surface"`
-	ModeHint string `json:"mode_hint"`
-	TotalNodes int32 `json:"total_nodes"`
-	TotalEdges int32 `json:"total_edges"`
-	Clusters []GraphSummaryItemResponse `json:"clusters,omitempty"`
-	TopNodes []GraphSummaryItemResponse `json:"top_nodes,omitempty"`
-	BundledEdges []GraphSummaryEdgeResponse `json:"bundled_edges,omitempty"`
-	InitialFocusIds []string `json:"initial_focus_ids,omitempty"`
-	GeneratedAt string `json:"generated_at"`
-	Cached *bool `json:"cached,omitempty"`
+	Surface         string                     `json:"surface"`
+	ModeHint        string                     `json:"mode_hint"`
+	TotalNodes      int32                      `json:"total_nodes"`
+	TotalEdges      int32                      `json:"total_edges"`
+	Clusters        []GraphSummaryItemResponse `json:"clusters,omitempty"`
+	TopNodes        []GraphSummaryItemResponse `json:"top_nodes,omitempty"`
+	BundledEdges    []GraphSummaryEdgeResponse `json:"bundled_edges,omitempty"`
+	InitialFocusIds []string                   `json:"initial_focus_ids,omitempty"`
+	GeneratedAt     string                     `json:"generated_at"`
+	Cached          *bool                      `json:"cached,omitempty"`
 }
 
 type _GraphSummaryResponse GraphSummaryResponse
@@ -46,6 +46,8 @@ func NewGraphSummaryResponse(surface string, modeHint string, totalNodes int32, 
 	this.TotalNodes = totalNodes
 	this.TotalEdges = totalEdges
 	this.GeneratedAt = generatedAt
+	var cached bool = false
+	this.Cached = &cached
 	return &this
 }
 
@@ -54,6 +56,8 @@ func NewGraphSummaryResponse(surface string, modeHint string, totalNodes int32, 
 // but it doesn't guarantee that properties required by API are set
 func NewGraphSummaryResponseWithDefaults() *GraphSummaryResponse {
 	this := GraphSummaryResponse{}
+	var cached bool = false
+	this.Cached = &cached
 	return &this
 }
 
@@ -338,7 +342,7 @@ func (o *GraphSummaryResponse) SetCached(v bool) {
 }
 
 func (o GraphSummaryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -387,10 +391,10 @@ func (o *GraphSummaryResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -446,5 +450,3 @@ func (v *NullableGraphSummaryResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

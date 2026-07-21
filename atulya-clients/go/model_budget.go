@@ -20,8 +20,8 @@ type Budget string
 
 // List of Budget
 const (
-	LOW Budget = "low"
-	MID Budget = "mid"
+	LOW  Budget = "low"
+	MID  Budget = "mid"
 	HIGH Budget = "high"
 )
 
@@ -110,4 +110,3 @@ func (v *NullableBudget) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-

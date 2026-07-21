@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -1554,25 +1555,25 @@ class MemoryReposApi:
             _path_params['repo_id'] = repo_id
         # process the query parameters
         if from_commit_id is not None:
-            
+
             _query_params.append(('from_commit_id', from_commit_id))
-            
+
         if to_commit_id is not None:
-            
+
             _query_params.append(('to_commit_id', to_commit_id))
-            
+
         if from_branch is not None:
-            
+
             _query_params.append(('from_branch', from_branch))
-            
+
         if to_branch is not None:
-            
+
             _query_params.append(('to_branch', to_branch))
-            
+
         if include_workspace is not None:
-            
+
             _query_params.append(('include_workspace', include_workspace))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -3031,13 +3032,13 @@ class MemoryReposApi:
             _path_params['repo_id'] = repo_id
         # process the query parameters
         if branch_name is not None:
-            
+
             _query_params.append(('branch_name', branch_name))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -3327,9 +3328,9 @@ class MemoryReposApi:
             _path_params['repo_id'] = repo_id
         # process the query parameters
         if branch_name is not None:
-            
+
             _query_params.append(('branch_name', branch_name))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -4477,5 +4478,3 @@ class MemoryReposApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

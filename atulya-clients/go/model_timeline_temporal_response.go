@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &TimelineTemporalResponse{}
 
 // TimelineTemporalResponse struct for TimelineTemporalResponse
 type TimelineTemporalResponse struct {
-	AnchorAt NullableString `json:"anchor_at,omitempty"`
-	AnchorKind string `json:"anchor_kind"`
-	RecordedAt NullableString `json:"recorded_at,omitempty"`
-	Direction string `json:"direction"`
-	Confidence NullableFloat32 `json:"confidence,omitempty"`
-	ReferenceText NullableString `json:"reference_text,omitempty"`
+	AnchorAt      NullableString  `json:"anchor_at,omitempty"`
+	AnchorKind    string          `json:"anchor_kind"`
+	RecordedAt    NullableString  `json:"recorded_at,omitempty"`
+	Direction     string          `json:"direction"`
+	Confidence    NullableFloat32 `json:"confidence,omitempty"`
+	ReferenceText NullableString  `json:"reference_text,omitempty"`
 }
 
 type _TimelineTemporalResponse TimelineTemporalResponse
@@ -82,6 +82,7 @@ func (o *TimelineTemporalResponse) HasAnchorAt() bool {
 func (o *TimelineTemporalResponse) SetAnchorAt(v string) {
 	o.AnchorAt.Set(&v)
 }
+
 // SetAnchorAtNil sets the value for AnchorAt to be an explicit nil
 func (o *TimelineTemporalResponse) SetAnchorAtNil() {
 	o.AnchorAt.Set(nil)
@@ -148,6 +149,7 @@ func (o *TimelineTemporalResponse) HasRecordedAt() bool {
 func (o *TimelineTemporalResponse) SetRecordedAt(v string) {
 	o.RecordedAt.Set(&v)
 }
+
 // SetRecordedAtNil sets the value for RecordedAt to be an explicit nil
 func (o *TimelineTemporalResponse) SetRecordedAtNil() {
 	o.RecordedAt.Set(nil)
@@ -214,6 +216,7 @@ func (o *TimelineTemporalResponse) HasConfidence() bool {
 func (o *TimelineTemporalResponse) SetConfidence(v float32) {
 	o.Confidence.Set(&v)
 }
+
 // SetConfidenceNil sets the value for Confidence to be an explicit nil
 func (o *TimelineTemporalResponse) SetConfidenceNil() {
 	o.Confidence.Set(nil)
@@ -256,6 +259,7 @@ func (o *TimelineTemporalResponse) HasReferenceText() bool {
 func (o *TimelineTemporalResponse) SetReferenceText(v string) {
 	o.ReferenceText.Set(&v)
 }
+
 // SetReferenceTextNil sets the value for ReferenceText to be an explicit nil
 func (o *TimelineTemporalResponse) SetReferenceTextNil() {
 	o.ReferenceText.Set(nil)
@@ -267,7 +271,7 @@ func (o *TimelineTemporalResponse) UnsetReferenceText() {
 }
 
 func (o TimelineTemporalResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -307,10 +311,10 @@ func (o *TimelineTemporalResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -366,5 +370,3 @@ func (v *NullableTimelineTemporalResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

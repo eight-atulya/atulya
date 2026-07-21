@@ -19,10 +19,10 @@ var _ MappedNullable = &TasteImportSetsRequest{}
 
 // TasteImportSetsRequest struct for TasteImportSetsRequest
 type TasteImportSetsRequest struct {
-	Sets []map[string]interface{} `json:"sets,omitempty"`
-	Jsonl NullableString `json:"jsonl,omitempty"`
-	TasteTags []string `json:"taste_tags,omitempty"`
-	SetKeyPrefix NullableString `json:"set_key_prefix,omitempty"`
+	Sets         []map[string]interface{} `json:"sets,omitempty"`
+	Jsonl        NullableString           `json:"jsonl,omitempty"`
+	TasteTags    []string                 `json:"taste_tags,omitempty"`
+	SetKeyPrefix NullableString           `json:"set_key_prefix,omitempty"`
 }
 
 // NewTasteImportSetsRequest instantiates a new TasteImportSetsRequest object
@@ -106,6 +106,7 @@ func (o *TasteImportSetsRequest) HasJsonl() bool {
 func (o *TasteImportSetsRequest) SetJsonl(v string) {
 	o.Jsonl.Set(&v)
 }
+
 // SetJsonlNil sets the value for Jsonl to be an explicit nil
 func (o *TasteImportSetsRequest) SetJsonlNil() {
 	o.Jsonl.Set(nil)
@@ -180,6 +181,7 @@ func (o *TasteImportSetsRequest) HasSetKeyPrefix() bool {
 func (o *TasteImportSetsRequest) SetSetKeyPrefix(v string) {
 	o.SetKeyPrefix.Set(&v)
 }
+
 // SetSetKeyPrefixNil sets the value for SetKeyPrefix to be an explicit nil
 func (o *TasteImportSetsRequest) SetSetKeyPrefixNil() {
 	o.SetKeyPrefix.Set(nil)
@@ -191,7 +193,7 @@ func (o *TasteImportSetsRequest) UnsetSetKeyPrefix() {
 }
 
 func (o TasteImportSetsRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -250,5 +252,3 @@ func (v *NullableTasteImportSetsRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

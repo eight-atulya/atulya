@@ -12,7 +12,6 @@ package atulya
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -21,7 +20,8 @@ var _ MappedNullable = &TagGroupOr{}
 
 // TagGroupOr Logical OR over a list of nested groups.
 type TagGroupOr struct {
-	Or []RecallRequestTagGroupsInner `json:"or"`
+	Or                   []RecallRequestTagGroupsInner `json:"or"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _TagGroupOr TagGroupOr
@@ -69,7 +69,7 @@ func (o *TagGroupOr) SetOr(v []RecallRequestTagGroupsInner) {
 }
 
 func (o TagGroupOr) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -79,6 +79,11 @@ func (o TagGroupOr) MarshalJSON() ([]byte, error) {
 func (o TagGroupOr) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["or"] = o.Or
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -95,10 +100,10 @@ func (o *TagGroupOr) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -106,15 +111,20 @@ func (o *TagGroupOr) UnmarshalJSON(data []byte) (err error) {
 
 	varTagGroupOr := _TagGroupOr{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTagGroupOr)
+	err = json.Unmarshal(data, &varTagGroupOr)
 
 	if err != nil {
 		return err
 	}
 
 	*o = TagGroupOr(varTagGroupOr)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "or")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }
@@ -154,5 +164,3 @@ func (v *NullableTagGroupOr) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

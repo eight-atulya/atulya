@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &CodebaseChunksResponse{}
 
 // CodebaseChunksResponse Paginated reviewable chunk response.
 type CodebaseChunksResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	Items []CodebaseChunkItemResponse `json:"items"`
-	NextCursor NullableString `json:"next_cursor,omitempty"`
-	HasMore *bool `json:"has_more,omitempty"`
+	CodebaseId string                      `json:"codebase_id"`
+	SnapshotId NullableString              `json:"snapshot_id,omitempty"`
+	Items      []CodebaseChunkItemResponse `json:"items"`
+	NextCursor NullableString              `json:"next_cursor,omitempty"`
+	HasMore    *bool                       `json:"has_more,omitempty"`
 }
 
 type _CodebaseChunksResponse CodebaseChunksResponse
@@ -38,6 +38,8 @@ func NewCodebaseChunksResponse(codebaseId string, items []CodebaseChunkItemRespo
 	this := CodebaseChunksResponse{}
 	this.CodebaseId = codebaseId
 	this.Items = items
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 
@@ -46,6 +48,8 @@ func NewCodebaseChunksResponse(codebaseId string, items []CodebaseChunkItemRespo
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunksResponseWithDefaults() *CodebaseChunksResponse {
 	this := CodebaseChunksResponse{}
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 
@@ -105,6 +109,7 @@ func (o *CodebaseChunksResponse) HasSnapshotId() bool {
 func (o *CodebaseChunksResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseChunksResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -171,6 +176,7 @@ func (o *CodebaseChunksResponse) HasNextCursor() bool {
 func (o *CodebaseChunksResponse) SetNextCursor(v string) {
 	o.NextCursor.Set(&v)
 }
+
 // SetNextCursorNil sets the value for NextCursor to be an explicit nil
 func (o *CodebaseChunksResponse) SetNextCursorNil() {
 	o.NextCursor.Set(nil)
@@ -214,7 +220,7 @@ func (o *CodebaseChunksResponse) SetHasMore(v bool) {
 }
 
 func (o CodebaseChunksResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -251,10 +257,10 @@ func (o *CodebaseChunksResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -310,5 +316,3 @@ func (v *NullableCodebaseChunksResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

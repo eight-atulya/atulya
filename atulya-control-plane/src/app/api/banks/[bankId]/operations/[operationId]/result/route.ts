@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 function extractSdkErrorMessage(error: unknown): string {
   if (!error || typeof error !== "object") return "Request failed";
@@ -26,7 +26,7 @@ export async function GET(
     }
 
     const response = await sdk.getOperationResult({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId, operation_id: operationId },
     });
 

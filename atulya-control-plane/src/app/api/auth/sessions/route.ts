@@ -1,0 +1,16 @@
+import { NextRequest, NextResponse } from "next/server";
+import { ATULYA_SESSION_COOKIE, DATAPLANE_URL } from "@/lib/atulya-client";
+
+export async function GET(request: NextRequest) {
+  const token = request.cookies.get(ATULYA_SESSION_COOKIE)?.value;
+  if (!token) return NextResponse.json([], { status: 401 });
+  const response = await fetch(`${DATAPLANE_URL}/v1/auth/sessions`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  }).catch(() => null);
+  if (!response) return NextResponse.json({ detail: "Dataplane unavailable" }, { status: 503 });
+  return new NextResponse(await response.text(), {
+    status: response.status,
+    headers: { "Content-Type": "application/json" },
+  });
+}

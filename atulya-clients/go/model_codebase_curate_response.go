@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &CodebaseCurateResponse{}
 
 // CodebaseCurateResponse Intent-driven curation response.
 type CodebaseCurateResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	Intent string `json:"intent"`
-	ScopeHint NullableString `json:"scope_hint,omitempty"`
-	Clusters []CodebaseCurateClusterResponse `json:"clusters,omitempty"`
-	SymbolCards []map[string]interface{} `json:"symbol_cards,omitempty"`
-	Unclustered []map[string]interface{} `json:"unclustered,omitempty"`
-	TotalCandidates *int32 `json:"total_candidates,omitempty"`
+	CodebaseId      string                          `json:"codebase_id"`
+	SnapshotId      NullableString                  `json:"snapshot_id,omitempty"`
+	Intent          string                          `json:"intent"`
+	ScopeHint       NullableString                  `json:"scope_hint,omitempty"`
+	Clusters        []CodebaseCurateClusterResponse `json:"clusters,omitempty"`
+	SymbolCards     []map[string]interface{}        `json:"symbol_cards,omitempty"`
+	Unclustered     []map[string]interface{}        `json:"unclustered,omitempty"`
+	TotalCandidates *int32                          `json:"total_candidates,omitempty"`
 }
 
 type _CodebaseCurateResponse CodebaseCurateResponse
@@ -41,6 +41,8 @@ func NewCodebaseCurateResponse(codebaseId string, intent string) *CodebaseCurate
 	this := CodebaseCurateResponse{}
 	this.CodebaseId = codebaseId
 	this.Intent = intent
+	var totalCandidates int32 = 0
+	this.TotalCandidates = &totalCandidates
 	return &this
 }
 
@@ -49,6 +51,8 @@ func NewCodebaseCurateResponse(codebaseId string, intent string) *CodebaseCurate
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseCurateResponseWithDefaults() *CodebaseCurateResponse {
 	this := CodebaseCurateResponse{}
+	var totalCandidates int32 = 0
+	this.TotalCandidates = &totalCandidates
 	return &this
 }
 
@@ -108,6 +112,7 @@ func (o *CodebaseCurateResponse) HasSnapshotId() bool {
 func (o *CodebaseCurateResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseCurateResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -174,6 +179,7 @@ func (o *CodebaseCurateResponse) HasScopeHint() bool {
 func (o *CodebaseCurateResponse) SetScopeHint(v string) {
 	o.ScopeHint.Set(&v)
 }
+
 // SetScopeHintNil sets the value for ScopeHint to be an explicit nil
 func (o *CodebaseCurateResponse) SetScopeHintNil() {
 	o.ScopeHint.Set(nil)
@@ -313,7 +319,7 @@ func (o *CodebaseCurateResponse) SetTotalCandidates(v int32) {
 }
 
 func (o CodebaseCurateResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -359,10 +365,10 @@ func (o *CodebaseCurateResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -418,5 +424,3 @@ func (v *NullableCodebaseCurateResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

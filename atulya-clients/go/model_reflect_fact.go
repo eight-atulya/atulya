@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -23,11 +23,11 @@ var _ MappedNullable = &ReflectFact{}
 type ReflectFact struct {
 	Id NullableString `json:"id,omitempty"`
 	// Fact text. When type='observation', this contains markdown-formatted consolidated knowledge
-	Text string `json:"text"`
-	Type NullableString `json:"type,omitempty"`
-	Context NullableString `json:"context,omitempty"`
+	Text          string         `json:"text"`
+	Type          NullableString `json:"type,omitempty"`
+	Context       NullableString `json:"context,omitempty"`
 	OccurredStart NullableString `json:"occurred_start,omitempty"`
-	OccurredEnd NullableString `json:"occurred_end,omitempty"`
+	OccurredEnd   NullableString `json:"occurred_end,omitempty"`
 }
 
 type _ReflectFact ReflectFact
@@ -82,6 +82,7 @@ func (o *ReflectFact) HasId() bool {
 func (o *ReflectFact) SetId(v string) {
 	o.Id.Set(&v)
 }
+
 // SetIdNil sets the value for Id to be an explicit nil
 func (o *ReflectFact) SetIdNil() {
 	o.Id.Set(nil)
@@ -148,6 +149,7 @@ func (o *ReflectFact) HasType() bool {
 func (o *ReflectFact) SetType(v string) {
 	o.Type.Set(&v)
 }
+
 // SetTypeNil sets the value for Type to be an explicit nil
 func (o *ReflectFact) SetTypeNil() {
 	o.Type.Set(nil)
@@ -190,6 +192,7 @@ func (o *ReflectFact) HasContext() bool {
 func (o *ReflectFact) SetContext(v string) {
 	o.Context.Set(&v)
 }
+
 // SetContextNil sets the value for Context to be an explicit nil
 func (o *ReflectFact) SetContextNil() {
 	o.Context.Set(nil)
@@ -232,6 +235,7 @@ func (o *ReflectFact) HasOccurredStart() bool {
 func (o *ReflectFact) SetOccurredStart(v string) {
 	o.OccurredStart.Set(&v)
 }
+
 // SetOccurredStartNil sets the value for OccurredStart to be an explicit nil
 func (o *ReflectFact) SetOccurredStartNil() {
 	o.OccurredStart.Set(nil)
@@ -274,6 +278,7 @@ func (o *ReflectFact) HasOccurredEnd() bool {
 func (o *ReflectFact) SetOccurredEnd(v string) {
 	o.OccurredEnd.Set(&v)
 }
+
 // SetOccurredEndNil sets the value for OccurredEnd to be an explicit nil
 func (o *ReflectFact) SetOccurredEndNil() {
 	o.OccurredEnd.Set(nil)
@@ -285,7 +290,7 @@ func (o *ReflectFact) UnsetOccurredEnd() {
 }
 
 func (o ReflectFact) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -326,10 +331,10 @@ func (o *ReflectFact) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -385,5 +390,3 @@ func (v *NullableReflectFact) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

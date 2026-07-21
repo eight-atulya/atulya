@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,22 +21,22 @@ var _ MappedNullable = &RecallRequest{}
 
 // RecallRequest Request model for recall endpoint.
 type RecallRequest struct {
-	Query string `json:"query"`
-	BranchName NullableString `json:"branch_name,omitempty"`
-	Types []string `json:"types,omitempty"`
-	Budget *Budget `json:"budget,omitempty"`
-	MaxTokens *int32 `json:"max_tokens,omitempty"`
-	Trace *bool `json:"trace,omitempty"`
+	Query          string         `json:"query"`
+	BranchName     NullableString `json:"branch_name,omitempty"`
+	Types          []string       `json:"types,omitempty"`
+	Budget         *Budget        `json:"budget,omitempty"`
+	MaxTokens      *int32         `json:"max_tokens,omitempty"`
+	Trace          *bool          `json:"trace,omitempty"`
 	QueryTimestamp NullableString `json:"query_timestamp,omitempty"`
 	// Options for including additional data (entities are included by default)
 	Include *IncludeOptions `json:"include,omitempty"`
-	Tags []string `json:"tags,omitempty"`
+	Tags    []string        `json:"tags,omitempty"`
 	// How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
-	TagsMatch *string `json:"tags_match,omitempty"`
+	TagsMatch *string                       `json:"tags_match,omitempty"`
 	TagGroups []RecallRequestTagGroupsInner `json:"tag_groups,omitempty"`
 	// Prefer observation results during recall ranking.
-	PreferObservations *bool `json:"prefer_observations,omitempty"`
-	MinScore NullableMinScores `json:"min_score,omitempty"`
+	PreferObservations *bool             `json:"prefer_observations,omitempty"`
+	MinScore           NullableMinScores `json:"min_score,omitempty"`
 }
 
 type _RecallRequest RecallRequest
@@ -48,6 +48,14 @@ type _RecallRequest RecallRequest
 func NewRecallRequest(query string) *RecallRequest {
 	this := RecallRequest{}
 	this.Query = query
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
+	var trace bool = false
+	this.Trace = &trace
+	var tagsMatch string = "any"
+	this.TagsMatch = &tagsMatch
+	var preferObservations bool = false
+	this.PreferObservations = &preferObservations
 	return &this
 }
 
@@ -56,6 +64,14 @@ func NewRecallRequest(query string) *RecallRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewRecallRequestWithDefaults() *RecallRequest {
 	this := RecallRequest{}
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
+	var trace bool = false
+	this.Trace = &trace
+	var tagsMatch string = "any"
+	this.TagsMatch = &tagsMatch
+	var preferObservations bool = false
+	this.PreferObservations = &preferObservations
 	return &this
 }
 
@@ -115,6 +131,7 @@ func (o *RecallRequest) HasBranchName() bool {
 func (o *RecallRequest) SetBranchName(v string) {
 	o.BranchName.Set(&v)
 }
+
 // SetBranchNameNil sets the value for BranchName to be an explicit nil
 func (o *RecallRequest) SetBranchNameNil() {
 	o.BranchName.Set(nil)
@@ -286,6 +303,7 @@ func (o *RecallRequest) HasQueryTimestamp() bool {
 func (o *RecallRequest) SetQueryTimestamp(v string) {
 	o.QueryTimestamp.Set(&v)
 }
+
 // SetQueryTimestampNil sets the value for QueryTimestamp to be an explicit nil
 func (o *RecallRequest) SetQueryTimestampNil() {
 	o.QueryTimestamp.Set(nil)
@@ -490,6 +508,7 @@ func (o *RecallRequest) HasMinScore() bool {
 func (o *RecallRequest) SetMinScore(v MinScores) {
 	o.MinScore.Set(&v)
 }
+
 // SetMinScoreNil sets the value for MinScore to be an explicit nil
 func (o *RecallRequest) SetMinScoreNil() {
 	o.MinScore.Set(nil)
@@ -501,7 +520,7 @@ func (o *RecallRequest) UnsetMinScore() {
 }
 
 func (o RecallRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -563,10 +582,10 @@ func (o *RecallRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -622,5 +641,3 @@ func (v *NullableRecallRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

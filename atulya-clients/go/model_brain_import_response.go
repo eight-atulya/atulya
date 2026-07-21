@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &BrainImportResponse{}
 
 // BrainImportResponse struct for BrainImportResponse
 type BrainImportResponse struct {
-	BankId string `json:"bank_id"`
-	FilePath string `json:"file_path"`
-	SizeBytes int32 `json:"size_bytes"`
+	BankId        string        `json:"bank_id"`
+	FilePath      string        `json:"file_path"`
+	SizeBytes     int32         `json:"size_bytes"`
 	FormatVersion NullableInt32 `json:"format_version,omitempty"`
 }
 
@@ -153,6 +153,7 @@ func (o *BrainImportResponse) HasFormatVersion() bool {
 func (o *BrainImportResponse) SetFormatVersion(v int32) {
 	o.FormatVersion.Set(&v)
 }
+
 // SetFormatVersionNil sets the value for FormatVersion to be an explicit nil
 func (o *BrainImportResponse) SetFormatVersionNil() {
 	o.FormatVersion.Set(nil)
@@ -164,7 +165,7 @@ func (o *BrainImportResponse) UnsetFormatVersion() {
 }
 
 func (o BrainImportResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -197,10 +198,10 @@ func (o *BrainImportResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -256,5 +257,3 @@ func (v *NullableBrainImportResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

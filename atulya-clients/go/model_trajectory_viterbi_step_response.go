@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &TrajectoryViterbiStepResponse{}
 
 // TrajectoryViterbiStepResponse One step on the decoded Viterbi path.
 type TrajectoryViterbiStepResponse struct {
-	UnitId string `json:"unit_id"`
-	State string `json:"state"`
+	UnitId         string `json:"unit_id"`
+	State          string `json:"state"`
 	OccurredSortAt string `json:"occurred_sort_at"`
-	FactPreview string `json:"fact_preview"`
+	FactPreview    string `json:"fact_preview"`
 }
 
 type _TrajectoryViterbiStepResponse TrajectoryViterbiStepResponse
@@ -147,7 +147,7 @@ func (o *TrajectoryViterbiStepResponse) SetFactPreview(v string) {
 }
 
 func (o TrajectoryViterbiStepResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -179,10 +179,10 @@ func (o *TrajectoryViterbiStepResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -238,5 +238,3 @@ func (v *NullableTrajectoryViterbiStepResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

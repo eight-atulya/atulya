@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DATAPLANE_URL } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(url, {
       method: "POST",
       body: formData,
+      headers: getDataplaneHeadersForRequest(request),
       // Don't set Content-Type - let fetch handle multipart boundary
     });
 

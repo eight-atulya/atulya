@@ -19,13 +19,13 @@ var _ MappedNullable = &CodebaseSourceConfigResponse{}
 
 // CodebaseSourceConfigResponse Normalized source configuration for a codebase.
 type CodebaseSourceConfigResponse struct {
-	Owner NullableString `json:"owner,omitempty"`
-	Repo NullableString `json:"repo,omitempty"`
-	RepoUrl NullableString `json:"repo_url,omitempty"`
-	Ref NullableString `json:"ref,omitempty"`
-	RootPath NullableString `json:"root_path,omitempty"`
-	IncludeGlobs []string `json:"include_globs,omitempty"`
-	ExcludeGlobs []string `json:"exclude_globs,omitempty"`
+	Owner        NullableString `json:"owner,omitempty"`
+	Repo         NullableString `json:"repo,omitempty"`
+	RepoUrl      NullableString `json:"repo_url,omitempty"`
+	Ref          NullableString `json:"ref,omitempty"`
+	RootPath     NullableString `json:"root_path,omitempty"`
+	IncludeGlobs []string       `json:"include_globs,omitempty"`
+	ExcludeGlobs []string       `json:"exclude_globs,omitempty"`
 }
 
 // NewCodebaseSourceConfigResponse instantiates a new CodebaseSourceConfigResponse object
@@ -77,6 +77,7 @@ func (o *CodebaseSourceConfigResponse) HasOwner() bool {
 func (o *CodebaseSourceConfigResponse) SetOwner(v string) {
 	o.Owner.Set(&v)
 }
+
 // SetOwnerNil sets the value for Owner to be an explicit nil
 func (o *CodebaseSourceConfigResponse) SetOwnerNil() {
 	o.Owner.Set(nil)
@@ -119,6 +120,7 @@ func (o *CodebaseSourceConfigResponse) HasRepo() bool {
 func (o *CodebaseSourceConfigResponse) SetRepo(v string) {
 	o.Repo.Set(&v)
 }
+
 // SetRepoNil sets the value for Repo to be an explicit nil
 func (o *CodebaseSourceConfigResponse) SetRepoNil() {
 	o.Repo.Set(nil)
@@ -161,6 +163,7 @@ func (o *CodebaseSourceConfigResponse) HasRepoUrl() bool {
 func (o *CodebaseSourceConfigResponse) SetRepoUrl(v string) {
 	o.RepoUrl.Set(&v)
 }
+
 // SetRepoUrlNil sets the value for RepoUrl to be an explicit nil
 func (o *CodebaseSourceConfigResponse) SetRepoUrlNil() {
 	o.RepoUrl.Set(nil)
@@ -203,6 +206,7 @@ func (o *CodebaseSourceConfigResponse) HasRef() bool {
 func (o *CodebaseSourceConfigResponse) SetRef(v string) {
 	o.Ref.Set(&v)
 }
+
 // SetRefNil sets the value for Ref to be an explicit nil
 func (o *CodebaseSourceConfigResponse) SetRefNil() {
 	o.Ref.Set(nil)
@@ -245,6 +249,7 @@ func (o *CodebaseSourceConfigResponse) HasRootPath() bool {
 func (o *CodebaseSourceConfigResponse) SetRootPath(v string) {
 	o.RootPath.Set(&v)
 }
+
 // SetRootPathNil sets the value for RootPath to be an explicit nil
 func (o *CodebaseSourceConfigResponse) SetRootPathNil() {
 	o.RootPath.Set(nil)
@@ -320,7 +325,7 @@ func (o *CodebaseSourceConfigResponse) SetExcludeGlobs(v []string) {
 }
 
 func (o CodebaseSourceConfigResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -388,5 +393,3 @@ func (v *NullableCodebaseSourceConfigResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -7,6 +7,7 @@ Create Date: 2026-07-20
 
 from __future__ import annotations
 
+import os
 from collections.abc import Sequence
 
 from alembic import context, op
@@ -22,7 +23,14 @@ def _get_schema_prefix() -> str:
     return f'"{schema}".' if schema else ""
 
 
+def _is_auth_schema() -> bool:
+    target = context.config.get_main_option("target_schema") or "public"
+    return target == os.getenv("ATULYA_API_AUTH_SCHEMA", "public")
+
+
 def upgrade() -> None:
+    if not _is_auth_schema():
+        return
     schema = _get_schema_prefix()
 
     op.execute(
@@ -132,6 +140,8 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    if not _is_auth_schema():
+        return
     schema = _get_schema_prefix()
     op.execute(f"DROP TABLE IF EXISTS {schema}audit_events")
     op.execute(f"DROP TABLE IF EXISTS {schema}access_grants")

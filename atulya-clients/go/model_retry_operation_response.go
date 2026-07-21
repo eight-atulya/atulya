@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &RetryOperationResponse{}
 
 // RetryOperationResponse Response model for retry operation endpoint.
 type RetryOperationResponse struct {
-	Success bool `json:"success"`
-	Message string `json:"message"`
-	OperationId string `json:"operation_id"`
-	RetriedFromOperationId string `json:"retried_from_operation_id"`
-	BankId string `json:"bank_id"`
-	OperationType NullableString `json:"operation_type,omitempty"`
+	Success                bool           `json:"success"`
+	Message                string         `json:"message"`
+	OperationId            string         `json:"operation_id"`
+	RetriedFromOperationId string         `json:"retried_from_operation_id"`
+	BankId                 string         `json:"bank_id"`
+	OperationType          NullableString `json:"operation_type,omitempty"`
 }
 
 type _RetryOperationResponse RetryOperationResponse
@@ -205,6 +205,7 @@ func (o *RetryOperationResponse) HasOperationType() bool {
 func (o *RetryOperationResponse) SetOperationType(v string) {
 	o.OperationType.Set(&v)
 }
+
 // SetOperationTypeNil sets the value for OperationType to be an explicit nil
 func (o *RetryOperationResponse) SetOperationTypeNil() {
 	o.OperationType.Set(nil)
@@ -216,7 +217,7 @@ func (o *RetryOperationResponse) UnsetOperationType() {
 }
 
 func (o RetryOperationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -253,10 +254,10 @@ func (o *RetryOperationResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -312,5 +313,3 @@ func (v *NullableRetryOperationResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

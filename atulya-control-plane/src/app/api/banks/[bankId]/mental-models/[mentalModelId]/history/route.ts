@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; mentalModelId: string }> }
 ) {
   try {
@@ -17,7 +17,7 @@ export async function GET(
 
     const response = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models/${mentalModelId}/history`,
-      { method: "GET", headers: getDataplaneHeaders() }
+      { method: "GET", headers: getDataplaneHeadersForRequest(request) }
     );
 
     if (!response.ok) {

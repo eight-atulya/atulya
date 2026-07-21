@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: NextRequest,
@@ -18,7 +18,7 @@ export async function GET(
     const decodedEntityId = decodeURIComponent(entityId);
 
     const response = await sdk.getEntity({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: {
         bank_id: bankId,
         entity_id: decodedEntityId,

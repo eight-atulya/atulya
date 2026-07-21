@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,18 +21,18 @@ var _ MappedNullable = &ReflectRequest{}
 
 // ReflectRequest Request model for reflect endpoint.
 type ReflectRequest struct {
-	Query string `json:"query"`
+	Query      string         `json:"query"`
 	BranchName NullableString `json:"branch_name,omitempty"`
-	Budget *Budget `json:"budget,omitempty"`
-	Context NullableString `json:"context,omitempty"`
+	Budget     *Budget        `json:"budget,omitempty"`
+	Context    NullableString `json:"context,omitempty"`
 	// Maximum tokens for the response
 	MaxTokens *int32 `json:"max_tokens,omitempty"`
 	// Options for including additional data (disabled by default)
-	Include *ReflectIncludeOptions `json:"include,omitempty"`
+	Include        *ReflectIncludeOptions `json:"include,omitempty"`
 	ResponseSchema map[string]interface{} `json:"response_schema,omitempty"`
-	Tags []string `json:"tags,omitempty"`
+	Tags           []string               `json:"tags,omitempty"`
 	// How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).
-	TagsMatch *string `json:"tags_match,omitempty"`
+	TagsMatch *string                       `json:"tags_match,omitempty"`
 	TagGroups []RecallRequestTagGroupsInner `json:"tag_groups,omitempty"`
 }
 
@@ -45,6 +45,10 @@ type _ReflectRequest ReflectRequest
 func NewReflectRequest(query string) *ReflectRequest {
 	this := ReflectRequest{}
 	this.Query = query
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
+	var tagsMatch string = "any"
+	this.TagsMatch = &tagsMatch
 	return &this
 }
 
@@ -53,6 +57,10 @@ func NewReflectRequest(query string) *ReflectRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewReflectRequestWithDefaults() *ReflectRequest {
 	this := ReflectRequest{}
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
+	var tagsMatch string = "any"
+	this.TagsMatch = &tagsMatch
 	return &this
 }
 
@@ -112,6 +120,7 @@ func (o *ReflectRequest) HasBranchName() bool {
 func (o *ReflectRequest) SetBranchName(v string) {
 	o.BranchName.Set(&v)
 }
+
 // SetBranchNameNil sets the value for BranchName to be an explicit nil
 func (o *ReflectRequest) SetBranchNameNil() {
 	o.BranchName.Set(nil)
@@ -186,6 +195,7 @@ func (o *ReflectRequest) HasContext() bool {
 func (o *ReflectRequest) SetContext(v string) {
 	o.Context.Set(&v)
 }
+
 // SetContextNil sets the value for Context to be an explicit nil
 func (o *ReflectRequest) SetContextNil() {
 	o.Context.Set(nil)
@@ -392,7 +402,7 @@ func (o *ReflectRequest) SetTagGroups(v []RecallRequestTagGroupsInner) {
 }
 
 func (o ReflectRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -445,10 +455,10 @@ func (o *ReflectRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -504,5 +514,3 @@ func (v *NullableReflectRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

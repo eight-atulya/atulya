@@ -1,7 +1,8 @@
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 type DataplaneFetchInit = RequestInit & {
   path: string;
+  request: Request;
 };
 
 function buildUrl(path: string): string {
@@ -10,11 +11,11 @@ function buildUrl(path: string): string {
   return `${trimmedBase}${normalizedPath}`;
 }
 
-export async function fetchDataplaneJson({ path, headers, ...init }: DataplaneFetchInit) {
+export async function fetchDataplaneJson({ path, request, headers, ...init }: DataplaneFetchInit) {
   const response = await fetch(buildUrl(path), {
     ...init,
     cache: "no-store",
-    headers: getDataplaneHeaders({
+    headers: getDataplaneHeadersForRequest(request, {
       Accept: "application/json",
       ...(headers as Record<string, string> | undefined),
     }),

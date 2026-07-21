@@ -19,8 +19,8 @@ var _ MappedNullable = &IncludeOptions{}
 
 // IncludeOptions Options for including additional data in recall results.
 type IncludeOptions struct {
-	Entities NullableEntityIncludeOptions `json:"entities,omitempty"`
-	Chunks NullableChunkIncludeOptions `json:"chunks,omitempty"`
+	Entities    NullableEntityIncludeOptions      `json:"entities,omitempty"`
+	Chunks      NullableChunkIncludeOptions       `json:"chunks,omitempty"`
 	SourceFacts NullableSourceFactsIncludeOptions `json:"source_facts,omitempty"`
 }
 
@@ -73,6 +73,7 @@ func (o *IncludeOptions) HasEntities() bool {
 func (o *IncludeOptions) SetEntities(v EntityIncludeOptions) {
 	o.Entities.Set(&v)
 }
+
 // SetEntitiesNil sets the value for Entities to be an explicit nil
 func (o *IncludeOptions) SetEntitiesNil() {
 	o.Entities.Set(nil)
@@ -115,6 +116,7 @@ func (o *IncludeOptions) HasChunks() bool {
 func (o *IncludeOptions) SetChunks(v ChunkIncludeOptions) {
 	o.Chunks.Set(&v)
 }
+
 // SetChunksNil sets the value for Chunks to be an explicit nil
 func (o *IncludeOptions) SetChunksNil() {
 	o.Chunks.Set(nil)
@@ -157,6 +159,7 @@ func (o *IncludeOptions) HasSourceFacts() bool {
 func (o *IncludeOptions) SetSourceFacts(v SourceFactsIncludeOptions) {
 	o.SourceFacts.Set(&v)
 }
+
 // SetSourceFactsNil sets the value for SourceFacts to be an explicit nil
 func (o *IncludeOptions) SetSourceFactsNil() {
 	o.SourceFacts.Set(nil)
@@ -168,7 +171,7 @@ func (o *IncludeOptions) UnsetSourceFacts() {
 }
 
 func (o IncludeOptions) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -224,5 +227,3 @@ func (v *NullableIncludeOptions) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

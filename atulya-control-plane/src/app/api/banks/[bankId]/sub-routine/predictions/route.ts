@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ bank
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/sub-routine/predictions${query}`,
       {
         method: "GET",
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
       }
     );
 

@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class EntityIntelligenceResponse(BaseModel):
     """
@@ -31,18 +30,17 @@ class EntityIntelligenceResponse(BaseModel):
     computed_at: Optional[StrictStr] = None
     entity_count: StrictInt
     source_entity_count: StrictInt
-    entity_snapshot_hash: Optional[StrictStr] = None
+    entity_snapshot_hash: Optional[StrictStr] = ''
     content: StrictStr
     structured_content: Optional[Dict[str, Any]] = None
     entity_context: Optional[Dict[str, Any]] = None
     delta_metadata: Optional[Dict[str, Any]] = None
-    llm_model: Optional[StrictStr] = None
-    prompt_version: Optional[StrictStr] = None
+    llm_model: Optional[StrictStr] = ''
+    prompt_version: Optional[StrictStr] = ''
     __properties: ClassVar[List[str]] = ["bank_id", "computed_at", "entity_count", "source_entity_count", "entity_snapshot_hash", "content", "structured_content", "entity_context", "delta_metadata", "llm_model", "prompt_version"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -54,7 +52,8 @@ class EntityIntelligenceResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -100,14 +99,12 @@ class EntityIntelligenceResponse(BaseModel):
             "computed_at": obj.get("computed_at"),
             "entity_count": obj.get("entity_count"),
             "source_entity_count": obj.get("source_entity_count"),
-            "entity_snapshot_hash": obj.get("entity_snapshot_hash"),
+            "entity_snapshot_hash": obj.get("entity_snapshot_hash") if obj.get("entity_snapshot_hash") is not None else '',
             "content": obj.get("content"),
             "structured_content": obj.get("structured_content"),
             "entity_context": obj.get("entity_context"),
             "delta_metadata": obj.get("delta_metadata"),
-            "llm_model": obj.get("llm_model"),
-            "prompt_version": obj.get("prompt_version")
+            "llm_model": obj.get("llm_model") if obj.get("llm_model") is not None else '',
+            "prompt_version": obj.get("prompt_version") if obj.get("prompt_version") is not None else ''
         })
         return _obj
-
-

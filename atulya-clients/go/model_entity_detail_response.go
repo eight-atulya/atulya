@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &EntityDetailResponse{}
 
 // EntityDetailResponse Response model for entity detail endpoint.
 type EntityDetailResponse struct {
-	Id string `json:"id"`
-	CanonicalName string `json:"canonical_name"`
-	MentionCount int32 `json:"mention_count"`
-	FirstSeen NullableString `json:"first_seen,omitempty"`
-	LastSeen NullableString `json:"last_seen,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-	Observations []EntityObservationResponse `json:"observations"`
+	Id            string                      `json:"id"`
+	CanonicalName string                      `json:"canonical_name"`
+	MentionCount  int32                       `json:"mention_count"`
+	FirstSeen     NullableString              `json:"first_seen,omitempty"`
+	LastSeen      NullableString              `json:"last_seen,omitempty"`
+	Metadata      map[string]interface{}      `json:"metadata,omitempty"`
+	Observations  []EntityObservationResponse `json:"observations"`
 }
 
 type _EntityDetailResponse EntityDetailResponse
@@ -157,6 +157,7 @@ func (o *EntityDetailResponse) HasFirstSeen() bool {
 func (o *EntityDetailResponse) SetFirstSeen(v string) {
 	o.FirstSeen.Set(&v)
 }
+
 // SetFirstSeenNil sets the value for FirstSeen to be an explicit nil
 func (o *EntityDetailResponse) SetFirstSeenNil() {
 	o.FirstSeen.Set(nil)
@@ -199,6 +200,7 @@ func (o *EntityDetailResponse) HasLastSeen() bool {
 func (o *EntityDetailResponse) SetLastSeen(v string) {
 	o.LastSeen.Set(&v)
 }
+
 // SetLastSeenNil sets the value for LastSeen to be an explicit nil
 func (o *EntityDetailResponse) SetLastSeenNil() {
 	o.LastSeen.Set(nil)
@@ -267,7 +269,7 @@ func (o *EntityDetailResponse) SetObservations(v []EntityObservationResponse) {
 }
 
 func (o EntityDetailResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -308,10 +310,10 @@ func (o *EntityDetailResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -367,5 +369,3 @@ func (v *NullableEntityDetailResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

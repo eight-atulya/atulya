@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &WebhookResponse{}
 
 // WebhookResponse Response model for a webhook.
 type WebhookResponse struct {
-	Id string `json:"id"`
-	BankId NullableString `json:"bank_id"`
-	Url string `json:"url"`
-	Secret NullableString `json:"secret,omitempty"`
-	EventTypes []string `json:"event_types"`
-	Enabled bool `json:"enabled"`
+	Id         string             `json:"id"`
+	BankId     NullableString     `json:"bank_id"`
+	Url        string             `json:"url"`
+	Secret     NullableString     `json:"secret,omitempty"`
+	EventTypes []string           `json:"event_types"`
+	Enabled    bool               `json:"enabled"`
 	HttpConfig *WebhookHttpConfig `json:"http_config,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
+	CreatedAt  NullableString     `json:"created_at,omitempty"`
+	UpdatedAt  NullableString     `json:"updated_at,omitempty"`
 }
 
 type _WebhookResponse WebhookResponse
@@ -162,6 +162,7 @@ func (o *WebhookResponse) HasSecret() bool {
 func (o *WebhookResponse) SetSecret(v string) {
 	o.Secret.Set(&v)
 }
+
 // SetSecretNil sets the value for Secret to be an explicit nil
 func (o *WebhookResponse) SetSecretNil() {
 	o.Secret.Set(nil)
@@ -284,6 +285,7 @@ func (o *WebhookResponse) HasCreatedAt() bool {
 func (o *WebhookResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *WebhookResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -326,6 +328,7 @@ func (o *WebhookResponse) HasUpdatedAt() bool {
 func (o *WebhookResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *WebhookResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -337,7 +340,7 @@ func (o *WebhookResponse) UnsetUpdatedAt() {
 }
 
 func (o WebhookResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -383,10 +386,10 @@ func (o *WebhookResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -442,5 +445,3 @@ func (v *NullableWebhookResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

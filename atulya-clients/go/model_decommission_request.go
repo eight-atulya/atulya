@@ -29,6 +29,8 @@ type DecommissionRequest struct {
 // will change when the set of required properties is changed
 func NewDecommissionRequest() *DecommissionRequest {
 	this := DecommissionRequest{}
+	var releaseStuck bool = true
+	this.ReleaseStuck = &releaseStuck
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewDecommissionRequest() *DecommissionRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewDecommissionRequestWithDefaults() *DecommissionRequest {
 	this := DecommissionRequest{}
+	var releaseStuck bool = true
+	this.ReleaseStuck = &releaseStuck
 	return &this
 }
 
@@ -73,7 +77,7 @@ func (o *DecommissionRequest) SetReleaseStuck(v bool) {
 }
 
 func (o DecommissionRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -123,5 +127,3 @@ func (v *NullableDecommissionRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

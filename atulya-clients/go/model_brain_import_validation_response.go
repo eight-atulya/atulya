@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &BrainImportValidationResponse{}
 
 // BrainImportValidationResponse struct for BrainImportValidationResponse
 type BrainImportValidationResponse struct {
-	Valid bool `json:"valid"`
-	Version NullableInt32 `json:"version,omitempty"`
-	Reason NullableString `json:"reason,omitempty"`
+	Valid   bool           `json:"valid"`
+	Version NullableInt32  `json:"version,omitempty"`
+	Reason  NullableString `json:"reason,omitempty"`
 }
 
 type _BrainImportValidationResponse BrainImportValidationResponse
@@ -102,6 +102,7 @@ func (o *BrainImportValidationResponse) HasVersion() bool {
 func (o *BrainImportValidationResponse) SetVersion(v int32) {
 	o.Version.Set(&v)
 }
+
 // SetVersionNil sets the value for Version to be an explicit nil
 func (o *BrainImportValidationResponse) SetVersionNil() {
 	o.Version.Set(nil)
@@ -144,6 +145,7 @@ func (o *BrainImportValidationResponse) HasReason() bool {
 func (o *BrainImportValidationResponse) SetReason(v string) {
 	o.Reason.Set(&v)
 }
+
 // SetReasonNil sets the value for Reason to be an explicit nil
 func (o *BrainImportValidationResponse) SetReasonNil() {
 	o.Reason.Set(nil)
@@ -155,7 +157,7 @@ func (o *BrainImportValidationResponse) UnsetReason() {
 }
 
 func (o BrainImportValidationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -187,10 +189,10 @@ func (o *BrainImportValidationResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -246,5 +248,3 @@ func (v *NullableBrainImportValidationResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

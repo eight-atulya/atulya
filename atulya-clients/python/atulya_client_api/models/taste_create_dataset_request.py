@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TasteCreateDatasetRequest(BaseModel):
     """
@@ -29,13 +28,12 @@ class TasteCreateDatasetRequest(BaseModel):
     """ # noqa: E501
     name: StrictStr
     description: Optional[StrictStr] = None
-    schema_type: Optional[StrictStr] = None
+    schema_type: Optional[StrictStr] = 'openai_chat'
     taste_tags: Optional[List[StrictStr]] = None
     __properties: ClassVar[List[str]] = ["name", "description", "schema_type", "taste_tags"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class TasteCreateDatasetRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -91,9 +90,7 @@ class TasteCreateDatasetRequest(BaseModel):
         _obj = cls.model_validate({
             "name": obj.get("name"),
             "description": obj.get("description"),
-            "schema_type": obj.get("schema_type"),
+            "schema_type": obj.get("schema_type") if obj.get("schema_type") is not None else 'openai_chat',
             "taste_tags": obj.get("taste_tags")
         })
         return _obj
-
-

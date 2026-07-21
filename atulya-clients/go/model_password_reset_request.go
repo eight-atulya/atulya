@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,6 +21,7 @@ var _ MappedNullable = &PasswordResetRequest{}
 
 // PasswordResetRequest struct for PasswordResetRequest
 type PasswordResetRequest struct {
+	Token    string `json:"token"`
 	Password string `json:"password"`
 }
 
@@ -30,8 +31,9 @@ type _PasswordResetRequest PasswordResetRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPasswordResetRequest(password string) *PasswordResetRequest {
+func NewPasswordResetRequest(token string, password string) *PasswordResetRequest {
 	this := PasswordResetRequest{}
+	this.Token = token
 	this.Password = password
 	return &this
 }
@@ -42,6 +44,30 @@ func NewPasswordResetRequest(password string) *PasswordResetRequest {
 func NewPasswordResetRequestWithDefaults() *PasswordResetRequest {
 	this := PasswordResetRequest{}
 	return &this
+}
+
+// GetToken returns the Token field value
+func (o *PasswordResetRequest) GetToken() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Token
+}
+
+// GetTokenOk returns a tuple with the Token field value
+// and a boolean to check if the value has been set.
+func (o *PasswordResetRequest) GetTokenOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.Token, true
+}
+
+// SetToken sets field value
+func (o *PasswordResetRequest) SetToken(v string) {
+	o.Token = v
 }
 
 // GetPassword returns the Password field value
@@ -69,7 +95,7 @@ func (o *PasswordResetRequest) SetPassword(v string) {
 }
 
 func (o PasswordResetRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -78,6 +104,7 @@ func (o PasswordResetRequest) MarshalJSON() ([]byte, error) {
 
 func (o PasswordResetRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
+	toSerialize["token"] = o.Token
 	toSerialize["password"] = o.Password
 	return toSerialize, nil
 }
@@ -87,6 +114,7 @@ func (o *PasswordResetRequest) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
+		"token",
 		"password",
 	}
 
@@ -95,10 +123,10 @@ func (o *PasswordResetRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

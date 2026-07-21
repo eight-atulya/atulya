@@ -19,16 +19,15 @@ import (
 	"strings"
 )
 
-
 // TasteAPIService TasteAPI service
 type TasteAPIService service
 
 type ApiCreateTasteDatasetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
+	ctx                       context.Context
+	ApiService                *TasteAPIService
+	bankId                    string
 	tasteCreateDatasetRequest *TasteCreateDatasetRequest
-	authorization *string
+	authorization             *string
 }
 
 func (r ApiCreateTasteDatasetRequest) TasteCreateDatasetRequest(tasteCreateDatasetRequest TasteCreateDatasetRequest) ApiCreateTasteDatasetRequest {
@@ -48,26 +47,27 @@ func (r ApiCreateTasteDatasetRequest) Execute() (interface{}, *http.Response, er
 /*
 CreateTasteDataset Create taste dataset
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiCreateTasteDatasetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiCreateTasteDatasetRequest
 */
 func (a *TasteAPIService) CreateTasteDataset(ctx context.Context, bankId string) ApiCreateTasteDatasetRequest {
 	return ApiCreateTasteDatasetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) CreateTasteDatasetExecute(r ApiCreateTasteDatasetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.CreateTasteDataset")
@@ -136,8 +136,8 @@ func (a *TasteAPIService) CreateTasteDatasetExecute(r ApiCreateTasteDatasetReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -155,10 +155,10 @@ func (a *TasteAPIService) CreateTasteDatasetExecute(r ApiCreateTasteDatasetReque
 }
 
 type ApiDeleteTasteDatasetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	datasetId string
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
+	datasetId     string
 	authorization *string
 }
 
@@ -174,28 +174,29 @@ func (r ApiDeleteTasteDatasetRequest) Execute() (interface{}, *http.Response, er
 /*
 DeleteTasteDataset Delete taste dataset
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param datasetId
- @return ApiDeleteTasteDatasetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param datasetId
+	@return ApiDeleteTasteDatasetRequest
 */
 func (a *TasteAPIService) DeleteTasteDataset(ctx context.Context, bankId string, datasetId string) ApiDeleteTasteDatasetRequest {
 	return ApiDeleteTasteDatasetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		datasetId: datasetId,
+		ctx:        ctx,
+		bankId:     bankId,
+		datasetId:  datasetId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) DeleteTasteDatasetExecute(r ApiDeleteTasteDatasetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.DeleteTasteDataset")
@@ -260,8 +261,8 @@ func (a *TasteAPIService) DeleteTasteDatasetExecute(r ApiDeleteTasteDatasetReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -279,11 +280,11 @@ func (a *TasteAPIService) DeleteTasteDatasetExecute(r ApiDeleteTasteDatasetReque
 }
 
 type ApiExportTasteDatasetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
+	ctx                      context.Context
+	ApiService               *TasteAPIService
+	bankId                   string
 	tasteExportSubmitRequest *TasteExportSubmitRequest
-	authorization *string
+	authorization            *string
 }
 
 func (r ApiExportTasteDatasetRequest) TasteExportSubmitRequest(tasteExportSubmitRequest TasteExportSubmitRequest) ApiExportTasteDatasetRequest {
@@ -303,26 +304,27 @@ func (r ApiExportTasteDatasetRequest) Execute() (interface{}, *http.Response, er
 /*
 ExportTasteDataset Export taste dataset via forge adapter
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiExportTasteDatasetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiExportTasteDatasetRequest
 */
 func (a *TasteAPIService) ExportTasteDataset(ctx context.Context, bankId string) ApiExportTasteDatasetRequest {
 	return ApiExportTasteDatasetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) ExportTasteDatasetExecute(r ApiExportTasteDatasetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.ExportTasteDataset")
@@ -391,8 +393,8 @@ func (a *TasteAPIService) ExportTasteDatasetExecute(r ApiExportTasteDatasetReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -410,12 +412,12 @@ func (a *TasteAPIService) ExportTasteDatasetExecute(r ApiExportTasteDatasetReque
 }
 
 type ApiGenerateTasteVariantsRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	datasetId string
+	ctx                        context.Context
+	ApiService                 *TasteAPIService
+	bankId                     string
+	datasetId                  string
 	tasteGenerateSubmitRequest *TasteGenerateSubmitRequest
-	authorization *string
+	authorization              *string
 }
 
 func (r ApiGenerateTasteVariantsRequest) TasteGenerateSubmitRequest(tasteGenerateSubmitRequest TasteGenerateSubmitRequest) ApiGenerateTasteVariantsRequest {
@@ -435,28 +437,29 @@ func (r ApiGenerateTasteVariantsRequest) Execute() (interface{}, *http.Response,
 /*
 GenerateTasteVariants Generate similar taste variants
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param datasetId
- @return ApiGenerateTasteVariantsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param datasetId
+	@return ApiGenerateTasteVariantsRequest
 */
 func (a *TasteAPIService) GenerateTasteVariants(ctx context.Context, bankId string, datasetId string) ApiGenerateTasteVariantsRequest {
 	return ApiGenerateTasteVariantsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		datasetId: datasetId,
+		ctx:        ctx,
+		bankId:     bankId,
+		datasetId:  datasetId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) GenerateTasteVariantsExecute(r ApiGenerateTasteVariantsRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.GenerateTasteVariants")
@@ -526,8 +529,8 @@ func (a *TasteAPIService) GenerateTasteVariantsExecute(r ApiGenerateTasteVariant
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -545,10 +548,10 @@ func (a *TasteAPIService) GenerateTasteVariantsExecute(r ApiGenerateTasteVariant
 }
 
 type ApiGetTasteDatasetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	datasetId string
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
+	datasetId     string
 	authorization *string
 }
 
@@ -564,28 +567,29 @@ func (r ApiGetTasteDatasetRequest) Execute() (interface{}, *http.Response, error
 /*
 GetTasteDataset Get taste dataset
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param datasetId
- @return ApiGetTasteDatasetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param datasetId
+	@return ApiGetTasteDatasetRequest
 */
 func (a *TasteAPIService) GetTasteDataset(ctx context.Context, bankId string, datasetId string) ApiGetTasteDatasetRequest {
 	return ApiGetTasteDatasetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		datasetId: datasetId,
+		ctx:        ctx,
+		bankId:     bankId,
+		datasetId:  datasetId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) GetTasteDatasetExecute(r ApiGetTasteDatasetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.GetTasteDataset")
@@ -650,8 +654,8 @@ func (a *TasteAPIService) GetTasteDatasetExecute(r ApiGetTasteDatasetRequest) (i
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -669,10 +673,10 @@ func (a *TasteAPIService) GetTasteDatasetExecute(r ApiGetTasteDatasetRequest) (i
 }
 
 type ApiGetTasteSetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	setId string
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
+	setId         string
 	authorization *string
 }
 
@@ -688,28 +692,29 @@ func (r ApiGetTasteSetRequest) Execute() (interface{}, *http.Response, error) {
 /*
 GetTasteSet Get taste set
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param setId
- @return ApiGetTasteSetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param setId
+	@return ApiGetTasteSetRequest
 */
 func (a *TasteAPIService) GetTasteSet(ctx context.Context, bankId string, setId string) ApiGetTasteSetRequest {
 	return ApiGetTasteSetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		setId: setId,
+		ctx:        ctx,
+		bankId:     bankId,
+		setId:      setId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) GetTasteSetExecute(r ApiGetTasteSetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.GetTasteSet")
@@ -774,8 +779,8 @@ func (a *TasteAPIService) GetTasteSetExecute(r ApiGetTasteSetRequest) (interface
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -793,12 +798,12 @@ func (a *TasteAPIService) GetTasteSetExecute(r ApiGetTasteSetRequest) (interface
 }
 
 type ApiImportTasteSetsRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	datasetId string
+	ctx                    context.Context
+	ApiService             *TasteAPIService
+	bankId                 string
+	datasetId              string
 	tasteImportSetsRequest *TasteImportSetsRequest
-	authorization *string
+	authorization          *string
 }
 
 func (r ApiImportTasteSetsRequest) TasteImportSetsRequest(tasteImportSetsRequest TasteImportSetsRequest) ApiImportTasteSetsRequest {
@@ -818,28 +823,29 @@ func (r ApiImportTasteSetsRequest) Execute() (interface{}, *http.Response, error
 /*
 ImportTasteSets Import taste sets
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param datasetId
- @return ApiImportTasteSetsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param datasetId
+	@return ApiImportTasteSetsRequest
 */
 func (a *TasteAPIService) ImportTasteSets(ctx context.Context, bankId string, datasetId string) ApiImportTasteSetsRequest {
 	return ApiImportTasteSetsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		datasetId: datasetId,
+		ctx:        ctx,
+		bankId:     bankId,
+		datasetId:  datasetId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) ImportTasteSetsExecute(r ApiImportTasteSetsRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.ImportTasteSets")
@@ -909,8 +915,8 @@ func (a *TasteAPIService) ImportTasteSetsExecute(r ApiImportTasteSetsRequest) (i
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -928,9 +934,9 @@ func (a *TasteAPIService) ImportTasteSetsExecute(r ApiImportTasteSetsRequest) (i
 }
 
 type ApiListTasteCatalogRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -946,26 +952,27 @@ func (r ApiListTasteCatalogRequest) Execute() (interface{}, *http.Response, erro
 /*
 ListTasteCatalog Taste Studio catalog
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListTasteCatalogRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListTasteCatalogRequest
 */
 func (a *TasteAPIService) ListTasteCatalog(ctx context.Context, bankId string) ApiListTasteCatalogRequest {
 	return ApiListTasteCatalogRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) ListTasteCatalogExecute(r ApiListTasteCatalogRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.ListTasteCatalog")
@@ -1029,8 +1036,8 @@ func (a *TasteAPIService) ListTasteCatalogExecute(r ApiListTasteCatalogRequest) 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1048,9 +1055,9 @@ func (a *TasteAPIService) ListTasteCatalogExecute(r ApiListTasteCatalogRequest) 
 }
 
 type ApiListTasteDatasetsRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1066,26 +1073,27 @@ func (r ApiListTasteDatasetsRequest) Execute() (interface{}, *http.Response, err
 /*
 ListTasteDatasets List taste datasets
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListTasteDatasetsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListTasteDatasetsRequest
 */
 func (a *TasteAPIService) ListTasteDatasets(ctx context.Context, bankId string) ApiListTasteDatasetsRequest {
 	return ApiListTasteDatasetsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) ListTasteDatasetsExecute(r ApiListTasteDatasetsRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.ListTasteDatasets")
@@ -1149,8 +1157,8 @@ func (a *TasteAPIService) ListTasteDatasetsExecute(r ApiListTasteDatasetsRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1168,12 +1176,12 @@ func (a *TasteAPIService) ListTasteDatasetsExecute(r ApiListTasteDatasetsRequest
 }
 
 type ApiListTasteSetsRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	datasetId string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
+	datasetId     string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -1199,28 +1207,29 @@ func (r ApiListTasteSetsRequest) Execute() (interface{}, *http.Response, error) 
 /*
 ListTasteSets List taste sets
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param datasetId
- @return ApiListTasteSetsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param datasetId
+	@return ApiListTasteSetsRequest
 */
 func (a *TasteAPIService) ListTasteSets(ctx context.Context, bankId string, datasetId string) ApiListTasteSetsRequest {
 	return ApiListTasteSetsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		datasetId: datasetId,
+		ctx:        ctx,
+		bankId:     bankId,
+		datasetId:  datasetId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) ListTasteSetsExecute(r ApiListTasteSetsRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.ListTasteSets")
@@ -1238,9 +1247,15 @@ func (a *TasteAPIService) ListTasteSetsExecute(r ApiListTasteSetsRequest) (inter
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1291,8 +1306,8 @@ func (a *TasteAPIService) ListTasteSetsExecute(r ApiListTasteSetsRequest) (inter
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1310,11 +1325,11 @@ func (a *TasteAPIService) ListTasteSetsExecute(r ApiListTasteSetsRequest) (inter
 }
 
 type ApiRetainTasteSetsRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
+	ctx                      context.Context
+	ApiService               *TasteAPIService
+	bankId                   string
 	tasteRetainSubmitRequest *TasteRetainSubmitRequest
-	authorization *string
+	authorization            *string
 }
 
 func (r ApiRetainTasteSetsRequest) TasteRetainSubmitRequest(tasteRetainSubmitRequest TasteRetainSubmitRequest) ApiRetainTasteSetsRequest {
@@ -1334,26 +1349,27 @@ func (r ApiRetainTasteSetsRequest) Execute() (interface{}, *http.Response, error
 /*
 RetainTasteSets Send taste sets to memory
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiRetainTasteSetsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiRetainTasteSetsRequest
 */
 func (a *TasteAPIService) RetainTasteSets(ctx context.Context, bankId string) ApiRetainTasteSetsRequest {
 	return ApiRetainTasteSetsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) RetainTasteSetsExecute(r ApiRetainTasteSetsRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.RetainTasteSets")
@@ -1422,8 +1438,8 @@ func (a *TasteAPIService) RetainTasteSetsExecute(r ApiRetainTasteSetsRequest) (i
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1441,10 +1457,10 @@ func (a *TasteAPIService) RetainTasteSetsExecute(r ApiRetainTasteSetsRequest) (i
 }
 
 type ApiRevertTasteSetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	setId string
+	ctx           context.Context
+	ApiService    *TasteAPIService
+	bankId        string
+	setId         string
 	authorization *string
 }
 
@@ -1460,28 +1476,29 @@ func (r ApiRevertTasteSetRequest) Execute() (interface{}, *http.Response, error)
 /*
 RevertTasteSet Revert taste set to seed payload
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param setId
- @return ApiRevertTasteSetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param setId
+	@return ApiRevertTasteSetRequest
 */
 func (a *TasteAPIService) RevertTasteSet(ctx context.Context, bankId string, setId string) ApiRevertTasteSetRequest {
 	return ApiRevertTasteSetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		setId: setId,
+		ctx:        ctx,
+		bankId:     bankId,
+		setId:      setId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) RevertTasteSetExecute(r ApiRevertTasteSetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.RevertTasteSet")
@@ -1546,8 +1563,8 @@ func (a *TasteAPIService) RevertTasteSetExecute(r ApiRevertTasteSetRequest) (int
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1565,11 +1582,11 @@ func (a *TasteAPIService) RevertTasteSetExecute(r ApiRevertTasteSetRequest) (int
 }
 
 type ApiSubmitTasteTransformRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
+	ctx                         context.Context
+	ApiService                  *TasteAPIService
+	bankId                      string
 	tasteTransformSubmitRequest *TasteTransformSubmitRequest
-	authorization *string
+	authorization               *string
 }
 
 func (r ApiSubmitTasteTransformRequest) TasteTransformSubmitRequest(tasteTransformSubmitRequest TasteTransformSubmitRequest) ApiSubmitTasteTransformRequest {
@@ -1589,26 +1606,27 @@ func (r ApiSubmitTasteTransformRequest) Execute() (interface{}, *http.Response, 
 /*
 SubmitTasteTransform Apply taste transforms with optional preview
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiSubmitTasteTransformRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiSubmitTasteTransformRequest
 */
 func (a *TasteAPIService) SubmitTasteTransform(ctx context.Context, bankId string) ApiSubmitTasteTransformRequest {
 	return ApiSubmitTasteTransformRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) SubmitTasteTransformExecute(r ApiSubmitTasteTransformRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.SubmitTasteTransform")
@@ -1677,8 +1695,8 @@ func (a *TasteAPIService) SubmitTasteTransformExecute(r ApiSubmitTasteTransformR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1696,12 +1714,12 @@ func (a *TasteAPIService) SubmitTasteTransformExecute(r ApiSubmitTasteTransformR
 }
 
 type ApiUpdateTasteDatasetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	datasetId string
+	ctx                       context.Context
+	ApiService                *TasteAPIService
+	bankId                    string
+	datasetId                 string
 	tasteUpdateDatasetRequest *TasteUpdateDatasetRequest
-	authorization *string
+	authorization             *string
 }
 
 func (r ApiUpdateTasteDatasetRequest) TasteUpdateDatasetRequest(tasteUpdateDatasetRequest TasteUpdateDatasetRequest) ApiUpdateTasteDatasetRequest {
@@ -1721,28 +1739,29 @@ func (r ApiUpdateTasteDatasetRequest) Execute() (interface{}, *http.Response, er
 /*
 UpdateTasteDataset Update taste dataset
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param datasetId
- @return ApiUpdateTasteDatasetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param datasetId
+	@return ApiUpdateTasteDatasetRequest
 */
 func (a *TasteAPIService) UpdateTasteDataset(ctx context.Context, bankId string, datasetId string) ApiUpdateTasteDatasetRequest {
 	return ApiUpdateTasteDatasetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		datasetId: datasetId,
+		ctx:        ctx,
+		bankId:     bankId,
+		datasetId:  datasetId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) UpdateTasteDatasetExecute(r ApiUpdateTasteDatasetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.UpdateTasteDataset")
@@ -1812,8 +1831,8 @@ func (a *TasteAPIService) UpdateTasteDatasetExecute(r ApiUpdateTasteDatasetReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1831,12 +1850,12 @@ func (a *TasteAPIService) UpdateTasteDatasetExecute(r ApiUpdateTasteDatasetReque
 }
 
 type ApiUpdateTasteSetRequest struct {
-	ctx context.Context
-	ApiService *TasteAPIService
-	bankId string
-	setId string
+	ctx                   context.Context
+	ApiService            *TasteAPIService
+	bankId                string
+	setId                 string
 	tasteUpdateSetRequest *TasteUpdateSetRequest
-	authorization *string
+	authorization         *string
 }
 
 func (r ApiUpdateTasteSetRequest) TasteUpdateSetRequest(tasteUpdateSetRequest TasteUpdateSetRequest) ApiUpdateTasteSetRequest {
@@ -1856,28 +1875,29 @@ func (r ApiUpdateTasteSetRequest) Execute() (interface{}, *http.Response, error)
 /*
 UpdateTasteSet Update taste set
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param setId
- @return ApiUpdateTasteSetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param setId
+	@return ApiUpdateTasteSetRequest
 */
 func (a *TasteAPIService) UpdateTasteSet(ctx context.Context, bankId string, setId string) ApiUpdateTasteSetRequest {
 	return ApiUpdateTasteSetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		setId: setId,
+		ctx:        ctx,
+		bankId:     bankId,
+		setId:      setId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *TasteAPIService) UpdateTasteSetExecute(r ApiUpdateTasteSetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "TasteAPIService.UpdateTasteSet")
@@ -1947,8 +1967,8 @@ func (a *TasteAPIService) UpdateTasteSetExecute(r ApiUpdateTasteSetRequest) (int
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

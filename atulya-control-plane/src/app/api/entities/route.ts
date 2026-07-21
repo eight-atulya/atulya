@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     const offset = searchParams.get("offset") ? Number(searchParams.get("offset")) : undefined;
 
     const response = await sdk.listEntities({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       query: { limit, offset },
     });

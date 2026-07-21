@@ -19,8 +19,8 @@ var _ MappedNullable = &CodebaseApproveRequest{}
 
 // CodebaseApproveRequest Approve a parsed codebase snapshot for memory hydration.
 type CodebaseApproveRequest struct {
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	MemoryIngestMode *string `json:"memory_ingest_mode,omitempty"`
+	SnapshotId       NullableString `json:"snapshot_id,omitempty"`
+	MemoryIngestMode *string        `json:"memory_ingest_mode,omitempty"`
 }
 
 // NewCodebaseApproveRequest instantiates a new CodebaseApproveRequest object
@@ -29,6 +29,8 @@ type CodebaseApproveRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseApproveRequest() *CodebaseApproveRequest {
 	this := CodebaseApproveRequest{}
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewCodebaseApproveRequest() *CodebaseApproveRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseApproveRequestWithDefaults() *CodebaseApproveRequest {
 	this := CodebaseApproveRequest{}
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -72,6 +76,7 @@ func (o *CodebaseApproveRequest) HasSnapshotId() bool {
 func (o *CodebaseApproveRequest) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseApproveRequest) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -115,7 +120,7 @@ func (o *CodebaseApproveRequest) SetMemoryIngestMode(v string) {
 }
 
 func (o CodebaseApproveRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +173,3 @@ func (v *NullableCodebaseApproveRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

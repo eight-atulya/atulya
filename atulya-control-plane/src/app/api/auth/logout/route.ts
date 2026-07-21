@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
   response.cookies.set(ATULYA_LOGGED_OUT_COOKIE, "1", {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.ATULYA_CP_COOKIE_SECURE === "true" || process.env.NODE_ENV === "production",
     path: "/",
   });
   return response;

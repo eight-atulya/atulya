@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -28,8 +28,8 @@ type BrainLearnRequest struct {
 	// Optional API key for the remote instance
 	RemoteApiKey *string `json:"remote_api_key,omitempty"`
 	LearningType *string `json:"learning_type,omitempty"`
-	Mode *string `json:"mode,omitempty"`
-	HorizonHours *int32 `json:"horizon_hours,omitempty"`
+	Mode         *string `json:"mode,omitempty"`
+	HorizonHours *int32  `json:"horizon_hours,omitempty"`
 }
 
 type _BrainLearnRequest BrainLearnRequest
@@ -42,6 +42,14 @@ func NewBrainLearnRequest(remoteEndpoint string, remoteBankId string) *BrainLear
 	this := BrainLearnRequest{}
 	this.RemoteEndpoint = remoteEndpoint
 	this.RemoteBankId = remoteBankId
+	var remoteApiKey string = ""
+	this.RemoteApiKey = &remoteApiKey
+	var learningType string = "auto"
+	this.LearningType = &learningType
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
 	return &this
 }
 
@@ -50,6 +58,14 @@ func NewBrainLearnRequest(remoteEndpoint string, remoteBankId string) *BrainLear
 // but it doesn't guarantee that properties required by API are set
 func NewBrainLearnRequestWithDefaults() *BrainLearnRequest {
 	this := BrainLearnRequest{}
+	var remoteApiKey string = ""
+	this.RemoteApiKey = &remoteApiKey
+	var learningType string = "auto"
+	this.LearningType = &learningType
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
 	return &this
 }
 
@@ -230,7 +246,7 @@ func (o *BrainLearnRequest) SetHorizonHours(v int32) {
 }
 
 func (o BrainLearnRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -270,10 +286,10 @@ func (o *BrainLearnRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -329,5 +345,3 @@ func (v *NullableBrainLearnRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

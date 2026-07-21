@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 type TruncUnit = "hour" | "day";
 
@@ -55,7 +55,7 @@ export async function GET(
     // limit=10000: graph default is 1000, no server-side max — use high ceiling to avoid
     // silent undercounting on large banks. Operations items_count=0 so ops are wrong source.
     const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${agentId}/graph?limit=10000`, {
-      headers: getDataplaneHeaders(),
+      headers: getDataplaneHeadersForRequest(request),
     });
 
     if (!res.ok) {

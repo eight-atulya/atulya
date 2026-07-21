@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 function parseJsonOrText(text: string): unknown {
   if (!text) return {};
@@ -25,7 +25,7 @@ export async function POST(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/codebases/${codebaseId}/approve`,
       {
         method: "POST",
-        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
         body: JSON.stringify(body),
       }
     );

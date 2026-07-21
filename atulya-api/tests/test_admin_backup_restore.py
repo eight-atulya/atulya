@@ -15,9 +15,8 @@ import asyncpg
 import pytest
 import pytest_asyncio
 
-from atulya_api.admin.cli import _backup, _restore, BACKUP_TABLES
+from atulya_api.admin.cli import BACKUP_TABLES, MANIFEST_VERSION, _backup, _restore
 from atulya_api.migrations import run_migrations
-
 
 # Run these tests sequentially since they do full DB backup/restore
 pytestmark = pytest.mark.xdist_group(name="backup_restore")
@@ -85,7 +84,7 @@ async def test_backup_restore_roundtrip(backup_test_schema):
             "The team uses PostgreSQL for their database.",
         ]:
             await conn.execute(
-                f"""INSERT INTO {_fq('memory_units')}
+                f"""INSERT INTO {_fq("memory_units")}
                     (bank_id, text, fact_type, embedding, event_date)
                     VALUES ($1, $2, 'world', $3::vector, NOW())""",
                 bank_id,
@@ -117,7 +116,7 @@ async def test_backup_restore_roundtrip(backup_test_schema):
         assert backup_path.stat().st_size > 0
 
         # Verify manifest
-        assert manifest["version"] == "1"
+        assert manifest["version"] == MANIFEST_VERSION
         assert "created_at" in manifest
         for table in BACKUP_TABLES:
             assert table in manifest["tables"]
@@ -187,7 +186,7 @@ async def test_backup_restore_preserves_all_column_types(backup_test_schema):
         embedding_list = embeddings.encode(["John Smith engineer"])[0]
         embedding_str = "[" + ",".join(str(x) for x in embedding_list) + "]"
         await conn.execute(
-            f"""INSERT INTO {_fq('memory_units')}
+            f"""INSERT INTO {_fq("memory_units")}
                 (bank_id, text, fact_type, embedding, event_date, metadata)
                 VALUES ($1, $2, 'world', $3::vector, NOW(), $4)""",
             bank_id,
@@ -198,7 +197,7 @@ async def test_backup_restore_preserves_all_column_types(backup_test_schema):
 
         # Create an entity
         await conn.execute(
-            f"""INSERT INTO {_fq('entities')}
+            f"""INSERT INTO {_fq("entities")}
                 (bank_id, canonical_name, metadata)
                 VALUES ($1, $2, $3)""",
             bank_id,
@@ -209,12 +208,12 @@ async def test_backup_restore_preserves_all_column_types(backup_test_schema):
         # Get original data
         original_unit = await conn.fetchrow(
             f"""SELECT id, embedding, event_date, created_at, metadata, text
-               FROM {_fq('memory_units')} WHERE bank_id = $1 LIMIT 1""",
+               FROM {_fq("memory_units")} WHERE bank_id = $1 LIMIT 1""",
             bank_id,
         )
         original_entity = await conn.fetchrow(
             f"""SELECT id, first_seen, last_seen, metadata, canonical_name
-               FROM {_fq('entities')} WHERE bank_id = $1 LIMIT 1""",
+               FROM {_fq("entities")} WHERE bank_id = $1 LIMIT 1""",
             bank_id,
         )
         original_bank = await conn.fetchrow(
@@ -250,12 +249,12 @@ async def test_backup_restore_preserves_all_column_types(backup_test_schema):
         try:
             restored_unit = await conn.fetchrow(
                 f"""SELECT id, embedding, event_date, created_at, metadata, text
-                   FROM {_fq('memory_units')} WHERE bank_id = $1 LIMIT 1""",
+                   FROM {_fq("memory_units")} WHERE bank_id = $1 LIMIT 1""",
                 bank_id,
             )
             restored_entity = await conn.fetchrow(
                 f"""SELECT id, first_seen, last_seen, metadata, canonical_name
-                   FROM {_fq('entities')} WHERE bank_id = $1 LIMIT 1""",
+                   FROM {_fq("entities")} WHERE bank_id = $1 LIMIT 1""",
                 bank_id,
             )
             restored_bank = await conn.fetchrow(
@@ -269,7 +268,9 @@ async def test_backup_restore_preserves_all_column_types(backup_test_schema):
         assert restored_unit is not None, "Should have restored memory unit"
         assert restored_unit["id"] == original_unit["id"], "UUID should match exactly"
         assert restored_unit["text"] == original_unit["text"], "Text should match"
-        assert list(restored_unit["embedding"]) == list(original_unit["embedding"]), "Vector embedding should match exactly"
+        assert list(restored_unit["embedding"]) == list(original_unit["embedding"]), (
+            "Vector embedding should match exactly"
+        )
         assert restored_unit["event_date"] == original_unit["event_date"], "Timestamp should match exactly"
         assert restored_unit["created_at"] == original_unit["created_at"], "Created timestamp should match"
         assert restored_unit["metadata"] == original_unit["metadata"], "JSONB metadata should match"

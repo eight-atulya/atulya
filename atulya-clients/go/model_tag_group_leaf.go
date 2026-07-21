@@ -12,7 +12,6 @@ package atulya
 
 import (
 	"encoding/json"
-	"bytes"
 	"fmt"
 )
 
@@ -21,8 +20,9 @@ var _ MappedNullable = &TagGroupLeaf{}
 
 // TagGroupLeaf A single tag predicate, semantically identical to the flat `tags` field.  `tags` is a non-empty list of tag strings; `match` controls AND/OR semantics and whether untagged memories are included, exactly mirroring the existing `TagsMatch` enum.
 type TagGroupLeaf struct {
-	Tags []string `json:"tags"`
-	Match *string `json:"match,omitempty"`
+	Tags                 []string `json:"tags"`
+	Match                *string  `json:"match,omitempty"`
+	AdditionalProperties map[string]interface{}
 }
 
 type _TagGroupLeaf TagGroupLeaf
@@ -34,6 +34,8 @@ type _TagGroupLeaf TagGroupLeaf
 func NewTagGroupLeaf(tags []string) *TagGroupLeaf {
 	this := TagGroupLeaf{}
 	this.Tags = tags
+	var match string = "any"
+	this.Match = &match
 	return &this
 }
 
@@ -42,6 +44,8 @@ func NewTagGroupLeaf(tags []string) *TagGroupLeaf {
 // but it doesn't guarantee that properties required by API are set
 func NewTagGroupLeafWithDefaults() *TagGroupLeaf {
 	this := TagGroupLeaf{}
+	var match string = "any"
+	this.Match = &match
 	return &this
 }
 
@@ -102,7 +106,7 @@ func (o *TagGroupLeaf) SetMatch(v string) {
 }
 
 func (o TagGroupLeaf) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -115,6 +119,11 @@ func (o TagGroupLeaf) ToMap() (map[string]interface{}, error) {
 	if !IsNil(o.Match) {
 		toSerialize["match"] = o.Match
 	}
+
+	for key, value := range o.AdditionalProperties {
+		toSerialize[key] = value
+	}
+
 	return toSerialize, nil
 }
 
@@ -131,10 +140,10 @@ func (o *TagGroupLeaf) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -142,15 +151,21 @@ func (o *TagGroupLeaf) UnmarshalJSON(data []byte) (err error) {
 
 	varTagGroupLeaf := _TagGroupLeaf{}
 
-	decoder := json.NewDecoder(bytes.NewReader(data))
-	decoder.DisallowUnknownFields()
-	err = decoder.Decode(&varTagGroupLeaf)
+	err = json.Unmarshal(data, &varTagGroupLeaf)
 
 	if err != nil {
 		return err
 	}
 
 	*o = TagGroupLeaf(varTagGroupLeaf)
+
+	additionalProperties := make(map[string]interface{})
+
+	if err = json.Unmarshal(data, &additionalProperties); err == nil {
+		delete(additionalProperties, "tags")
+		delete(additionalProperties, "match")
+		o.AdditionalProperties = additionalProperties
+	}
 
 	return err
 }
@@ -190,5 +205,3 @@ func (v *NullableTagGroupLeaf) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

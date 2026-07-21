@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function POST(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -10,7 +10,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
     }
 
     const response = await sdk.triggerConsolidation({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 

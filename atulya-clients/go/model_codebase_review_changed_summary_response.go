@@ -19,7 +19,7 @@ var _ MappedNullable = &CodebaseReviewChangedSummaryResponse{}
 
 // CodebaseReviewChangedSummaryResponse Changed-file summary for the current review snapshot.
 type CodebaseReviewChangedSummaryResponse struct {
-	AddedFiles *int32 `json:"added_files,omitempty"`
+	AddedFiles   *int32 `json:"added_files,omitempty"`
 	ChangedFiles *int32 `json:"changed_files,omitempty"`
 	DeletedFiles *int32 `json:"deleted_files,omitempty"`
 }
@@ -30,6 +30,12 @@ type CodebaseReviewChangedSummaryResponse struct {
 // will change when the set of required properties is changed
 func NewCodebaseReviewChangedSummaryResponse() *CodebaseReviewChangedSummaryResponse {
 	this := CodebaseReviewChangedSummaryResponse{}
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
 	return &this
 }
 
@@ -38,6 +44,12 @@ func NewCodebaseReviewChangedSummaryResponse() *CodebaseReviewChangedSummaryResp
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseReviewChangedSummaryResponseWithDefaults() *CodebaseReviewChangedSummaryResponse {
 	this := CodebaseReviewChangedSummaryResponse{}
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
 	return &this
 }
 
@@ -138,7 +150,7 @@ func (o *CodebaseReviewChangedSummaryResponse) SetDeletedFiles(v int32) {
 }
 
 func (o CodebaseReviewChangedSummaryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -194,5 +206,3 @@ func (v *NullableCodebaseReviewChangedSummaryResponse) UnmarshalJSON(src []byte)
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

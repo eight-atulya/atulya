@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &OrgCreateRequest{}
 
 // OrgCreateRequest struct for OrgCreateRequest
 type OrgCreateRequest struct {
-	Slug string `json:"slug"`
-	Name string `json:"name"`
-	OwnerEmail string `json:"owner_email"`
-	OwnerPassword string `json:"owner_password"`
-	OwnerName NullableString `json:"owner_name,omitempty"`
+	Slug          string         `json:"slug"`
+	Name          string         `json:"name"`
+	OwnerEmail    string         `json:"owner_email"`
+	OwnerPassword NullableString `json:"owner_password,omitempty"`
+	OwnerName     NullableString `json:"owner_name,omitempty"`
 }
 
 type _OrgCreateRequest OrgCreateRequest
@@ -34,12 +34,11 @@ type _OrgCreateRequest OrgCreateRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewOrgCreateRequest(slug string, name string, ownerEmail string, ownerPassword string) *OrgCreateRequest {
+func NewOrgCreateRequest(slug string, name string, ownerEmail string) *OrgCreateRequest {
 	this := OrgCreateRequest{}
 	this.Slug = slug
 	this.Name = name
 	this.OwnerEmail = ownerEmail
-	this.OwnerPassword = ownerPassword
 	return &this
 }
 
@@ -123,28 +122,47 @@ func (o *OrgCreateRequest) SetOwnerEmail(v string) {
 	o.OwnerEmail = v
 }
 
-// GetOwnerPassword returns the OwnerPassword field value
+// GetOwnerPassword returns the OwnerPassword field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *OrgCreateRequest) GetOwnerPassword() string {
-	if o == nil {
+	if o == nil || IsNil(o.OwnerPassword.Get()) {
 		var ret string
 		return ret
 	}
-
-	return o.OwnerPassword
+	return *o.OwnerPassword.Get()
 }
 
-// GetOwnerPasswordOk returns a tuple with the OwnerPassword field value
+// GetOwnerPasswordOk returns a tuple with the OwnerPassword field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *OrgCreateRequest) GetOwnerPasswordOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.OwnerPassword, true
+	return o.OwnerPassword.Get(), o.OwnerPassword.IsSet()
 }
 
-// SetOwnerPassword sets field value
+// HasOwnerPassword returns a boolean if a field has been set.
+func (o *OrgCreateRequest) HasOwnerPassword() bool {
+	if o != nil && o.OwnerPassword.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetOwnerPassword gets a reference to the given NullableString and assigns it to the OwnerPassword field.
 func (o *OrgCreateRequest) SetOwnerPassword(v string) {
-	o.OwnerPassword = v
+	o.OwnerPassword.Set(&v)
+}
+
+// SetOwnerPasswordNil sets the value for OwnerPassword to be an explicit nil
+func (o *OrgCreateRequest) SetOwnerPasswordNil() {
+	o.OwnerPassword.Set(nil)
+}
+
+// UnsetOwnerPassword ensures that no value is present for OwnerPassword, not even an explicit nil
+func (o *OrgCreateRequest) UnsetOwnerPassword() {
+	o.OwnerPassword.Unset()
 }
 
 // GetOwnerName returns the OwnerName field value if set, zero value otherwise (both if not set or set to explicit null).
@@ -179,6 +197,7 @@ func (o *OrgCreateRequest) HasOwnerName() bool {
 func (o *OrgCreateRequest) SetOwnerName(v string) {
 	o.OwnerName.Set(&v)
 }
+
 // SetOwnerNameNil sets the value for OwnerName to be an explicit nil
 func (o *OrgCreateRequest) SetOwnerNameNil() {
 	o.OwnerName.Set(nil)
@@ -190,7 +209,7 @@ func (o *OrgCreateRequest) UnsetOwnerName() {
 }
 
 func (o OrgCreateRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -202,7 +221,9 @@ func (o OrgCreateRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["slug"] = o.Slug
 	toSerialize["name"] = o.Name
 	toSerialize["owner_email"] = o.OwnerEmail
-	toSerialize["owner_password"] = o.OwnerPassword
+	if o.OwnerPassword.IsSet() {
+		toSerialize["owner_password"] = o.OwnerPassword.Get()
+	}
 	if o.OwnerName.IsSet() {
 		toSerialize["owner_name"] = o.OwnerName.Get()
 	}
@@ -217,7 +238,6 @@ func (o *OrgCreateRequest) UnmarshalJSON(data []byte) (err error) {
 		"slug",
 		"name",
 		"owner_email",
-		"owner_password",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -225,10 +245,10 @@ func (o *OrgCreateRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

@@ -19,10 +19,9 @@ import json
 
 from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List
-from atulya_client_api.models.principal_info import PrincipalInfo
+from atulya_client_api.models.resolved_identity import ResolvedIdentity
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class LoginResponse(BaseModel):
     """
@@ -30,12 +29,11 @@ class LoginResponse(BaseModel):
     """ # noqa: E501
     token: StrictStr
     expires_at: StrictStr
-    principal: PrincipalInfo
+    principal: ResolvedIdentity
     __properties: ClassVar[List[str]] = ["token", "expires_at", "principal"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class LoginResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -89,6 +88,6 @@ class LoginResponse(BaseModel):
         _obj = cls.model_validate({
             "token": obj.get("token"),
             "expires_at": obj.get("expires_at"),
-            "principal": PrincipalInfo.from_dict(obj["principal"]) if obj.get("principal") is not None else None
+            "principal": ResolvedIdentity.from_dict(obj["principal"]) if obj.get("principal") is not None else None
         })
         return _obj

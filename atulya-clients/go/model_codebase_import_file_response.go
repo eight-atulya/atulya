@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &CodebaseImportFileResponse{}
 
 // CodebaseImportFileResponse Queued single-file codebase import response.
 type CodebaseImportFileResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId string `json:"snapshot_id"`
+	CodebaseId  string `json:"codebase_id"`
+	SnapshotId  string `json:"snapshot_id"`
 	OperationId string `json:"operation_id"`
-	Status string `json:"status"`
-	Filename string `json:"filename"`
+	Status      string `json:"status"`
+	Filename    string `json:"filename"`
 	VirtualPath string `json:"virtual_path"`
 }
 
@@ -199,7 +199,7 @@ func (o *CodebaseImportFileResponse) SetVirtualPath(v string) {
 }
 
 func (o CodebaseImportFileResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -235,10 +235,10 @@ func (o *CodebaseImportFileResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -294,5 +294,3 @@ func (v *NullableCodebaseImportFileResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &WorkerStatusResponse{}
 
 // WorkerStatusResponse struct for WorkerStatusResponse
 type WorkerStatusResponse struct {
-	WorkerId string `json:"worker_id"`
-	SchemaName string `json:"schema_name"`
-	PendingCount int32 `json:"pending_count"`
-	StuckCount int32 `json:"stuck_count"`
-	LastSeenAt NullableString `json:"last_seen_at"`
+	WorkerId     string         `json:"worker_id"`
+	SchemaName   string         `json:"schema_name"`
+	PendingCount int32          `json:"pending_count"`
+	StuckCount   int32          `json:"stuck_count"`
+	LastSeenAt   NullableString `json:"last_seen_at"`
 }
 
 type _WorkerStatusResponse WorkerStatusResponse
@@ -175,7 +175,7 @@ func (o *WorkerStatusResponse) SetLastSeenAt(v string) {
 }
 
 func (o WorkerStatusResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -209,10 +209,10 @@ func (o *WorkerStatusResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -268,5 +268,3 @@ func (v *NullableWorkerStatusResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -16,19 +16,18 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"reflect"
+	"strings"
 )
-
 
 // MemoryAPIService MemoryAPI service
 type MemoryAPIService service
 
 type ApiClearBankMemoriesRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	type_ *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	type_         *string
 	authorization *string
 }
 
@@ -52,26 +51,27 @@ ClearBankMemories Clear memory bank memories
 
 Delete memory units for a memory bank. Optionally filter by type (world, experience, opinion) to delete only specific types. This is a destructive operation that cannot be undone. The bank profile (disposition and background) will be preserved.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiClearBankMemoriesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiClearBankMemoriesRequest
 */
 func (a *MemoryAPIService) ClearBankMemories(ctx context.Context, bankId string) ApiClearBankMemoriesRequest {
 	return ApiClearBankMemoriesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DeleteResponse
+//
+//	@return DeleteResponse
 func (a *MemoryAPIService) ClearBankMemoriesExecute(r ApiClearBankMemoriesRequest) (*DeleteResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DeleteResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DeleteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.ClearBankMemories")
@@ -138,8 +138,8 @@ func (a *MemoryAPIService) ClearBankMemoriesExecute(r ApiClearBankMemoriesReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -157,10 +157,10 @@ func (a *MemoryAPIService) ClearBankMemoriesExecute(r ApiClearBankMemoriesReques
 }
 
 type ApiClearMemoryObservationsRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	memoryId string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	memoryId      string
 	authorization *string
 }
 
@@ -178,28 +178,29 @@ ClearMemoryObservations Clear observations for a memory
 
 Delete all observations derived from a specific memory and reset it for re-consolidation. The memory itself is not deleted. A consolidation job is triggered automatically so the memory will produce fresh observations on the next consolidation run.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param memoryId
- @return ApiClearMemoryObservationsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param memoryId
+	@return ApiClearMemoryObservationsRequest
 */
 func (a *MemoryAPIService) ClearMemoryObservations(ctx context.Context, bankId string, memoryId string) ApiClearMemoryObservationsRequest {
 	return ApiClearMemoryObservationsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		memoryId: memoryId,
+		ctx:        ctx,
+		bankId:     bankId,
+		memoryId:   memoryId,
 	}
 }
 
 // Execute executes the request
-//  @return ClearMemoryObservationsResponse
+//
+//	@return ClearMemoryObservationsResponse
 func (a *MemoryAPIService) ClearMemoryObservationsExecute(r ApiClearMemoryObservationsRequest) (*ClearMemoryObservationsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ClearMemoryObservationsResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ClearMemoryObservationsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.ClearMemoryObservations")
@@ -264,8 +265,8 @@ func (a *MemoryAPIService) ClearMemoryObservationsExecute(r ApiClearMemoryObserv
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -283,11 +284,11 @@ func (a *MemoryAPIService) ClearMemoryObservationsExecute(r ApiClearMemoryObserv
 }
 
 type ApiGetAnomalyIntelligenceRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx                        context.Context
+	ApiService                 *MemoryAPIService
+	bankId                     string
 	anomalyIntelligenceRequest *AnomalyIntelligenceRequest
-	authorization *string
+	authorization              *string
 }
 
 func (r ApiGetAnomalyIntelligenceRequest) AnomalyIntelligenceRequest(anomalyIntelligenceRequest AnomalyIntelligenceRequest) ApiGetAnomalyIntelligenceRequest {
@@ -307,26 +308,27 @@ func (r ApiGetAnomalyIntelligenceRequest) Execute() (*AnomalyIntelligenceRespons
 /*
 GetAnomalyIntelligence Get anomaly intelligence for bank
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetAnomalyIntelligenceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetAnomalyIntelligenceRequest
 */
 func (a *MemoryAPIService) GetAnomalyIntelligence(ctx context.Context, bankId string) ApiGetAnomalyIntelligenceRequest {
 	return ApiGetAnomalyIntelligenceRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return AnomalyIntelligenceResponse
+//
+//	@return AnomalyIntelligenceResponse
 func (a *MemoryAPIService) GetAnomalyIntelligenceExecute(r ApiGetAnomalyIntelligenceRequest) (*AnomalyIntelligenceResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AnomalyIntelligenceResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AnomalyIntelligenceResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetAnomalyIntelligence")
@@ -395,8 +397,8 @@ func (a *MemoryAPIService) GetAnomalyIntelligenceExecute(r ApiGetAnomalyIntellig
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -414,14 +416,14 @@ func (a *MemoryAPIService) GetAnomalyIntelligenceExecute(r ApiGetAnomalyIntellig
 }
 
 type ApiGetGraphRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	type_ *string
-	limit *int32
-	q *string
-	tags *[]*string
-	tagsMatch *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	type_         *string
+	limit         *int32
+	q             *string
+	tags          *[]*string
+	tagsMatch     *string
 	authorization *string
 }
 
@@ -464,26 +466,27 @@ GetGraph Get memory graph data
 
 Retrieve graph data for visualization, optionally filtered by type (world/experience/opinion).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetGraphRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetGraphRequest
 */
 func (a *MemoryAPIService) GetGraph(ctx context.Context, bankId string) ApiGetGraphRequest {
 	return ApiGetGraphRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return GraphDataResponse
+//
+//	@return GraphDataResponse
 func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *GraphDataResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GraphDataResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetGraph")
@@ -503,6 +506,9 @@ func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResp
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 1000
+		r.limit = &defaultValue
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
@@ -520,6 +526,9 @@ func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResp
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "all_strict"
+		r.tagsMatch = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -570,8 +579,8 @@ func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResp
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -589,17 +598,17 @@ func (a *MemoryAPIService) GetGraphExecute(r ApiGetGraphRequest) (*GraphDataResp
 }
 
 type ApiGetGraphIntelligenceRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	type_ *string
-	limit *int32
-	q *string
-	tags *[]string
-	tagsMatch *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	type_         *string
+	limit         *int32
+	q             *string
+	tags          *[]string
+	tagsMatch     *string
 	confidenceMin *float32
-	nodeKind *string
-	windowDays *int32
+	nodeKind      *string
+	windowDays    *int32
 	authorization *string
 }
 
@@ -657,26 +666,27 @@ GetGraphIntelligence Get graph intelligence state graph
 
 Retrieve a state/topic graph with high-confidence changes, contradictions, and stale signals.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetGraphIntelligenceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetGraphIntelligenceRequest
 */
 func (a *MemoryAPIService) GetGraphIntelligence(ctx context.Context, bankId string) ApiGetGraphIntelligenceRequest {
 	return ApiGetGraphIntelligenceRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return GraphIntelligenceResponse
+//
+//	@return GraphIntelligenceResponse
 func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligenceRequest) (*GraphIntelligenceResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *GraphIntelligenceResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GraphIntelligenceResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetGraphIntelligence")
@@ -696,6 +706,9 @@ func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligence
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 18
+		r.limit = &defaultValue
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
@@ -713,12 +726,21 @@ func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligence
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "all_strict"
+		r.tagsMatch = &defaultValue
 	}
 	if r.confidenceMin != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "confidence_min", r.confidenceMin, "form", "")
+	} else {
+		var defaultValue float32 = 0.55
+		r.confidenceMin = &defaultValue
 	}
 	if r.nodeKind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "node_kind", r.nodeKind, "form", "")
+	} else {
+		var defaultValue string = "all"
+		r.nodeKind = &defaultValue
 	}
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
@@ -772,8 +794,8 @@ func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligence
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -791,21 +813,21 @@ func (a *MemoryAPIService) GetGraphIntelligenceExecute(r ApiGetGraphIntelligence
 }
 
 type ApiGetGraphNeighborhoodRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	surface *string
-	type_ *string
-	q *string
-	tags *[]string
-	tagsMatch *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	surface       *string
+	type_         *string
+	q             *string
+	tags          *[]string
+	tagsMatch     *string
 	confidenceMin *float32
-	nodeKind *string
-	windowDays *int32
-	focusIds *[]string
-	depth *int32
-	limitNodes *int32
-	limitEdges *int32
+	nodeKind      *string
+	windowDays    *int32
+	focusIds      *[]string
+	depth         *int32
+	limitNodes    *int32
+	limitEdges    *int32
 	authorization *string
 }
 
@@ -883,26 +905,27 @@ GetGraphNeighborhood Get focused graph neighborhood
 
 Retrieve a bounded neighborhood for focused graph exploration and detail rendering.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetGraphNeighborhoodRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetGraphNeighborhoodRequest
 */
 func (a *MemoryAPIService) GetGraphNeighborhood(ctx context.Context, bankId string) ApiGetGraphNeighborhoodRequest {
 	return ApiGetGraphNeighborhoodRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return GraphNeighborhoodResponse
+//
+//	@return GraphNeighborhoodResponse
 func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhoodRequest) (*GraphNeighborhoodResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *GraphNeighborhoodResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GraphNeighborhoodResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetGraphNeighborhood")
@@ -919,6 +942,9 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 
 	if r.surface != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "surface", r.surface, "form", "")
+	} else {
+		var defaultValue string = "state"
+		r.surface = &defaultValue
 	}
 	if r.type_ != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
@@ -939,12 +965,21 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "all_strict"
+		r.tagsMatch = &defaultValue
 	}
 	if r.confidenceMin != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "confidence_min", r.confidenceMin, "form", "")
+	} else {
+		var defaultValue float32 = 0.55
+		r.confidenceMin = &defaultValue
 	}
 	if r.nodeKind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "node_kind", r.nodeKind, "form", "")
+	} else {
+		var defaultValue string = "all"
+		r.nodeKind = &defaultValue
 	}
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
@@ -962,12 +997,21 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 	}
 	if r.depth != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "depth", r.depth, "form", "")
+	} else {
+		var defaultValue int32 = 1
+		r.depth = &defaultValue
 	}
 	if r.limitNodes != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit_nodes", r.limitNodes, "form", "")
+	} else {
+		var defaultValue int32 = 60
+		r.limitNodes = &defaultValue
 	}
 	if r.limitEdges != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit_edges", r.limitEdges, "form", "")
+	} else {
+		var defaultValue int32 = 140
+		r.limitEdges = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1018,8 +1062,8 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1037,17 +1081,17 @@ func (a *MemoryAPIService) GetGraphNeighborhoodExecute(r ApiGetGraphNeighborhood
 }
 
 type ApiGetGraphSummaryRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	surface *string
-	type_ *string
-	q *string
-	tags *[]string
-	tagsMatch *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	surface       *string
+	type_         *string
+	q             *string
+	tags          *[]string
+	tagsMatch     *string
 	confidenceMin *float32
-	nodeKind *string
-	windowDays *int32
+	nodeKind      *string
+	windowDays    *int32
 	authorization *string
 }
 
@@ -1105,26 +1149,27 @@ GetGraphSummary Get scalable graph summary
 
 Retrieve a clustered graph summary and top-use nodes for scalable graph exploration.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetGraphSummaryRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetGraphSummaryRequest
 */
 func (a *MemoryAPIService) GetGraphSummary(ctx context.Context, bankId string) ApiGetGraphSummaryRequest {
 	return ApiGetGraphSummaryRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return GraphSummaryResponse
+//
+//	@return GraphSummaryResponse
 func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (*GraphSummaryResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *GraphSummaryResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GraphSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetGraphSummary")
@@ -1141,6 +1186,9 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 
 	if r.surface != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "surface", r.surface, "form", "")
+	} else {
+		var defaultValue string = "state"
+		r.surface = &defaultValue
 	}
 	if r.type_ != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "type", r.type_, "form", "")
@@ -1161,12 +1209,21 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "all_strict"
+		r.tagsMatch = &defaultValue
 	}
 	if r.confidenceMin != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "confidence_min", r.confidenceMin, "form", "")
+	} else {
+		var defaultValue float32 = 0.55
+		r.confidenceMin = &defaultValue
 	}
 	if r.nodeKind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "node_kind", r.nodeKind, "form", "")
+	} else {
+		var defaultValue string = "all"
+		r.nodeKind = &defaultValue
 	}
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
@@ -1220,8 +1277,8 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1239,11 +1296,11 @@ func (a *MemoryAPIService) GetGraphSummaryExecute(r ApiGetGraphSummaryRequest) (
 }
 
 type ApiGetLlmRequestStatsRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	periodHours *int32
-	trunc *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	periodHours   *int32
+	trunc         *string
 	authorization *string
 }
 
@@ -1273,26 +1330,27 @@ GetLlmRequestStats Get LLM request trace statistics
 
 Return time-bucketed LLM request counts and token totals for one bank.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetLlmRequestStatsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetLlmRequestStatsRequest
 */
 func (a *MemoryAPIService) GetLlmRequestStats(ctx context.Context, bankId string) ApiGetLlmRequestStatsRequest {
 	return ApiGetLlmRequestStatsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return LLMRequestStatsResponse
+//
+//	@return LLMRequestStatsResponse
 func (a *MemoryAPIService) GetLlmRequestStatsExecute(r ApiGetLlmRequestStatsRequest) (*LLMRequestStatsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *LLMRequestStatsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *LLMRequestStatsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetLlmRequestStats")
@@ -1309,9 +1367,15 @@ func (a *MemoryAPIService) GetLlmRequestStatsExecute(r ApiGetLlmRequestStatsRequ
 
 	if r.periodHours != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "period_hours", r.periodHours, "form", "")
+	} else {
+		var defaultValue int32 = 24
+		r.periodHours = &defaultValue
 	}
 	if r.trunc != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "trunc", r.trunc, "form", "")
+	} else {
+		var defaultValue string = "hour"
+		r.trunc = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1362,8 +1426,8 @@ func (a *MemoryAPIService) GetLlmRequestStatsExecute(r ApiGetLlmRequestStatsRequ
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1381,11 +1445,11 @@ func (a *MemoryAPIService) GetLlmRequestStatsExecute(r ApiGetLlmRequestStatsRequ
 }
 
 type ApiGetMemoryRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	memoryId string
-	branchName *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	memoryId      string
+	branchName    *string
 	authorization *string
 }
 
@@ -1408,28 +1472,29 @@ GetMemory Get memory unit
 
 Get a single memory unit by ID with all its metadata including entities and tags. Note: the 'history' field is deprecated and always returns an empty list - use GET /memories/{memory_id}/history instead.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param memoryId
- @return ApiGetMemoryRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param memoryId
+	@return ApiGetMemoryRequest
 */
 func (a *MemoryAPIService) GetMemory(ctx context.Context, bankId string, memoryId string) ApiGetMemoryRequest {
 	return ApiGetMemoryRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		memoryId: memoryId,
+		ctx:        ctx,
+		bankId:     bankId,
+		memoryId:   memoryId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *MemoryAPIService) GetMemoryExecute(r ApiGetMemoryRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetMemory")
@@ -1497,8 +1562,8 @@ func (a *MemoryAPIService) GetMemoryExecute(r ApiGetMemoryRequest) (interface{},
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1516,10 +1581,10 @@ func (a *MemoryAPIService) GetMemoryExecute(r ApiGetMemoryRequest) (interface{},
 }
 
 type ApiGetObservationHistoryRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	memoryId string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	memoryId      string
 	authorization *string
 }
 
@@ -1537,28 +1602,29 @@ GetObservationHistory Get observation history
 
 Get the full history of an observation, with each change's source facts resolved to their text.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param memoryId
- @return ApiGetObservationHistoryRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param memoryId
+	@return ApiGetObservationHistoryRequest
 */
 func (a *MemoryAPIService) GetObservationHistory(ctx context.Context, bankId string, memoryId string) ApiGetObservationHistoryRequest {
 	return ApiGetObservationHistoryRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		memoryId: memoryId,
+		ctx:        ctx,
+		bankId:     bankId,
+		memoryId:   memoryId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *MemoryAPIService) GetObservationHistoryExecute(r ApiGetObservationHistoryRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetObservationHistory")
@@ -1623,8 +1689,8 @@ func (a *MemoryAPIService) GetObservationHistoryExecute(r ApiGetObservationHisto
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1642,14 +1708,14 @@ func (a *MemoryAPIService) GetObservationHistoryExecute(r ApiGetObservationHisto
 }
 
 type ApiGetTimelineRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	type_ *string
-	limit *int32
-	q *string
-	tags *[]string
-	tagsMatch *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	type_         *string
+	limit         *int32
+	q             *string
+	tags          *[]string
+	tagsMatch     *string
 	authorization *string
 }
 
@@ -1692,26 +1758,27 @@ GetTimeline Get normalized timeline data
 
 Retrieve git-style timeline items and edges for facts, observations, and mental models.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetTimelineRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetTimelineRequest
 */
 func (a *MemoryAPIService) GetTimeline(ctx context.Context, bankId string) ApiGetTimelineRequest {
 	return ApiGetTimelineRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return TimelineResponse
+//
+//	@return TimelineResponse
 func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*TimelineResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *TimelineResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *TimelineResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.GetTimeline")
@@ -1731,6 +1798,9 @@ func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*Timelin
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 500
+		r.limit = &defaultValue
 	}
 	if r.q != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "q", r.q, "form", "")
@@ -1748,6 +1818,9 @@ func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*Timelin
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "all_strict"
+		r.tagsMatch = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1798,8 +1871,8 @@ func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*Timelin
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1817,11 +1890,11 @@ func (a *MemoryAPIService) GetTimelineExecute(r ApiGetTimelineRequest) (*Timelin
 }
 
 type ApiInternetResearchRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx                     context.Context
+	ApiService              *MemoryAPIService
+	bankId                  string
 	internetResearchRequest *InternetResearchRequest
-	authorization *string
+	authorization           *string
 }
 
 func (r ApiInternetResearchRequest) InternetResearchRequest(internetResearchRequest InternetResearchRequest) ApiInternetResearchRequest {
@@ -1843,26 +1916,27 @@ InternetResearch Internet research (live web)
 
 Run the internet research agent: SearXNG search and optional Firecrawl extract. Uses the same LLM configuration as reflect for this bank. Does not read or write memories.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiInternetResearchRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiInternetResearchRequest
 */
 func (a *MemoryAPIService) InternetResearch(ctx context.Context, bankId string) ApiInternetResearchRequest {
 	return ApiInternetResearchRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return InternetResearchResponse
+//
+//	@return InternetResearchResponse
 func (a *MemoryAPIService) InternetResearchExecute(r ApiInternetResearchRequest) (*InternetResearchResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *InternetResearchResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *InternetResearchResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.InternetResearch")
@@ -1931,8 +2005,8 @@ func (a *MemoryAPIService) InternetResearchExecute(r ApiInternetResearchRequest)
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1950,11 +2024,11 @@ func (a *MemoryAPIService) InternetResearchExecute(r ApiInternetResearchRequest)
 }
 
 type ApiInvestigateGraphRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx                       context.Context
+	ApiService                *MemoryAPIService
+	bankId                    string
 	graphInvestigationRequest *GraphInvestigationRequest
-	authorization *string
+	authorization             *string
 }
 
 func (r ApiInvestigateGraphRequest) GraphInvestigationRequest(graphInvestigationRequest GraphInvestigationRequest) ApiInvestigateGraphRequest {
@@ -1976,26 +2050,27 @@ InvestigateGraph Investigate graph intelligence
 
 Ask a focused question over the state graph and return the relevant change events, evidence path, and checks.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiInvestigateGraphRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiInvestigateGraphRequest
 */
 func (a *MemoryAPIService) InvestigateGraph(ctx context.Context, bankId string) ApiInvestigateGraphRequest {
 	return ApiInvestigateGraphRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return GraphInvestigationResponse
+//
+//	@return GraphInvestigationResponse
 func (a *MemoryAPIService) InvestigateGraphExecute(r ApiInvestigateGraphRequest) (*GraphInvestigationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *GraphInvestigationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *GraphInvestigationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.InvestigateGraph")
@@ -2064,8 +2139,8 @@ func (a *MemoryAPIService) InvestigateGraphExecute(r ApiInvestigateGraphRequest)
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2083,15 +2158,15 @@ func (a *MemoryAPIService) InvestigateGraphExecute(r ApiInvestigateGraphRequest)
 }
 
 type ApiListLlmRequestsRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	limit *int32
-	offset *int32
-	traceId *string
-	status *string
-	operation *string
-	provider *string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	limit         *int32
+	offset        *int32
+	traceId       *string
+	status        *string
+	operation     *string
+	provider      *string
 	authorization *string
 }
 
@@ -2145,26 +2220,27 @@ ListLlmRequests List LLM request traces
 
 List database-backed LLM request traces for one bank.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListLlmRequestsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListLlmRequestsRequest
 */
 func (a *MemoryAPIService) ListLlmRequests(ctx context.Context, bankId string) ApiListLlmRequestsRequest {
 	return ApiListLlmRequestsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return LLMRequestListResponse
+//
+//	@return LLMRequestListResponse
 func (a *MemoryAPIService) ListLlmRequestsExecute(r ApiListLlmRequestsRequest) (*LLMRequestListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *LLMRequestListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *LLMRequestListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.ListLlmRequests")
@@ -2181,9 +2257,15 @@ func (a *MemoryAPIService) ListLlmRequestsExecute(r ApiListLlmRequestsRequest) (
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	if r.traceId != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "trace_id", r.traceId, "form", "")
@@ -2246,8 +2328,8 @@ func (a *MemoryAPIService) ListLlmRequestsExecute(r ApiListLlmRequestsRequest) (
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2265,14 +2347,14 @@ func (a *MemoryAPIService) ListLlmRequestsExecute(r ApiListLlmRequestsRequest) (
 }
 
 type ApiListMemoriesRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	type_ *string
-	q *string
-	branchName *string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	type_         *string
+	q             *string
+	branchName    *string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -2315,26 +2397,27 @@ ListMemories List memory units
 
 List memory units with pagination and optional full-text search. Supports filtering by type. Results are sorted by most recent first (mentioned_at DESC, then created_at DESC).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListMemoriesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListMemoriesRequest
 */
 func (a *MemoryAPIService) ListMemories(ctx context.Context, bankId string) ApiListMemoriesRequest {
 	return ApiListMemoriesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ListMemoryUnitsResponse
+//
+//	@return ListMemoryUnitsResponse
 func (a *MemoryAPIService) ListMemoriesExecute(r ApiListMemoriesRequest) (*ListMemoryUnitsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListMemoryUnitsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListMemoryUnitsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.ListMemories")
@@ -2360,9 +2443,15 @@ func (a *MemoryAPIService) ListMemoriesExecute(r ApiListMemoriesRequest) (*ListM
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2413,8 +2502,8 @@ func (a *MemoryAPIService) ListMemoriesExecute(r ApiListMemoriesRequest) (*ListM
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2432,12 +2521,12 @@ func (a *MemoryAPIService) ListMemoriesExecute(r ApiListMemoriesRequest) (*ListM
 }
 
 type ApiListTagsRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
-	q *string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
+	q             *string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -2473,26 +2562,27 @@ ListTags List tags
 
 List all unique tags in a memory bank with usage counts. Supports wildcard search using '*' (e.g., 'user:*', '*-fred', 'tag*-2'). Case-insensitive.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListTagsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListTagsRequest
 */
 func (a *MemoryAPIService) ListTags(ctx context.Context, bankId string) ApiListTagsRequest {
 	return ApiListTagsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ListTagsResponse
+//
+//	@return ListTagsResponse
 func (a *MemoryAPIService) ListTagsExecute(r ApiListTagsRequest) (*ListTagsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListTagsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListTagsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.ListTags")
@@ -2512,9 +2602,15 @@ func (a *MemoryAPIService) ListTagsExecute(r ApiListTagsRequest) (*ListTagsRespo
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2565,8 +2661,8 @@ func (a *MemoryAPIService) ListTagsExecute(r ApiListTagsRequest) (*ListTagsRespo
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2584,9 +2680,9 @@ func (a *MemoryAPIService) ListTagsExecute(r ApiListTagsRequest) (*ListTagsRespo
 }
 
 type ApiRecallMemoriesRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
 	recallRequest *RecallRequest
 	authorization *string
 }
@@ -2614,26 +2710,27 @@ The type parameter is optional and must be one of:
 - `world`: General knowledge about people, places, events, and things that happen
 - `experience`: Memories about experience, conversations, actions taken, and tasks performed
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiRecallMemoriesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiRecallMemoriesRequest
 */
 func (a *MemoryAPIService) RecallMemories(ctx context.Context, bankId string) ApiRecallMemoriesRequest {
 	return ApiRecallMemoriesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return RecallResponse
+//
+//	@return RecallResponse
 func (a *MemoryAPIService) RecallMemoriesExecute(r ApiRecallMemoriesRequest) (*RecallResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RecallResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RecallResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.RecallMemories")
@@ -2702,8 +2799,8 @@ func (a *MemoryAPIService) RecallMemoriesExecute(r ApiRecallMemoriesRequest) (*R
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2721,11 +2818,11 @@ func (a *MemoryAPIService) RecallMemoriesExecute(r ApiRecallMemoriesRequest) (*R
 }
 
 type ApiReflectRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx            context.Context
+	ApiService     *MemoryAPIService
+	bankId         string
 	reflectRequest *ReflectRequest
-	authorization *string
+	authorization  *string
 }
 
 func (r ApiReflectRequest) ReflectRequest(reflectRequest ReflectRequest) ApiReflectRequest {
@@ -2754,26 +2851,27 @@ This endpoint:
 4. Uses LLM to formulate a contextual answer
 5. Returns plain text answer and the facts used
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiReflectRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiReflectRequest
 */
 func (a *MemoryAPIService) Reflect(ctx context.Context, bankId string) ApiReflectRequest {
 	return ApiReflectRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ReflectResponse
+//
+//	@return ReflectResponse
 func (a *MemoryAPIService) ReflectExecute(r ApiReflectRequest) (*ReflectResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ReflectResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ReflectResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.Reflect")
@@ -2842,8 +2940,8 @@ func (a *MemoryAPIService) ReflectExecute(r ApiReflectRequest) (*ReflectResponse
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2861,9 +2959,9 @@ func (a *MemoryAPIService) ReflectExecute(r ApiReflectRequest) (*ReflectResponse
 }
 
 type ApiRetainMemoriesRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *MemoryAPIService
+	bankId        string
 	retainRequest *RetainRequest
 	authorization *string
 }
@@ -2910,26 +3008,27 @@ This is the main endpoint for storing memories. It supports both synchronous and
 
 **Note:** If a memory item has a `document_id` that already exists, the old document and its memory units will be deleted before creating new ones (upsert behavior).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiRetainMemoriesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiRetainMemoriesRequest
 */
 func (a *MemoryAPIService) RetainMemories(ctx context.Context, bankId string) ApiRetainMemoriesRequest {
 	return ApiRetainMemoriesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return RetainResponse
+//
+//	@return RetainResponse
 func (a *MemoryAPIService) RetainMemoriesExecute(r ApiRetainMemoriesRequest) (*RetainResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RetainResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RetainResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.RetainMemories")
@@ -2998,8 +3097,8 @@ func (a *MemoryAPIService) RetainMemoriesExecute(r ApiRetainMemoriesRequest) (*R
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3017,11 +3116,11 @@ func (a *MemoryAPIService) RetainMemoriesExecute(r ApiRetainMemoriesRequest) (*R
 }
 
 type ApiSubmitAsyncReflectRequest struct {
-	ctx context.Context
-	ApiService *MemoryAPIService
-	bankId string
+	ctx            context.Context
+	ApiService     *MemoryAPIService
+	bankId         string
 	reflectRequest *ReflectRequest
-	authorization *string
+	authorization  *string
 }
 
 func (r ApiSubmitAsyncReflectRequest) ReflectRequest(reflectRequest ReflectRequest) ApiSubmitAsyncReflectRequest {
@@ -3043,26 +3142,27 @@ SubmitAsyncReflect Submit async reflect
 
 Queue a reflect operation for background execution and retrieve the result via the operations API.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiSubmitAsyncReflectRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiSubmitAsyncReflectRequest
 */
 func (a *MemoryAPIService) SubmitAsyncReflect(ctx context.Context, bankId string) ApiSubmitAsyncReflectRequest {
 	return ApiSubmitAsyncReflectRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return AsyncOperationSubmitResponse
+//
+//	@return AsyncOperationSubmitResponse
 func (a *MemoryAPIService) SubmitAsyncReflectExecute(r ApiSubmitAsyncReflectRequest) (*AsyncOperationSubmitResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *AsyncOperationSubmitResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *AsyncOperationSubmitResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryAPIService.SubmitAsyncReflect")
@@ -3131,8 +3231,8 @@ func (a *MemoryAPIService) SubmitAsyncReflectExecute(r ApiSubmitAsyncReflectRequ
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

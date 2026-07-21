@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.getAll("tags");
 
     const response = await sdk.getGraph({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       query: {
         type: type,
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       console.error("Graph API error:", response.error);
       return NextResponse.json(
         { error: response.error || "Failed to fetch graph data" },
-        { status: 500 }
+        { status: response.response?.status ?? 502 }
       );
     }
 

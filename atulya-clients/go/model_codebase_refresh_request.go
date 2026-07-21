@@ -19,8 +19,8 @@ var _ MappedNullable = &CodebaseRefreshRequest{}
 
 // CodebaseRefreshRequest Explicit codebase refresh request.
 type CodebaseRefreshRequest struct {
-	Ref NullableString `json:"ref,omitempty"`
-	FullRebuild *bool `json:"full_rebuild,omitempty"`
+	Ref         NullableString `json:"ref,omitempty"`
+	FullRebuild *bool          `json:"full_rebuild,omitempty"`
 }
 
 // NewCodebaseRefreshRequest instantiates a new CodebaseRefreshRequest object
@@ -29,6 +29,8 @@ type CodebaseRefreshRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseRefreshRequest() *CodebaseRefreshRequest {
 	this := CodebaseRefreshRequest{}
+	var fullRebuild bool = false
+	this.FullRebuild = &fullRebuild
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewCodebaseRefreshRequest() *CodebaseRefreshRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRefreshRequestWithDefaults() *CodebaseRefreshRequest {
 	this := CodebaseRefreshRequest{}
+	var fullRebuild bool = false
+	this.FullRebuild = &fullRebuild
 	return &this
 }
 
@@ -72,6 +76,7 @@ func (o *CodebaseRefreshRequest) HasRef() bool {
 func (o *CodebaseRefreshRequest) SetRef(v string) {
 	o.Ref.Set(&v)
 }
+
 // SetRefNil sets the value for Ref to be an explicit nil
 func (o *CodebaseRefreshRequest) SetRefNil() {
 	o.Ref.Set(nil)
@@ -115,7 +120,7 @@ func (o *CodebaseRefreshRequest) SetFullRebuild(v bool) {
 }
 
 func (o CodebaseRefreshRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -168,5 +173,3 @@ func (v *NullableCodebaseRefreshRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

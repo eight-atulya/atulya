@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,11 +22,11 @@ var _ MappedNullable = &ReflectResponse{}
 // ReflectResponse Response model for think endpoint.
 type ReflectResponse struct {
 	// The reflect response as well-formatted markdown (headers, lists, bold/italic, code blocks, etc.)
-	Text string `json:"text"`
-	BasedOn NullableReflectBasedOn `json:"based_on,omitempty"`
+	Text             string                 `json:"text"`
+	BasedOn          NullableReflectBasedOn `json:"based_on,omitempty"`
 	StructuredOutput map[string]interface{} `json:"structured_output,omitempty"`
-	Usage NullableTokenUsage `json:"usage,omitempty"`
-	Trace NullableReflectTrace `json:"trace,omitempty"`
+	Usage            NullableTokenUsage     `json:"usage,omitempty"`
+	Trace            NullableReflectTrace   `json:"trace,omitempty"`
 }
 
 type _ReflectResponse ReflectResponse
@@ -105,6 +105,7 @@ func (o *ReflectResponse) HasBasedOn() bool {
 func (o *ReflectResponse) SetBasedOn(v ReflectBasedOn) {
 	o.BasedOn.Set(&v)
 }
+
 // SetBasedOnNil sets the value for BasedOn to be an explicit nil
 func (o *ReflectResponse) SetBasedOnNil() {
 	o.BasedOn.Set(nil)
@@ -180,6 +181,7 @@ func (o *ReflectResponse) HasUsage() bool {
 func (o *ReflectResponse) SetUsage(v TokenUsage) {
 	o.Usage.Set(&v)
 }
+
 // SetUsageNil sets the value for Usage to be an explicit nil
 func (o *ReflectResponse) SetUsageNil() {
 	o.Usage.Set(nil)
@@ -222,6 +224,7 @@ func (o *ReflectResponse) HasTrace() bool {
 func (o *ReflectResponse) SetTrace(v ReflectTrace) {
 	o.Trace.Set(&v)
 }
+
 // SetTraceNil sets the value for Trace to be an explicit nil
 func (o *ReflectResponse) SetTraceNil() {
 	o.Trace.Set(nil)
@@ -233,7 +236,7 @@ func (o *ReflectResponse) UnsetTrace() {
 }
 
 func (o ReflectResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -271,10 +274,10 @@ func (o *ReflectResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -330,5 +333,3 @@ func (v *NullableReflectResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

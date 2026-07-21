@@ -30,7 +30,18 @@ async def test_submit_async_retain_includes_document_tags_in_task_payload():
 
     engine._get_pool = AsyncMock(return_value=mock_pool)
 
-    request_context = RequestContext(tenant_id="tenant-a", api_key_id="key-a")
+    request_context = RequestContext(
+        tenant_id="tenant-a",
+        api_key_id="key-a",
+        org_id="org-a",
+        membership_id="membership-a",
+        principal_id="principal-a",
+        principal_type="human",
+        role="owner",
+        schema_name="org_a",
+        allowed_actions=["memory.retain"],
+        action_scopes={"memory.retain": ["org:*"]},
+    )
     contents = [{"content": "Async retain payload test."}]
     document_tags = ["scope:tools", "user:alice"]
 
@@ -62,6 +73,12 @@ async def test_submit_async_retain_includes_document_tags_in_task_payload():
     assert kwargs["task_payload"]["document_tags"] == document_tags
     assert kwargs["task_payload"]["_tenant_id"] == "tenant-a"
     assert kwargs["task_payload"]["_api_key_id"] == "key-a"
+    assert kwargs["request_context"] is request_context
+    authorization = request_context.to_task_authorization()
+    assert authorization["principal_id"] == "principal-a"
+    assert authorization["allowed_actions"] == ["memory.retain"]
+    assert authorization["action_scopes"] == {"memory.retain": ["org:*"]}
+    assert "api_key" not in authorization
 
 
 @pytest.mark.asyncio
@@ -92,3 +109,44 @@ async def test_handle_batch_retain_forwards_document_tags_to_retain_batch_async(
     assert request_context.user_initiated is True
     assert request_context.tenant_id == "tenant-a"
     assert request_context.api_key_id == "key-a"
+
+
+@pytest.mark.asyncio
+async def test_worker_restores_effective_authorization_from_task_envelope():
+    """A session-authenticated task must retain its action and bank scope in the worker."""
+    engine = MemoryEngine.__new__(MemoryEngine)
+    engine._initialized = True
+    engine.retain_batch_async = AsyncMock(return_value={"items_count": 1})
+
+    await MemoryEngine._handle_batch_retain(
+        engine,
+        {
+            "bank_id": "bank-1",
+            "contents": [{"content": "Authorization envelope test."}],
+            "_authorization": {
+                "version": 1,
+                "tenant_id": "org-a",
+                "org_id": "org-a",
+                "membership_id": "membership-a",
+                "principal_id": "principal-a",
+                "principal_type": "human",
+                "role": "operator",
+                "schema_name": "org_a",
+                "allowed_actions": ["memory.retain"],
+                "action_scopes": {"memory.retain": ["bank:bank-1"]},
+                "user_initiated": True,
+            },
+        },
+    )
+
+    request_context = engine.retain_batch_async.await_args.kwargs["request_context"]
+    assert request_context.internal is True
+    assert request_context.user_initiated is True
+    assert request_context.principal_id == "principal-a"
+    assert request_context.allowed_actions == ["memory.retain"]
+    assert request_context.action_scopes == {"memory.retain": ["bank:bank-1"]}
+
+    from atulya_api.auth import can_perform
+
+    assert can_perform(request_context, "memory.retain", "bank-1") is True
+    assert can_perform(request_context, "memory.retain", "other-bank") is False

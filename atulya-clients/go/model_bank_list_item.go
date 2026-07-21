@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &BankListItem{}
 
 // BankListItem Bank list item with profile summary.
 type BankListItem struct {
-	BankId string `json:"bank_id"`
-	Name NullableString `json:"name,omitempty"`
+	BankId      string            `json:"bank_id"`
+	Name        NullableString    `json:"name,omitempty"`
 	Disposition DispositionTraits `json:"disposition"`
-	Mission NullableString `json:"mission,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
+	Mission     NullableString    `json:"mission,omitempty"`
+	CreatedAt   NullableString    `json:"created_at,omitempty"`
+	UpdatedAt   NullableString    `json:"updated_at,omitempty"`
 }
 
 type _BankListItem BankListItem
@@ -106,6 +106,7 @@ func (o *BankListItem) HasName() bool {
 func (o *BankListItem) SetName(v string) {
 	o.Name.Set(&v)
 }
+
 // SetNameNil sets the value for Name to be an explicit nil
 func (o *BankListItem) SetNameNil() {
 	o.Name.Set(nil)
@@ -172,6 +173,7 @@ func (o *BankListItem) HasMission() bool {
 func (o *BankListItem) SetMission(v string) {
 	o.Mission.Set(&v)
 }
+
 // SetMissionNil sets the value for Mission to be an explicit nil
 func (o *BankListItem) SetMissionNil() {
 	o.Mission.Set(nil)
@@ -214,6 +216,7 @@ func (o *BankListItem) HasCreatedAt() bool {
 func (o *BankListItem) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *BankListItem) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -256,6 +259,7 @@ func (o *BankListItem) HasUpdatedAt() bool {
 func (o *BankListItem) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *BankListItem) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -267,7 +271,7 @@ func (o *BankListItem) UnsetUpdatedAt() {
 }
 
 func (o BankListItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -307,10 +311,10 @@ func (o *BankListItem) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -366,5 +370,3 @@ func (v *NullableBankListItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

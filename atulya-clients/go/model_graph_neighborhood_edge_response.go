@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,16 +21,16 @@ var _ MappedNullable = &GraphNeighborhoodEdgeResponse{}
 
 // GraphNeighborhoodEdgeResponse struct for GraphNeighborhoodEdgeResponse
 type GraphNeighborhoodEdgeResponse struct {
-	Id string `json:"id"`
-	Source string `json:"source"`
-	Target string `json:"target"`
-	Kind *string `json:"kind,omitempty"`
-	Label NullableString `json:"label,omitempty"`
-	Stroke NullableString `json:"stroke,omitempty"`
-	Dashed *bool `json:"dashed,omitempty"`
-	Width *float32 `json:"width,omitempty"`
-	Animated *bool `json:"animated,omitempty"`
-	Priority *float32 `json:"priority,omitempty"`
+	Id       string         `json:"id"`
+	Source   string         `json:"source"`
+	Target   string         `json:"target"`
+	Kind     *string        `json:"kind,omitempty"`
+	Label    NullableString `json:"label,omitempty"`
+	Stroke   NullableString `json:"stroke,omitempty"`
+	Dashed   *bool          `json:"dashed,omitempty"`
+	Width    *float32       `json:"width,omitempty"`
+	Animated *bool          `json:"animated,omitempty"`
+	Priority *float32       `json:"priority,omitempty"`
 }
 
 type _GraphNeighborhoodEdgeResponse GraphNeighborhoodEdgeResponse
@@ -44,6 +44,16 @@ func NewGraphNeighborhoodEdgeResponse(id string, source string, target string) *
 	this.Id = id
 	this.Source = source
 	this.Target = target
+	var kind string = "relation"
+	this.Kind = &kind
+	var dashed bool = false
+	this.Dashed = &dashed
+	var width float32 = 1.6
+	this.Width = &width
+	var animated bool = true
+	this.Animated = &animated
+	var priority float32 = 0.0
+	this.Priority = &priority
 	return &this
 }
 
@@ -52,6 +62,16 @@ func NewGraphNeighborhoodEdgeResponse(id string, source string, target string) *
 // but it doesn't guarantee that properties required by API are set
 func NewGraphNeighborhoodEdgeResponseWithDefaults() *GraphNeighborhoodEdgeResponse {
 	this := GraphNeighborhoodEdgeResponse{}
+	var kind string = "relation"
+	this.Kind = &kind
+	var dashed bool = false
+	this.Dashed = &dashed
+	var width float32 = 1.6
+	this.Width = &width
+	var animated bool = true
+	this.Animated = &animated
+	var priority float32 = 0.0
+	this.Priority = &priority
 	return &this
 }
 
@@ -191,6 +211,7 @@ func (o *GraphNeighborhoodEdgeResponse) HasLabel() bool {
 func (o *GraphNeighborhoodEdgeResponse) SetLabel(v string) {
 	o.Label.Set(&v)
 }
+
 // SetLabelNil sets the value for Label to be an explicit nil
 func (o *GraphNeighborhoodEdgeResponse) SetLabelNil() {
 	o.Label.Set(nil)
@@ -233,6 +254,7 @@ func (o *GraphNeighborhoodEdgeResponse) HasStroke() bool {
 func (o *GraphNeighborhoodEdgeResponse) SetStroke(v string) {
 	o.Stroke.Set(&v)
 }
+
 // SetStrokeNil sets the value for Stroke to be an explicit nil
 func (o *GraphNeighborhoodEdgeResponse) SetStrokeNil() {
 	o.Stroke.Set(nil)
@@ -372,7 +394,7 @@ func (o *GraphNeighborhoodEdgeResponse) SetPriority(v float32) {
 }
 
 func (o GraphNeighborhoodEdgeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -423,10 +445,10 @@ func (o *GraphNeighborhoodEdgeResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -482,5 +504,3 @@ func (v *NullableGraphNeighborhoodEdgeResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

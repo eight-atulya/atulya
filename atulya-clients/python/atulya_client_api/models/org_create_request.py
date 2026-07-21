@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class OrgCreateRequest(BaseModel):
     """
@@ -31,13 +30,12 @@ class OrgCreateRequest(BaseModel):
     slug: StrictStr
     name: StrictStr
     owner_email: StrictStr
-    owner_password: Annotated[str, Field(min_length=12, strict=True)]
+    owner_password: Optional[Annotated[str, Field(min_length=12, strict=True)]] = None
     owner_name: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["slug", "name", "owner_email", "owner_password", "owner_name"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -49,7 +47,8 @@ class OrgCreateRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -74,6 +73,11 @@ class OrgCreateRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if owner_password (nullable) is None
+        # and model_fields_set contains the field
+        if self.owner_password is None and "owner_password" in self.model_fields_set:
+            _dict['owner_password'] = None
+
         # set to None if owner_name (nullable) is None
         # and model_fields_set contains the field
         if self.owner_name is None and "owner_name" in self.model_fields_set:

@@ -16,21 +16,20 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"reflect"
+	"strings"
 )
-
 
 // DocumentsAPIService DocumentsAPI service
 type DocumentsAPIService service
 
 type ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest struct {
-	ctx context.Context
-	ApiService *DocumentsAPIService
-	bankId string
-	documentId string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *DocumentsAPIService
+	bankId        string
+	documentId    string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -60,28 +59,29 @@ ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGet List ch
 
 List all chunks IDs and metadata associated with a specific document.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param documentId
- @return ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param documentId
+	@return ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest
 */
 func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGet(ctx context.Context, bankId string, documentId string) ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest {
 	return ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		documentId: documentId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetExecute(r ApiApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGet")
@@ -99,9 +99,15 @@ func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocume
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 200
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -152,8 +158,8 @@ func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocume
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -171,12 +177,12 @@ func (a *DocumentsAPIService) ApiListChunksForDocumentV1DefaultBanksBankIdDocume
 }
 
 type ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest struct {
-	ctx context.Context
-	ApiService *DocumentsAPIService
-	bankId string
-	documentId string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *DocumentsAPIService
+	bankId        string
+	documentId    string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -206,28 +212,29 @@ ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGet List m
 
 List all memory units and observations associated with a specific document.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param documentId
- @return ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param documentId
+	@return ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest
 */
 func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGet(ctx context.Context, bankId string, documentId string) ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest {
 	return ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		documentId: documentId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetExecute(r ApiApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGet")
@@ -245,9 +252,15 @@ func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumen
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 200
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -298,8 +311,8 @@ func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumen
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -317,10 +330,10 @@ func (a *DocumentsAPIService) ApiListDocumentMemoriesV1DefaultBanksBankIdDocumen
 }
 
 type ApiDeleteDocumentRequest struct {
-	ctx context.Context
-	ApiService *DocumentsAPIService
-	bankId string
-	documentId string
+	ctx           context.Context
+	ApiService    *DocumentsAPIService
+	bankId        string
+	documentId    string
 	authorization *string
 }
 
@@ -345,28 +358,29 @@ This will cascade delete:
 
 This operation cannot be undone.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param documentId
- @return ApiDeleteDocumentRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param documentId
+	@return ApiDeleteDocumentRequest
 */
 func (a *DocumentsAPIService) DeleteDocument(ctx context.Context, bankId string, documentId string) ApiDeleteDocumentRequest {
 	return ApiDeleteDocumentRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		documentId: documentId,
 	}
 }
 
 // Execute executes the request
-//  @return DeleteDocumentResponse
+//
+//	@return DeleteDocumentResponse
 func (a *DocumentsAPIService) DeleteDocumentExecute(r ApiDeleteDocumentRequest) (*DeleteDocumentResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DeleteDocumentResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DeleteDocumentResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.DeleteDocument")
@@ -431,8 +445,8 @@ func (a *DocumentsAPIService) DeleteDocumentExecute(r ApiDeleteDocumentRequest) 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -450,9 +464,9 @@ func (a *DocumentsAPIService) DeleteDocumentExecute(r ApiDeleteDocumentRequest) 
 }
 
 type ApiGetChunkRequest struct {
-	ctx context.Context
-	ApiService *DocumentsAPIService
-	chunkId string
+	ctx           context.Context
+	ApiService    *DocumentsAPIService
+	chunkId       string
 	authorization *string
 }
 
@@ -470,26 +484,27 @@ GetChunk Get chunk details
 
 Get a specific chunk by its ID
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param chunkId
- @return ApiGetChunkRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param chunkId
+	@return ApiGetChunkRequest
 */
 func (a *DocumentsAPIService) GetChunk(ctx context.Context, chunkId string) ApiGetChunkRequest {
 	return ApiGetChunkRequest{
 		ApiService: a,
-		ctx: ctx,
-		chunkId: chunkId,
+		ctx:        ctx,
+		chunkId:    chunkId,
 	}
 }
 
 // Execute executes the request
-//  @return ChunkResponse
+//
+//	@return ChunkResponse
 func (a *DocumentsAPIService) GetChunkExecute(r ApiGetChunkRequest) (*ChunkResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ChunkResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ChunkResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.GetChunk")
@@ -553,8 +568,8 @@ func (a *DocumentsAPIService) GetChunkExecute(r ApiGetChunkRequest) (*ChunkRespo
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -572,11 +587,11 @@ func (a *DocumentsAPIService) GetChunkExecute(r ApiGetChunkRequest) (*ChunkRespo
 }
 
 type ApiGetDocumentRequest struct {
-	ctx context.Context
-	ApiService *DocumentsAPIService
-	bankId string
-	documentId string
-	branchName *string
+	ctx           context.Context
+	ApiService    *DocumentsAPIService
+	bankId        string
+	documentId    string
+	branchName    *string
 	authorization *string
 }
 
@@ -599,28 +614,29 @@ GetDocument Get document details
 
 Get a specific document including its original text
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param documentId
- @return ApiGetDocumentRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param documentId
+	@return ApiGetDocumentRequest
 */
 func (a *DocumentsAPIService) GetDocument(ctx context.Context, bankId string, documentId string) ApiGetDocumentRequest {
 	return ApiGetDocumentRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		documentId: documentId,
 	}
 }
 
 // Execute executes the request
-//  @return DocumentResponse
+//
+//	@return DocumentResponse
 func (a *DocumentsAPIService) GetDocumentExecute(r ApiGetDocumentRequest) (*DocumentResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DocumentResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DocumentResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.GetDocument")
@@ -688,8 +704,8 @@ func (a *DocumentsAPIService) GetDocumentExecute(r ApiGetDocumentRequest) (*Docu
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -707,15 +723,15 @@ func (a *DocumentsAPIService) GetDocumentExecute(r ApiGetDocumentRequest) (*Docu
 }
 
 type ApiListDocumentsRequest struct {
-	ctx context.Context
-	ApiService *DocumentsAPIService
-	bankId string
-	q *string
-	branchName *string
-	tags *[]string
-	tagsMatch *string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *DocumentsAPIService
+	bankId        string
+	q             *string
+	branchName    *string
+	tags          *[]string
+	tagsMatch     *string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -767,26 +783,27 @@ ListDocuments List documents
 
 List documents with pagination and optional search. Documents are the source content from which memory units are extracted.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListDocumentsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListDocumentsRequest
 */
 func (a *DocumentsAPIService) ListDocuments(ctx context.Context, bankId string) ApiListDocumentsRequest {
 	return ApiListDocumentsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ListDocumentsResponse
+//
+//	@return ListDocumentsResponse
 func (a *DocumentsAPIService) ListDocumentsExecute(r ApiListDocumentsRequest) (*ListDocumentsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ListDocumentsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ListDocumentsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DocumentsAPIService.ListDocuments")
@@ -820,12 +837,21 @@ func (a *DocumentsAPIService) ListDocumentsExecute(r ApiListDocumentsRequest) (*
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "any_strict"
+		r.tagsMatch = &defaultValue
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -876,8 +902,8 @@ func (a *DocumentsAPIService) ListDocumentsExecute(r ApiListDocumentsRequest) (*
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

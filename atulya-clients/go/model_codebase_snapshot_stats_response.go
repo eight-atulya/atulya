@@ -19,23 +19,23 @@ var _ MappedNullable = &CodebaseSnapshotStatsResponse{}
 
 // CodebaseSnapshotStatsResponse Snapshot-level deterministic indexing stats.
 type CodebaseSnapshotStatsResponse struct {
-	TotalFiles *int32 `json:"total_files,omitempty"`
-	IndexedFiles *int32 `json:"indexed_files,omitempty"`
-	RetainedFiles *int32 `json:"retained_files,omitempty"`
-	ManifestOnlyFiles *int32 `json:"manifest_only_files,omitempty"`
-	ExcludedFiles *int32 `json:"excluded_files,omitempty"`
-	SymbolCount *int32 `json:"symbol_count,omitempty"`
-	EdgeCount *int32 `json:"edge_count,omitempty"`
-	AddedFiles *int32 `json:"added_files,omitempty"`
-	ChangedFiles *int32 `json:"changed_files,omitempty"`
-	UnchangedFiles *int32 `json:"unchanged_files,omitempty"`
-	DeletedFiles *int32 `json:"deleted_files,omitempty"`
-	ChunkCount *int32 `json:"chunk_count,omitempty"`
-	ClusterCount *int32 `json:"cluster_count,omitempty"`
-	RelatedChunkCount *int32 `json:"related_chunk_count,omitempty"`
-	ParseCoverage *float32 `json:"parse_coverage,omitempty"`
-	ReviewCounts *CodebaseReviewCountsResponse `json:"review_counts,omitempty"`
-	Error NullableString `json:"error,omitempty"`
+	TotalFiles        *int32                        `json:"total_files,omitempty"`
+	IndexedFiles      *int32                        `json:"indexed_files,omitempty"`
+	RetainedFiles     *int32                        `json:"retained_files,omitempty"`
+	ManifestOnlyFiles *int32                        `json:"manifest_only_files,omitempty"`
+	ExcludedFiles     *int32                        `json:"excluded_files,omitempty"`
+	SymbolCount       *int32                        `json:"symbol_count,omitempty"`
+	EdgeCount         *int32                        `json:"edge_count,omitempty"`
+	AddedFiles        *int32                        `json:"added_files,omitempty"`
+	ChangedFiles      *int32                        `json:"changed_files,omitempty"`
+	UnchangedFiles    *int32                        `json:"unchanged_files,omitempty"`
+	DeletedFiles      *int32                        `json:"deleted_files,omitempty"`
+	ChunkCount        *int32                        `json:"chunk_count,omitempty"`
+	ClusterCount      *int32                        `json:"cluster_count,omitempty"`
+	RelatedChunkCount *int32                        `json:"related_chunk_count,omitempty"`
+	ParseCoverage     *float32                      `json:"parse_coverage,omitempty"`
+	ReviewCounts      *CodebaseReviewCountsResponse `json:"review_counts,omitempty"`
+	Error             NullableString                `json:"error,omitempty"`
 }
 
 // NewCodebaseSnapshotStatsResponse instantiates a new CodebaseSnapshotStatsResponse object
@@ -44,6 +44,36 @@ type CodebaseSnapshotStatsResponse struct {
 // will change when the set of required properties is changed
 func NewCodebaseSnapshotStatsResponse() *CodebaseSnapshotStatsResponse {
 	this := CodebaseSnapshotStatsResponse{}
+	var totalFiles int32 = 0
+	this.TotalFiles = &totalFiles
+	var indexedFiles int32 = 0
+	this.IndexedFiles = &indexedFiles
+	var retainedFiles int32 = 0
+	this.RetainedFiles = &retainedFiles
+	var manifestOnlyFiles int32 = 0
+	this.ManifestOnlyFiles = &manifestOnlyFiles
+	var excludedFiles int32 = 0
+	this.ExcludedFiles = &excludedFiles
+	var symbolCount int32 = 0
+	this.SymbolCount = &symbolCount
+	var edgeCount int32 = 0
+	this.EdgeCount = &edgeCount
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var unchangedFiles int32 = 0
+	this.UnchangedFiles = &unchangedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -52,6 +82,36 @@ func NewCodebaseSnapshotStatsResponse() *CodebaseSnapshotStatsResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseSnapshotStatsResponseWithDefaults() *CodebaseSnapshotStatsResponse {
 	this := CodebaseSnapshotStatsResponse{}
+	var totalFiles int32 = 0
+	this.TotalFiles = &totalFiles
+	var indexedFiles int32 = 0
+	this.IndexedFiles = &indexedFiles
+	var retainedFiles int32 = 0
+	this.RetainedFiles = &retainedFiles
+	var manifestOnlyFiles int32 = 0
+	this.ManifestOnlyFiles = &manifestOnlyFiles
+	var excludedFiles int32 = 0
+	this.ExcludedFiles = &excludedFiles
+	var symbolCount int32 = 0
+	this.SymbolCount = &symbolCount
+	var edgeCount int32 = 0
+	this.EdgeCount = &edgeCount
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var unchangedFiles int32 = 0
+	this.UnchangedFiles = &unchangedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -599,6 +659,7 @@ func (o *CodebaseSnapshotStatsResponse) HasError() bool {
 func (o *CodebaseSnapshotStatsResponse) SetError(v string) {
 	o.Error.Set(&v)
 }
+
 // SetErrorNil sets the value for Error to be an explicit nil
 func (o *CodebaseSnapshotStatsResponse) SetErrorNil() {
 	o.Error.Set(nil)
@@ -610,7 +671,7 @@ func (o *CodebaseSnapshotStatsResponse) UnsetError() {
 }
 
 func (o CodebaseSnapshotStatsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -708,5 +769,3 @@ func (v *NullableCodebaseSnapshotStatsResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

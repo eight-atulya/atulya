@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,21 +21,21 @@ var _ MappedNullable = &GraphStateNodeResponse{}
 
 // GraphStateNodeResponse struct for GraphStateNodeResponse
 type GraphStateNodeResponse struct {
-	Id string `json:"id"`
-	Title string `json:"title"`
-	Kind string `json:"kind"`
-	Subtitle NullableString `json:"subtitle,omitempty"`
-	CurrentState string `json:"current_state"`
-	Status string `json:"status"`
-	StatusReason string `json:"status_reason"`
-	Confidence float32 `json:"confidence"`
-	ChangeScore float32 `json:"change_score"`
-	LastChangedAt NullableString `json:"last_changed_at,omitempty"`
-	PrimaryTimestamp NullableString `json:"primary_timestamp,omitempty"`
-	EvidenceCount int32 `json:"evidence_count"`
-	Tags []string `json:"tags,omitempty"`
-	EvidenceIds []string `json:"evidence_ids,omitempty"`
-	Conviction NullableFloat32 `json:"conviction,omitempty"`
+	Id                      string          `json:"id"`
+	Title                   string          `json:"title"`
+	Kind                    string          `json:"kind"`
+	Subtitle                NullableString  `json:"subtitle,omitempty"`
+	CurrentState            string          `json:"current_state"`
+	Status                  string          `json:"status"`
+	StatusReason            string          `json:"status_reason"`
+	Confidence              float32         `json:"confidence"`
+	ChangeScore             float32         `json:"change_score"`
+	LastChangedAt           NullableString  `json:"last_changed_at,omitempty"`
+	PrimaryTimestamp        NullableString  `json:"primary_timestamp,omitempty"`
+	EvidenceCount           int32           `json:"evidence_count"`
+	Tags                    []string        `json:"tags,omitempty"`
+	EvidenceIds             []string        `json:"evidence_ids,omitempty"`
+	Conviction              NullableFloat32 `json:"conviction,omitempty"`
 	SemanticChangeMagnitude NullableFloat32 `json:"semantic_change_magnitude,omitempty"`
 }
 
@@ -171,6 +171,7 @@ func (o *GraphStateNodeResponse) HasSubtitle() bool {
 func (o *GraphStateNodeResponse) SetSubtitle(v string) {
 	o.Subtitle.Set(&v)
 }
+
 // SetSubtitleNil sets the value for Subtitle to be an explicit nil
 func (o *GraphStateNodeResponse) SetSubtitleNil() {
 	o.Subtitle.Set(nil)
@@ -333,6 +334,7 @@ func (o *GraphStateNodeResponse) HasLastChangedAt() bool {
 func (o *GraphStateNodeResponse) SetLastChangedAt(v string) {
 	o.LastChangedAt.Set(&v)
 }
+
 // SetLastChangedAtNil sets the value for LastChangedAt to be an explicit nil
 func (o *GraphStateNodeResponse) SetLastChangedAtNil() {
 	o.LastChangedAt.Set(nil)
@@ -375,6 +377,7 @@ func (o *GraphStateNodeResponse) HasPrimaryTimestamp() bool {
 func (o *GraphStateNodeResponse) SetPrimaryTimestamp(v string) {
 	o.PrimaryTimestamp.Set(&v)
 }
+
 // SetPrimaryTimestampNil sets the value for PrimaryTimestamp to be an explicit nil
 func (o *GraphStateNodeResponse) SetPrimaryTimestampNil() {
 	o.PrimaryTimestamp.Set(nil)
@@ -505,6 +508,7 @@ func (o *GraphStateNodeResponse) HasConviction() bool {
 func (o *GraphStateNodeResponse) SetConviction(v float32) {
 	o.Conviction.Set(&v)
 }
+
 // SetConvictionNil sets the value for Conviction to be an explicit nil
 func (o *GraphStateNodeResponse) SetConvictionNil() {
 	o.Conviction.Set(nil)
@@ -547,6 +551,7 @@ func (o *GraphStateNodeResponse) HasSemanticChangeMagnitude() bool {
 func (o *GraphStateNodeResponse) SetSemanticChangeMagnitude(v float32) {
 	o.SemanticChangeMagnitude.Set(&v)
 }
+
 // SetSemanticChangeMagnitudeNil sets the value for SemanticChangeMagnitude to be an explicit nil
 func (o *GraphStateNodeResponse) SetSemanticChangeMagnitudeNil() {
 	o.SemanticChangeMagnitude.Set(nil)
@@ -558,7 +563,7 @@ func (o *GraphStateNodeResponse) UnsetSemanticChangeMagnitude() {
 }
 
 func (o GraphStateNodeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -621,10 +626,10 @@ func (o *GraphStateNodeResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -680,5 +685,3 @@ func (v *NullableGraphStateNodeResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

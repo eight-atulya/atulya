@@ -11,10 +11,10 @@ package atulya
 
 import (
 	"context"
+	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
-	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 )
 
 func Test_atulya_DirectivesAPIService(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_atulya_DirectivesAPIService(t *testing.T) {
 
 	t.Run("Test DirectivesAPIService CreateDirective", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -38,7 +38,7 @@ func Test_atulya_DirectivesAPIService(t *testing.T) {
 
 	t.Run("Test DirectivesAPIService DeleteDirective", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var directiveId string
@@ -53,7 +53,7 @@ func Test_atulya_DirectivesAPIService(t *testing.T) {
 
 	t.Run("Test DirectivesAPIService GetDirective", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var directiveId string
@@ -68,7 +68,7 @@ func Test_atulya_DirectivesAPIService(t *testing.T) {
 
 	t.Run("Test DirectivesAPIService ListDirectives", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -82,7 +82,7 @@ func Test_atulya_DirectivesAPIService(t *testing.T) {
 
 	t.Run("Test DirectivesAPIService UpdateDirective", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var directiveId string

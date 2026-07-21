@@ -16,10 +16,10 @@ Security notes:
 
 from __future__ import annotations
 
+import os
 from typing import Sequence
 
-import sqlalchemy as sa
-from alembic import op
+from alembic import context, op
 
 # revision identifiers, used by Alembic.
 revision: str = "080109b0cbdc"
@@ -28,7 +28,14 @@ branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 
 
+def _is_auth_schema() -> bool:
+    target = context.config.get_main_option("target_schema") or "public"
+    return target == os.getenv("ATULYA_API_AUTH_SCHEMA", "public")
+
+
 def upgrade() -> None:
+    if not _is_auth_schema():
+        return
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS api_keys (
@@ -52,4 +59,6 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    if not _is_auth_schema():
+        return
     op.execute("DROP TABLE IF EXISTS api_keys")

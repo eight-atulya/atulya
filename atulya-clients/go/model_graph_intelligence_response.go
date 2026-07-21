@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &GraphIntelligenceResponse{}
 
 // GraphIntelligenceResponse struct for GraphIntelligenceResponse
 type GraphIntelligenceResponse struct {
-	Nodes []GraphStateNodeResponse `json:"nodes"`
-	Edges []GraphRelationEdgeResponse `json:"edges"`
-	ChangeEvents []GraphChangeEventResponse `json:"change_events"`
-	TotalNodes int32 `json:"total_nodes"`
-	GeneratedAt string `json:"generated_at"`
-	Cached *bool `json:"cached,omitempty"`
+	Nodes        []GraphStateNodeResponse    `json:"nodes"`
+	Edges        []GraphRelationEdgeResponse `json:"edges"`
+	ChangeEvents []GraphChangeEventResponse  `json:"change_events"`
+	TotalNodes   int32                       `json:"total_nodes"`
+	GeneratedAt  string                      `json:"generated_at"`
+	Cached       *bool                       `json:"cached,omitempty"`
 }
 
 type _GraphIntelligenceResponse GraphIntelligenceResponse
@@ -42,6 +42,8 @@ func NewGraphIntelligenceResponse(nodes []GraphStateNodeResponse, edges []GraphR
 	this.ChangeEvents = changeEvents
 	this.TotalNodes = totalNodes
 	this.GeneratedAt = generatedAt
+	var cached bool = false
+	this.Cached = &cached
 	return &this
 }
 
@@ -50,6 +52,8 @@ func NewGraphIntelligenceResponse(nodes []GraphStateNodeResponse, edges []GraphR
 // but it doesn't guarantee that properties required by API are set
 func NewGraphIntelligenceResponseWithDefaults() *GraphIntelligenceResponse {
 	this := GraphIntelligenceResponse{}
+	var cached bool = false
+	this.Cached = &cached
 	return &this
 }
 
@@ -206,7 +210,7 @@ func (o *GraphIntelligenceResponse) SetCached(v bool) {
 }
 
 func (o GraphIntelligenceResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -243,10 +247,10 @@ func (o *GraphIntelligenceResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -302,5 +306,3 @@ func (v *NullableGraphIntelligenceResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

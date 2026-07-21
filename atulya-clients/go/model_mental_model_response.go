@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &MentalModelResponse{}
 
 // MentalModelResponse Response model for a mental model (stored reflect response).
 type MentalModelResponse struct {
-	Id string `json:"id"`
-	BankId string `json:"bank_id"`
-	Name string `json:"name"`
+	Id          string `json:"id"`
+	BankId      string `json:"bank_id"`
+	Name        string `json:"name"`
 	SourceQuery string `json:"source_query"`
 	// The mental model content as well-formatted markdown (auto-generated from reflect endpoint)
-	Content string `json:"content"`
-	Tags []string `json:"tags,omitempty"`
-	MaxTokens *int32 `json:"max_tokens,omitempty"`
-	Trigger *MentalModelTrigger `json:"trigger,omitempty"`
-	LastRefreshedAt NullableString `json:"last_refreshed_at,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
+	Content         string                 `json:"content"`
+	Tags            []string               `json:"tags,omitempty"`
+	MaxTokens       *int32                 `json:"max_tokens,omitempty"`
+	Trigger         *MentalModelTrigger    `json:"trigger,omitempty"`
+	LastRefreshedAt NullableString         `json:"last_refreshed_at,omitempty"`
+	CreatedAt       NullableString         `json:"created_at,omitempty"`
 	ReflectResponse map[string]interface{} `json:"reflect_response,omitempty"`
 }
 
@@ -48,6 +48,8 @@ func NewMentalModelResponse(id string, bankId string, name string, sourceQuery s
 	this.Name = name
 	this.SourceQuery = sourceQuery
 	this.Content = content
+	var maxTokens int32 = 2048
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -56,6 +58,8 @@ func NewMentalModelResponse(id string, bankId string, name string, sourceQuery s
 // but it doesn't guarantee that properties required by API are set
 func NewMentalModelResponseWithDefaults() *MentalModelResponse {
 	this := MentalModelResponse{}
+	var maxTokens int32 = 2048
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -307,6 +311,7 @@ func (o *MentalModelResponse) HasLastRefreshedAt() bool {
 func (o *MentalModelResponse) SetLastRefreshedAt(v string) {
 	o.LastRefreshedAt.Set(&v)
 }
+
 // SetLastRefreshedAtNil sets the value for LastRefreshedAt to be an explicit nil
 func (o *MentalModelResponse) SetLastRefreshedAtNil() {
 	o.LastRefreshedAt.Set(nil)
@@ -349,6 +354,7 @@ func (o *MentalModelResponse) HasCreatedAt() bool {
 func (o *MentalModelResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *MentalModelResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -393,7 +399,7 @@ func (o *MentalModelResponse) SetReflectResponse(v map[string]interface{}) {
 }
 
 func (o MentalModelResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -445,10 +451,10 @@ func (o *MentalModelResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -504,5 +510,3 @@ func (v *NullableMentalModelResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

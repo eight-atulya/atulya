@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,7 +21,7 @@ var _ MappedNullable = &EntityObservationResponse{}
 
 // EntityObservationResponse An observation about an entity.
 type EntityObservationResponse struct {
-	Text string `json:"text"`
+	Text        string         `json:"text"`
 	MentionedAt NullableString `json:"mentioned_at,omitempty"`
 }
 
@@ -101,6 +101,7 @@ func (o *EntityObservationResponse) HasMentionedAt() bool {
 func (o *EntityObservationResponse) SetMentionedAt(v string) {
 	o.MentionedAt.Set(&v)
 }
+
 // SetMentionedAtNil sets the value for MentionedAt to be an explicit nil
 func (o *EntityObservationResponse) SetMentionedAtNil() {
 	o.MentionedAt.Set(nil)
@@ -112,7 +113,7 @@ func (o *EntityObservationResponse) UnsetMentionedAt() {
 }
 
 func (o EntityObservationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -141,10 +142,10 @@ func (o *EntityObservationResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -200,5 +201,3 @@ func (v *NullableEntityObservationResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &InfluenceTrendPoint{}
 
 // InfluenceTrendPoint struct for InfluenceTrendPoint
 type InfluenceTrendPoint struct {
-	Index int32 `json:"index"`
-	Raw float32 `json:"raw"`
-	Ewma float32 `json:"ewma"`
+	Index int32   `json:"index"`
+	Raw   float32 `json:"raw"`
+	Ewma  float32 `json:"ewma"`
 	Lower float32 `json:"lower"`
 	Upper float32 `json:"upper"`
 }
@@ -173,7 +173,7 @@ func (o *InfluenceTrendPoint) SetUpper(v float32) {
 }
 
 func (o InfluenceTrendPoint) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -207,10 +207,10 @@ func (o *InfluenceTrendPoint) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -266,5 +266,3 @@ func (v *NullableInfluenceTrendPoint) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,16 +21,16 @@ var _ MappedNullable = &AnomalyCorrectionResponse{}
 
 // AnomalyCorrectionResponse struct for AnomalyCorrectionResponse
 type AnomalyCorrectionResponse struct {
-	Id string `json:"id"`
-	BankId string `json:"bank_id"`
-	AnomalyId string `json:"anomaly_id"`
-	CorrectionType string `json:"correction_type"`
-	TargetUnitId NullableString `json:"target_unit_id,omitempty"`
-	BeforeState map[string]interface{} `json:"before_state,omitempty"`
-	AfterState map[string]interface{} `json:"after_state,omitempty"`
-	ConfidenceDelta NullableFloat32 `json:"confidence_delta,omitempty"`
-	AppliedAt NullableString `json:"applied_at,omitempty"`
-	AppliedBy string `json:"applied_by"`
+	Id              string                 `json:"id"`
+	BankId          string                 `json:"bank_id"`
+	AnomalyId       string                 `json:"anomaly_id"`
+	CorrectionType  string                 `json:"correction_type"`
+	TargetUnitId    NullableString         `json:"target_unit_id,omitempty"`
+	BeforeState     map[string]interface{} `json:"before_state,omitempty"`
+	AfterState      map[string]interface{} `json:"after_state,omitempty"`
+	ConfidenceDelta NullableFloat32        `json:"confidence_delta,omitempty"`
+	AppliedAt       NullableString         `json:"applied_at,omitempty"`
+	AppliedBy       string                 `json:"applied_by"`
 }
 
 type _AnomalyCorrectionResponse AnomalyCorrectionResponse
@@ -185,6 +185,7 @@ func (o *AnomalyCorrectionResponse) HasTargetUnitId() bool {
 func (o *AnomalyCorrectionResponse) SetTargetUnitId(v string) {
 	o.TargetUnitId.Set(&v)
 }
+
 // SetTargetUnitIdNil sets the value for TargetUnitId to be an explicit nil
 func (o *AnomalyCorrectionResponse) SetTargetUnitIdNil() {
 	o.TargetUnitId.Set(nil)
@@ -291,6 +292,7 @@ func (o *AnomalyCorrectionResponse) HasConfidenceDelta() bool {
 func (o *AnomalyCorrectionResponse) SetConfidenceDelta(v float32) {
 	o.ConfidenceDelta.Set(&v)
 }
+
 // SetConfidenceDeltaNil sets the value for ConfidenceDelta to be an explicit nil
 func (o *AnomalyCorrectionResponse) SetConfidenceDeltaNil() {
 	o.ConfidenceDelta.Set(nil)
@@ -333,6 +335,7 @@ func (o *AnomalyCorrectionResponse) HasAppliedAt() bool {
 func (o *AnomalyCorrectionResponse) SetAppliedAt(v string) {
 	o.AppliedAt.Set(&v)
 }
+
 // SetAppliedAtNil sets the value for AppliedAt to be an explicit nil
 func (o *AnomalyCorrectionResponse) SetAppliedAtNil() {
 	o.AppliedAt.Set(nil)
@@ -368,7 +371,7 @@ func (o *AnomalyCorrectionResponse) SetAppliedBy(v string) {
 }
 
 func (o AnomalyCorrectionResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -417,10 +420,10 @@ func (o *AnomalyCorrectionResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -476,5 +479,3 @@ func (v *NullableAnomalyCorrectionResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

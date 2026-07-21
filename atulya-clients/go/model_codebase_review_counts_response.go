@@ -19,9 +19,9 @@ var _ MappedNullable = &CodebaseReviewCountsResponse{}
 
 // CodebaseReviewCountsResponse Counts of routed review items in the current snapshot.
 type CodebaseReviewCountsResponse struct {
-	Unrouted *int32 `json:"unrouted,omitempty"`
-	Memory *int32 `json:"memory,omitempty"`
-	Research *int32 `json:"research,omitempty"`
+	Unrouted  *int32 `json:"unrouted,omitempty"`
+	Memory    *int32 `json:"memory,omitempty"`
+	Research  *int32 `json:"research,omitempty"`
 	Dismissed *int32 `json:"dismissed,omitempty"`
 }
 
@@ -31,6 +31,14 @@ type CodebaseReviewCountsResponse struct {
 // will change when the set of required properties is changed
 func NewCodebaseReviewCountsResponse() *CodebaseReviewCountsResponse {
 	this := CodebaseReviewCountsResponse{}
+	var unrouted int32 = 0
+	this.Unrouted = &unrouted
+	var memory int32 = 0
+	this.Memory = &memory
+	var research int32 = 0
+	this.Research = &research
+	var dismissed int32 = 0
+	this.Dismissed = &dismissed
 	return &this
 }
 
@@ -39,6 +47,14 @@ func NewCodebaseReviewCountsResponse() *CodebaseReviewCountsResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseReviewCountsResponseWithDefaults() *CodebaseReviewCountsResponse {
 	this := CodebaseReviewCountsResponse{}
+	var unrouted int32 = 0
+	this.Unrouted = &unrouted
+	var memory int32 = 0
+	this.Memory = &memory
+	var research int32 = 0
+	this.Research = &research
+	var dismissed int32 = 0
+	this.Dismissed = &dismissed
 	return &this
 }
 
@@ -171,7 +187,7 @@ func (o *CodebaseReviewCountsResponse) SetDismissed(v int32) {
 }
 
 func (o CodebaseReviewCountsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -230,5 +246,3 @@ func (v *NullableCodebaseReviewCountsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

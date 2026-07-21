@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &CodebaseReviewResponse{}
 
 // CodebaseReviewResponse Review summary for the current codebase snapshot.
 type CodebaseReviewResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	SnapshotStatus NullableString `json:"snapshot_status,omitempty"`
-	ApprovalStatus NullableString `json:"approval_status,omitempty"`
-	MemoryStatus NullableString `json:"memory_status,omitempty"`
-	ReviewCounts *CodebaseReviewCountsResponse `json:"review_counts,omitempty"`
-	ClusterCount *int32 `json:"cluster_count,omitempty"`
-	RelatedChunkCount *int32 `json:"related_chunk_count,omitempty"`
-	ParseCoverage *float32 `json:"parse_coverage,omitempty"`
-	ChangedSummary *CodebaseReviewChangedSummaryResponse `json:"changed_summary,omitempty"`
-	Diagnostics []CodebaseReviewDiagnosticResponse `json:"diagnostics,omitempty"`
+	CodebaseId        string                                `json:"codebase_id"`
+	SnapshotId        NullableString                        `json:"snapshot_id,omitempty"`
+	SnapshotStatus    NullableString                        `json:"snapshot_status,omitempty"`
+	ApprovalStatus    NullableString                        `json:"approval_status,omitempty"`
+	MemoryStatus      NullableString                        `json:"memory_status,omitempty"`
+	ReviewCounts      *CodebaseReviewCountsResponse         `json:"review_counts,omitempty"`
+	ClusterCount      *int32                                `json:"cluster_count,omitempty"`
+	RelatedChunkCount *int32                                `json:"related_chunk_count,omitempty"`
+	ParseCoverage     *float32                              `json:"parse_coverage,omitempty"`
+	ChangedSummary    *CodebaseReviewChangedSummaryResponse `json:"changed_summary,omitempty"`
+	Diagnostics       []CodebaseReviewDiagnosticResponse    `json:"diagnostics,omitempty"`
 }
 
 type _CodebaseReviewResponse CodebaseReviewResponse
@@ -43,6 +43,12 @@ type _CodebaseReviewResponse CodebaseReviewResponse
 func NewCodebaseReviewResponse(codebaseId string) *CodebaseReviewResponse {
 	this := CodebaseReviewResponse{}
 	this.CodebaseId = codebaseId
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -51,6 +57,12 @@ func NewCodebaseReviewResponse(codebaseId string) *CodebaseReviewResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseReviewResponseWithDefaults() *CodebaseReviewResponse {
 	this := CodebaseReviewResponse{}
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -110,6 +122,7 @@ func (o *CodebaseReviewResponse) HasSnapshotId() bool {
 func (o *CodebaseReviewResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseReviewResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -152,6 +165,7 @@ func (o *CodebaseReviewResponse) HasSnapshotStatus() bool {
 func (o *CodebaseReviewResponse) SetSnapshotStatus(v string) {
 	o.SnapshotStatus.Set(&v)
 }
+
 // SetSnapshotStatusNil sets the value for SnapshotStatus to be an explicit nil
 func (o *CodebaseReviewResponse) SetSnapshotStatusNil() {
 	o.SnapshotStatus.Set(nil)
@@ -194,6 +208,7 @@ func (o *CodebaseReviewResponse) HasApprovalStatus() bool {
 func (o *CodebaseReviewResponse) SetApprovalStatus(v string) {
 	o.ApprovalStatus.Set(&v)
 }
+
 // SetApprovalStatusNil sets the value for ApprovalStatus to be an explicit nil
 func (o *CodebaseReviewResponse) SetApprovalStatusNil() {
 	o.ApprovalStatus.Set(nil)
@@ -236,6 +251,7 @@ func (o *CodebaseReviewResponse) HasMemoryStatus() bool {
 func (o *CodebaseReviewResponse) SetMemoryStatus(v string) {
 	o.MemoryStatus.Set(&v)
 }
+
 // SetMemoryStatusNil sets the value for MemoryStatus to be an explicit nil
 func (o *CodebaseReviewResponse) SetMemoryStatusNil() {
 	o.MemoryStatus.Set(nil)
@@ -439,7 +455,7 @@ func (o *CodebaseReviewResponse) SetDiagnostics(v []CodebaseReviewDiagnosticResp
 }
 
 func (o CodebaseReviewResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -495,10 +511,10 @@ func (o *CodebaseReviewResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -554,5 +570,3 @@ func (v *NullableCodebaseReviewResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

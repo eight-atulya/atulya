@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &EntityIntelligenceRecomputeResponse{}
 
 // EntityIntelligenceRecomputeResponse Queued background entity intelligence recompute.
 type EntityIntelligenceRecomputeResponse struct {
-	OperationId string `json:"operation_id"`
-	Status *string `json:"status,omitempty"`
+	OperationId string  `json:"operation_id"`
+	Status      *string `json:"status,omitempty"`
 }
 
 type _EntityIntelligenceRecomputeResponse EntityIntelligenceRecomputeResponse
@@ -34,6 +34,8 @@ type _EntityIntelligenceRecomputeResponse EntityIntelligenceRecomputeResponse
 func NewEntityIntelligenceRecomputeResponse(operationId string) *EntityIntelligenceRecomputeResponse {
 	this := EntityIntelligenceRecomputeResponse{}
 	this.OperationId = operationId
+	var status string = "pending"
+	this.Status = &status
 	return &this
 }
 
@@ -42,6 +44,8 @@ func NewEntityIntelligenceRecomputeResponse(operationId string) *EntityIntellige
 // but it doesn't guarantee that properties required by API are set
 func NewEntityIntelligenceRecomputeResponseWithDefaults() *EntityIntelligenceRecomputeResponse {
 	this := EntityIntelligenceRecomputeResponse{}
+	var status string = "pending"
+	this.Status = &status
 	return &this
 }
 
@@ -102,7 +106,7 @@ func (o *EntityIntelligenceRecomputeResponse) SetStatus(v string) {
 }
 
 func (o EntityIntelligenceRecomputeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -131,10 +135,10 @@ func (o *EntityIntelligenceRecomputeResponse) UnmarshalJSON(data []byte) (err er
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -190,5 +194,3 @@ func (v *NullableEntityIntelligenceRecomputeResponse) UnmarshalJSON(src []byte) 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

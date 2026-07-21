@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { atulyaClient, sdk, lowLevelClient } from "@/lib/atulya-client";
+import { createLowLevelClientForRequest, sdk } from "@/lib/atulya-client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,14 +15,20 @@ export async function GET(request: NextRequest) {
     const type = searchParams.get("type") || searchParams.get("fact_type") || undefined;
     const q = searchParams.get("q") || undefined;
 
-    const response = await atulyaClient.listMemories(bankId, {
-      limit,
-      offset,
-      type,
-      q,
+    const response = await sdk.listMemories({
+      client: createLowLevelClientForRequest(request),
+      path: { bank_id: bankId },
+      query: { limit, offset, type, q },
     });
 
-    return NextResponse.json(response, { status: 200 });
+    if (response.error || !response.data) {
+      return NextResponse.json(
+        { error: response.error || "Failed to list memory units" },
+        { status: response.response?.status ?? 500 }
+      );
+    }
+
+    return NextResponse.json(response.data, { status: 200 });
   } catch (error) {
     console.error("Error listing memory units:", error);
     return NextResponse.json({ error: "Failed to list memory units" }, { status: 500 });
@@ -31,7 +37,7 @@ export async function GET(request: NextRequest) {
 
 // Note: Individual memory unit deletion is not yet supported by the API
 // Use clearBankMemories to delete all memories for a bank instead
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
   return NextResponse.json(
     {
       error:

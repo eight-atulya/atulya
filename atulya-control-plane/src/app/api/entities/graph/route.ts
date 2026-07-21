@@ -19,7 +19,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 const NODE_COLOURS = [
   "#8b5cf6",
@@ -68,12 +68,12 @@ export async function GET(request: NextRequest) {
     // [branch] Parallel: memory graph (entity lists per node) + entity registry (IDs)
     const [graphRes, entitiesRes] = await Promise.all([
       sdk.getGraph({
-        client: lowLevelClient,
+        client: createLowLevelClientForRequest(request),
         path: { bank_id: bankId },
         query: { limit: 2000 } as Record<string, unknown>,
       }),
       sdk.listEntities({
-        client: lowLevelClient,
+        client: createLowLevelClientForRequest(request),
         path: { bank_id: bankId },
         query: { limit: 500, offset: 0 } as Record<string, unknown>,
       }),

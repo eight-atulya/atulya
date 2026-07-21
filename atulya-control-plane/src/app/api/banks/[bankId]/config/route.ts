@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { lowLevelClient, sdk } from "@/lib/atulya-client";
+import { createLowLevelClientForRequest, sdk } from "@/lib/atulya-client";
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function GET(
     const { bankId } = await params;
 
     const response = await sdk.getBankConfig({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 
@@ -35,7 +35,7 @@ export async function PATCH(
     const { updates } = body;
 
     const response = await sdk.updateBankConfig({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       body: { updates },
     });
@@ -60,7 +60,7 @@ export async function DELETE(
     const { bankId } = await params;
 
     const response = await sdk.resetBankConfig({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 

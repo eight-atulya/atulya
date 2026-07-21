@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const response = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/timeline?${params.toString()}`,
       {
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
         cache: "no-store",
       }
     );

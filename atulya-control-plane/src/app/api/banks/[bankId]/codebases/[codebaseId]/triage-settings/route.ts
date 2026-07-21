@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 function parseJsonOrText(text: string): unknown {
   if (!text) return {};
@@ -11,7 +11,7 @@ function parseJsonOrText(text: string): unknown {
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; codebaseId: string }> }
 ) {
   try {
@@ -20,7 +20,7 @@ export async function GET(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/codebases/${codebaseId}/triage-settings`,
       {
         method: "GET",
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
         cache: "no-store",
       }
     );
@@ -47,7 +47,7 @@ export async function PUT(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/codebases/${codebaseId}/triage-settings`,
       {
         method: "PUT",
-        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
         body: JSON.stringify(body),
       }
     );

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: Request,
@@ -18,7 +18,7 @@ export async function GET(
     }
 
     const response = await sdk.getOperationStatus({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId, operation_id: operationId },
     });
 
@@ -35,7 +35,7 @@ export async function GET(
 }
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; operationId: string }> }
 ) {
   try {
@@ -53,7 +53,7 @@ export async function POST(
       `${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/operations/${encodeURIComponent(operationId)}/retry`,
       {
         method: "POST",
-        headers: getDataplaneHeaders({
+        headers: getDataplaneHeadersForRequest(request, {
           "Content-Type": "application/json",
         }),
       }

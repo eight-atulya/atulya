@@ -19,11 +19,11 @@ var _ MappedNullable = &UpdateMentalModelRequest{}
 
 // UpdateMentalModelRequest Request model for updating a mental model.
 type UpdateMentalModelRequest struct {
-	Name NullableString `json:"name,omitempty"`
-	SourceQuery NullableString `json:"source_query,omitempty"`
-	MaxTokens NullableInt32 `json:"max_tokens,omitempty"`
-	Tags []string `json:"tags,omitempty"`
-	Trigger NullableMentalModelTrigger `json:"trigger,omitempty"`
+	Name        NullableString             `json:"name,omitempty"`
+	SourceQuery NullableString             `json:"source_query,omitempty"`
+	MaxTokens   NullableInt32              `json:"max_tokens,omitempty"`
+	Tags        []string                   `json:"tags,omitempty"`
+	Trigger     NullableMentalModelTrigger `json:"trigger,omitempty"`
 }
 
 // NewUpdateMentalModelRequest instantiates a new UpdateMentalModelRequest object
@@ -75,6 +75,7 @@ func (o *UpdateMentalModelRequest) HasName() bool {
 func (o *UpdateMentalModelRequest) SetName(v string) {
 	o.Name.Set(&v)
 }
+
 // SetNameNil sets the value for Name to be an explicit nil
 func (o *UpdateMentalModelRequest) SetNameNil() {
 	o.Name.Set(nil)
@@ -117,6 +118,7 @@ func (o *UpdateMentalModelRequest) HasSourceQuery() bool {
 func (o *UpdateMentalModelRequest) SetSourceQuery(v string) {
 	o.SourceQuery.Set(&v)
 }
+
 // SetSourceQueryNil sets the value for SourceQuery to be an explicit nil
 func (o *UpdateMentalModelRequest) SetSourceQueryNil() {
 	o.SourceQuery.Set(nil)
@@ -159,6 +161,7 @@ func (o *UpdateMentalModelRequest) HasMaxTokens() bool {
 func (o *UpdateMentalModelRequest) SetMaxTokens(v int32) {
 	o.MaxTokens.Set(&v)
 }
+
 // SetMaxTokensNil sets the value for MaxTokens to be an explicit nil
 func (o *UpdateMentalModelRequest) SetMaxTokensNil() {
 	o.MaxTokens.Set(nil)
@@ -234,6 +237,7 @@ func (o *UpdateMentalModelRequest) HasTrigger() bool {
 func (o *UpdateMentalModelRequest) SetTrigger(v MentalModelTrigger) {
 	o.Trigger.Set(&v)
 }
+
 // SetTriggerNil sets the value for Trigger to be an explicit nil
 func (o *UpdateMentalModelRequest) SetTriggerNil() {
 	o.Trigger.Set(nil)
@@ -245,7 +249,7 @@ func (o *UpdateMentalModelRequest) UnsetTrigger() {
 }
 
 func (o UpdateMentalModelRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -307,5 +311,3 @@ func (v *NullableUpdateMentalModelRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

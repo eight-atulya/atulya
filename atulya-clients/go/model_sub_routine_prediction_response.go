@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &SubRoutinePredictionResponse{}
 
 // SubRoutinePredictionResponse struct for SubRoutinePredictionResponse
 type SubRoutinePredictionResponse struct {
-	BankId string `json:"bank_id"`
-	HorizonHours int32 `json:"horizon_hours"`
-	Predictions []PredictionPoint `json:"predictions"`
-	SampleCount *int32 `json:"sample_count,omitempty"`
-	SourceSnapshotId NullableString `json:"source_snapshot_id,omitempty"`
-	ModelSignature NullableString `json:"model_signature,omitempty"`
+	BankId           string            `json:"bank_id"`
+	HorizonHours     int32             `json:"horizon_hours"`
+	Predictions      []PredictionPoint `json:"predictions"`
+	SampleCount      *int32            `json:"sample_count,omitempty"`
+	SourceSnapshotId NullableString    `json:"source_snapshot_id,omitempty"`
+	ModelSignature   NullableString    `json:"model_signature,omitempty"`
 }
 
 type _SubRoutinePredictionResponse SubRoutinePredictionResponse
@@ -40,6 +40,8 @@ func NewSubRoutinePredictionResponse(bankId string, horizonHours int32, predicti
 	this.BankId = bankId
 	this.HorizonHours = horizonHours
 	this.Predictions = predictions
+	var sampleCount int32 = 0
+	this.SampleCount = &sampleCount
 	return &this
 }
 
@@ -48,6 +50,8 @@ func NewSubRoutinePredictionResponse(bankId string, horizonHours int32, predicti
 // but it doesn't guarantee that properties required by API are set
 func NewSubRoutinePredictionResponseWithDefaults() *SubRoutinePredictionResponse {
 	this := SubRoutinePredictionResponse{}
+	var sampleCount int32 = 0
+	this.SampleCount = &sampleCount
 	return &this
 }
 
@@ -187,6 +191,7 @@ func (o *SubRoutinePredictionResponse) HasSourceSnapshotId() bool {
 func (o *SubRoutinePredictionResponse) SetSourceSnapshotId(v string) {
 	o.SourceSnapshotId.Set(&v)
 }
+
 // SetSourceSnapshotIdNil sets the value for SourceSnapshotId to be an explicit nil
 func (o *SubRoutinePredictionResponse) SetSourceSnapshotIdNil() {
 	o.SourceSnapshotId.Set(nil)
@@ -229,6 +234,7 @@ func (o *SubRoutinePredictionResponse) HasModelSignature() bool {
 func (o *SubRoutinePredictionResponse) SetModelSignature(v string) {
 	o.ModelSignature.Set(&v)
 }
+
 // SetModelSignatureNil sets the value for ModelSignature to be an explicit nil
 func (o *SubRoutinePredictionResponse) SetModelSignatureNil() {
 	o.ModelSignature.Set(nil)
@@ -240,7 +246,7 @@ func (o *SubRoutinePredictionResponse) UnsetModelSignature() {
 }
 
 func (o SubRoutinePredictionResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -279,10 +285,10 @@ func (o *SubRoutinePredictionResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -338,5 +344,3 @@ func (v *NullableSubRoutinePredictionResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

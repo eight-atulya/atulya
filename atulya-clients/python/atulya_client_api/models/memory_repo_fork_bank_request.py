@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class MemoryRepoForkBankRequest(BaseModel):
     """
@@ -31,14 +30,13 @@ class MemoryRepoForkBankRequest(BaseModel):
     target_bank_name: Optional[StrictStr] = None
     source_branch: Optional[StrictStr] = None
     source_commit_id: Optional[StrictStr] = None
-    include_workspace: Optional[StrictBool] = Field(default=None, description="When true, fork the live branch workspace instead of the branch HEAD commit.")
-    enable_repo: Optional[StrictBool] = Field(default=None, description="Enable repo mode on the forked bank after materializing the snapshot.")
+    include_workspace: Optional[StrictBool] = Field(default=False, description="When true, fork the live branch workspace instead of the branch HEAD commit.")
+    enable_repo: Optional[StrictBool] = Field(default=False, description="Enable repo mode on the forked bank after materializing the snapshot.")
     repo_name: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["target_bank_id", "target_bank_name", "source_branch", "source_commit_id", "include_workspace", "enable_repo", "repo_name"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -50,7 +48,8 @@ class MemoryRepoForkBankRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -111,10 +110,8 @@ class MemoryRepoForkBankRequest(BaseModel):
             "target_bank_name": obj.get("target_bank_name"),
             "source_branch": obj.get("source_branch"),
             "source_commit_id": obj.get("source_commit_id"),
-            "include_workspace": obj.get("include_workspace"),
-            "enable_repo": obj.get("enable_repo"),
+            "include_workspace": obj.get("include_workspace") if obj.get("include_workspace") is not None else False,
+            "enable_repo": obj.get("enable_repo") if obj.get("enable_repo") is not None else False,
             "repo_name": obj.get("repo_name")
         })
         return _obj
-
-

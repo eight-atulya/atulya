@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &OperationProgressResponse{}
 
 // OperationProgressResponse Typed progress payload for async operations when totals are known.
 type OperationProgressResponse struct {
-	Current int32 `json:"current"`
-	Total int32 `json:"total"`
-	Unit NullableString `json:"unit,omitempty"`
-	Label NullableString `json:"label,omitempty"`
-	Failed NullableInt32 `json:"failed,omitempty"`
+	Current int32          `json:"current"`
+	Total   int32          `json:"total"`
+	Unit    NullableString `json:"unit,omitempty"`
+	Label   NullableString `json:"label,omitempty"`
+	Failed  NullableInt32  `json:"failed,omitempty"`
 }
 
 type _OperationProgressResponse OperationProgressResponse
@@ -129,6 +129,7 @@ func (o *OperationProgressResponse) HasUnit() bool {
 func (o *OperationProgressResponse) SetUnit(v string) {
 	o.Unit.Set(&v)
 }
+
 // SetUnitNil sets the value for Unit to be an explicit nil
 func (o *OperationProgressResponse) SetUnitNil() {
 	o.Unit.Set(nil)
@@ -171,6 +172,7 @@ func (o *OperationProgressResponse) HasLabel() bool {
 func (o *OperationProgressResponse) SetLabel(v string) {
 	o.Label.Set(&v)
 }
+
 // SetLabelNil sets the value for Label to be an explicit nil
 func (o *OperationProgressResponse) SetLabelNil() {
 	o.Label.Set(nil)
@@ -213,6 +215,7 @@ func (o *OperationProgressResponse) HasFailed() bool {
 func (o *OperationProgressResponse) SetFailed(v int32) {
 	o.Failed.Set(&v)
 }
+
 // SetFailedNil sets the value for Failed to be an explicit nil
 func (o *OperationProgressResponse) SetFailedNil() {
 	o.Failed.Set(nil)
@@ -224,7 +227,7 @@ func (o *OperationProgressResponse) UnsetFailed() {
 }
 
 func (o OperationProgressResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -261,10 +264,10 @@ func (o *OperationProgressResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -320,5 +323,3 @@ func (v *NullableOperationProgressResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

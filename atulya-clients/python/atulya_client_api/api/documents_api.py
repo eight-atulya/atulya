@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -323,13 +324,13 @@ class DocumentsApi:
             _path_params['document_id'] = document_id
         # process the query parameters
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -650,13 +651,13 @@ class DocumentsApi:
             _path_params['document_id'] = document_id
         # process the query parameters
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1535,9 +1536,9 @@ class DocumentsApi:
             _path_params['document_id'] = document_id
         # process the query parameters
         if branch_name is not None:
-            
+
             _query_params.append(('branch_name', branch_name))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1896,29 +1897,29 @@ class DocumentsApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if branch_name is not None:
-            
+
             _query_params.append(('branch_name', branch_name))
-            
+
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1953,5 +1954,3 @@ class DocumentsApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { LockKeyhole, Loader2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,14 +27,11 @@ export function LoginPanel() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [verificationPending, setVerificationPending] = useState(false);
 
   const requestedPath = search.get("next") || "/dashboard";
   const nextPath =
-    requestedPath.startsWith("/") &&
-    !requestedPath.startsWith("//") &&
-    !requestedPath.startsWith("/admin")
-      ? requestedPath
-      : "/dashboard";
+    requestedPath.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
   const workspaceSlug = useMemo(() => slugify(workspaceName), [workspaceName]);
   const signupAvailable = Boolean(signupState?.available);
   const submitDisabled = loading || (mode === "signup" && !workspaceSlug);
@@ -58,7 +56,7 @@ export function LoginPanel() {
             ? {
                 org_slug: workspaceSlug,
                 org_name: workspaceName.trim(),
-                owner_name: name.trim() || null,
+                owner_name: name.trim(),
                 owner_email: email.trim(),
                 owner_password: password,
               }
@@ -67,7 +65,17 @@ export function LoginPanel() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.detail || body.error || "Authentication failed");
+        const detail = body.detail;
+        throw new Error(
+          typeof detail === "string"
+            ? detail
+            : detail?.code || body.error || "Authentication failed"
+        );
+      }
+      const body = await res.json();
+      if (body.verification_required && !body.token) {
+        setVerificationPending(true);
+        return;
       }
       router.replace(nextPath);
       router.refresh();
@@ -76,6 +84,29 @@ export function LoginPanel() {
     } finally {
       setLoading(false);
     }
+  }
+
+  if (verificationPending) {
+    return (
+      <div className="rounded-md border bg-card p-6 shadow-sm">
+        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary">
+          <LockKeyhole className="h-5 w-5 text-primary-foreground" />
+        </div>
+        <h1 className="mt-5 text-xl font-semibold">Check your email</h1>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+          We sent a verification link to{" "}
+          <span className="font-medium text-foreground">{email}</span>. The link expires in 30
+          minutes.
+        </p>
+        <Button
+          variant="outline"
+          className="mt-5 w-full"
+          onClick={() => setVerificationPending(false)}
+        >
+          Back to sign in
+        </Button>
+      </div>
+    );
   }
 
   return (
@@ -93,7 +124,9 @@ export function LoginPanel() {
             {mode === "signup" ? "Create workspace" : "Sign in"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signup" ? "Set up the first owner account." : "Access your memory banks."}
+            {mode === "signup"
+              ? "Set up your account and workspace."
+              : "Use your work email to continue."}
           </p>
         </div>
       </div>
@@ -134,7 +167,7 @@ export function LoginPanel() {
           type="password"
           value={password}
           onChange={setPassword}
-          autoComplete="current-password"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
           placeholder="Enter password"
           minLength={mode === "signup" ? 12 : undefined}
         />
@@ -163,6 +196,17 @@ export function LoginPanel() {
         {mode === "signup" ? "Create workspace" : "Sign in"}
       </Button>
 
+      {mode === "login" && (
+        <div className="mt-3 text-center">
+          <Link
+            href="/forgot-password"
+            className="text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Forgot password?
+          </Link>
+        </div>
+      )}
+
       {signupAvailable && (
         <div className="mt-4 border-t pt-4 text-center text-sm text-muted-foreground">
           {mode === "login" ? (
@@ -174,7 +218,7 @@ export function LoginPanel() {
                 setMode("signup");
               }}
             >
-              Create the first workspace
+              Create a workspace
             </button>
           ) : (
             <button

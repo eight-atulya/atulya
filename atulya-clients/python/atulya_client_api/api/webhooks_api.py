@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -924,13 +925,13 @@ class WebhooksApi:
             _path_params['webhook_id'] = webhook_id
         # process the query parameters
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if cursor is not None:
-            
+
             _query_params.append(('cursor', cursor))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1564,5 +1565,3 @@ class WebhooksApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

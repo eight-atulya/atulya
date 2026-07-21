@@ -21,21 +21,19 @@ from pydantic import BaseModel, ConfigDict, StrictFloat, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ForgeExportSubmitRequest(BaseModel):
     """
     ForgeExportSubmitRequest
     """ # noqa: E501
     operation_id: StrictStr
-    adapter_id: Optional[StrictStr] = None
+    adapter_id: Optional[StrictStr] = 'atr_jsonl'
     quality_threshold: Optional[Union[StrictFloat, StrictInt]] = None
     options: Optional[Dict[str, Any]] = None
     __properties: ClassVar[List[str]] = ["operation_id", "adapter_id", "quality_threshold", "options"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class ForgeExportSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -90,10 +89,8 @@ class ForgeExportSubmitRequest(BaseModel):
 
         _obj = cls.model_validate({
             "operation_id": obj.get("operation_id"),
-            "adapter_id": obj.get("adapter_id"),
+            "adapter_id": obj.get("adapter_id") if obj.get("adapter_id") is not None else 'atr_jsonl',
             "quality_threshold": obj.get("quality_threshold"),
             "options": obj.get("options")
         })
         return _obj
-
-

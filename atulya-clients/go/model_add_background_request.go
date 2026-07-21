@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -36,6 +36,8 @@ type _AddBackgroundRequest AddBackgroundRequest
 func NewAddBackgroundRequest(content string) *AddBackgroundRequest {
 	this := AddBackgroundRequest{}
 	this.Content = content
+	var updateDisposition bool = true
+	this.UpdateDisposition = &updateDisposition
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewAddBackgroundRequest(content string) *AddBackgroundRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewAddBackgroundRequestWithDefaults() *AddBackgroundRequest {
 	this := AddBackgroundRequest{}
+	var updateDisposition bool = true
+	this.UpdateDisposition = &updateDisposition
 	return &this
 }
 
@@ -104,7 +108,7 @@ func (o *AddBackgroundRequest) SetUpdateDisposition(v bool) {
 }
 
 func (o AddBackgroundRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -133,10 +137,10 @@ func (o *AddBackgroundRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -192,5 +196,3 @@ func (v *NullableAddBackgroundRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

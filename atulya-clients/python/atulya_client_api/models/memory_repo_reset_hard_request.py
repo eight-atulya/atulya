@@ -21,19 +21,17 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class MemoryRepoResetHardRequest(BaseModel):
     """
     MemoryRepoResetHardRequest
     """ # noqa: E501
     commit_id: StrictStr = Field(description="Commit to reset the active branch to")
-    force: Optional[StrictBool] = Field(default=None, description="Allow reset even when the workspace is dirty")
+    force: Optional[StrictBool] = Field(default=False, description="Allow reset even when the workspace is dirty")
     __properties: ClassVar[List[str]] = ["commit_id", "force"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -45,7 +43,8 @@ class MemoryRepoResetHardRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -83,8 +82,6 @@ class MemoryRepoResetHardRequest(BaseModel):
 
         _obj = cls.model_validate({
             "commit_id": obj.get("commit_id"),
-            "force": obj.get("force")
+            "force": obj.get("force") if obj.get("force") is not None else False
         })
         return _obj
-
-

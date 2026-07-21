@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &SystemHealthResponse{}
 
 // SystemHealthResponse struct for SystemHealthResponse
 type SystemHealthResponse struct {
-	Status string `json:"status"`
-	ApiVersion string `json:"api_version"`
-	DbPoolMin int32 `json:"db_pool_min"`
-	DbPoolMax int32 `json:"db_pool_max"`
-	DbPoolSize int32 `json:"db_pool_size"`
-	DbPoolFree int32 `json:"db_pool_free"`
+	Status           string         `json:"status"`
+	ApiVersion       string         `json:"api_version"`
+	DbPoolMin        int32          `json:"db_pool_min"`
+	DbPoolMax        int32          `json:"db_pool_max"`
+	DbPoolSize       int32          `json:"db_pool_size"`
+	DbPoolFree       int32          `json:"db_pool_free"`
 	MigrationVersion NullableString `json:"migration_version"`
-	WorkerCount int32 `json:"worker_count"`
-	AdminSchema string `json:"admin_schema"`
+	WorkerCount      int32          `json:"worker_count"`
+	AdminSchema      string         `json:"admin_schema"`
 }
 
 type _SystemHealthResponse SystemHealthResponse
@@ -279,7 +279,7 @@ func (o *SystemHealthResponse) SetAdminSchema(v string) {
 }
 
 func (o SystemHealthResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -321,10 +321,10 @@ func (o *SystemHealthResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -380,5 +380,3 @@ func (v *NullableSystemHealthResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

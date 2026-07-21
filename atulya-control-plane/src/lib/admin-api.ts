@@ -2,30 +2,31 @@
  * Admin API client — server-side only.
  *
  * NEVER import this in a "use client" component.
- * The ATULYA_CP_ADMIN_API_KEY env var is server-only (no NEXT_PUBLIC_ prefix).
- *
+ * Platform calls forward the signed-in actor's HTTP-only session.
  */
 
 const DATAPLANE_URL = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
-const ADMIN_KEY = process.env.ATULYA_CP_ADMIN_API_KEY || "";
 
 /**
- * Typed fetch wrapper for all /v1/admin/* endpoints.
+ * Typed fetch wrapper for all /v1/platform/* endpoints.
  * Throws on non-2xx responses with the server's error detail.
  */
 export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const { canUseAdminConsole, getCurrentIdentity } = await import("@/lib/server-auth");
+  const { canUsePlatformAdmin, getCurrentIdentity, getSessionToken } =
+    await import("@/lib/server-auth");
   const identity = await getCurrentIdentity();
-  if (!canUseAdminConsole(identity)) {
-    throw new Error("Access denied: missing admin.* or system.admin");
+  if (!canUsePlatformAdmin(identity)) {
+    throw new Error("Access denied: missing system.admin on system:*");
   }
+  const token = await getSessionToken();
+  if (!token) throw new Error("Authentication session missing");
 
-  const url = `${DATAPLANE_URL}/v1/admin${path}`;
+  const url = `${DATAPLANE_URL}/v1/platform${path}`;
   const res = await fetch(url, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${ADMIN_KEY}`,
+      Authorization: `Bearer ${token}`,
       ...(init?.headers ?? {}),
     },
     cache: "no-store", // Admin data must always be fresh
@@ -41,17 +42,12 @@ export async function adminFetch<T>(path: string, init?: RequestInit): Promise<T
     }
     if (res.status === 404 && detail === "Not Found") {
       detail =
-        "Dataplane admin routes are not mounted. Set ATULYA_API_ADMIN_ENABLED=true and ATULYA_API_SUPERUSER_KEY on the API, then restart the API process.";
+        "Platform routes are not mounted. Enable database auth and admin routes on the API, then restart it.";
     }
     throw new Error(`Admin API error (${path}): ${detail}`);
   }
 
   return res.json() as Promise<T>;
-}
-
-/** Returns true if admin API is configured (key is set). */
-export function isAdminConfigured(): boolean {
-  return ADMIN_KEY.length > 0;
 }
 
 // ---------------------------------------------------------------------------

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &BankStatsResponse{}
 
 // BankStatsResponse Response model for bank statistics endpoint.
 type BankStatsResponse struct {
-	BankId string `json:"bank_id"`
-	TotalNodes int32 `json:"total_nodes"`
-	TotalLinks int32 `json:"total_links"`
-	TotalDocuments int32 `json:"total_documents"`
-	NodesByFactType map[string]int32 `json:"nodes_by_fact_type"`
-	LinksByLinkType map[string]int32 `json:"links_by_link_type"`
-	LinksByFactType map[string]int32 `json:"links_by_fact_type"`
-	LinksBreakdown map[string]map[string]int32 `json:"links_breakdown"`
-	PendingOperations int32 `json:"pending_operations"`
-	FailedOperations int32 `json:"failed_operations"`
-	LastConsolidatedAt NullableString `json:"last_consolidated_at,omitempty"`
+	BankId             string                      `json:"bank_id"`
+	TotalNodes         int32                       `json:"total_nodes"`
+	TotalLinks         int32                       `json:"total_links"`
+	TotalDocuments     int32                       `json:"total_documents"`
+	NodesByFactType    map[string]int32            `json:"nodes_by_fact_type"`
+	LinksByLinkType    map[string]int32            `json:"links_by_link_type"`
+	LinksByFactType    map[string]int32            `json:"links_by_fact_type"`
+	LinksBreakdown     map[string]map[string]int32 `json:"links_breakdown"`
+	PendingOperations  int32                       `json:"pending_operations"`
+	FailedOperations   int32                       `json:"failed_operations"`
+	LastConsolidatedAt NullableString              `json:"last_consolidated_at,omitempty"`
 	// Number of memories not yet processed into observations
 	PendingConsolidation *int32 `json:"pending_consolidation,omitempty"`
 	// Total number of observations
@@ -56,6 +56,10 @@ func NewBankStatsResponse(bankId string, totalNodes int32, totalLinks int32, tot
 	this.LinksBreakdown = linksBreakdown
 	this.PendingOperations = pendingOperations
 	this.FailedOperations = failedOperations
+	var pendingConsolidation int32 = 0
+	this.PendingConsolidation = &pendingConsolidation
+	var totalObservations int32 = 0
+	this.TotalObservations = &totalObservations
 	return &this
 }
 
@@ -64,6 +68,10 @@ func NewBankStatsResponse(bankId string, totalNodes int32, totalLinks int32, tot
 // but it doesn't guarantee that properties required by API are set
 func NewBankStatsResponseWithDefaults() *BankStatsResponse {
 	this := BankStatsResponse{}
+	var pendingConsolidation int32 = 0
+	this.PendingConsolidation = &pendingConsolidation
+	var totalObservations int32 = 0
+	this.TotalObservations = &totalObservations
 	return &this
 }
 
@@ -339,6 +347,7 @@ func (o *BankStatsResponse) HasLastConsolidatedAt() bool {
 func (o *BankStatsResponse) SetLastConsolidatedAt(v string) {
 	o.LastConsolidatedAt.Set(&v)
 }
+
 // SetLastConsolidatedAtNil sets the value for LastConsolidatedAt to be an explicit nil
 func (o *BankStatsResponse) SetLastConsolidatedAtNil() {
 	o.LastConsolidatedAt.Set(nil)
@@ -414,7 +423,7 @@ func (o *BankStatsResponse) SetTotalObservations(v int32) {
 }
 
 func (o BankStatsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -467,10 +476,10 @@ func (o *BankStatsResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -526,5 +535,3 @@ func (v *NullableBankStatsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

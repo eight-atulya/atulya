@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -26,9 +26,9 @@ type InternetResearchResponse struct {
 	// URLs the model relied on
 	SourceUrls []string `json:"source_urls,omitempty"`
 	// Always false; included so clients can assert no graph mutation occurred
-	WritesToBank *bool `json:"writes_to_bank,omitempty"`
-	Usage NullableTokenUsage `json:"usage,omitempty"`
-	Trace NullableReflectTrace `json:"trace,omitempty"`
+	WritesToBank *bool                `json:"writes_to_bank,omitempty"`
+	Usage        NullableTokenUsage   `json:"usage,omitempty"`
+	Trace        NullableReflectTrace `json:"trace,omitempty"`
 }
 
 type _InternetResearchResponse InternetResearchResponse
@@ -40,6 +40,8 @@ type _InternetResearchResponse InternetResearchResponse
 func NewInternetResearchResponse(text string) *InternetResearchResponse {
 	this := InternetResearchResponse{}
 	this.Text = text
+	var writesToBank bool = false
+	this.WritesToBank = &writesToBank
 	return &this
 }
 
@@ -48,6 +50,8 @@ func NewInternetResearchResponse(text string) *InternetResearchResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewInternetResearchResponseWithDefaults() *InternetResearchResponse {
 	this := InternetResearchResponse{}
+	var writesToBank bool = false
+	this.WritesToBank = &writesToBank
 	return &this
 }
 
@@ -171,6 +175,7 @@ func (o *InternetResearchResponse) HasUsage() bool {
 func (o *InternetResearchResponse) SetUsage(v TokenUsage) {
 	o.Usage.Set(&v)
 }
+
 // SetUsageNil sets the value for Usage to be an explicit nil
 func (o *InternetResearchResponse) SetUsageNil() {
 	o.Usage.Set(nil)
@@ -213,6 +218,7 @@ func (o *InternetResearchResponse) HasTrace() bool {
 func (o *InternetResearchResponse) SetTrace(v ReflectTrace) {
 	o.Trace.Set(&v)
 }
+
 // SetTraceNil sets the value for Trace to be an explicit nil
 func (o *InternetResearchResponse) SetTraceNil() {
 	o.Trace.Set(nil)
@@ -224,7 +230,7 @@ func (o *InternetResearchResponse) UnsetTrace() {
 }
 
 func (o InternetResearchResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -262,10 +268,10 @@ func (o *InternetResearchResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -321,5 +327,3 @@ func (v *NullableInternetResearchResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

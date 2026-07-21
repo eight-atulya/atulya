@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function POST(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -11,7 +11,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
     const formData = await request.formData();
     const response = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/brain/import`, {
       method: "POST",
-      headers: getDataplaneHeaders(),
+      headers: getDataplaneHeadersForRequest(request),
       body: formData,
     });
 

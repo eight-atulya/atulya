@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function PUT(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -11,7 +11,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ bank
     }
 
     const response = await sdk.createOrUpdateBank({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       body: {
         name: body.name,
@@ -42,7 +42,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ ba
     }
 
     const response = await sdk.updateBank({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       body: {
         name: body.name,
@@ -75,7 +75,7 @@ export async function DELETE(
     }
 
     const response = await sdk.deleteBank({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,16 +21,16 @@ var _ MappedNullable = &CodebaseSymbolMatchResponse{}
 
 // CodebaseSymbolMatchResponse Single deterministic symbol match.
 type CodebaseSymbolMatchResponse struct {
-	Name string `json:"name"`
-	Kind string `json:"kind"`
-	FqName string `json:"fq_name"`
-	Path string `json:"path"`
-	Language NullableString `json:"language,omitempty"`
+	Name      string         `json:"name"`
+	Kind      string         `json:"kind"`
+	FqName    string         `json:"fq_name"`
+	Path      string         `json:"path"`
+	Language  NullableString `json:"language,omitempty"`
 	Container NullableString `json:"container,omitempty"`
-	StartLine int32 `json:"start_line"`
-	EndLine int32 `json:"end_line"`
+	StartLine int32          `json:"start_line"`
+	EndLine   int32          `json:"end_line"`
 	MatchMode NullableString `json:"match_mode,omitempty"`
-	ChunkIds []string `json:"chunk_ids,omitempty"`
+	ChunkIds  []string       `json:"chunk_ids,omitempty"`
 }
 
 type _CodebaseSymbolMatchResponse CodebaseSymbolMatchResponse
@@ -186,6 +186,7 @@ func (o *CodebaseSymbolMatchResponse) HasLanguage() bool {
 func (o *CodebaseSymbolMatchResponse) SetLanguage(v string) {
 	o.Language.Set(&v)
 }
+
 // SetLanguageNil sets the value for Language to be an explicit nil
 func (o *CodebaseSymbolMatchResponse) SetLanguageNil() {
 	o.Language.Set(nil)
@@ -228,6 +229,7 @@ func (o *CodebaseSymbolMatchResponse) HasContainer() bool {
 func (o *CodebaseSymbolMatchResponse) SetContainer(v string) {
 	o.Container.Set(&v)
 }
+
 // SetContainerNil sets the value for Container to be an explicit nil
 func (o *CodebaseSymbolMatchResponse) SetContainerNil() {
 	o.Container.Set(nil)
@@ -318,6 +320,7 @@ func (o *CodebaseSymbolMatchResponse) HasMatchMode() bool {
 func (o *CodebaseSymbolMatchResponse) SetMatchMode(v string) {
 	o.MatchMode.Set(&v)
 }
+
 // SetMatchModeNil sets the value for MatchMode to be an explicit nil
 func (o *CodebaseSymbolMatchResponse) SetMatchModeNil() {
 	o.MatchMode.Set(nil)
@@ -361,7 +364,7 @@ func (o *CodebaseSymbolMatchResponse) SetChunkIds(v []string) {
 }
 
 func (o CodebaseSymbolMatchResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -409,10 +412,10 @@ func (o *CodebaseSymbolMatchResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -468,5 +471,3 @@ func (v *NullableCodebaseSymbolMatchResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

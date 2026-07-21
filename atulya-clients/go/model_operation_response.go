@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,16 +21,16 @@ var _ MappedNullable = &OperationResponse{}
 
 // OperationResponse Response model for a single async operation.
 type OperationResponse struct {
-	Id string `json:"id"`
-	TaskType string `json:"task_type"`
-	ItemsCount int32 `json:"items_count"`
-	DocumentId NullableString `json:"document_id,omitempty"`
-	CreatedAt string `json:"created_at"`
-	Status string `json:"status"`
-	QueueState NullableString `json:"queue_state,omitempty"`
-	Stage NullableString `json:"stage,omitempty"`
-	Progress NullableOperationProgressResponse `json:"progress,omitempty"`
-	ErrorMessage NullableString `json:"error_message"`
+	Id           string                            `json:"id"`
+	TaskType     string                            `json:"task_type"`
+	ItemsCount   int32                             `json:"items_count"`
+	DocumentId   NullableString                    `json:"document_id,omitempty"`
+	CreatedAt    string                            `json:"created_at"`
+	Status       string                            `json:"status"`
+	QueueState   NullableString                    `json:"queue_state,omitempty"`
+	Stage        NullableString                    `json:"stage,omitempty"`
+	Progress     NullableOperationProgressResponse `json:"progress,omitempty"`
+	ErrorMessage NullableString                    `json:"error_message"`
 }
 
 type _OperationResponse OperationResponse
@@ -162,6 +162,7 @@ func (o *OperationResponse) HasDocumentId() bool {
 func (o *OperationResponse) SetDocumentId(v string) {
 	o.DocumentId.Set(&v)
 }
+
 // SetDocumentIdNil sets the value for DocumentId to be an explicit nil
 func (o *OperationResponse) SetDocumentIdNil() {
 	o.DocumentId.Set(nil)
@@ -252,6 +253,7 @@ func (o *OperationResponse) HasQueueState() bool {
 func (o *OperationResponse) SetQueueState(v string) {
 	o.QueueState.Set(&v)
 }
+
 // SetQueueStateNil sets the value for QueueState to be an explicit nil
 func (o *OperationResponse) SetQueueStateNil() {
 	o.QueueState.Set(nil)
@@ -294,6 +296,7 @@ func (o *OperationResponse) HasStage() bool {
 func (o *OperationResponse) SetStage(v string) {
 	o.Stage.Set(&v)
 }
+
 // SetStageNil sets the value for Stage to be an explicit nil
 func (o *OperationResponse) SetStageNil() {
 	o.Stage.Set(nil)
@@ -336,6 +339,7 @@ func (o *OperationResponse) HasProgress() bool {
 func (o *OperationResponse) SetProgress(v OperationProgressResponse) {
 	o.Progress.Set(&v)
 }
+
 // SetProgressNil sets the value for Progress to be an explicit nil
 func (o *OperationResponse) SetProgressNil() {
 	o.Progress.Set(nil)
@@ -373,7 +377,7 @@ func (o *OperationResponse) SetErrorMessage(v string) {
 }
 
 func (o OperationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -421,10 +425,10 @@ func (o *OperationResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -480,5 +484,3 @@ func (v *NullableOperationResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

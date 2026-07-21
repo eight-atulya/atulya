@@ -20,9 +20,9 @@ var _ MappedNullable = &MinScores{}
 // MinScores Minimum scores for filtering recall results (all inclusive, AND-ed).
 type MinScores struct {
 	Semantic NullableFloat32 `json:"semantic,omitempty"`
-	Keyword NullableFloat32 `json:"keyword,omitempty"`
+	Keyword  NullableFloat32 `json:"keyword,omitempty"`
 	Reranker NullableFloat32 `json:"reranker,omitempty"`
-	Final NullableFloat32 `json:"final,omitempty"`
+	Final    NullableFloat32 `json:"final,omitempty"`
 }
 
 // NewMinScores instantiates a new MinScores object
@@ -74,6 +74,7 @@ func (o *MinScores) HasSemantic() bool {
 func (o *MinScores) SetSemantic(v float32) {
 	o.Semantic.Set(&v)
 }
+
 // SetSemanticNil sets the value for Semantic to be an explicit nil
 func (o *MinScores) SetSemanticNil() {
 	o.Semantic.Set(nil)
@@ -116,6 +117,7 @@ func (o *MinScores) HasKeyword() bool {
 func (o *MinScores) SetKeyword(v float32) {
 	o.Keyword.Set(&v)
 }
+
 // SetKeywordNil sets the value for Keyword to be an explicit nil
 func (o *MinScores) SetKeywordNil() {
 	o.Keyword.Set(nil)
@@ -158,6 +160,7 @@ func (o *MinScores) HasReranker() bool {
 func (o *MinScores) SetReranker(v float32) {
 	o.Reranker.Set(&v)
 }
+
 // SetRerankerNil sets the value for Reranker to be an explicit nil
 func (o *MinScores) SetRerankerNil() {
 	o.Reranker.Set(nil)
@@ -200,6 +203,7 @@ func (o *MinScores) HasFinal() bool {
 func (o *MinScores) SetFinal(v float32) {
 	o.Final.Set(&v)
 }
+
 // SetFinalNil sets the value for Final to be an explicit nil
 func (o *MinScores) SetFinalNil() {
 	o.Final.Set(nil)
@@ -211,7 +215,7 @@ func (o *MinScores) UnsetFinal() {
 }
 
 func (o MinScores) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -270,5 +274,3 @@ func (v *NullableMinScores) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

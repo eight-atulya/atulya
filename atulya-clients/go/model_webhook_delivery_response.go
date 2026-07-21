@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,19 +21,19 @@ var _ MappedNullable = &WebhookDeliveryResponse{}
 
 // WebhookDeliveryResponse Response model for a webhook delivery record.
 type WebhookDeliveryResponse struct {
-	Id string `json:"id"`
-	WebhookId NullableString `json:"webhook_id"`
-	Url string `json:"url"`
-	EventType string `json:"event_type"`
-	Status string `json:"status"`
-	Attempts int32 `json:"attempts"`
-	NextRetryAt NullableString `json:"next_retry_at,omitempty"`
-	LastError NullableString `json:"last_error,omitempty"`
-	LastResponseStatus NullableInt32 `json:"last_response_status,omitempty"`
-	LastResponseBody NullableString `json:"last_response_body,omitempty"`
-	LastAttemptAt NullableString `json:"last_attempt_at,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
+	Id                 string         `json:"id"`
+	WebhookId          NullableString `json:"webhook_id"`
+	Url                string         `json:"url"`
+	EventType          string         `json:"event_type"`
+	Status             string         `json:"status"`
+	Attempts           int32          `json:"attempts"`
+	NextRetryAt        NullableString `json:"next_retry_at,omitempty"`
+	LastError          NullableString `json:"last_error,omitempty"`
+	LastResponseStatus NullableInt32  `json:"last_response_status,omitempty"`
+	LastResponseBody   NullableString `json:"last_response_body,omitempty"`
+	LastAttemptAt      NullableString `json:"last_attempt_at,omitempty"`
+	CreatedAt          NullableString `json:"created_at,omitempty"`
+	UpdatedAt          NullableString `json:"updated_at,omitempty"`
 }
 
 type _WebhookDeliveryResponse WebhookDeliveryResponse
@@ -239,6 +239,7 @@ func (o *WebhookDeliveryResponse) HasNextRetryAt() bool {
 func (o *WebhookDeliveryResponse) SetNextRetryAt(v string) {
 	o.NextRetryAt.Set(&v)
 }
+
 // SetNextRetryAtNil sets the value for NextRetryAt to be an explicit nil
 func (o *WebhookDeliveryResponse) SetNextRetryAtNil() {
 	o.NextRetryAt.Set(nil)
@@ -281,6 +282,7 @@ func (o *WebhookDeliveryResponse) HasLastError() bool {
 func (o *WebhookDeliveryResponse) SetLastError(v string) {
 	o.LastError.Set(&v)
 }
+
 // SetLastErrorNil sets the value for LastError to be an explicit nil
 func (o *WebhookDeliveryResponse) SetLastErrorNil() {
 	o.LastError.Set(nil)
@@ -323,6 +325,7 @@ func (o *WebhookDeliveryResponse) HasLastResponseStatus() bool {
 func (o *WebhookDeliveryResponse) SetLastResponseStatus(v int32) {
 	o.LastResponseStatus.Set(&v)
 }
+
 // SetLastResponseStatusNil sets the value for LastResponseStatus to be an explicit nil
 func (o *WebhookDeliveryResponse) SetLastResponseStatusNil() {
 	o.LastResponseStatus.Set(nil)
@@ -365,6 +368,7 @@ func (o *WebhookDeliveryResponse) HasLastResponseBody() bool {
 func (o *WebhookDeliveryResponse) SetLastResponseBody(v string) {
 	o.LastResponseBody.Set(&v)
 }
+
 // SetLastResponseBodyNil sets the value for LastResponseBody to be an explicit nil
 func (o *WebhookDeliveryResponse) SetLastResponseBodyNil() {
 	o.LastResponseBody.Set(nil)
@@ -407,6 +411,7 @@ func (o *WebhookDeliveryResponse) HasLastAttemptAt() bool {
 func (o *WebhookDeliveryResponse) SetLastAttemptAt(v string) {
 	o.LastAttemptAt.Set(&v)
 }
+
 // SetLastAttemptAtNil sets the value for LastAttemptAt to be an explicit nil
 func (o *WebhookDeliveryResponse) SetLastAttemptAtNil() {
 	o.LastAttemptAt.Set(nil)
@@ -449,6 +454,7 @@ func (o *WebhookDeliveryResponse) HasCreatedAt() bool {
 func (o *WebhookDeliveryResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *WebhookDeliveryResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -491,6 +497,7 @@ func (o *WebhookDeliveryResponse) HasUpdatedAt() bool {
 func (o *WebhookDeliveryResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *WebhookDeliveryResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -502,7 +509,7 @@ func (o *WebhookDeliveryResponse) UnsetUpdatedAt() {
 }
 
 func (o WebhookDeliveryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -559,10 +566,10 @@ func (o *WebhookDeliveryResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -618,5 +625,3 @@ func (v *NullableWebhookDeliveryResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class LLMRequestStatsBucket(BaseModel):
     """
@@ -30,15 +29,14 @@ class LLMRequestStatsBucket(BaseModel):
     bucket: StrictStr
     status: StrictStr
     count: StrictInt
-    input_tokens: Optional[StrictInt] = None
-    output_tokens: Optional[StrictInt] = None
-    cached_tokens: Optional[StrictInt] = None
-    total_tokens: Optional[StrictInt] = None
+    input_tokens: Optional[StrictInt] = 0
+    output_tokens: Optional[StrictInt] = 0
+    cached_tokens: Optional[StrictInt] = 0
+    total_tokens: Optional[StrictInt] = 0
     __properties: ClassVar[List[str]] = ["bucket", "status", "count", "input_tokens", "output_tokens", "cached_tokens", "total_tokens"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -50,7 +48,8 @@ class LLMRequestStatsBucket(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -90,11 +89,9 @@ class LLMRequestStatsBucket(BaseModel):
             "bucket": obj.get("bucket"),
             "status": obj.get("status"),
             "count": obj.get("count"),
-            "input_tokens": obj.get("input_tokens"),
-            "output_tokens": obj.get("output_tokens"),
-            "cached_tokens": obj.get("cached_tokens"),
-            "total_tokens": obj.get("total_tokens")
+            "input_tokens": obj.get("input_tokens") if obj.get("input_tokens") is not None else 0,
+            "output_tokens": obj.get("output_tokens") if obj.get("output_tokens") is not None else 0,
+            "cached_tokens": obj.get("cached_tokens") if obj.get("cached_tokens") is not None else 0,
+            "total_tokens": obj.get("total_tokens") if obj.get("total_tokens") is not None else 0
         })
         return _obj
-
-

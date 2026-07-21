@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &WebhookDeliveryListResponse{}
 
 // WebhookDeliveryListResponse Response model for listing webhook deliveries.
 type WebhookDeliveryListResponse struct {
-	Items []WebhookDeliveryResponse `json:"items"`
-	NextCursor NullableString `json:"next_cursor,omitempty"`
+	Items      []WebhookDeliveryResponse `json:"items"`
+	NextCursor NullableString            `json:"next_cursor,omitempty"`
 }
 
 type _WebhookDeliveryListResponse WebhookDeliveryListResponse
@@ -101,6 +101,7 @@ func (o *WebhookDeliveryListResponse) HasNextCursor() bool {
 func (o *WebhookDeliveryListResponse) SetNextCursor(v string) {
 	o.NextCursor.Set(&v)
 }
+
 // SetNextCursorNil sets the value for NextCursor to be an explicit nil
 func (o *WebhookDeliveryListResponse) SetNextCursorNil() {
 	o.NextCursor.Set(nil)
@@ -112,7 +113,7 @@ func (o *WebhookDeliveryListResponse) UnsetNextCursor() {
 }
 
 func (o WebhookDeliveryListResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -141,10 +142,10 @@ func (o *WebhookDeliveryListResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -200,5 +201,3 @@ func (v *NullableWebhookDeliveryListResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

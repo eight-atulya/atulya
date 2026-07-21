@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &AuditEventResponse{}
 
 // AuditEventResponse struct for AuditEventResponse
 type AuditEventResponse struct {
-	Id string `json:"id"`
-	OrgId NullableString `json:"org_id"`
-	ActorPrincipalId NullableString `json:"actor_principal_id"`
-	Action string `json:"action"`
-	TargetType NullableString `json:"target_type"`
-	TargetId NullableString `json:"target_id"`
-	Result string `json:"result"`
-	Metadata map[string]interface{} `json:"metadata"`
-	CreatedAt string `json:"created_at"`
+	Id               string                 `json:"id"`
+	OrgId            NullableString         `json:"org_id"`
+	ActorPrincipalId NullableString         `json:"actor_principal_id"`
+	Action           string                 `json:"action"`
+	TargetType       NullableString         `json:"target_type"`
+	TargetId         NullableString         `json:"target_id"`
+	Result           string                 `json:"result"`
+	Metadata         map[string]interface{} `json:"metadata"`
+	CreatedAt        string                 `json:"created_at"`
 }
 
 type _AuditEventResponse AuditEventResponse
@@ -285,7 +285,7 @@ func (o *AuditEventResponse) SetCreatedAt(v string) {
 }
 
 func (o AuditEventResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -327,10 +327,10 @@ func (o *AuditEventResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

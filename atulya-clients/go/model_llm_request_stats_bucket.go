@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &LLMRequestStatsBucket{}
 
 // LLMRequestStatsBucket A single bucket of LLM request statistics.
 type LLMRequestStatsBucket struct {
-	Bucket string `json:"bucket"`
-	Status string `json:"status"`
-	Count int32 `json:"count"`
-	InputTokens *int32 `json:"input_tokens,omitempty"`
+	Bucket       string `json:"bucket"`
+	Status       string `json:"status"`
+	Count        int32  `json:"count"`
+	InputTokens  *int32 `json:"input_tokens,omitempty"`
 	OutputTokens *int32 `json:"output_tokens,omitempty"`
 	CachedTokens *int32 `json:"cached_tokens,omitempty"`
-	TotalTokens *int32 `json:"total_tokens,omitempty"`
+	TotalTokens  *int32 `json:"total_tokens,omitempty"`
 }
 
 type _LLMRequestStatsBucket LLMRequestStatsBucket
@@ -41,6 +41,14 @@ func NewLLMRequestStatsBucket(bucket string, status string, count int32) *LLMReq
 	this.Bucket = bucket
 	this.Status = status
 	this.Count = count
+	var inputTokens int32 = 0
+	this.InputTokens = &inputTokens
+	var outputTokens int32 = 0
+	this.OutputTokens = &outputTokens
+	var cachedTokens int32 = 0
+	this.CachedTokens = &cachedTokens
+	var totalTokens int32 = 0
+	this.TotalTokens = &totalTokens
 	return &this
 }
 
@@ -49,6 +57,14 @@ func NewLLMRequestStatsBucket(bucket string, status string, count int32) *LLMReq
 // but it doesn't guarantee that properties required by API are set
 func NewLLMRequestStatsBucketWithDefaults() *LLMRequestStatsBucket {
 	this := LLMRequestStatsBucket{}
+	var inputTokens int32 = 0
+	this.InputTokens = &inputTokens
+	var outputTokens int32 = 0
+	this.OutputTokens = &outputTokens
+	var cachedTokens int32 = 0
+	this.CachedTokens = &cachedTokens
+	var totalTokens int32 = 0
+	this.TotalTokens = &totalTokens
 	return &this
 }
 
@@ -253,7 +269,7 @@ func (o *LLMRequestStatsBucket) SetTotalTokens(v int32) {
 }
 
 func (o LLMRequestStatsBucket) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -295,10 +311,10 @@ func (o *LLMRequestStatsBucket) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -354,5 +370,3 @@ func (v *NullableLLMRequestStatsBucket) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

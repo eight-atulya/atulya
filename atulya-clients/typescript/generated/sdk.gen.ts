@@ -2,7 +2,7 @@
 
 import { type Client, formDataBodySerializer, type Options as Options2, type TDataShape } from './client';
 import { client } from './client.gen';
-import type { AddBankBackgroundData, AddBankBackgroundErrors, AddBankBackgroundResponses, AdminCreateAccessGrantData, AdminCreateAccessGrantErrors, AdminCreateAccessGrantResponses, AdminCreateApiKeyData, AdminCreateApiKeyErrors, AdminCreateApiKeyResponses, AdminCreateOrgData, AdminCreateOrgErrors, AdminCreateOrgResponses, AdminCreatePrincipalData, AdminCreatePrincipalErrors, AdminCreatePrincipalResponses, AdminDecommissionWorkerData, AdminDecommissionWorkerErrors, AdminDecommissionWorkerResponses, AdminDeleteAccessGrantData, AdminDeleteAccessGrantErrors, AdminDeleteAccessGrantResponses, AdminListAccessGrantsData, AdminListAccessGrantsErrors, AdminListAccessGrantsResponses, AdminListApiKeysData, AdminListApiKeysErrors, AdminListApiKeysResponses, AdminListAuditEventsData, AdminListAuditEventsErrors, AdminListAuditEventsResponses, AdminListOperationsData, AdminListOperationsErrors, AdminListOperationsResponses, AdminListOrgsData, AdminListOrgsErrors, AdminListOrgsResponses, AdminListPrincipalsData, AdminListPrincipalsErrors, AdminListPrincipalsResponses, AdminListTenantBanksData, AdminListTenantBanksErrors, AdminListTenantBanksResponses, AdminListTenantsData, AdminListTenantsErrors, AdminListTenantsResponses, AdminListWorkersData, AdminListWorkersErrors, AdminListWorkersResponses, AdminResetPrincipalPasswordData, AdminResetPrincipalPasswordErrors, AdminResetPrincipalPasswordResponses, AdminRevokeApiKeyData, AdminRevokeApiKeyErrors, AdminRevokeApiKeyResponses, AdminSystemHealthData, AdminSystemHealthErrors, AdminSystemHealthResponses, AdminTriggerConsolidationData, AdminTriggerConsolidationErrors, AdminTriggerConsolidationResponses, AdminUpdateApiKeyData, AdminUpdateApiKeyErrors, AdminUpdateApiKeyResponses, AdminUpdatePrincipalData, AdminUpdatePrincipalErrors, AdminUpdatePrincipalResponses, AnalyzeCodebaseImpactData, AnalyzeCodebaseImpactErrors, AnalyzeCodebaseImpactResponses, ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetData, ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetErrors, ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetResponses, ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetData, ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetErrors, ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetResponses, ApproveCodebaseData, ApproveCodebaseErrors, ApproveCodebaseResponses, AuthLoginData, AuthLoginErrors, AuthLoginResponses, AuthLogoutData, AuthLogoutErrors, AuthLogoutResponses, AuthMeData, AuthMeErrors, AuthMeResponses, AuthSignupData, AuthSignupErrors, AuthSignupResponses, AuthSignupStateData, AuthSignupStateResponses, BrainLearnFromRemoteData, BrainLearnFromRemoteErrors, BrainLearnFromRemoteResponses, CancelOperationData, CancelOperationErrors, CancelOperationResponses, CheckoutMemoryRepoBranchData, CheckoutMemoryRepoBranchErrors, CheckoutMemoryRepoBranchResponses, ClearBankMemoriesData, ClearBankMemoriesErrors, ClearBankMemoriesResponses, ClearMemoryObservationsData, ClearMemoryObservationsErrors, ClearMemoryObservationsResponses, ClearObservationsData, ClearObservationsErrors, ClearObservationsResponses, CommitMemoryRepoData, CommitMemoryRepoErrors, CommitMemoryRepoResponses, CreateDirectiveData, CreateDirectiveErrors, CreateDirectiveResponses, CreateMemoryRepoBranchData, CreateMemoryRepoBranchErrors, CreateMemoryRepoBranchResponses, CreateMemoryRepoData, CreateMemoryRepoErrors, CreateMemoryRepoResponses, CreateMentalModelData, CreateMentalModelErrors, CreateMentalModelResponses, CreateOrUpdateBankData, CreateOrUpdateBankErrors, CreateOrUpdateBankResponses, CreateTasteDatasetData, CreateTasteDatasetErrors, CreateTasteDatasetResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CurateCodebaseByIntentData, CurateCodebaseByIntentErrors, CurateCodebaseByIntentResponses, DeleteBankData, DeleteBankErrors, DeleteBankResponses, DeleteDirectiveData, DeleteDirectiveErrors, DeleteDirectiveResponses, DeleteDocumentData, DeleteDocumentErrors, DeleteDocumentResponses, DeleteMentalModelData, DeleteMentalModelErrors, DeleteMentalModelResponses, DeleteTasteDatasetData, DeleteTasteDatasetErrors, DeleteTasteDatasetResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DiffMemoryRepoData, DiffMemoryRepoErrors, DiffMemoryRepoResponses, EnableMemoryRepoData, EnableMemoryRepoErrors, EnableMemoryRepoResponses, ExportBrainSnapshotData, ExportBrainSnapshotErrors, ExportBrainSnapshotResponses, ExportForgeJobData, ExportForgeJobErrors, ExportForgeJobResponses, ExportTasteDatasetData, ExportTasteDatasetErrors, ExportTasteDatasetResponses, FileRetainData, FileRetainErrors, FileRetainResponses, ForkMemoryRepoBankData, ForkMemoryRepoBankErrors, ForkMemoryRepoBankResponses, GenerateTasteVariantsData, GenerateTasteVariantsErrors, GenerateTasteVariantsResponses, GetAgentStatsData, GetAgentStatsErrors, GetAgentStatsResponses, GetAnomalyIntelligenceData, GetAnomalyIntelligenceErrors, GetAnomalyIntelligenceResponses, GetBankConfigData, GetBankConfigErrors, GetBankConfigResponses, GetBankProfileData, GetBankProfileErrors, GetBankProfileResponses, GetBrainInfluenceData, GetBrainInfluenceErrors, GetBrainInfluenceResponses, GetBrainRuntimeStatusData, GetBrainRuntimeStatusErrors, GetBrainRuntimeStatusResponses, GetChunkData, GetChunkErrors, GetChunkResponses, GetCodebaseChunkDetailData, GetCodebaseChunkDetailErrors, GetCodebaseChunkDetailResponses, GetCodebaseData, GetCodebaseErrors, GetCodebaseRepoMapData, GetCodebaseRepoMapErrors, GetCodebaseRepoMapResponses, GetCodebaseResponses, GetCodebaseReviewData, GetCodebaseReviewErrors, GetCodebaseReviewResponses, GetCodebaseSymbolCardData, GetCodebaseSymbolCardErrors, GetCodebaseSymbolCardResponses, GetCodebaseTriageSettingsData, GetCodebaseTriageSettingsErrors, GetCodebaseTriageSettingsResponses, GetDirectiveData, GetDirectiveErrors, GetDirectiveResponses, GetDocumentData, GetDocumentErrors, GetDocumentResponses, GetDreamStatsData, GetDreamStatsErrors, GetDreamStatsResponses, GetEntityData, GetEntityErrors, GetEntityIntelligenceData, GetEntityIntelligenceErrors, GetEntityIntelligenceResponses, GetEntityResponses, GetEntityTrajectoryData, GetEntityTrajectoryErrors, GetEntityTrajectoryResponses, GetForgeJobLineageData, GetForgeJobLineageErrors, GetForgeJobLineageResponses, GetGraphData, GetGraphErrors, GetGraphIntelligenceData, GetGraphIntelligenceErrors, GetGraphIntelligenceResponses, GetGraphNeighborhoodData, GetGraphNeighborhoodErrors, GetGraphNeighborhoodResponses, GetGraphResponses, GetGraphSummaryData, GetGraphSummaryErrors, GetGraphSummaryResponses, GetLlmRequestStatsData, GetLlmRequestStatsErrors, GetLlmRequestStatsResponses, GetMemoryData, GetMemoryErrors, GetMemoryRepoData, GetMemoryRepoErrors, GetMemoryRepoForBankData, GetMemoryRepoForBankErrors, GetMemoryRepoForBankResponses, GetMemoryRepoLogData, GetMemoryRepoLogErrors, GetMemoryRepoLogResponses, GetMemoryRepoResponses, GetMemoryRepoStatusData, GetMemoryRepoStatusErrors, GetMemoryRepoStatusResponses, GetMemoryResponses, GetMentalModelData, GetMentalModelErrors, GetMentalModelHistoryData, GetMentalModelHistoryErrors, GetMentalModelHistoryResponses, GetMentalModelResponses, GetObservationHistoryData, GetObservationHistoryErrors, GetObservationHistoryResponses, GetOperationResultData, GetOperationResultErrors, GetOperationResultResponses, GetOperationStatusData, GetOperationStatusErrors, GetOperationStatusResponses, GetSubRoutineHistogramData, GetSubRoutineHistogramErrors, GetSubRoutineHistogramResponses, GetSubRoutinePredictionsData, GetSubRoutinePredictionsErrors, GetSubRoutinePredictionsResponses, GetTasteDatasetData, GetTasteDatasetErrors, GetTasteDatasetResponses, GetTasteSetData, GetTasteSetErrors, GetTasteSetResponses, GetTimelineData, GetTimelineErrors, GetTimelineResponses, GetVersionData, GetVersionResponses, HealthEndpointHealthGetData, HealthEndpointHealthGetResponses, ImportBrainSnapshotData, ImportBrainSnapshotErrors, ImportBrainSnapshotResponses, ImportCodebaseFileData, ImportCodebaseFileErrors, ImportCodebaseFileResponses, ImportCodebaseGithubData, ImportCodebaseGithubErrors, ImportCodebaseGithubResponses, ImportCodebaseZipData, ImportCodebaseZipErrors, ImportCodebaseZipResponses, ImportTasteSetsData, ImportTasteSetsErrors, ImportTasteSetsResponses, InternetResearchData, InternetResearchErrors, InternetResearchResponses, InvestigateGraphData, InvestigateGraphErrors, InvestigateGraphResponses, ListBanksData, ListBanksErrors, ListBanksResponses, ListCodebaseChunksData, ListCodebaseChunksErrors, ListCodebaseChunksResponses, ListCodebaseFilesData, ListCodebaseFilesErrors, ListCodebaseFilesResponses, ListCodebaseModulesData, ListCodebaseModulesErrors, ListCodebaseModulesResponses, ListCodebaseResearchQueueData, ListCodebaseResearchQueueErrors, ListCodebaseResearchQueueResponses, ListCodebasesData, ListCodebasesErrors, ListCodebasesResponses, ListCodebaseSymbolCardsData, ListCodebaseSymbolCardsErrors, ListCodebaseSymbolCardsResponses, ListDirectivesData, ListDirectivesErrors, ListDirectivesResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListDreamArtifactsData, ListDreamArtifactsErrors, ListDreamArtifactsResponses, ListEntitiesData, ListEntitiesErrors, ListEntitiesResponses, ListForgeRecipesData, ListForgeRecipesErrors, ListForgeRecipesResponses, ListForgeRecordsData, ListForgeRecordsErrors, ListForgeRecordsResponses, ListLlmRequestsData, ListLlmRequestsErrors, ListLlmRequestsResponses, ListMemoriesData, ListMemoriesErrors, ListMemoriesResponses, ListMemoryRepoBranchesData, ListMemoryRepoBranchesErrors, ListMemoryRepoBranchesForBankData, ListMemoryRepoBranchesForBankErrors, ListMemoryRepoBranchesForBankResponses, ListMemoryRepoBranchesResponses, ListMemoryReposData, ListMemoryReposErrors, ListMemoryReposResponses, ListMentalModelsData, ListMentalModelsErrors, ListMentalModelsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTagsData, ListTagsErrors, ListTagsResponses, ListTasteCatalogData, ListTasteCatalogErrors, ListTasteCatalogResponses, ListTasteDatasetsData, ListTasteDatasetsErrors, ListTasteDatasetsResponses, ListTasteSetsData, ListTasteSetsErrors, ListTasteSetsResponses, ListWebhookDeliveriesData, ListWebhookDeliveriesErrors, ListWebhookDeliveriesResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, MetricsEndpointMetricsGetData, MetricsEndpointMetricsGetResponses, PostEntityIntelligenceRecomputeData, PostEntityIntelligenceRecomputeErrors, PostEntityIntelligenceRecomputeResponses, PostEntityTrajectoryRecomputeData, PostEntityTrajectoryRecomputeErrors, PostEntityTrajectoryRecomputeResponses, RecallMemoriesData, RecallMemoriesErrors, RecallMemoriesResponses, ReflectData, ReflectErrors, ReflectResponses, RefreshCodebaseData, RefreshCodebaseErrors, RefreshCodebaseResponses, RefreshMentalModelData, RefreshMentalModelErrors, RefreshMentalModelResponses, RegenerateEntityObservationsData, RegenerateEntityObservationsErrors, RegenerateEntityObservationsResponses, ResetBankConfigData, ResetBankConfigErrors, ResetBankConfigResponses, ResetMemoryRepoHardData, ResetMemoryRepoHardErrors, ResetMemoryRepoHardResponses, RetainMemoriesData, RetainMemoriesErrors, RetainMemoriesResponses, RetainTasteSetsData, RetainTasteSetsErrors, RetainTasteSetsResponses, RetryOperationData, RetryOperationErrors, RetryOperationResponses, RevertTasteSetData, RevertTasteSetErrors, RevertTasteSetResponses, ReviewDreamProposalData, ReviewDreamProposalErrors, ReviewDreamProposalResponses, RouteCodebaseReviewItemsData, RouteCodebaseReviewItemsErrors, RouteCodebaseReviewItemsResponses, SearchCodebaseSymbolsData, SearchCodebaseSymbolsErrors, SearchCodebaseSymbolsResponses, SubmitAsyncReflectData, SubmitAsyncReflectErrors, SubmitAsyncReflectResponses, SubmitForgeJobData, SubmitForgeJobErrors, SubmitForgeJobResponses, SubmitTasteTransformData, SubmitTasteTransformErrors, SubmitTasteTransformResponses, TriggerConsolidationData, TriggerConsolidationErrors, TriggerConsolidationResponses, TriggerDreamGenerationData, TriggerDreamGenerationErrors, TriggerDreamGenerationResponses, TriggerSubRoutineData, TriggerSubRoutineErrors, TriggerSubRoutineResponses, UpdateBankConfigData, UpdateBankConfigErrors, UpdateBankConfigResponses, UpdateBankData, UpdateBankDispositionData, UpdateBankDispositionErrors, UpdateBankDispositionResponses, UpdateBankErrors, UpdateBankResponses, UpdateCodebaseTriageSettingsData, UpdateCodebaseTriageSettingsErrors, UpdateCodebaseTriageSettingsResponses, UpdateDirectiveData, UpdateDirectiveErrors, UpdateDirectiveResponses, UpdateDreamPredictionOutcomeData, UpdateDreamPredictionOutcomeErrors, UpdateDreamPredictionOutcomeResponses, UpdateMentalModelData, UpdateMentalModelErrors, UpdateMentalModelResponses, UpdateTasteDatasetData, UpdateTasteDatasetErrors, UpdateTasteDatasetResponses, UpdateTasteSetData, UpdateTasteSetErrors, UpdateTasteSetResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, ValidateBrainImportData, ValidateBrainImportErrors, ValidateBrainImportResponses } from './types.gen';
+import type { AddBankBackgroundData, AddBankBackgroundErrors, AddBankBackgroundResponses, AdminCreateOrgData, AdminCreateOrgErrors, AdminCreateOrgResponses, AdminDecommissionWorkerData, AdminDecommissionWorkerErrors, AdminDecommissionWorkerResponses, AdminListAuditEventsData, AdminListAuditEventsErrors, AdminListAuditEventsResponses, AdminListOperationsData, AdminListOperationsErrors, AdminListOperationsResponses, AdminListOrgsData, AdminListOrgsErrors, AdminListOrgsResponses, AdminListTenantBanksData, AdminListTenantBanksErrors, AdminListTenantBanksResponses, AdminListTenantsData, AdminListTenantsErrors, AdminListTenantsResponses, AdminListWorkersData, AdminListWorkersErrors, AdminListWorkersResponses, AdminRetryOrgData, AdminRetryOrgErrors, AdminRetryOrgResponses, AdminSystemHealthData, AdminSystemHealthErrors, AdminSystemHealthResponses, AdminTriggerConsolidationData, AdminTriggerConsolidationErrors, AdminTriggerConsolidationResponses, AdminUpdateOrgData, AdminUpdateOrgErrors, AdminUpdateOrgResponses, AnalyzeCodebaseImpactData, AnalyzeCodebaseImpactErrors, AnalyzeCodebaseImpactResponses, ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetData, ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetErrors, ApiListChunksForDocumentV1DefaultBanksBankIdDocumentsDocumentIdChunksGetResponses, ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetData, ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetErrors, ApiListDocumentMemoriesV1DefaultBanksBankIdDocumentsDocumentIdMemoriesGetResponses, ApproveCodebaseData, ApproveCodebaseErrors, ApproveCodebaseResponses, AuthForgotPasswordData, AuthForgotPasswordErrors, AuthForgotPasswordResponses, AuthListSessionsData, AuthListSessionsErrors, AuthListSessionsResponses, AuthLoginData, AuthLoginErrors, AuthLoginResponses, AuthLogoutData, AuthLogoutErrors, AuthLogoutResponses, AuthMeData, AuthMeErrors, AuthMeResponses, AuthResendVerificationData, AuthResendVerificationErrors, AuthResendVerificationResponses, AuthResetPasswordData, AuthResetPasswordErrors, AuthResetPasswordResponses, AuthRevokeSessionData, AuthRevokeSessionErrors, AuthRevokeSessionResponses, AuthSignupData, AuthSignupErrors, AuthSignupResponses, AuthSignupStateData, AuthSignupStateResponses, AuthSwitchWorkspaceData, AuthSwitchWorkspaceErrors, AuthSwitchWorkspaceResponses, AuthVerifyEmailData, AuthVerifyEmailErrors, AuthVerifyEmailResponses, BrainLearnFromRemoteData, BrainLearnFromRemoteErrors, BrainLearnFromRemoteResponses, CancelOperationData, CancelOperationErrors, CancelOperationResponses, CheckoutMemoryRepoBranchData, CheckoutMemoryRepoBranchErrors, CheckoutMemoryRepoBranchResponses, ClearBankMemoriesData, ClearBankMemoriesErrors, ClearBankMemoriesResponses, ClearMemoryObservationsData, ClearMemoryObservationsErrors, ClearMemoryObservationsResponses, ClearObservationsData, ClearObservationsErrors, ClearObservationsResponses, CommitMemoryRepoData, CommitMemoryRepoErrors, CommitMemoryRepoResponses, CreateDirectiveData, CreateDirectiveErrors, CreateDirectiveResponses, CreateMemoryRepoBranchData, CreateMemoryRepoBranchErrors, CreateMemoryRepoBranchResponses, CreateMemoryRepoData, CreateMemoryRepoErrors, CreateMemoryRepoResponses, CreateMentalModelData, CreateMentalModelErrors, CreateMentalModelResponses, CreateOrUpdateBankData, CreateOrUpdateBankErrors, CreateOrUpdateBankResponses, CreateTasteDatasetData, CreateTasteDatasetErrors, CreateTasteDatasetResponses, CreateWebhookData, CreateWebhookErrors, CreateWebhookResponses, CurateCodebaseByIntentData, CurateCodebaseByIntentErrors, CurateCodebaseByIntentResponses, DeleteBankData, DeleteBankErrors, DeleteBankResponses, DeleteDirectiveData, DeleteDirectiveErrors, DeleteDirectiveResponses, DeleteDocumentData, DeleteDocumentErrors, DeleteDocumentResponses, DeleteMentalModelData, DeleteMentalModelErrors, DeleteMentalModelResponses, DeleteTasteDatasetData, DeleteTasteDatasetErrors, DeleteTasteDatasetResponses, DeleteWebhookData, DeleteWebhookErrors, DeleteWebhookResponses, DiffMemoryRepoData, DiffMemoryRepoErrors, DiffMemoryRepoResponses, EnableMemoryRepoData, EnableMemoryRepoErrors, EnableMemoryRepoResponses, ExportBrainSnapshotData, ExportBrainSnapshotErrors, ExportBrainSnapshotResponses, ExportForgeJobData, ExportForgeJobErrors, ExportForgeJobResponses, ExportTasteDatasetData, ExportTasteDatasetErrors, ExportTasteDatasetResponses, FileRetainData, FileRetainErrors, FileRetainResponses, ForkMemoryRepoBankData, ForkMemoryRepoBankErrors, ForkMemoryRepoBankResponses, GenerateTasteVariantsData, GenerateTasteVariantsErrors, GenerateTasteVariantsResponses, GetAgentStatsData, GetAgentStatsErrors, GetAgentStatsResponses, GetAnomalyIntelligenceData, GetAnomalyIntelligenceErrors, GetAnomalyIntelligenceResponses, GetBankConfigData, GetBankConfigErrors, GetBankConfigResponses, GetBankProfileData, GetBankProfileErrors, GetBankProfileResponses, GetBrainInfluenceData, GetBrainInfluenceErrors, GetBrainInfluenceResponses, GetBrainRuntimeStatusData, GetBrainRuntimeStatusErrors, GetBrainRuntimeStatusResponses, GetChunkData, GetChunkErrors, GetChunkResponses, GetCodebaseChunkDetailData, GetCodebaseChunkDetailErrors, GetCodebaseChunkDetailResponses, GetCodebaseData, GetCodebaseErrors, GetCodebaseRepoMapData, GetCodebaseRepoMapErrors, GetCodebaseRepoMapResponses, GetCodebaseResponses, GetCodebaseReviewData, GetCodebaseReviewErrors, GetCodebaseReviewResponses, GetCodebaseSymbolCardData, GetCodebaseSymbolCardErrors, GetCodebaseSymbolCardResponses, GetCodebaseTriageSettingsData, GetCodebaseTriageSettingsErrors, GetCodebaseTriageSettingsResponses, GetDirectiveData, GetDirectiveErrors, GetDirectiveResponses, GetDocumentData, GetDocumentErrors, GetDocumentResponses, GetDreamStatsData, GetDreamStatsErrors, GetDreamStatsResponses, GetEntityData, GetEntityErrors, GetEntityIntelligenceData, GetEntityIntelligenceErrors, GetEntityIntelligenceResponses, GetEntityResponses, GetEntityTrajectoryData, GetEntityTrajectoryErrors, GetEntityTrajectoryResponses, GetForgeJobLineageData, GetForgeJobLineageErrors, GetForgeJobLineageResponses, GetGraphData, GetGraphErrors, GetGraphIntelligenceData, GetGraphIntelligenceErrors, GetGraphIntelligenceResponses, GetGraphNeighborhoodData, GetGraphNeighborhoodErrors, GetGraphNeighborhoodResponses, GetGraphResponses, GetGraphSummaryData, GetGraphSummaryErrors, GetGraphSummaryResponses, GetLlmRequestStatsData, GetLlmRequestStatsErrors, GetLlmRequestStatsResponses, GetMemoryData, GetMemoryErrors, GetMemoryRepoData, GetMemoryRepoErrors, GetMemoryRepoForBankData, GetMemoryRepoForBankErrors, GetMemoryRepoForBankResponses, GetMemoryRepoLogData, GetMemoryRepoLogErrors, GetMemoryRepoLogResponses, GetMemoryRepoResponses, GetMemoryRepoStatusData, GetMemoryRepoStatusErrors, GetMemoryRepoStatusResponses, GetMemoryResponses, GetMentalModelData, GetMentalModelErrors, GetMentalModelHistoryData, GetMentalModelHistoryErrors, GetMentalModelHistoryResponses, GetMentalModelResponses, GetObservationHistoryData, GetObservationHistoryErrors, GetObservationHistoryResponses, GetOperationResultData, GetOperationResultErrors, GetOperationResultResponses, GetOperationStatusData, GetOperationStatusErrors, GetOperationStatusResponses, GetSubRoutineHistogramData, GetSubRoutineHistogramErrors, GetSubRoutineHistogramResponses, GetSubRoutinePredictionsData, GetSubRoutinePredictionsErrors, GetSubRoutinePredictionsResponses, GetTasteDatasetData, GetTasteDatasetErrors, GetTasteDatasetResponses, GetTasteSetData, GetTasteSetErrors, GetTasteSetResponses, GetTimelineData, GetTimelineErrors, GetTimelineResponses, GetVersionData, GetVersionResponses, HealthEndpointHealthGetData, HealthEndpointHealthGetResponses, ImportBrainSnapshotData, ImportBrainSnapshotErrors, ImportBrainSnapshotResponses, ImportCodebaseFileData, ImportCodebaseFileErrors, ImportCodebaseFileResponses, ImportCodebaseGithubData, ImportCodebaseGithubErrors, ImportCodebaseGithubResponses, ImportCodebaseZipData, ImportCodebaseZipErrors, ImportCodebaseZipResponses, ImportTasteSetsData, ImportTasteSetsErrors, ImportTasteSetsResponses, InternetResearchData, InternetResearchErrors, InternetResearchResponses, InvestigateGraphData, InvestigateGraphErrors, InvestigateGraphResponses, ListBanksData, ListBanksErrors, ListBanksResponses, ListCodebaseChunksData, ListCodebaseChunksErrors, ListCodebaseChunksResponses, ListCodebaseFilesData, ListCodebaseFilesErrors, ListCodebaseFilesResponses, ListCodebaseModulesData, ListCodebaseModulesErrors, ListCodebaseModulesResponses, ListCodebaseResearchQueueData, ListCodebaseResearchQueueErrors, ListCodebaseResearchQueueResponses, ListCodebasesData, ListCodebasesErrors, ListCodebasesResponses, ListCodebaseSymbolCardsData, ListCodebaseSymbolCardsErrors, ListCodebaseSymbolCardsResponses, ListDirectivesData, ListDirectivesErrors, ListDirectivesResponses, ListDocumentsData, ListDocumentsErrors, ListDocumentsResponses, ListDreamArtifactsData, ListDreamArtifactsErrors, ListDreamArtifactsResponses, ListEntitiesData, ListEntitiesErrors, ListEntitiesResponses, ListForgeRecipesData, ListForgeRecipesErrors, ListForgeRecipesResponses, ListForgeRecordsData, ListForgeRecordsErrors, ListForgeRecordsResponses, ListLlmRequestsData, ListLlmRequestsErrors, ListLlmRequestsResponses, ListMemoriesData, ListMemoriesErrors, ListMemoriesResponses, ListMemoryRepoBranchesData, ListMemoryRepoBranchesErrors, ListMemoryRepoBranchesForBankData, ListMemoryRepoBranchesForBankErrors, ListMemoryRepoBranchesForBankResponses, ListMemoryRepoBranchesResponses, ListMemoryReposData, ListMemoryReposErrors, ListMemoryReposResponses, ListMentalModelsData, ListMentalModelsErrors, ListMentalModelsResponses, ListOperationsData, ListOperationsErrors, ListOperationsResponses, ListTagsData, ListTagsErrors, ListTagsResponses, ListTasteCatalogData, ListTasteCatalogErrors, ListTasteCatalogResponses, ListTasteDatasetsData, ListTasteDatasetsErrors, ListTasteDatasetsResponses, ListTasteSetsData, ListTasteSetsErrors, ListTasteSetsResponses, ListWebhookDeliveriesData, ListWebhookDeliveriesErrors, ListWebhookDeliveriesResponses, ListWebhooksData, ListWebhooksErrors, ListWebhooksResponses, MetricsEndpointMetricsGetData, MetricsEndpointMetricsGetResponses, OrgAcceptInvitationData, OrgAcceptInvitationErrors, OrgAcceptInvitationResponses, OrgAccessMatrixData, OrgAccessMatrixErrors, OrgAccessMatrixResponses, OrgCreateDirectGrantData, OrgCreateDirectGrantErrors, OrgCreateDirectGrantResponses, OrgCreateInvitationData, OrgCreateInvitationErrors, OrgCreateInvitationResponses, OrgCreateRoleData, OrgCreateRoleErrors, OrgCreateRoleResponses, OrgCreateServiceAccountData, OrgCreateServiceAccountErrors, OrgCreateServiceAccountResponses, OrgCreateServiceKeyData, OrgCreateServiceKeyErrors, OrgCreateServiceKeyResponses, OrgCreateWorkspaceData, OrgCreateWorkspaceErrors, OrgCreateWorkspaceResponses, OrgDeleteDirectGrantData, OrgDeleteDirectGrantErrors, OrgDeleteDirectGrantResponses, OrgDeleteRoleData, OrgDeleteRoleErrors, OrgDeleteRoleResponses, OrgGetEffectivePermissionsData, OrgGetEffectivePermissionsErrors, OrgGetEffectivePermissionsResponses, OrgGetOverviewData, OrgGetOverviewErrors, OrgGetOverviewResponses, OrgListAuditEventsData, OrgListAuditEventsErrors, OrgListAuditEventsResponses, OrgListInvitationsData, OrgListInvitationsErrors, OrgListInvitationsResponses, OrgListMembersData, OrgListMembersErrors, OrgListMembershipsData, OrgListMembershipsErrors, OrgListMembershipsResponses, OrgListMembersResponses, OrgListRolesData, OrgListRolesErrors, OrgListRolesResponses, OrgListServiceAccountsData, OrgListServiceAccountsErrors, OrgListServiceAccountsResponses, OrgListServiceKeysData, OrgListServiceKeysErrors, OrgListServiceKeysResponses, OrgRevokeInvitationData, OrgRevokeInvitationErrors, OrgRevokeInvitationResponses, OrgRevokeServiceKeyData, OrgRevokeServiceKeyErrors, OrgRevokeServiceKeyResponses, OrgRotateServiceKeyData, OrgRotateServiceKeyErrors, OrgRotateServiceKeyResponses, OrgUpdateMemberData, OrgUpdateMemberErrors, OrgUpdateMemberResponses, OrgUpdateRoleData, OrgUpdateRoleErrors, OrgUpdateRoleResponses, OrgUpdateServiceAccountData, OrgUpdateServiceAccountErrors, OrgUpdateServiceAccountResponses, PostEntityIntelligenceRecomputeData, PostEntityIntelligenceRecomputeErrors, PostEntityIntelligenceRecomputeResponses, PostEntityTrajectoryRecomputeData, PostEntityTrajectoryRecomputeErrors, PostEntityTrajectoryRecomputeResponses, RecallMemoriesData, RecallMemoriesErrors, RecallMemoriesResponses, ReflectData, ReflectErrors, ReflectResponses, RefreshCodebaseData, RefreshCodebaseErrors, RefreshCodebaseResponses, RefreshMentalModelData, RefreshMentalModelErrors, RefreshMentalModelResponses, RegenerateEntityObservationsData, RegenerateEntityObservationsErrors, RegenerateEntityObservationsResponses, ResetBankConfigData, ResetBankConfigErrors, ResetBankConfigResponses, ResetMemoryRepoHardData, ResetMemoryRepoHardErrors, ResetMemoryRepoHardResponses, RetainMemoriesData, RetainMemoriesErrors, RetainMemoriesResponses, RetainTasteSetsData, RetainTasteSetsErrors, RetainTasteSetsResponses, RetryOperationData, RetryOperationErrors, RetryOperationResponses, RevertTasteSetData, RevertTasteSetErrors, RevertTasteSetResponses, ReviewDreamProposalData, ReviewDreamProposalErrors, ReviewDreamProposalResponses, RouteCodebaseReviewItemsData, RouteCodebaseReviewItemsErrors, RouteCodebaseReviewItemsResponses, SearchCodebaseSymbolsData, SearchCodebaseSymbolsErrors, SearchCodebaseSymbolsResponses, SubmitAsyncReflectData, SubmitAsyncReflectErrors, SubmitAsyncReflectResponses, SubmitForgeJobData, SubmitForgeJobErrors, SubmitForgeJobResponses, SubmitTasteTransformData, SubmitTasteTransformErrors, SubmitTasteTransformResponses, TriggerConsolidationData, TriggerConsolidationErrors, TriggerConsolidationResponses, TriggerDreamGenerationData, TriggerDreamGenerationErrors, TriggerDreamGenerationResponses, TriggerSubRoutineData, TriggerSubRoutineErrors, TriggerSubRoutineResponses, UpdateBankConfigData, UpdateBankConfigErrors, UpdateBankConfigResponses, UpdateBankData, UpdateBankDispositionData, UpdateBankDispositionErrors, UpdateBankDispositionResponses, UpdateBankErrors, UpdateBankResponses, UpdateCodebaseTriageSettingsData, UpdateCodebaseTriageSettingsErrors, UpdateCodebaseTriageSettingsResponses, UpdateDirectiveData, UpdateDirectiveErrors, UpdateDirectiveResponses, UpdateDreamPredictionOutcomeData, UpdateDreamPredictionOutcomeErrors, UpdateDreamPredictionOutcomeResponses, UpdateMentalModelData, UpdateMentalModelErrors, UpdateMentalModelResponses, UpdateTasteDatasetData, UpdateTasteDatasetErrors, UpdateTasteDatasetResponses, UpdateTasteSetData, UpdateTasteSetErrors, UpdateTasteSetResponses, UpdateWebhookData, UpdateWebhookErrors, UpdateWebhookResponses, ValidateBrainImportData, ValidateBrainImportErrors, ValidateBrainImportResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean> = Options2<TData, ThrowOnError> & {
     /**
@@ -1388,18 +1388,18 @@ export const analyzeCodebaseImpact = <ThrowOnError extends boolean = false>(opti
  *
  * Returns DB pool stats, migration version, and active worker count.
  */
-export const adminSystemHealth = <ThrowOnError extends boolean = false>(options?: Options<AdminSystemHealthData, ThrowOnError>) => (options?.client ?? client).get<AdminSystemHealthResponses, AdminSystemHealthErrors, ThrowOnError>({ url: '/v1/admin/system/health', ...options });
+export const adminSystemHealth = <ThrowOnError extends boolean = false>(options?: Options<AdminSystemHealthData, ThrowOnError>) => (options?.client ?? client).get<AdminSystemHealthResponses, AdminSystemHealthErrors, ThrowOnError>({ url: '/v1/platform/system/health', ...options });
 
 /**
  * Admin List Orgs
  */
-export const adminListOrgs = <ThrowOnError extends boolean = false>(options?: Options<AdminListOrgsData, ThrowOnError>) => (options?.client ?? client).get<AdminListOrgsResponses, AdminListOrgsErrors, ThrowOnError>({ url: '/v1/admin/orgs', ...options });
+export const adminListOrgs = <ThrowOnError extends boolean = false>(options?: Options<AdminListOrgsData, ThrowOnError>) => (options?.client ?? client).get<AdminListOrgsResponses, AdminListOrgsErrors, ThrowOnError>({ url: '/v1/platform/orgs', ...options });
 
 /**
  * Admin Create Org
  */
 export const adminCreateOrg = <ThrowOnError extends boolean = false>(options: Options<AdminCreateOrgData, ThrowOnError>) => (options.client ?? client).post<AdminCreateOrgResponses, AdminCreateOrgErrors, ThrowOnError>({
-    url: '/v1/admin/orgs',
+    url: '/v1/platform/orgs',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1408,86 +1408,40 @@ export const adminCreateOrg = <ThrowOnError extends boolean = false>(options: Op
 });
 
 /**
- * Admin List Principals
+ * Admin Update Org
  */
-export const adminListPrincipals = <ThrowOnError extends boolean = false>(options: Options<AdminListPrincipalsData, ThrowOnError>) => (options.client ?? client).get<AdminListPrincipalsResponses, AdminListPrincipalsErrors, ThrowOnError>({ url: '/v1/admin/principals', ...options });
+export const adminUpdateOrg = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateOrgData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateOrgResponses, AdminUpdateOrgErrors, ThrowOnError>({ url: '/v1/platform/orgs/{org_id}', ...options });
 
 /**
- * Admin Create Principal
+ * Admin Retry Org
  */
-export const adminCreatePrincipal = <ThrowOnError extends boolean = false>(options: Options<AdminCreatePrincipalData, ThrowOnError>) => (options.client ?? client).post<AdminCreatePrincipalResponses, AdminCreatePrincipalErrors, ThrowOnError>({
-    url: '/v1/admin/principals',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Admin Update Principal
- */
-export const adminUpdatePrincipal = <ThrowOnError extends boolean = false>(options: Options<AdminUpdatePrincipalData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdatePrincipalResponses, AdminUpdatePrincipalErrors, ThrowOnError>({ url: '/v1/admin/principals/{principal_id}', ...options });
-
-/**
- * Admin Reset Principal Password
- */
-export const adminResetPrincipalPassword = <ThrowOnError extends boolean = false>(options: Options<AdminResetPrincipalPasswordData, ThrowOnError>) => (options.client ?? client).post<AdminResetPrincipalPasswordResponses, AdminResetPrincipalPasswordErrors, ThrowOnError>({
-    url: '/v1/admin/principals/{principal_id}/password',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Admin List Access Grants
- */
-export const adminListAccessGrants = <ThrowOnError extends boolean = false>(options: Options<AdminListAccessGrantsData, ThrowOnError>) => (options.client ?? client).get<AdminListAccessGrantsResponses, AdminListAccessGrantsErrors, ThrowOnError>({ url: '/v1/admin/access-grants', ...options });
-
-/**
- * Admin Create Access Grant
- */
-export const adminCreateAccessGrant = <ThrowOnError extends boolean = false>(options: Options<AdminCreateAccessGrantData, ThrowOnError>) => (options.client ?? client).post<AdminCreateAccessGrantResponses, AdminCreateAccessGrantErrors, ThrowOnError>({
-    url: '/v1/admin/access-grants',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Admin Delete Access Grant
- */
-export const adminDeleteAccessGrant = <ThrowOnError extends boolean = false>(options: Options<AdminDeleteAccessGrantData, ThrowOnError>) => (options.client ?? client).delete<AdminDeleteAccessGrantResponses, AdminDeleteAccessGrantErrors, ThrowOnError>({ url: '/v1/admin/access-grants/{grant_id}', ...options });
+export const adminRetryOrg = <ThrowOnError extends boolean = false>(options: Options<AdminRetryOrgData, ThrowOnError>) => (options.client ?? client).post<AdminRetryOrgResponses, AdminRetryOrgErrors, ThrowOnError>({ url: '/v1/platform/orgs/{org_id}/retry-provisioning', ...options });
 
 /**
  * Admin List Audit Events
  */
-export const adminListAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<AdminListAuditEventsData, ThrowOnError>) => (options?.client ?? client).get<AdminListAuditEventsResponses, AdminListAuditEventsErrors, ThrowOnError>({ url: '/v1/admin/audit-events', ...options });
+export const adminListAuditEvents = <ThrowOnError extends boolean = false>(options?: Options<AdminListAuditEventsData, ThrowOnError>) => (options?.client ?? client).get<AdminListAuditEventsResponses, AdminListAuditEventsErrors, ThrowOnError>({ url: '/v1/platform/audit-events', ...options });
 
 /**
  * List all tenants
  *
  * Returns all tenants known to the tenant extension with bank counts.
  */
-export const adminListTenants = <ThrowOnError extends boolean = false>(options?: Options<AdminListTenantsData, ThrowOnError>) => (options?.client ?? client).get<AdminListTenantsResponses, AdminListTenantsErrors, ThrowOnError>({ url: '/v1/admin/tenants', ...options });
+export const adminListTenants = <ThrowOnError extends boolean = false>(options?: Options<AdminListTenantsData, ThrowOnError>) => (options?.client ?? client).get<AdminListTenantsResponses, AdminListTenantsErrors, ThrowOnError>({ url: '/v1/platform/tenants', ...options });
 
 /**
  * List banks in a tenant schema
  *
  * Returns all bank IDs and names within the specified tenant schema.
  */
-export const adminListTenantBanks = <ThrowOnError extends boolean = false>(options: Options<AdminListTenantBanksData, ThrowOnError>) => (options.client ?? client).get<AdminListTenantBanksResponses, AdminListTenantBanksErrors, ThrowOnError>({ url: '/v1/admin/tenants/{schema}/banks', ...options });
+export const adminListTenantBanks = <ThrowOnError extends boolean = false>(options: Options<AdminListTenantBanksData, ThrowOnError>) => (options.client ?? client).get<AdminListTenantBanksResponses, AdminListTenantBanksErrors, ThrowOnError>({ url: '/v1/platform/tenants/{schema}/banks', ...options });
 
 /**
  * List active workers
  *
  * Lists workers with pending/stuck operation counts from async_operations.
  */
-export const adminListWorkers = <ThrowOnError extends boolean = false>(options?: Options<AdminListWorkersData, ThrowOnError>) => (options?.client ?? client).get<AdminListWorkersResponses, AdminListWorkersErrors, ThrowOnError>({ url: '/v1/admin/workers', ...options });
+export const adminListWorkers = <ThrowOnError extends boolean = false>(options?: Options<AdminListWorkersData, ThrowOnError>) => (options?.client ?? client).get<AdminListWorkersResponses, AdminListWorkersErrors, ThrowOnError>({ url: '/v1/platform/workers', ...options });
 
 /**
  * Decommission a worker
@@ -1495,7 +1449,7 @@ export const adminListWorkers = <ThrowOnError extends boolean = false>(options?:
  * Release all tasks claimed by the specified worker so another worker can pick them up. Use worker_id='__all_stuck__' to release all tasks with no active worker.
  */
 export const adminDecommissionWorker = <ThrowOnError extends boolean = false>(options: Options<AdminDecommissionWorkerData, ThrowOnError>) => (options.client ?? client).post<AdminDecommissionWorkerResponses, AdminDecommissionWorkerErrors, ThrowOnError>({
-    url: '/v1/admin/workers/{worker_id}/decommission',
+    url: '/v1/platform/workers/{worker_id}/decommission',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1508,56 +1462,14 @@ export const adminDecommissionWorker = <ThrowOnError extends boolean = false>(op
  *
  * Returns recent async operations across all tenant schemas visible to the superuser.
  */
-export const adminListOperations = <ThrowOnError extends boolean = false>(options?: Options<AdminListOperationsData, ThrowOnError>) => (options?.client ?? client).get<AdminListOperationsResponses, AdminListOperationsErrors, ThrowOnError>({ url: '/v1/admin/operations', ...options });
+export const adminListOperations = <ThrowOnError extends boolean = false>(options?: Options<AdminListOperationsData, ThrowOnError>) => (options?.client ?? client).get<AdminListOperationsResponses, AdminListOperationsErrors, ThrowOnError>({ url: '/v1/platform/operations', ...options });
 
 /**
  * Trigger consolidation for all banks in a schema
  *
  * Enqueues a consolidation task for every bank in the given schema.
  */
-export const adminTriggerConsolidation = <ThrowOnError extends boolean = false>(options: Options<AdminTriggerConsolidationData, ThrowOnError>) => (options.client ?? client).post<AdminTriggerConsolidationResponses, AdminTriggerConsolidationErrors, ThrowOnError>({ url: '/v1/admin/consolidate/{schema}', ...options });
-
-/**
- * List API keys
- *
- * Returns all API keys (redacted — raw key is never returned after creation).
- */
-export const adminListApiKeys = <ThrowOnError extends boolean = false>(options?: Options<AdminListApiKeysData, ThrowOnError>) => (options?.client ?? client).get<AdminListApiKeysResponses, AdminListApiKeysErrors, ThrowOnError>({ url: '/v1/admin/api-keys', ...options });
-
-/**
- * Create API key
- *
- * Creates a new API key and returns the raw key **once**. Store it securely — it cannot be retrieved again.
- */
-export const adminCreateApiKey = <ThrowOnError extends boolean = false>(options: Options<AdminCreateApiKeyData, ThrowOnError>) => (options.client ?? client).post<AdminCreateApiKeyResponses, AdminCreateApiKeyErrors, ThrowOnError>({
-    url: '/v1/admin/api-keys',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
-
-/**
- * Revoke API key
- *
- * Soft-deletes an API key by setting revoked_at. The key is immediately inactive.
- */
-export const adminRevokeApiKey = <ThrowOnError extends boolean = false>(options: Options<AdminRevokeApiKeyData, ThrowOnError>) => (options.client ?? client).delete<AdminRevokeApiKeyResponses, AdminRevokeApiKeyErrors, ThrowOnError>({ url: '/v1/admin/api-keys/{key_id}', ...options });
-
-/**
- * Update API key
- *
- * Update name, role, or allowed_bank_ids for an existing key.
- */
-export const adminUpdateApiKey = <ThrowOnError extends boolean = false>(options: Options<AdminUpdateApiKeyData, ThrowOnError>) => (options.client ?? client).patch<AdminUpdateApiKeyResponses, AdminUpdateApiKeyErrors, ThrowOnError>({
-    url: '/v1/admin/api-keys/{key_id}',
-    ...options,
-    headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
-    }
-});
+export const adminTriggerConsolidation = <ThrowOnError extends boolean = false>(options: Options<AdminTriggerConsolidationData, ThrowOnError>) => (options.client ?? client).post<AdminTriggerConsolidationResponses, AdminTriggerConsolidationErrors, ThrowOnError>({ url: '/v1/platform/consolidate/{schema}', ...options });
 
 /**
  * Signup State
@@ -1569,6 +1481,30 @@ export const authSignupState = <ThrowOnError extends boolean = false>(options?: 
  */
 export const authSignup = <ThrowOnError extends boolean = false>(options: Options<AuthSignupData, ThrowOnError>) => (options.client ?? client).post<AuthSignupResponses, AuthSignupErrors, ThrowOnError>({
     url: '/v1/auth/signup',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Verify Email
+ */
+export const authVerifyEmail = <ThrowOnError extends boolean = false>(options: Options<AuthVerifyEmailData, ThrowOnError>) => (options.client ?? client).post<AuthVerifyEmailResponses, AuthVerifyEmailErrors, ThrowOnError>({
+    url: '/v1/auth/verify',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Resend Verification
+ */
+export const authResendVerification = <ThrowOnError extends boolean = false>(options: Options<AuthResendVerificationData, ThrowOnError>) => (options.client ?? client).post<AuthResendVerificationResponses, AuthResendVerificationErrors, ThrowOnError>({
+    url: '/v1/auth/resend-verification',
     ...options,
     headers: {
         'Content-Type': 'application/json',
@@ -1597,3 +1533,251 @@ export const authLogout = <ThrowOnError extends boolean = false>(options?: Optio
  * Me
  */
 export const authMe = <ThrowOnError extends boolean = false>(options?: Options<AuthMeData, ThrowOnError>) => (options?.client ?? client).get<AuthMeResponses, AuthMeErrors, ThrowOnError>({ url: '/v1/auth/me', ...options });
+
+/**
+ * Switch Workspace
+ */
+export const authSwitchWorkspace = <ThrowOnError extends boolean = false>(options: Options<AuthSwitchWorkspaceData, ThrowOnError>) => (options.client ?? client).post<AuthSwitchWorkspaceResponses, AuthSwitchWorkspaceErrors, ThrowOnError>({
+    url: '/v1/auth/switch-workspace',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Sessions
+ */
+export const authListSessions = <ThrowOnError extends boolean = false>(options?: Options<AuthListSessionsData, ThrowOnError>) => (options?.client ?? client).get<AuthListSessionsResponses, AuthListSessionsErrors, ThrowOnError>({ url: '/v1/auth/sessions', ...options });
+
+/**
+ * Revoke Session
+ */
+export const authRevokeSession = <ThrowOnError extends boolean = false>(options: Options<AuthRevokeSessionData, ThrowOnError>) => (options.client ?? client).delete<AuthRevokeSessionResponses, AuthRevokeSessionErrors, ThrowOnError>({ url: '/v1/auth/sessions/{session_id}', ...options });
+
+/**
+ * Forgot Password
+ */
+export const authForgotPassword = <ThrowOnError extends boolean = false>(options: Options<AuthForgotPasswordData, ThrowOnError>) => (options.client ?? client).post<AuthForgotPasswordResponses, AuthForgotPasswordErrors, ThrowOnError>({
+    url: '/v1/auth/forgot-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Reset Password
+ */
+export const authResetPassword = <ThrowOnError extends boolean = false>(options: Options<AuthResetPasswordData, ThrowOnError>) => (options.client ?? client).post<AuthResetPasswordResponses, AuthResetPasswordErrors, ThrowOnError>({
+    url: '/v1/auth/reset-password',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Workspaces
+ */
+export const orgListMemberships = <ThrowOnError extends boolean = false>(options?: Options<OrgListMembershipsData, ThrowOnError>) => (options?.client ?? client).get<OrgListMembershipsResponses, OrgListMembershipsErrors, ThrowOnError>({ url: '/v1/orgs', ...options });
+
+/**
+ * Create Workspace
+ */
+export const orgCreateWorkspace = <ThrowOnError extends boolean = false>(options: Options<OrgCreateWorkspaceData, ThrowOnError>) => (options.client ?? client).post<OrgCreateWorkspaceResponses, OrgCreateWorkspaceErrors, ThrowOnError>({
+    url: '/v1/orgs',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Overview
+ */
+export const orgGetOverview = <ThrowOnError extends boolean = false>(options: Options<OrgGetOverviewData, ThrowOnError>) => (options.client ?? client).get<OrgGetOverviewResponses, OrgGetOverviewErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}', ...options });
+
+/**
+ * List Members
+ */
+export const orgListMembers = <ThrowOnError extends boolean = false>(options: Options<OrgListMembersData, ThrowOnError>) => (options.client ?? client).get<OrgListMembersResponses, OrgListMembersErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/members', ...options });
+
+/**
+ * Update Member
+ */
+export const orgUpdateMember = <ThrowOnError extends boolean = false>(options: Options<OrgUpdateMemberData, ThrowOnError>) => (options.client ?? client).patch<OrgUpdateMemberResponses, OrgUpdateMemberErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/members/{membership_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Invitations
+ */
+export const orgListInvitations = <ThrowOnError extends boolean = false>(options: Options<OrgListInvitationsData, ThrowOnError>) => (options.client ?? client).get<OrgListInvitationsResponses, OrgListInvitationsErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/invitations', ...options });
+
+/**
+ * Create Invitation
+ */
+export const orgCreateInvitation = <ThrowOnError extends boolean = false>(options: Options<OrgCreateInvitationData, ThrowOnError>) => (options.client ?? client).post<OrgCreateInvitationResponses, OrgCreateInvitationErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/invitations',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke Invitation
+ */
+export const orgRevokeInvitation = <ThrowOnError extends boolean = false>(options: Options<OrgRevokeInvitationData, ThrowOnError>) => (options.client ?? client).delete<OrgRevokeInvitationResponses, OrgRevokeInvitationErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/invitations/{invitation_id}', ...options });
+
+/**
+ * Accept Invitation
+ */
+export const orgAcceptInvitation = <ThrowOnError extends boolean = false>(options: Options<OrgAcceptInvitationData, ThrowOnError>) => (options.client ?? client).post<OrgAcceptInvitationResponses, OrgAcceptInvitationErrors, ThrowOnError>({
+    url: '/v1/orgs/invitations/accept',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Roles
+ */
+export const orgListRoles = <ThrowOnError extends boolean = false>(options: Options<OrgListRolesData, ThrowOnError>) => (options.client ?? client).get<OrgListRolesResponses, OrgListRolesErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/roles', ...options });
+
+/**
+ * Create Role
+ */
+export const orgCreateRole = <ThrowOnError extends boolean = false>(options: Options<OrgCreateRoleData, ThrowOnError>) => (options.client ?? client).post<OrgCreateRoleResponses, OrgCreateRoleErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/roles',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Role
+ */
+export const orgDeleteRole = <ThrowOnError extends boolean = false>(options: Options<OrgDeleteRoleData, ThrowOnError>) => (options.client ?? client).delete<OrgDeleteRoleResponses, OrgDeleteRoleErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/roles/{role_id}', ...options });
+
+/**
+ * Update Role
+ */
+export const orgUpdateRole = <ThrowOnError extends boolean = false>(options: Options<OrgUpdateRoleData, ThrowOnError>) => (options.client ?? client).patch<OrgUpdateRoleResponses, OrgUpdateRoleErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/roles/{role_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Service Accounts
+ */
+export const orgListServiceAccounts = <ThrowOnError extends boolean = false>(options: Options<OrgListServiceAccountsData, ThrowOnError>) => (options.client ?? client).get<OrgListServiceAccountsResponses, OrgListServiceAccountsErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/service-accounts', ...options });
+
+/**
+ * Create Service Account
+ */
+export const orgCreateServiceAccount = <ThrowOnError extends boolean = false>(options: Options<OrgCreateServiceAccountData, ThrowOnError>) => (options.client ?? client).post<OrgCreateServiceAccountResponses, OrgCreateServiceAccountErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/service-accounts',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Update Service Account
+ */
+export const orgUpdateServiceAccount = <ThrowOnError extends boolean = false>(options: Options<OrgUpdateServiceAccountData, ThrowOnError>) => (options.client ?? client).patch<OrgUpdateServiceAccountResponses, OrgUpdateServiceAccountErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/service-accounts/{principal_id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Service Keys
+ */
+export const orgListServiceKeys = <ThrowOnError extends boolean = false>(options: Options<OrgListServiceKeysData, ThrowOnError>) => (options.client ?? client).get<OrgListServiceKeysResponses, OrgListServiceKeysErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/service-accounts/{principal_id}/keys', ...options });
+
+/**
+ * Create Service Key
+ */
+export const orgCreateServiceKey = <ThrowOnError extends boolean = false>(options: Options<OrgCreateServiceKeyData, ThrowOnError>) => (options.client ?? client).post<OrgCreateServiceKeyResponses, OrgCreateServiceKeyErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/service-accounts/{principal_id}/keys',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Rotate Service Key
+ */
+export const orgRotateServiceKey = <ThrowOnError extends boolean = false>(options: Options<OrgRotateServiceKeyData, ThrowOnError>) => (options.client ?? client).post<OrgRotateServiceKeyResponses, OrgRotateServiceKeyErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/service-accounts/{principal_id}/keys/{key_id}/rotate',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Revoke Service Key
+ */
+export const orgRevokeServiceKey = <ThrowOnError extends boolean = false>(options: Options<OrgRevokeServiceKeyData, ThrowOnError>) => (options.client ?? client).delete<OrgRevokeServiceKeyResponses, OrgRevokeServiceKeyErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/service-accounts/{principal_id}/keys/{key_id}', ...options });
+
+/**
+ * Access Matrix
+ */
+export const orgAccessMatrix = <ThrowOnError extends boolean = false>(options: Options<OrgAccessMatrixData, ThrowOnError>) => (options.client ?? client).get<OrgAccessMatrixResponses, OrgAccessMatrixErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/access', ...options });
+
+/**
+ * Effective Permissions
+ */
+export const orgGetEffectivePermissions = <ThrowOnError extends boolean = false>(options: Options<OrgGetEffectivePermissionsData, ThrowOnError>) => (options.client ?? client).get<OrgGetEffectivePermissionsResponses, OrgGetEffectivePermissionsErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/effective-permissions/{principal_id}', ...options });
+
+/**
+ * Create Direct Grant
+ */
+export const orgCreateDirectGrant = <ThrowOnError extends boolean = false>(options: Options<OrgCreateDirectGrantData, ThrowOnError>) => (options.client ?? client).post<OrgCreateDirectGrantResponses, OrgCreateDirectGrantErrors, ThrowOnError>({
+    url: '/v1/orgs/{org_id}/grants',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Delete Direct Grant
+ */
+export const orgDeleteDirectGrant = <ThrowOnError extends boolean = false>(options: Options<OrgDeleteDirectGrantData, ThrowOnError>) => (options.client ?? client).delete<OrgDeleteDirectGrantResponses, OrgDeleteDirectGrantErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/grants/{grant_id}', ...options });
+
+/**
+ * Audit Events
+ */
+export const orgListAuditEvents = <ThrowOnError extends boolean = false>(options: Options<OrgListAuditEventsData, ThrowOnError>) => (options.client ?? client).get<OrgListAuditEventsResponses, OrgListAuditEventsErrors, ThrowOnError>({ url: '/v1/orgs/{org_id}/audit-events', ...options });

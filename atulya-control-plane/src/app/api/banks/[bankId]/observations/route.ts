@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ bank
 
     // Note: tags filtering is not supported by the list_memories API endpoint
     const response = await sdk.listMemories({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       query: {
         type: "observation",
@@ -57,7 +57,7 @@ export async function DELETE(
     }
 
     const response = await sdk.clearObservations({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 

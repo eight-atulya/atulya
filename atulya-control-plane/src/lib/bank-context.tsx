@@ -110,8 +110,10 @@ export function BankProvider({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   useEffect(() => {
-    loadBanks();
-  }, [loadBanks]);
+    if (pathname === "/dashboard" || pathname?.startsWith("/banks/")) {
+      void loadBanks();
+    }
+  }, [loadBanks, pathname]);
 
   useEffect(() => {
     void loadRepoState(currentBank);

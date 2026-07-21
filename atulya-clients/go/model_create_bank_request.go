@@ -19,21 +19,21 @@ var _ MappedNullable = &CreateBankRequest{}
 
 // CreateBankRequest Request model for creating/updating a bank.
 type CreateBankRequest struct {
-	Name NullableString `json:"name,omitempty"`
-	Disposition NullableDispositionTraits `json:"disposition,omitempty"`
-	DispositionSkepticism NullableInt32 `json:"disposition_skepticism,omitempty"`
-	DispositionLiteralism NullableInt32 `json:"disposition_literalism,omitempty"`
-	DispositionEmpathy NullableInt32 `json:"disposition_empathy,omitempty"`
-	Mission NullableString `json:"mission,omitempty"`
-	Background NullableString `json:"background,omitempty"`
-	ReflectMission NullableString `json:"reflect_mission,omitempty"`
-	RetainMission NullableString `json:"retain_mission,omitempty"`
-	RetainExtractionMode NullableString `json:"retain_extraction_mode,omitempty"`
-	RetainCustomInstructions NullableString `json:"retain_custom_instructions,omitempty"`
-	RetainChunkSize NullableInt32 `json:"retain_chunk_size,omitempty"`
-	BankPreset NullableString `json:"bank_preset,omitempty"`
-	EnableObservations NullableBool `json:"enable_observations,omitempty"`
-	ObservationsMission NullableString `json:"observations_mission,omitempty"`
+	Name                     NullableString            `json:"name,omitempty"`
+	Disposition              NullableDispositionTraits `json:"disposition,omitempty"`
+	DispositionSkepticism    NullableInt32             `json:"disposition_skepticism,omitempty"`
+	DispositionLiteralism    NullableInt32             `json:"disposition_literalism,omitempty"`
+	DispositionEmpathy       NullableInt32             `json:"disposition_empathy,omitempty"`
+	Mission                  NullableString            `json:"mission,omitempty"`
+	Background               NullableString            `json:"background,omitempty"`
+	ReflectMission           NullableString            `json:"reflect_mission,omitempty"`
+	RetainMission            NullableString            `json:"retain_mission,omitempty"`
+	RetainExtractionMode     NullableString            `json:"retain_extraction_mode,omitempty"`
+	RetainCustomInstructions NullableString            `json:"retain_custom_instructions,omitempty"`
+	RetainChunkSize          NullableInt32             `json:"retain_chunk_size,omitempty"`
+	BankPreset               NullableString            `json:"bank_preset,omitempty"`
+	EnableObservations       NullableBool              `json:"enable_observations,omitempty"`
+	ObservationsMission      NullableString            `json:"observations_mission,omitempty"`
 }
 
 // NewCreateBankRequest instantiates a new CreateBankRequest object
@@ -85,6 +85,7 @@ func (o *CreateBankRequest) HasName() bool {
 func (o *CreateBankRequest) SetName(v string) {
 	o.Name.Set(&v)
 }
+
 // SetNameNil sets the value for Name to be an explicit nil
 func (o *CreateBankRequest) SetNameNil() {
 	o.Name.Set(nil)
@@ -127,6 +128,7 @@ func (o *CreateBankRequest) HasDisposition() bool {
 func (o *CreateBankRequest) SetDisposition(v DispositionTraits) {
 	o.Disposition.Set(&v)
 }
+
 // SetDispositionNil sets the value for Disposition to be an explicit nil
 func (o *CreateBankRequest) SetDispositionNil() {
 	o.Disposition.Set(nil)
@@ -169,6 +171,7 @@ func (o *CreateBankRequest) HasDispositionSkepticism() bool {
 func (o *CreateBankRequest) SetDispositionSkepticism(v int32) {
 	o.DispositionSkepticism.Set(&v)
 }
+
 // SetDispositionSkepticismNil sets the value for DispositionSkepticism to be an explicit nil
 func (o *CreateBankRequest) SetDispositionSkepticismNil() {
 	o.DispositionSkepticism.Set(nil)
@@ -211,6 +214,7 @@ func (o *CreateBankRequest) HasDispositionLiteralism() bool {
 func (o *CreateBankRequest) SetDispositionLiteralism(v int32) {
 	o.DispositionLiteralism.Set(&v)
 }
+
 // SetDispositionLiteralismNil sets the value for DispositionLiteralism to be an explicit nil
 func (o *CreateBankRequest) SetDispositionLiteralismNil() {
 	o.DispositionLiteralism.Set(nil)
@@ -253,6 +257,7 @@ func (o *CreateBankRequest) HasDispositionEmpathy() bool {
 func (o *CreateBankRequest) SetDispositionEmpathy(v int32) {
 	o.DispositionEmpathy.Set(&v)
 }
+
 // SetDispositionEmpathyNil sets the value for DispositionEmpathy to be an explicit nil
 func (o *CreateBankRequest) SetDispositionEmpathyNil() {
 	o.DispositionEmpathy.Set(nil)
@@ -295,6 +300,7 @@ func (o *CreateBankRequest) HasMission() bool {
 func (o *CreateBankRequest) SetMission(v string) {
 	o.Mission.Set(&v)
 }
+
 // SetMissionNil sets the value for Mission to be an explicit nil
 func (o *CreateBankRequest) SetMissionNil() {
 	o.Mission.Set(nil)
@@ -337,6 +343,7 @@ func (o *CreateBankRequest) HasBackground() bool {
 func (o *CreateBankRequest) SetBackground(v string) {
 	o.Background.Set(&v)
 }
+
 // SetBackgroundNil sets the value for Background to be an explicit nil
 func (o *CreateBankRequest) SetBackgroundNil() {
 	o.Background.Set(nil)
@@ -379,6 +386,7 @@ func (o *CreateBankRequest) HasReflectMission() bool {
 func (o *CreateBankRequest) SetReflectMission(v string) {
 	o.ReflectMission.Set(&v)
 }
+
 // SetReflectMissionNil sets the value for ReflectMission to be an explicit nil
 func (o *CreateBankRequest) SetReflectMissionNil() {
 	o.ReflectMission.Set(nil)
@@ -421,6 +429,7 @@ func (o *CreateBankRequest) HasRetainMission() bool {
 func (o *CreateBankRequest) SetRetainMission(v string) {
 	o.RetainMission.Set(&v)
 }
+
 // SetRetainMissionNil sets the value for RetainMission to be an explicit nil
 func (o *CreateBankRequest) SetRetainMissionNil() {
 	o.RetainMission.Set(nil)
@@ -463,6 +472,7 @@ func (o *CreateBankRequest) HasRetainExtractionMode() bool {
 func (o *CreateBankRequest) SetRetainExtractionMode(v string) {
 	o.RetainExtractionMode.Set(&v)
 }
+
 // SetRetainExtractionModeNil sets the value for RetainExtractionMode to be an explicit nil
 func (o *CreateBankRequest) SetRetainExtractionModeNil() {
 	o.RetainExtractionMode.Set(nil)
@@ -505,6 +515,7 @@ func (o *CreateBankRequest) HasRetainCustomInstructions() bool {
 func (o *CreateBankRequest) SetRetainCustomInstructions(v string) {
 	o.RetainCustomInstructions.Set(&v)
 }
+
 // SetRetainCustomInstructionsNil sets the value for RetainCustomInstructions to be an explicit nil
 func (o *CreateBankRequest) SetRetainCustomInstructionsNil() {
 	o.RetainCustomInstructions.Set(nil)
@@ -547,6 +558,7 @@ func (o *CreateBankRequest) HasRetainChunkSize() bool {
 func (o *CreateBankRequest) SetRetainChunkSize(v int32) {
 	o.RetainChunkSize.Set(&v)
 }
+
 // SetRetainChunkSizeNil sets the value for RetainChunkSize to be an explicit nil
 func (o *CreateBankRequest) SetRetainChunkSizeNil() {
 	o.RetainChunkSize.Set(nil)
@@ -589,6 +601,7 @@ func (o *CreateBankRequest) HasBankPreset() bool {
 func (o *CreateBankRequest) SetBankPreset(v string) {
 	o.BankPreset.Set(&v)
 }
+
 // SetBankPresetNil sets the value for BankPreset to be an explicit nil
 func (o *CreateBankRequest) SetBankPresetNil() {
 	o.BankPreset.Set(nil)
@@ -631,6 +644,7 @@ func (o *CreateBankRequest) HasEnableObservations() bool {
 func (o *CreateBankRequest) SetEnableObservations(v bool) {
 	o.EnableObservations.Set(&v)
 }
+
 // SetEnableObservationsNil sets the value for EnableObservations to be an explicit nil
 func (o *CreateBankRequest) SetEnableObservationsNil() {
 	o.EnableObservations.Set(nil)
@@ -673,6 +687,7 @@ func (o *CreateBankRequest) HasObservationsMission() bool {
 func (o *CreateBankRequest) SetObservationsMission(v string) {
 	o.ObservationsMission.Set(&v)
 }
+
 // SetObservationsMissionNil sets the value for ObservationsMission to be an explicit nil
 func (o *CreateBankRequest) SetObservationsMissionNil() {
 	o.ObservationsMission.Set(nil)
@@ -684,7 +699,7 @@ func (o *CreateBankRequest) UnsetObservationsMission() {
 }
 
 func (o CreateBankRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -776,5 +791,3 @@ func (v *NullableCreateBankRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

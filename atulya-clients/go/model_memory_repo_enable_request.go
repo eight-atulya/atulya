@@ -71,6 +71,7 @@ func (o *MemoryRepoEnableRequest) HasRepoName() bool {
 func (o *MemoryRepoEnableRequest) SetRepoName(v string) {
 	o.RepoName.Set(&v)
 }
+
 // SetRepoNameNil sets the value for RepoName to be an explicit nil
 func (o *MemoryRepoEnableRequest) SetRepoNameNil() {
 	o.RepoName.Set(nil)
@@ -82,7 +83,7 @@ func (o *MemoryRepoEnableRequest) UnsetRepoName() {
 }
 
 func (o MemoryRepoEnableRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -132,5 +133,3 @@ func (v *NullableMemoryRepoEnableRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

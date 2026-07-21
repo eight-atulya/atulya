@@ -24,7 +24,6 @@ from atulya_client_api.models.recall_request_tag_groups_inner import RecallReque
 from atulya_client_api.models.reflect_include_options import ReflectIncludeOptions
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ReflectRequest(BaseModel):
     """
@@ -34,11 +33,11 @@ class ReflectRequest(BaseModel):
     branch_name: Optional[StrictStr] = None
     budget: Optional[Budget] = None
     context: Optional[StrictStr] = None
-    max_tokens: Optional[StrictInt] = Field(default=None, description="Maximum tokens for the response")
+    max_tokens: Optional[StrictInt] = Field(default=4096, description="Maximum tokens for the response")
     include: Optional[ReflectIncludeOptions] = Field(default=None, description="Options for including additional data (disabled by default)")
     response_schema: Optional[Dict[str, Any]] = None
     tags: Optional[List[StrictStr]] = None
-    tags_match: Optional[StrictStr] = Field(default=None, description="How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).")
+    tags_match: Optional[StrictStr] = Field(default='any', description="How to match tags: 'any' (OR, includes untagged), 'all' (AND, includes untagged), 'any_strict' (OR, excludes untagged), 'all_strict' (AND, excludes untagged).")
     tag_groups: Optional[List[RecallRequestTagGroupsInner]] = None
     __properties: ClassVar[List[str]] = ["query", "branch_name", "budget", "context", "max_tokens", "include", "response_schema", "tags", "tags_match", "tag_groups"]
 
@@ -53,8 +52,7 @@ class ReflectRequest(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -66,7 +64,8 @@ class ReflectRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -142,13 +141,11 @@ class ReflectRequest(BaseModel):
             "branch_name": obj.get("branch_name"),
             "budget": obj.get("budget"),
             "context": obj.get("context"),
-            "max_tokens": obj.get("max_tokens"),
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 4096,
             "include": ReflectIncludeOptions.from_dict(obj["include"]) if obj.get("include") is not None else None,
             "response_schema": obj.get("response_schema"),
             "tags": obj.get("tags"),
-            "tags_match": obj.get("tags_match"),
+            "tags_match": obj.get("tags_match") if obj.get("tags_match") is not None else 'any',
             "tag_groups": [RecallRequestTagGroupsInner.from_dict(_item) for _item in obj["tag_groups"]] if obj.get("tag_groups") is not None else None
         })
         return _obj
-
-

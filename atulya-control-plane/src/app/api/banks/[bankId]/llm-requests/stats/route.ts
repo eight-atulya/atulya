@@ -18,6 +18,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ bank
 
     const suffix = query.toString() ? `?${query.toString()}` : "";
     const result = await fetchDataplaneJson({
+      request,
       path: `/v1/default/banks/${encodeURIComponent(bankId)}/llm-requests/stats${suffix}`,
     });
 

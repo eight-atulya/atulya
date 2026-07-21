@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -1214,21 +1215,21 @@ class OperationsApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if status is not None:
-            
+
             _query_params.append(('status', status))
-            
+
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1556,5 +1557,3 @@ class OperationsApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

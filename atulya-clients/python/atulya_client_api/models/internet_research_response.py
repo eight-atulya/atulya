@@ -23,7 +23,6 @@ from atulya_client_api.models.reflect_trace import ReflectTrace
 from atulya_client_api.models.token_usage import TokenUsage
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class InternetResearchResponse(BaseModel):
     """
@@ -31,14 +30,13 @@ class InternetResearchResponse(BaseModel):
     """ # noqa: E501
     text: StrictStr = Field(description="Markdown answer synthesized from web tools")
     source_urls: Optional[List[StrictStr]] = Field(default=None, description="URLs the model relied on")
-    writes_to_bank: Optional[StrictBool] = Field(default=None, description="Always false; included so clients can assert no graph mutation occurred")
+    writes_to_bank: Optional[StrictBool] = Field(default=False, description="Always false; included so clients can assert no graph mutation occurred")
     usage: Optional[TokenUsage] = None
     trace: Optional[ReflectTrace] = None
     __properties: ClassVar[List[str]] = ["text", "source_urls", "writes_to_bank", "usage", "trace"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -50,7 +48,8 @@ class InternetResearchResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -105,10 +104,8 @@ class InternetResearchResponse(BaseModel):
         _obj = cls.model_validate({
             "text": obj.get("text"),
             "source_urls": obj.get("source_urls"),
-            "writes_to_bank": obj.get("writes_to_bank"),
+            "writes_to_bank": obj.get("writes_to_bank") if obj.get("writes_to_bank") is not None else False,
             "usage": TokenUsage.from_dict(obj["usage"]) if obj.get("usage") is not None else None,
             "trace": ReflectTrace.from_dict(obj["trace"]) if obj.get("trace") is not None else None
         })
         return _obj
-
-

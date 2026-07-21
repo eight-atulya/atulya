@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { atulyaClient } from "@/lib/atulya-client";
+import { createLowLevelClientForRequest, sdk } from "@/lib/atulya-client";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,12 +20,30 @@ export async function POST(request: NextRequest) {
         }))
       : items;
 
-    const response = await atulyaClient.retainBatch(bankId, mappedItems, {
-      documentId: document_id,
-      documentTags: document_tags,
+    const itemsWithDocumentId = Array.isArray(mappedItems)
+      ? mappedItems.map((item: any) => ({
+          ...item,
+          document_id: item.document_id || document_id,
+        }))
+      : mappedItems;
+
+    const response = await sdk.retainMemories({
+      client: createLowLevelClientForRequest(request),
+      path: { bank_id: bankId },
+      body: {
+        items: itemsWithDocumentId,
+        document_tags,
+      },
     });
 
-    return NextResponse.json(response, { status: 200 });
+    if (response.error || !response.data) {
+      return NextResponse.json(
+        { error: response.error || "Failed to batch retain" },
+        { status: response.response?.status ?? 500 }
+      );
+    }
+
+    return NextResponse.json(response.data, { status: 200 });
   } catch (error: any) {
     console.error("Error batch retain:", error);
 

@@ -7,7 +7,9 @@ const DATAPLANE_URL = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localho
 
 export interface CurrentIdentity {
   org_id: string | null;
+  active_org_id: string | null;
   org_slug?: string | null;
+  org_name?: string | null;
   schema_name: string;
   principal_id: string | null;
   email: string | null;
@@ -17,12 +19,29 @@ export interface CurrentIdentity {
   allowed_actions: string[] | null;
   action_scopes: Record<string, string[]> | null;
   is_superuser: boolean;
+  email_verified: boolean;
+  memberships: Array<{
+    id: string;
+    org_id: string;
+    org_slug: string;
+    org_name: string;
+    schema_name: string;
+    role_id: string;
+    role: string;
+    status: string;
+  }>;
+}
+
+export async function getSessionToken(): Promise<string | null> {
+  const cookieStore = await cookies();
+  return cookieStore.get(ATULYA_SESSION_COOKIE)?.value ?? null;
 }
 
 export async function getCurrentIdentity(): Promise<CurrentIdentity | null> {
   if (process.env.ATULYA_CP_AUTH_DISABLED === "true") {
     return {
       org_id: null,
+      active_org_id: null,
       schema_name: "public",
       principal_id: null,
       email: "local-dev",
@@ -32,11 +51,12 @@ export async function getCurrentIdentity(): Promise<CurrentIdentity | null> {
       allowed_actions: ["system.admin"],
       action_scopes: { "system.admin": ["system:*"] },
       is_superuser: true,
+      email_verified: true,
+      memberships: [],
     };
   }
 
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ATULYA_SESSION_COOKIE)?.value;
+  const token = await getSessionToken();
   if (!token) return null;
 
   try {
@@ -63,5 +83,8 @@ export function canUseAdminConsole(identity: CurrentIdentity | null): boolean {
 export function canUsePlatformAdmin(identity: CurrentIdentity | null): boolean {
   if (!identity) return false;
   if (identity.is_superuser || identity.role === "superuser") return true;
-  return new Set(identity.allowed_actions || []).has("system.admin");
+  return (
+    new Set(identity.allowed_actions || []).has("system.admin") &&
+    new Set(identity.action_scopes?.["system.admin"] || []).has("system:*")
+  );
 }

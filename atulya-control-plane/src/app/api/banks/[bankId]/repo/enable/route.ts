@@ -6,6 +6,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
   const { bankId } = await params;
   const body = await request.json().catch(() => ({}));
   const response = await fetchDataplaneJson({
+    request,
     path: `/v1/default/banks/${encodeURIComponent(bankId)}/repos/enable`,
     method: "POST",
     headers: { "Content-Type": "application/json" },

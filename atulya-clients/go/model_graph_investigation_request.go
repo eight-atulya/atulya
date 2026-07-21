@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &GraphInvestigationRequest{}
 
 // GraphInvestigationRequest struct for GraphInvestigationRequest
 type GraphInvestigationRequest struct {
-	Query string `json:"query"`
-	Type NullableString `json:"type,omitempty"`
-	Tags []string `json:"tags,omitempty"`
-	TagsMatch *string `json:"tags_match,omitempty"`
-	ConfidenceMin *float32 `json:"confidence_min,omitempty"`
-	NodeKind *string `json:"node_kind,omitempty"`
-	WindowDays NullableInt32 `json:"window_days,omitempty"`
-	Limit *int32 `json:"limit,omitempty"`
+	Query         string         `json:"query"`
+	Type          NullableString `json:"type,omitempty"`
+	Tags          []string       `json:"tags,omitempty"`
+	TagsMatch     *string        `json:"tags_match,omitempty"`
+	ConfidenceMin *float32       `json:"confidence_min,omitempty"`
+	NodeKind      *string        `json:"node_kind,omitempty"`
+	WindowDays    NullableInt32  `json:"window_days,omitempty"`
+	Limit         *int32         `json:"limit,omitempty"`
 }
 
 type _GraphInvestigationRequest GraphInvestigationRequest
@@ -40,6 +40,14 @@ type _GraphInvestigationRequest GraphInvestigationRequest
 func NewGraphInvestigationRequest(query string) *GraphInvestigationRequest {
 	this := GraphInvestigationRequest{}
 	this.Query = query
+	var tagsMatch string = "all_strict"
+	this.TagsMatch = &tagsMatch
+	var confidenceMin float32 = 0.55
+	this.ConfidenceMin = &confidenceMin
+	var nodeKind string = "all"
+	this.NodeKind = &nodeKind
+	var limit int32 = 18
+	this.Limit = &limit
 	return &this
 }
 
@@ -48,6 +56,14 @@ func NewGraphInvestigationRequest(query string) *GraphInvestigationRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewGraphInvestigationRequestWithDefaults() *GraphInvestigationRequest {
 	this := GraphInvestigationRequest{}
+	var tagsMatch string = "all_strict"
+	this.TagsMatch = &tagsMatch
+	var confidenceMin float32 = 0.55
+	this.ConfidenceMin = &confidenceMin
+	var nodeKind string = "all"
+	this.NodeKind = &nodeKind
+	var limit int32 = 18
+	this.Limit = &limit
 	return &this
 }
 
@@ -107,6 +123,7 @@ func (o *GraphInvestigationRequest) HasType() bool {
 func (o *GraphInvestigationRequest) SetType(v string) {
 	o.Type.Set(&v)
 }
+
 // SetTypeNil sets the value for Type to be an explicit nil
 func (o *GraphInvestigationRequest) SetTypeNil() {
 	o.Type.Set(nil)
@@ -278,6 +295,7 @@ func (o *GraphInvestigationRequest) HasWindowDays() bool {
 func (o *GraphInvestigationRequest) SetWindowDays(v int32) {
 	o.WindowDays.Set(&v)
 }
+
 // SetWindowDaysNil sets the value for WindowDays to be an explicit nil
 func (o *GraphInvestigationRequest) SetWindowDaysNil() {
 	o.WindowDays.Set(nil)
@@ -321,7 +339,7 @@ func (o *GraphInvestigationRequest) SetLimit(v int32) {
 }
 
 func (o GraphInvestigationRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -368,10 +386,10 @@ func (o *GraphInvestigationRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -427,5 +445,3 @@ func (v *NullableGraphInvestigationRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

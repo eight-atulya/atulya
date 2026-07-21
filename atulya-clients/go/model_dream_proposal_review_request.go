@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &DreamProposalReviewRequest{}
 
 // DreamProposalReviewRequest struct for DreamProposalReviewRequest
 type DreamProposalReviewRequest struct {
-	Action string `json:"action"`
-	Note NullableString `json:"note,omitempty"`
+	Action string         `json:"action"`
+	Note   NullableString `json:"note,omitempty"`
 }
 
 type _DreamProposalReviewRequest DreamProposalReviewRequest
@@ -101,6 +101,7 @@ func (o *DreamProposalReviewRequest) HasNote() bool {
 func (o *DreamProposalReviewRequest) SetNote(v string) {
 	o.Note.Set(&v)
 }
+
 // SetNoteNil sets the value for Note to be an explicit nil
 func (o *DreamProposalReviewRequest) SetNoteNil() {
 	o.Note.Set(nil)
@@ -112,7 +113,7 @@ func (o *DreamProposalReviewRequest) UnsetNote() {
 }
 
 func (o DreamProposalReviewRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -141,10 +142,10 @@ func (o *DreamProposalReviewRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -200,5 +201,3 @@ func (v *NullableDreamProposalReviewRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

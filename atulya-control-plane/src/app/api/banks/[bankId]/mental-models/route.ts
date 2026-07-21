@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -21,7 +21,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ bank
     }
 
     const url = `${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models${queryParams.toString() ? `?${queryParams}` : ""}`;
-    const response = await fetch(url, { method: "GET", headers: getDataplaneHeaders() });
+    const response = await fetch(url, {
+      method: "GET",
+      headers: getDataplaneHeadersForRequest(request),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -52,7 +55,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
 
     const response = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models`, {
       method: "POST",
-      headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+      headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
       body: JSON.stringify(body),
     });
 

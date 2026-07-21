@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { ATULYA_SESSION_COOKIE } from "@/lib/atulya-client";
-import { getCurrentIdentity } from "@/lib/server-auth";
+import { getCurrentIdentity, getSessionToken } from "@/lib/server-auth";
 
 const DATAPLANE_URL = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
 const ATULYA_LOGGED_OUT_COOKIE = "atulya_logged_out";
@@ -16,11 +16,19 @@ function classifyTenantProvider(extension: string) {
 
 export async function GET() {
   const dataplaneApiKeyConfigured = Boolean(process.env.ATULYA_CP_DATAPLANE_API_KEY?.trim());
-  const adminConfigured = Boolean(process.env.ATULYA_CP_ADMIN_API_KEY?.trim());
   const tenantExtension = process.env.ATULYA_API_TENANT_EXTENSION?.trim() || "";
   const tenantProvider = classifyTenantProvider(tenantExtension);
   const supabaseUrlConfigured = Boolean(process.env.ATULYA_API_TENANT_SUPABASE_URL?.trim());
   const identity = await getCurrentIdentity();
+  const token = await getSessionToken();
+  const sessions = token
+    ? await fetch(`${DATAPLANE_URL}/v1/auth/sessions`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      })
+        .then((response) => (response.ok ? response.json() : []))
+        .catch(() => [])
+    : [];
 
   return NextResponse.json(
     {
@@ -29,13 +37,17 @@ export async function GET() {
           identity?.display_name ||
           identity?.email ||
           (dataplaneApiKeyConfigured ? "Control Plane Operator" : "Local Operator"),
-        role: identity?.role || (adminConfigured ? "operator + admin" : "operator"),
+        role: identity?.role || "operator",
         identity_source: identity ? "session" : "control-plane",
+        email: identity?.email || null,
+        workspace: identity?.org_name || identity?.org_slug || null,
+        workspace_count: identity?.memberships.length || 0,
       },
       auth: {
         mode: identity ? "session" : dataplaneApiKeyConfigured ? "dataplane_api_key" : "public",
         configured: Boolean(identity) || dataplaneApiKeyConfigured,
         logout_mode: identity ? "session" : "local",
+        sessions,
       },
       tenancy: {
         provider: tenantProvider,
@@ -44,7 +56,11 @@ export async function GET() {
         schema_prefix: process.env.ATULYA_API_TENANT_SCHEMA_PREFIX || "user",
       },
       admin: {
-        configured: adminConfigured,
+        configured: Boolean(
+          identity?.allowed_actions?.some(
+            (action) => action === "system.admin" || action.startsWith("admin.")
+          )
+        ),
       },
       dataplane: {
         url: DATAPLANE_URL,
@@ -55,6 +71,14 @@ export async function GET() {
 }
 
 export async function POST() {
+  const token = await getSessionToken();
+  if (token) {
+    await fetch(`${DATAPLANE_URL}/v1/auth/logout`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    }).catch(() => null);
+  }
   const response = NextResponse.json({ ok: true, logout_mode: "session" }, { status: 200 });
   response.cookies.delete(ATULYA_SESSION_COOKIE);
   response.cookies.set(ATULYA_LOGGED_OUT_COOKIE, "1", {

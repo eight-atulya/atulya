@@ -1,12 +1,20 @@
 import { Suspense } from "react";
 import { ShieldCheck } from "lucide-react";
+import { redirect } from "next/navigation";
 import { ControlPlaneShell } from "@/components/control-plane-shell";
 import { LoginPanel } from "@/components/login-panel";
+import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 export const metadata = { title: "Sign in | Atulya Control Plane" };
 
-export default function LoginPage() {
+export default async function LoginPage() {
   const authDisabled = process.env.ATULYA_CP_AUTH_DISABLED === "true";
+  const identity = await getCurrentIdentity();
+  if (identity) {
+    redirect(
+      !identity.active_org_id && canUsePlatformAdmin(identity) ? "/admin/platform" : "/dashboard"
+    );
+  }
 
   return (
     <ControlPlaneShell
@@ -19,19 +27,18 @@ export default function LoginPage() {
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold">Atulya Control Plane</p>
-              <p className="text-[10px] text-muted-foreground">Session access</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {authDisabled && (
-              <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-300">
+              <span className="rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-600 dark:text-amber-300">
                 auth disabled
               </span>
             )}
           </div>
         </header>
       }
-      contentClassName="flex max-w-5xl items-start pt-8 sm:pt-12"
+      contentClassName="flex max-w-5xl items-center"
     >
       <div className="w-full">
         <section className="mx-auto min-w-0 max-w-xl">

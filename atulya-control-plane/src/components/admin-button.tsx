@@ -1,59 +1,41 @@
 "use client";
 
-/**
- * AdminButton
- *
- * Renders a shield icon button in the main header.
- * On click: checks /api/admin-access (server-side env check, never exposes
- * the key), then either navigates to /admin or shows an access error toast.
- *
- */
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function AdminButton() {
   const router = useRouter();
-  const [checking, setChecking] = useState(false);
+  const [visible, setVisible] = useState(false);
 
-  const handleClick = async () => {
-    setChecking(true);
-    try {
-      const res = await fetch("/api/admin-access");
-      const { enabled } = (await res.json()) as { enabled: boolean };
+  useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then(async (response) => (response.ok ? response.json() : null))
+      .then((identity) => {
+        const actions = new Set<string>(identity?.allowed_actions || []);
+        setVisible(
+          Array.from(actions).some((action) => action.startsWith("admin.")) ||
+            actions.has("system.admin")
+        );
+      })
+      .catch(() => setVisible(false));
+  }, []);
 
-      if (enabled) {
-        router.push("/admin");
-      } else {
-        toast.error("Admin access not configured", {
-          description: "Set ATULYA_CP_ADMIN_API_KEY in .env.local and restart.",
-          duration: 5000,
-        });
-      }
-    } catch {
-      toast.error("Could not check admin access");
-    } finally {
-      setChecking(false);
-    }
-  };
-
+  if (!visible) return null;
   return (
     <Button
       variant="ghost"
       size="sm"
-      onClick={handleClick}
-      disabled={checking}
+      onClick={async () => {
+        const response = await fetch("/api/auth/me", { cache: "no-store" });
+        const identity = response.ok ? await response.json() : null;
+        router.push(identity?.active_org_id ? "/admin" : "/admin/platform");
+      }}
       className="h-9 gap-1.5 text-muted-foreground hover:text-foreground"
-      title="Go to Admin Panel"
+      title="Organization administration"
     >
-      {checking ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
-      ) : (
-        <ShieldCheck className="h-4 w-4" />
-      )}
+      <ShieldCheck className="h-4 w-4" />
       <span className="text-sm font-medium">Admin</span>
     </Button>
   );

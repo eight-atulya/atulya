@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,7 +22,7 @@ var _ MappedNullable = &EntityInput{}
 // EntityInput Entity to associate with retained content.
 type EntityInput struct {
 	// The entity name/text
-	Text string `json:"text"`
+	Text string         `json:"text"`
 	Type NullableString `json:"type,omitempty"`
 }
 
@@ -102,6 +102,7 @@ func (o *EntityInput) HasType() bool {
 func (o *EntityInput) SetType(v string) {
 	o.Type.Set(&v)
 }
+
 // SetTypeNil sets the value for Type to be an explicit nil
 func (o *EntityInput) SetTypeNil() {
 	o.Type.Set(nil)
@@ -113,7 +114,7 @@ func (o *EntityInput) UnsetType() {
 }
 
 func (o EntityInput) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -142,10 +143,10 @@ func (o *EntityInput) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -201,5 +202,3 @@ func (v *NullableEntityInput) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

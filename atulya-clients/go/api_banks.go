@@ -16,20 +16,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"os"
+	"strings"
 )
-
 
 // BanksAPIService BanksAPI service
 type BanksAPIService service
 
 type ApiAddBankBackgroundRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx                  context.Context
+	ApiService           *BanksAPIService
+	bankId               string
 	addBackgroundRequest *AddBackgroundRequest
-	authorization *string
+	authorization        *string
 }
 
 func (r ApiAddBankBackgroundRequest) AddBackgroundRequest(addBackgroundRequest AddBackgroundRequest) ApiAddBankBackgroundRequest {
@@ -51,29 +50,31 @@ AddBankBackground Add/merge memory bank background (deprecated)
 
 Deprecated: Use PUT /mission instead. This endpoint now updates the mission field.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiAddBankBackgroundRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiAddBankBackgroundRequest
 
 Deprecated
 */
 func (a *BanksAPIService) AddBankBackground(ctx context.Context, bankId string) ApiAddBankBackgroundRequest {
 	return ApiAddBankBackgroundRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BackgroundResponse
+//
+//	@return BackgroundResponse
+//
 // Deprecated
 func (a *BanksAPIService) AddBankBackgroundExecute(r ApiAddBankBackgroundRequest) (*BackgroundResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BackgroundResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BackgroundResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.AddBankBackground")
@@ -142,8 +143,8 @@ func (a *BanksAPIService) AddBankBackgroundExecute(r ApiAddBankBackgroundRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -161,11 +162,11 @@ func (a *BanksAPIService) AddBankBackgroundExecute(r ApiAddBankBackgroundRequest
 }
 
 type ApiBrainLearnFromRemoteRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx               context.Context
+	ApiService        *BanksAPIService
+	bankId            string
 	brainLearnRequest *BrainLearnRequest
-	authorization *string
+	authorization     *string
 }
 
 func (r ApiBrainLearnFromRemoteRequest) BrainLearnRequest(brainLearnRequest BrainLearnRequest) ApiBrainLearnFromRemoteRequest {
@@ -187,26 +188,27 @@ BrainLearnFromRemote Learn from a remote brain
 
 Connect to another Atulya instance and distill its knowledge into this bank's brain.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiBrainLearnFromRemoteRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiBrainLearnFromRemoteRequest
 */
 func (a *BanksAPIService) BrainLearnFromRemote(ctx context.Context, bankId string) ApiBrainLearnFromRemoteRequest {
 	return ApiBrainLearnFromRemoteRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BrainLearnResponse
+//
+//	@return BrainLearnResponse
 func (a *BanksAPIService) BrainLearnFromRemoteExecute(r ApiBrainLearnFromRemoteRequest) (*BrainLearnResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BrainLearnResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BrainLearnResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.BrainLearnFromRemote")
@@ -275,8 +277,8 @@ func (a *BanksAPIService) BrainLearnFromRemoteExecute(r ApiBrainLearnFromRemoteR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -294,9 +296,9 @@ func (a *BanksAPIService) BrainLearnFromRemoteExecute(r ApiBrainLearnFromRemoteR
 }
 
 type ApiClearObservationsRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -314,26 +316,27 @@ ClearObservations Clear all observations
 
 Delete all observations for a memory bank. This is useful for resetting the consolidated knowledge.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiClearObservationsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiClearObservationsRequest
 */
 func (a *BanksAPIService) ClearObservations(ctx context.Context, bankId string) ApiClearObservationsRequest {
 	return ApiClearObservationsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DeleteResponse
+//
+//	@return DeleteResponse
 func (a *BanksAPIService) ClearObservationsExecute(r ApiClearObservationsRequest) (*DeleteResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DeleteResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DeleteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ClearObservations")
@@ -397,8 +400,8 @@ func (a *BanksAPIService) ClearObservationsExecute(r ApiClearObservationsRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -416,11 +419,11 @@ func (a *BanksAPIService) ClearObservationsExecute(r ApiClearObservationsRequest
 }
 
 type ApiCreateOrUpdateBankRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx               context.Context
+	ApiService        *BanksAPIService
+	bankId            string
 	createBankRequest *CreateBankRequest
-	authorization *string
+	authorization     *string
 }
 
 func (r ApiCreateOrUpdateBankRequest) CreateBankRequest(createBankRequest CreateBankRequest) ApiCreateOrUpdateBankRequest {
@@ -442,26 +445,27 @@ CreateOrUpdateBank Create or update memory bank
 
 Create a new agent or update existing agent with disposition and mission. Auto-fills missing fields with defaults.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiCreateOrUpdateBankRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiCreateOrUpdateBankRequest
 */
 func (a *BanksAPIService) CreateOrUpdateBank(ctx context.Context, bankId string) ApiCreateOrUpdateBankRequest {
 	return ApiCreateOrUpdateBankRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankProfileResponse
+//
+//	@return BankProfileResponse
 func (a *BanksAPIService) CreateOrUpdateBankExecute(r ApiCreateOrUpdateBankRequest) (*BankProfileResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankProfileResponse
+		localVarHTTPMethod  = http.MethodPut
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankProfileResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.CreateOrUpdateBank")
@@ -530,8 +534,8 @@ func (a *BanksAPIService) CreateOrUpdateBankExecute(r ApiCreateOrUpdateBankReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -549,9 +553,9 @@ func (a *BanksAPIService) CreateOrUpdateBankExecute(r ApiCreateOrUpdateBankReque
 }
 
 type ApiDeleteBankRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -569,26 +573,27 @@ DeleteBank Delete memory bank
 
 Delete an entire memory bank including all memories, entities, documents, and the bank profile itself. This is a destructive operation that cannot be undone.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiDeleteBankRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiDeleteBankRequest
 */
 func (a *BanksAPIService) DeleteBank(ctx context.Context, bankId string) ApiDeleteBankRequest {
 	return ApiDeleteBankRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DeleteResponse
+//
+//	@return DeleteResponse
 func (a *BanksAPIService) DeleteBankExecute(r ApiDeleteBankRequest) (*DeleteResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DeleteResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DeleteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.DeleteBank")
@@ -652,8 +657,8 @@ func (a *BanksAPIService) DeleteBankExecute(r ApiDeleteBankRequest) (*DeleteResp
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -671,9 +676,9 @@ func (a *BanksAPIService) DeleteBankExecute(r ApiDeleteBankRequest) (*DeleteResp
 }
 
 type ApiExportBrainSnapshotRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -691,26 +696,27 @@ ExportBrainSnapshot Export current .brain snapshot
 
 Export validated brain snapshot for this bank.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiExportBrainSnapshotRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiExportBrainSnapshotRequest
 */
 func (a *BanksAPIService) ExportBrainSnapshot(ctx context.Context, bankId string) ApiExportBrainSnapshotRequest {
 	return ApiExportBrainSnapshotRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *BanksAPIService) ExportBrainSnapshotExecute(r ApiExportBrainSnapshotRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ExportBrainSnapshot")
@@ -774,8 +780,8 @@ func (a *BanksAPIService) ExportBrainSnapshotExecute(r ApiExportBrainSnapshotReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -793,9 +799,9 @@ func (a *BanksAPIService) ExportBrainSnapshotExecute(r ApiExportBrainSnapshotReq
 }
 
 type ApiGetAgentStatsRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -813,26 +819,27 @@ GetAgentStats Get statistics for memory bank
 
 Get statistics about nodes and links for a specific agent
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetAgentStatsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetAgentStatsRequest
 */
 func (a *BanksAPIService) GetAgentStats(ctx context.Context, bankId string) ApiGetAgentStatsRequest {
 	return ApiGetAgentStatsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankStatsResponse
+//
+//	@return BankStatsResponse
 func (a *BanksAPIService) GetAgentStatsExecute(r ApiGetAgentStatsRequest) (*BankStatsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankStatsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankStatsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetAgentStats")
@@ -896,8 +903,8 @@ func (a *BanksAPIService) GetAgentStatsExecute(r ApiGetAgentStatsRequest) (*Bank
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -915,9 +922,9 @@ func (a *BanksAPIService) GetAgentStatsExecute(r ApiGetAgentStatsRequest) (*Bank
 }
 
 type ApiGetBankConfigRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -935,26 +942,27 @@ GetBankConfig Get bank configuration
 
 Get fully resolved configuration for a bank including all hierarchical overrides (global → tenant → bank). The 'config' field contains all resolved config values. The 'overrides' field shows only bank-specific overrides.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetBankConfigRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetBankConfigRequest
 */
 func (a *BanksAPIService) GetBankConfig(ctx context.Context, bankId string) ApiGetBankConfigRequest {
 	return ApiGetBankConfigRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankConfigResponse
+//
+//	@return BankConfigResponse
 func (a *BanksAPIService) GetBankConfigExecute(r ApiGetBankConfigRequest) (*BankConfigResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankConfigResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankConfigResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetBankConfig")
@@ -1018,8 +1026,8 @@ func (a *BanksAPIService) GetBankConfigExecute(r ApiGetBankConfigRequest) (*Bank
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1037,9 +1045,9 @@ func (a *BanksAPIService) GetBankConfigExecute(r ApiGetBankConfigRequest) (*Bank
 }
 
 type ApiGetBankProfileRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1057,29 +1065,31 @@ GetBankProfile Get memory bank profile
 
 Get disposition traits and mission for a memory bank. Auto-creates agent with defaults if not exists.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetBankProfileRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetBankProfileRequest
 
 Deprecated
 */
 func (a *BanksAPIService) GetBankProfile(ctx context.Context, bankId string) ApiGetBankProfileRequest {
 	return ApiGetBankProfileRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankProfileResponse
+//
+//	@return BankProfileResponse
+//
 // Deprecated
 func (a *BanksAPIService) GetBankProfileExecute(r ApiGetBankProfileRequest) (*BankProfileResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankProfileResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankProfileResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetBankProfile")
@@ -1143,8 +1153,8 @@ func (a *BanksAPIService) GetBankProfileExecute(r ApiGetBankProfileRequest) (*Ba
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1162,12 +1172,12 @@ func (a *BanksAPIService) GetBankProfileExecute(r ApiGetBankProfileRequest) (*Ba
 }
 
 type ApiGetBrainInfluenceRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	windowDays *int32
-	topK *int32
-	entityType *string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
+	windowDays    *int32
+	topK          *int32
+	entityType    *string
 	authorization *string
 }
 
@@ -1198,26 +1208,27 @@ func (r ApiGetBrainInfluenceRequest) Execute() (*BrainInfluenceResponse, *http.R
 /*
 GetBrainInfluence Get brain influence analytics
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetBrainInfluenceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetBrainInfluenceRequest
 */
 func (a *BanksAPIService) GetBrainInfluence(ctx context.Context, bankId string) ApiGetBrainInfluenceRequest {
 	return ApiGetBrainInfluenceRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BrainInfluenceResponse
+//
+//	@return BrainInfluenceResponse
 func (a *BanksAPIService) GetBrainInfluenceExecute(r ApiGetBrainInfluenceRequest) (*BrainInfluenceResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BrainInfluenceResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BrainInfluenceResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetBrainInfluence")
@@ -1234,12 +1245,21 @@ func (a *BanksAPIService) GetBrainInfluenceExecute(r ApiGetBrainInfluenceRequest
 
 	if r.windowDays != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "window_days", r.windowDays, "form", "")
+	} else {
+		var defaultValue int32 = 14
+		r.windowDays = &defaultValue
 	}
 	if r.topK != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "top_k", r.topK, "form", "")
+	} else {
+		var defaultValue int32 = 12
+		r.topK = &defaultValue
 	}
 	if r.entityType != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "entity_type", r.entityType, "form", "")
+	} else {
+		var defaultValue string = "all"
+		r.entityType = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1290,8 +1310,8 @@ func (a *BanksAPIService) GetBrainInfluenceExecute(r ApiGetBrainInfluenceRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1309,9 +1329,9 @@ func (a *BanksAPIService) GetBrainInfluenceExecute(r ApiGetBrainInfluenceRequest
 }
 
 type ApiGetBrainRuntimeStatusRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1329,26 +1349,27 @@ GetBrainRuntimeStatus Get brain runtime status
 
 Return current brain cache state for the bank.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetBrainRuntimeStatusRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetBrainRuntimeStatusRequest
 */
 func (a *BanksAPIService) GetBrainRuntimeStatus(ctx context.Context, bankId string) ApiGetBrainRuntimeStatusRequest {
 	return ApiGetBrainRuntimeStatusRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BrainRuntimeStatusResponse
+//
+//	@return BrainRuntimeStatusResponse
 func (a *BanksAPIService) GetBrainRuntimeStatusExecute(r ApiGetBrainRuntimeStatusRequest) (*BrainRuntimeStatusResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BrainRuntimeStatusResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BrainRuntimeStatusResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetBrainRuntimeStatus")
@@ -1412,8 +1433,8 @@ func (a *BanksAPIService) GetBrainRuntimeStatusExecute(r ApiGetBrainRuntimeStatu
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1431,9 +1452,9 @@ func (a *BanksAPIService) GetBrainRuntimeStatusExecute(r ApiGetBrainRuntimeStatu
 }
 
 type ApiGetDreamStatsRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1449,26 +1470,27 @@ func (r ApiGetDreamStatsRequest) Execute() (*DreamStatsResponse, *http.Response,
 /*
 GetDreamStats Get dream generation stats
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetDreamStatsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetDreamStatsRequest
 */
 func (a *BanksAPIService) GetDreamStats(ctx context.Context, bankId string) ApiGetDreamStatsRequest {
 	return ApiGetDreamStatsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DreamStatsResponse
+//
+//	@return DreamStatsResponse
 func (a *BanksAPIService) GetDreamStatsExecute(r ApiGetDreamStatsRequest) (*DreamStatsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DreamStatsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DreamStatsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetDreamStats")
@@ -1532,8 +1554,8 @@ func (a *BanksAPIService) GetDreamStatsExecute(r ApiGetDreamStatsRequest) (*Drea
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1551,9 +1573,9 @@ func (a *BanksAPIService) GetDreamStatsExecute(r ApiGetDreamStatsRequest) (*Drea
 }
 
 type ApiGetSubRoutineHistogramRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1571,26 +1593,27 @@ GetSubRoutineHistogram Get full activity histogram
 
 Return all 24 hourly activity probabilities from the current sub_routine model.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetSubRoutineHistogramRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetSubRoutineHistogramRequest
 */
 func (a *BanksAPIService) GetSubRoutineHistogram(ctx context.Context, bankId string) ApiGetSubRoutineHistogramRequest {
 	return ApiGetSubRoutineHistogramRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return SubRoutineHistogramResponse
+//
+//	@return SubRoutineHistogramResponse
 func (a *BanksAPIService) GetSubRoutineHistogramExecute(r ApiGetSubRoutineHistogramRequest) (*SubRoutineHistogramResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SubRoutineHistogramResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SubRoutineHistogramResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetSubRoutineHistogram")
@@ -1654,8 +1677,8 @@ func (a *BanksAPIService) GetSubRoutineHistogramExecute(r ApiGetSubRoutineHistog
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1673,10 +1696,10 @@ func (a *BanksAPIService) GetSubRoutineHistogramExecute(r ApiGetSubRoutineHistog
 }
 
 type ApiGetSubRoutinePredictionsRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	horizonHours *int32
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
+	horizonHours  *int32
 	authorization *string
 }
 
@@ -1699,26 +1722,27 @@ GetSubRoutinePredictions Get activity-time predictions
 
 Return model predictions for likely active hours for this bank.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetSubRoutinePredictionsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetSubRoutinePredictionsRequest
 */
 func (a *BanksAPIService) GetSubRoutinePredictions(ctx context.Context, bankId string) ApiGetSubRoutinePredictionsRequest {
 	return ApiGetSubRoutinePredictionsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return SubRoutinePredictionResponse
+//
+//	@return SubRoutinePredictionResponse
 func (a *BanksAPIService) GetSubRoutinePredictionsExecute(r ApiGetSubRoutinePredictionsRequest) (*SubRoutinePredictionResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SubRoutinePredictionResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *SubRoutinePredictionResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.GetSubRoutinePredictions")
@@ -1735,6 +1759,9 @@ func (a *BanksAPIService) GetSubRoutinePredictionsExecute(r ApiGetSubRoutinePred
 
 	if r.horizonHours != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "horizon_hours", r.horizonHours, "form", "")
+	} else {
+		var defaultValue int32 = 24
+		r.horizonHours = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1785,8 +1812,8 @@ func (a *BanksAPIService) GetSubRoutinePredictionsExecute(r ApiGetSubRoutinePred
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1804,10 +1831,10 @@ func (a *BanksAPIService) GetSubRoutinePredictionsExecute(r ApiGetSubRoutinePred
 }
 
 type ApiImportBrainSnapshotRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	file *os.File
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
+	file          *os.File
 	authorization *string
 }
 
@@ -1831,26 +1858,27 @@ ImportBrainSnapshot Import .brain snapshot
 
 Import a validated brain snapshot into this bank cache path.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiImportBrainSnapshotRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiImportBrainSnapshotRequest
 */
 func (a *BanksAPIService) ImportBrainSnapshot(ctx context.Context, bankId string) ApiImportBrainSnapshotRequest {
 	return ApiImportBrainSnapshotRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BrainImportResponse
+//
+//	@return BrainImportResponse
 func (a *BanksAPIService) ImportBrainSnapshotExecute(r ApiImportBrainSnapshotRequest) (*BrainImportResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BrainImportResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BrainImportResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ImportBrainSnapshot")
@@ -1889,8 +1917,8 @@ func (a *BanksAPIService) ImportBrainSnapshotExecute(r ApiImportBrainSnapshotReq
 		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
 	}
 	var fileLocalVarFormFileName string
-	var fileLocalVarFileName     string
-	var fileLocalVarFileBytes    []byte
+	var fileLocalVarFileName string
+	var fileLocalVarFileBytes []byte
 
 	fileLocalVarFormFileName = "file"
 	fileLocalVarFile := r.file
@@ -1932,8 +1960,8 @@ func (a *BanksAPIService) ImportBrainSnapshotExecute(r ApiImportBrainSnapshotReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1951,8 +1979,8 @@ func (a *BanksAPIService) ImportBrainSnapshotExecute(r ApiImportBrainSnapshotReq
 }
 
 type ApiListBanksRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
+	ctx           context.Context
+	ApiService    *BanksAPIService
 	authorization *string
 }
 
@@ -1970,24 +1998,25 @@ ListBanks List all memory banks
 
 Get a list of all agents with their profiles
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListBanksRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListBanksRequest
 */
 func (a *BanksAPIService) ListBanks(ctx context.Context) ApiListBanksRequest {
 	return ApiListBanksRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return BankListResponse
+//
+//	@return BankListResponse
 func (a *BanksAPIService) ListBanksExecute(r ApiListBanksRequest) (*BankListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ListBanks")
@@ -2050,8 +2079,8 @@ func (a *BanksAPIService) ListBanksExecute(r ApiListBanksRequest) (*BankListResp
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2069,10 +2098,10 @@ func (a *BanksAPIService) ListBanksExecute(r ApiListBanksRequest) (*BankListResp
 }
 
 type ApiListDreamArtifactsRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	limit *int32
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
+	limit         *int32
 	authorization *string
 }
 
@@ -2093,26 +2122,27 @@ func (r ApiListDreamArtifactsRequest) Execute() (*DreamRunListResponse, *http.Re
 /*
 ListDreamArtifacts List dream artifacts
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListDreamArtifactsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListDreamArtifactsRequest
 */
 func (a *BanksAPIService) ListDreamArtifacts(ctx context.Context, bankId string) ApiListDreamArtifactsRequest {
 	return ApiListDreamArtifactsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DreamRunListResponse
+//
+//	@return DreamRunListResponse
 func (a *BanksAPIService) ListDreamArtifactsExecute(r ApiListDreamArtifactsRequest) (*DreamRunListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DreamRunListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DreamRunListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ListDreamArtifacts")
@@ -2129,6 +2159,9 @@ func (a *BanksAPIService) ListDreamArtifactsExecute(r ApiListDreamArtifactsReque
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 20
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2179,8 +2212,8 @@ func (a *BanksAPIService) ListDreamArtifactsExecute(r ApiListDreamArtifactsReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2198,9 +2231,9 @@ func (a *BanksAPIService) ListDreamArtifactsExecute(r ApiListDreamArtifactsReque
 }
 
 type ApiResetBankConfigRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -2218,26 +2251,27 @@ ResetBankConfig Reset bank configuration
 
 Reset bank configuration to defaults by removing all bank-specific overrides. The bank will then use global and tenant-level configuration only.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiResetBankConfigRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiResetBankConfigRequest
 */
 func (a *BanksAPIService) ResetBankConfig(ctx context.Context, bankId string) ApiResetBankConfigRequest {
 	return ApiResetBankConfigRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankConfigResponse
+//
+//	@return BankConfigResponse
 func (a *BanksAPIService) ResetBankConfigExecute(r ApiResetBankConfigRequest) (*BankConfigResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankConfigResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankConfigResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ResetBankConfig")
@@ -2301,8 +2335,8 @@ func (a *BanksAPIService) ResetBankConfigExecute(r ApiResetBankConfigRequest) (*
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2320,12 +2354,12 @@ func (a *BanksAPIService) ResetBankConfigExecute(r ApiResetBankConfigRequest) (*
 }
 
 type ApiReviewDreamProposalRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	proposalId string
+	ctx                        context.Context
+	ApiService                 *BanksAPIService
+	bankId                     string
+	proposalId                 string
 	dreamProposalReviewRequest *DreamProposalReviewRequest
-	authorization *string
+	authorization              *string
 }
 
 func (r ApiReviewDreamProposalRequest) DreamProposalReviewRequest(dreamProposalReviewRequest DreamProposalReviewRequest) ApiReviewDreamProposalRequest {
@@ -2345,28 +2379,29 @@ func (r ApiReviewDreamProposalRequest) Execute() (interface{}, *http.Response, e
 /*
 ReviewDreamProposal Review a dream proposal
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param proposalId
- @return ApiReviewDreamProposalRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param proposalId
+	@return ApiReviewDreamProposalRequest
 */
 func (a *BanksAPIService) ReviewDreamProposal(ctx context.Context, bankId string, proposalId string) ApiReviewDreamProposalRequest {
 	return ApiReviewDreamProposalRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		proposalId: proposalId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *BanksAPIService) ReviewDreamProposalExecute(r ApiReviewDreamProposalRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ReviewDreamProposal")
@@ -2436,8 +2471,8 @@ func (a *BanksAPIService) ReviewDreamProposalExecute(r ApiReviewDreamProposalReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2455,9 +2490,9 @@ func (a *BanksAPIService) ReviewDreamProposalExecute(r ApiReviewDreamProposalReq
 }
 
 type ApiTriggerConsolidationRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -2475,26 +2510,27 @@ TriggerConsolidation Trigger consolidation
 
 Run memory consolidation to create/update observations from recent memories.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiTriggerConsolidationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiTriggerConsolidationRequest
 */
 func (a *BanksAPIService) TriggerConsolidation(ctx context.Context, bankId string) ApiTriggerConsolidationRequest {
 	return ApiTriggerConsolidationRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ConsolidationResponse
+//
+//	@return ConsolidationResponse
 func (a *BanksAPIService) TriggerConsolidationExecute(r ApiTriggerConsolidationRequest) (*ConsolidationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ConsolidationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ConsolidationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.TriggerConsolidation")
@@ -2558,8 +2594,8 @@ func (a *BanksAPIService) TriggerConsolidationExecute(r ApiTriggerConsolidationR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2577,11 +2613,11 @@ func (a *BanksAPIService) TriggerConsolidationExecute(r ApiTriggerConsolidationR
 }
 
 type ApiTriggerDreamGenerationRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx                context.Context
+	ApiService         *BanksAPIService
+	bankId             string
 	dreamSubmitRequest *DreamSubmitRequest
-	authorization *string
+	authorization      *string
 }
 
 func (r ApiTriggerDreamGenerationRequest) DreamSubmitRequest(dreamSubmitRequest DreamSubmitRequest) ApiTriggerDreamGenerationRequest {
@@ -2601,26 +2637,27 @@ func (r ApiTriggerDreamGenerationRequest) Execute() (*ConsolidationResponse, *ht
 /*
 TriggerDreamGeneration Trigger Dream/Trance generation
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiTriggerDreamGenerationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiTriggerDreamGenerationRequest
 */
 func (a *BanksAPIService) TriggerDreamGeneration(ctx context.Context, bankId string) ApiTriggerDreamGenerationRequest {
 	return ApiTriggerDreamGenerationRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ConsolidationResponse
+//
+//	@return ConsolidationResponse
 func (a *BanksAPIService) TriggerDreamGenerationExecute(r ApiTriggerDreamGenerationRequest) (*ConsolidationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ConsolidationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ConsolidationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.TriggerDreamGeneration")
@@ -2689,8 +2726,8 @@ func (a *BanksAPIService) TriggerDreamGenerationExecute(r ApiTriggerDreamGenerat
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2708,11 +2745,11 @@ func (a *BanksAPIService) TriggerDreamGenerationExecute(r ApiTriggerDreamGenerat
 }
 
 type ApiTriggerSubRoutineRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx                     context.Context
+	ApiService              *BanksAPIService
+	bankId                  string
 	subRoutineSubmitRequest *SubRoutineSubmitRequest
-	authorization *string
+	authorization           *string
 }
 
 func (r ApiTriggerSubRoutineRequest) SubRoutineSubmitRequest(subRoutineSubmitRequest SubRoutineSubmitRequest) ApiTriggerSubRoutineRequest {
@@ -2734,26 +2771,27 @@ TriggerSubRoutine Trigger sub_routine
 
 Queue a sub_routine operation for atulya-brain cache refresh and activity-time learning.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiTriggerSubRoutineRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiTriggerSubRoutineRequest
 */
 func (a *BanksAPIService) TriggerSubRoutine(ctx context.Context, bankId string) ApiTriggerSubRoutineRequest {
 	return ApiTriggerSubRoutineRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ConsolidationResponse
+//
+//	@return ConsolidationResponse
 func (a *BanksAPIService) TriggerSubRoutineExecute(r ApiTriggerSubRoutineRequest) (*ConsolidationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ConsolidationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ConsolidationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.TriggerSubRoutine")
@@ -2822,8 +2860,8 @@ func (a *BanksAPIService) TriggerSubRoutineExecute(r ApiTriggerSubRoutineRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2841,11 +2879,11 @@ func (a *BanksAPIService) TriggerSubRoutineExecute(r ApiTriggerSubRoutineRequest
 }
 
 type ApiUpdateBankRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx               context.Context
+	ApiService        *BanksAPIService
+	bankId            string
 	createBankRequest *CreateBankRequest
-	authorization *string
+	authorization     *string
 }
 
 func (r ApiUpdateBankRequest) CreateBankRequest(createBankRequest CreateBankRequest) ApiUpdateBankRequest {
@@ -2867,26 +2905,27 @@ UpdateBank Partial update memory bank
 
 Partially update an agent's profile. Only provided fields will be updated.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiUpdateBankRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiUpdateBankRequest
 */
 func (a *BanksAPIService) UpdateBank(ctx context.Context, bankId string) ApiUpdateBankRequest {
 	return ApiUpdateBankRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankProfileResponse
+//
+//	@return BankProfileResponse
 func (a *BanksAPIService) UpdateBankExecute(r ApiUpdateBankRequest) (*BankProfileResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankProfileResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankProfileResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.UpdateBank")
@@ -2955,8 +2994,8 @@ func (a *BanksAPIService) UpdateBankExecute(r ApiUpdateBankRequest) (*BankProfil
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2974,11 +3013,11 @@ func (a *BanksAPIService) UpdateBankExecute(r ApiUpdateBankRequest) (*BankProfil
 }
 
 type ApiUpdateBankConfigRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx              context.Context
+	ApiService       *BanksAPIService
+	bankId           string
 	bankConfigUpdate *BankConfigUpdate
-	authorization *string
+	authorization    *string
 }
 
 func (r ApiUpdateBankConfigRequest) BankConfigUpdate(bankConfigUpdate BankConfigUpdate) ApiUpdateBankConfigRequest {
@@ -3000,26 +3039,27 @@ UpdateBankConfig Update bank configuration
 
 Update configuration overrides for a bank. Only hierarchical fields can be overridden (LLM settings, retention parameters, etc.). Keys can be provided in Python field format (llm_provider) or environment variable format (ATULYA_API_LLM_PROVIDER).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiUpdateBankConfigRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiUpdateBankConfigRequest
 */
 func (a *BanksAPIService) UpdateBankConfig(ctx context.Context, bankId string) ApiUpdateBankConfigRequest {
 	return ApiUpdateBankConfigRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankConfigResponse
+//
+//	@return BankConfigResponse
 func (a *BanksAPIService) UpdateBankConfigExecute(r ApiUpdateBankConfigRequest) (*BankConfigResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankConfigResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankConfigResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.UpdateBankConfig")
@@ -3088,8 +3128,8 @@ func (a *BanksAPIService) UpdateBankConfigExecute(r ApiUpdateBankConfigRequest) 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3107,11 +3147,11 @@ func (a *BanksAPIService) UpdateBankConfigExecute(r ApiUpdateBankConfigRequest) 
 }
 
 type ApiUpdateBankDispositionRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
+	ctx                      context.Context
+	ApiService               *BanksAPIService
+	bankId                   string
 	updateDispositionRequest *UpdateDispositionRequest
-	authorization *string
+	authorization            *string
 }
 
 func (r ApiUpdateBankDispositionRequest) UpdateDispositionRequest(updateDispositionRequest UpdateDispositionRequest) ApiUpdateBankDispositionRequest {
@@ -3133,29 +3173,31 @@ UpdateBankDisposition Update memory bank disposition
 
 Update bank's disposition traits (skepticism, literalism, empathy)
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiUpdateBankDispositionRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiUpdateBankDispositionRequest
 
 Deprecated
 */
 func (a *BanksAPIService) UpdateBankDisposition(ctx context.Context, bankId string) ApiUpdateBankDispositionRequest {
 	return ApiUpdateBankDispositionRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BankProfileResponse
+//
+//	@return BankProfileResponse
+//
 // Deprecated
 func (a *BanksAPIService) UpdateBankDispositionExecute(r ApiUpdateBankDispositionRequest) (*BankProfileResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BankProfileResponse
+		localVarHTTPMethod  = http.MethodPut
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BankProfileResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.UpdateBankDisposition")
@@ -3224,8 +3266,8 @@ func (a *BanksAPIService) UpdateBankDispositionExecute(r ApiUpdateBankDispositio
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3243,12 +3285,12 @@ func (a *BanksAPIService) UpdateBankDispositionExecute(r ApiUpdateBankDispositio
 }
 
 type ApiUpdateDreamPredictionOutcomeRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	predictionId string
+	ctx                           context.Context
+	ApiService                    *BanksAPIService
+	bankId                        string
+	predictionId                  string
 	dreamPredictionOutcomeRequest *DreamPredictionOutcomeRequest
-	authorization *string
+	authorization                 *string
 }
 
 func (r ApiUpdateDreamPredictionOutcomeRequest) DreamPredictionOutcomeRequest(dreamPredictionOutcomeRequest DreamPredictionOutcomeRequest) ApiUpdateDreamPredictionOutcomeRequest {
@@ -3268,28 +3310,29 @@ func (r ApiUpdateDreamPredictionOutcomeRequest) Execute() (interface{}, *http.Re
 /*
 UpdateDreamPredictionOutcome Update dream prediction outcome
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param predictionId
- @return ApiUpdateDreamPredictionOutcomeRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param predictionId
+	@return ApiUpdateDreamPredictionOutcomeRequest
 */
 func (a *BanksAPIService) UpdateDreamPredictionOutcome(ctx context.Context, bankId string, predictionId string) ApiUpdateDreamPredictionOutcomeRequest {
 	return ApiUpdateDreamPredictionOutcomeRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:   a,
+		ctx:          ctx,
+		bankId:       bankId,
 		predictionId: predictionId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *BanksAPIService) UpdateDreamPredictionOutcomeExecute(r ApiUpdateDreamPredictionOutcomeRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.UpdateDreamPredictionOutcome")
@@ -3359,8 +3402,8 @@ func (a *BanksAPIService) UpdateDreamPredictionOutcomeExecute(r ApiUpdateDreamPr
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3378,10 +3421,10 @@ func (a *BanksAPIService) UpdateDreamPredictionOutcomeExecute(r ApiUpdateDreamPr
 }
 
 type ApiValidateBrainImportRequest struct {
-	ctx context.Context
-	ApiService *BanksAPIService
-	bankId string
-	file *os.File
+	ctx           context.Context
+	ApiService    *BanksAPIService
+	bankId        string
+	file          *os.File
 	authorization *string
 }
 
@@ -3405,26 +3448,27 @@ ValidateBrainImport Validate .brain import payload
 
 Validate schema/version/checksum compatibility before importing.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiValidateBrainImportRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiValidateBrainImportRequest
 */
 func (a *BanksAPIService) ValidateBrainImport(ctx context.Context, bankId string) ApiValidateBrainImportRequest {
 	return ApiValidateBrainImportRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return BrainImportValidationResponse
+//
+//	@return BrainImportValidationResponse
 func (a *BanksAPIService) ValidateBrainImportExecute(r ApiValidateBrainImportRequest) (*BrainImportValidationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *BrainImportValidationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *BrainImportValidationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "BanksAPIService.ValidateBrainImport")
@@ -3463,8 +3507,8 @@ func (a *BanksAPIService) ValidateBrainImportExecute(r ApiValidateBrainImportReq
 		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
 	}
 	var fileLocalVarFormFileName string
-	var fileLocalVarFileName     string
-	var fileLocalVarFileBytes    []byte
+	var fileLocalVarFileName string
+	var fileLocalVarFileBytes []byte
 
 	fileLocalVarFormFileName = "file"
 	fileLocalVarFile := r.file
@@ -3506,8 +3550,8 @@ func (a *BanksAPIService) ValidateBrainImportExecute(r ApiValidateBrainImportReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

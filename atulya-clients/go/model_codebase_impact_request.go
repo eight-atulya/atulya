@@ -19,11 +19,11 @@ var _ MappedNullable = &CodebaseImpactRequest{}
 
 // CodebaseImpactRequest Impact analysis request for a codebase.
 type CodebaseImpactRequest struct {
-	Path NullableString `json:"path,omitempty"`
-	Symbol NullableString `json:"symbol,omitempty"`
-	Query NullableString `json:"query,omitempty"`
-	MaxDepth *int32 `json:"max_depth,omitempty"`
-	Limit *int32 `json:"limit,omitempty"`
+	Path     NullableString `json:"path,omitempty"`
+	Symbol   NullableString `json:"symbol,omitempty"`
+	Query    NullableString `json:"query,omitempty"`
+	MaxDepth *int32         `json:"max_depth,omitempty"`
+	Limit    *int32         `json:"limit,omitempty"`
 }
 
 // NewCodebaseImpactRequest instantiates a new CodebaseImpactRequest object
@@ -32,6 +32,10 @@ type CodebaseImpactRequest struct {
 // will change when the set of required properties is changed
 func NewCodebaseImpactRequest() *CodebaseImpactRequest {
 	this := CodebaseImpactRequest{}
+	var maxDepth int32 = 2
+	this.MaxDepth = &maxDepth
+	var limit int32 = 50
+	this.Limit = &limit
 	return &this
 }
 
@@ -40,6 +44,10 @@ func NewCodebaseImpactRequest() *CodebaseImpactRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseImpactRequestWithDefaults() *CodebaseImpactRequest {
 	this := CodebaseImpactRequest{}
+	var maxDepth int32 = 2
+	this.MaxDepth = &maxDepth
+	var limit int32 = 50
+	this.Limit = &limit
 	return &this
 }
 
@@ -75,6 +83,7 @@ func (o *CodebaseImpactRequest) HasPath() bool {
 func (o *CodebaseImpactRequest) SetPath(v string) {
 	o.Path.Set(&v)
 }
+
 // SetPathNil sets the value for Path to be an explicit nil
 func (o *CodebaseImpactRequest) SetPathNil() {
 	o.Path.Set(nil)
@@ -117,6 +126,7 @@ func (o *CodebaseImpactRequest) HasSymbol() bool {
 func (o *CodebaseImpactRequest) SetSymbol(v string) {
 	o.Symbol.Set(&v)
 }
+
 // SetSymbolNil sets the value for Symbol to be an explicit nil
 func (o *CodebaseImpactRequest) SetSymbolNil() {
 	o.Symbol.Set(nil)
@@ -159,6 +169,7 @@ func (o *CodebaseImpactRequest) HasQuery() bool {
 func (o *CodebaseImpactRequest) SetQuery(v string) {
 	o.Query.Set(&v)
 }
+
 // SetQueryNil sets the value for Query to be an explicit nil
 func (o *CodebaseImpactRequest) SetQueryNil() {
 	o.Query.Set(nil)
@@ -234,7 +245,7 @@ func (o *CodebaseImpactRequest) SetLimit(v int32) {
 }
 
 func (o CodebaseImpactRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -296,5 +307,3 @@ func (v *NullableCodebaseImpactRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

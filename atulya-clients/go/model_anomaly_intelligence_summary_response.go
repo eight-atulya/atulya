@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &AnomalyIntelligenceSummaryResponse{}
 
 // AnomalyIntelligenceSummaryResponse struct for AnomalyIntelligenceSummaryResponse
 type AnomalyIntelligenceSummaryResponse struct {
-	TotalEvents int32 `json:"total_events"`
-	OpenEvents int32 `json:"open_events"`
-	ResolvedEvents int32 `json:"resolved_events"`
-	AvgSeverity float32 `json:"avg_severity"`
-	ByType map[string]int32 `json:"by_type,omitempty"`
+	TotalEvents    int32            `json:"total_events"`
+	OpenEvents     int32            `json:"open_events"`
+	ResolvedEvents int32            `json:"resolved_events"`
+	AvgSeverity    float32          `json:"avg_severity"`
+	ByType         map[string]int32 `json:"by_type,omitempty"`
 }
 
 type _AnomalyIntelligenceSummaryResponse AnomalyIntelligenceSummaryResponse
@@ -180,7 +180,7 @@ func (o *AnomalyIntelligenceSummaryResponse) SetByType(v map[string]int32) {
 }
 
 func (o AnomalyIntelligenceSummaryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -215,10 +215,10 @@ func (o *AnomalyIntelligenceSummaryResponse) UnmarshalJSON(data []byte) (err err
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -274,5 +274,3 @@ func (v *NullableAnomalyIntelligenceSummaryResponse) UnmarshalJSON(src []byte) e
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

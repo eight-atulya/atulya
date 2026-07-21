@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: Request,
@@ -12,7 +12,7 @@ export async function GET(
     const offset = searchParams.get("offset") || "0";
     const res = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}/sets?limit=${limit}&offset=${offset}`,
-      { headers: getDataplaneHeaders() }
+      { headers: getDataplaneHeadersForRequest(request) }
     );
     const data = await res.json();
     if (!res.ok)
@@ -35,7 +35,7 @@ export async function POST(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}/sets`,
       {
         method: "POST",
-        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
         body: JSON.stringify(body),
       }
     );

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function POST(
   request: Request,
@@ -17,7 +17,7 @@ export async function POST(
 
     const response = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models/${mentalModelId}/refresh`,
-      { method: "POST", headers: getDataplaneHeaders() }
+      { method: "POST", headers: getDataplaneHeadersForRequest(request) }
     );
 
     if (!response.ok) {

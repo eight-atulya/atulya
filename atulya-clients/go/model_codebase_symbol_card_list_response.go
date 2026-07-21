@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &CodebaseSymbolCardListResponse{}
 
 // CodebaseSymbolCardListResponse Paginated Symbol Card artifact list.
 type CodebaseSymbolCardListResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	Items []map[string]interface{} `json:"items,omitempty"`
-	NextCursor NullableString `json:"next_cursor,omitempty"`
-	HasMore *bool `json:"has_more,omitempty"`
+	CodebaseId string                   `json:"codebase_id"`
+	SnapshotId NullableString           `json:"snapshot_id,omitempty"`
+	Items      []map[string]interface{} `json:"items,omitempty"`
+	NextCursor NullableString           `json:"next_cursor,omitempty"`
+	HasMore    *bool                    `json:"has_more,omitempty"`
 }
 
 type _CodebaseSymbolCardListResponse CodebaseSymbolCardListResponse
@@ -37,6 +37,8 @@ type _CodebaseSymbolCardListResponse CodebaseSymbolCardListResponse
 func NewCodebaseSymbolCardListResponse(codebaseId string) *CodebaseSymbolCardListResponse {
 	this := CodebaseSymbolCardListResponse{}
 	this.CodebaseId = codebaseId
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 
@@ -45,6 +47,8 @@ func NewCodebaseSymbolCardListResponse(codebaseId string) *CodebaseSymbolCardLis
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseSymbolCardListResponseWithDefaults() *CodebaseSymbolCardListResponse {
 	this := CodebaseSymbolCardListResponse{}
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	return &this
 }
 
@@ -104,6 +108,7 @@ func (o *CodebaseSymbolCardListResponse) HasSnapshotId() bool {
 func (o *CodebaseSymbolCardListResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseSymbolCardListResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -178,6 +183,7 @@ func (o *CodebaseSymbolCardListResponse) HasNextCursor() bool {
 func (o *CodebaseSymbolCardListResponse) SetNextCursor(v string) {
 	o.NextCursor.Set(&v)
 }
+
 // SetNextCursorNil sets the value for NextCursor to be an explicit nil
 func (o *CodebaseSymbolCardListResponse) SetNextCursorNil() {
 	o.NextCursor.Set(nil)
@@ -221,7 +227,7 @@ func (o *CodebaseSymbolCardListResponse) SetHasMore(v bool) {
 }
 
 func (o CodebaseSymbolCardListResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -259,10 +265,10 @@ func (o *CodebaseSymbolCardListResponse) UnmarshalJSON(data []byte) (err error) 
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -318,5 +324,3 @@ func (v *NullableCodebaseSymbolCardListResponse) UnmarshalJSON(src []byte) error
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,8 +22,8 @@ var _ MappedNullable = &MemoryRepoCommitRequest{}
 // MemoryRepoCommitRequest struct for MemoryRepoCommitRequest
 type MemoryRepoCommitRequest struct {
 	// Commit message
-	Message string `json:"message"`
-	Actor NullableString `json:"actor,omitempty"`
+	Message string         `json:"message"`
+	Actor   NullableString `json:"actor,omitempty"`
 }
 
 type _MemoryRepoCommitRequest MemoryRepoCommitRequest
@@ -102,6 +102,7 @@ func (o *MemoryRepoCommitRequest) HasActor() bool {
 func (o *MemoryRepoCommitRequest) SetActor(v string) {
 	o.Actor.Set(&v)
 }
+
 // SetActorNil sets the value for Actor to be an explicit nil
 func (o *MemoryRepoCommitRequest) SetActorNil() {
 	o.Actor.Set(nil)
@@ -113,7 +114,7 @@ func (o *MemoryRepoCommitRequest) UnsetActor() {
 }
 
 func (o MemoryRepoCommitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -142,10 +143,10 @@ func (o *MemoryRepoCommitRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -201,5 +202,3 @@ func (v *NullableMemoryRepoCommitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

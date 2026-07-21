@@ -7,6 +7,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ repo
   const url = new URL(request.url);
   const query = url.searchParams.toString();
   const response = await fetchDataplaneJson({
+    request,
     path: `/v1/default/repos/${encodeURIComponent(repoId)}/status${query ? `?${query}` : ""}`,
     method: "GET",
   });

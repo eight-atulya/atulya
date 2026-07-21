@@ -12,11 +12,12 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError
+from argon2.exceptions import VerificationError
 
 AUTH_SCHEMA_ENV = "ATULYA_API_AUTH_SCHEMA"
 KEY_PEPPER_ENV = "ATULYA_API_KEY_HASH_PEPPER"
 SESSION_TTL_HOURS_ENV = "ATULYA_API_SESSION_TTL_HOURS"
+SESSION_PEPPER_ENV = "ATULYA_API_SESSION_HASH_PEPPER"
 
 SESSION_PREFIX = "atulya_sess_"
 API_KEY_PREFIX = "atulya_"
@@ -115,7 +116,7 @@ def schema_for_org(slug: str) -> str:
     return f"org_{normalized}"
 
 
-def hash_secret(raw: str, *, version: int = 2) -> str:
+def hash_secret(raw: str, *, version: int = 2, pepper_env: str = KEY_PEPPER_ENV) -> str:
     """Hash API keys and session tokens.
 
     Version 1 is the legacy plain SHA-256 hash. Version 2 uses an env pepper.
@@ -123,16 +124,22 @@ def hash_secret(raw: str, *, version: int = 2) -> str:
 
     if version <= 1:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
-    pepper = os.getenv(KEY_PEPPER_ENV, "")
+    pepper = os.getenv(pepper_env, "")
     if not pepper:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
     return hmac.new(pepper.encode("utf-8"), raw.encode("utf-8"), hashlib.sha256).hexdigest()
 
 
-def verify_secret(raw: str, stored_hash: str, *, version: int | None = None) -> bool:
+def verify_secret(
+    raw: str,
+    stored_hash: str,
+    *,
+    version: int | None = None,
+    pepper_env: str = KEY_PEPPER_ENV,
+) -> bool:
     versions = [version] if version else [2, 1]
     for candidate_version in versions:
-        if hmac.compare_digest(hash_secret(raw, version=candidate_version), stored_hash):
+        if hmac.compare_digest(hash_secret(raw, version=candidate_version, pepper_env=pepper_env), stored_hash):
             return True
     return False
 
@@ -145,7 +152,15 @@ def generate_session() -> LoginSession:
     raw = f"{SESSION_PREFIX}{secrets.token_urlsafe(32)}"
     ttl_hours = int(os.getenv(SESSION_TTL_HOURS_ENV, "12"))
     expires_at = datetime.now(timezone.utc) + timedelta(hours=ttl_hours)
-    return LoginSession(raw_token=raw, token_hash=hash_secret(raw), expires_at=expires_at)
+    return LoginSession(
+        raw_token=raw,
+        token_hash=hash_secret(raw, pepper_env=SESSION_PEPPER_ENV),
+        expires_at=expires_at,
+    )
+
+
+def hash_session_token(raw: str) -> str:
+    return hash_secret(raw, pepper_env=SESSION_PEPPER_ENV)
 
 
 def key_prefix(raw: str) -> str:
@@ -159,8 +174,12 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     try:
         return _password_hasher.verify(password_hash, password)
-    except VerifyMismatchError:
+    except VerificationError:
         return False
+
+
+def password_needs_rehash(password_hash: str) -> bool:
+    return _password_hasher.check_needs_rehash(password_hash)
 
 
 def normalize_action_scopes(rows: list[Any]) -> dict[str, list[str]]:

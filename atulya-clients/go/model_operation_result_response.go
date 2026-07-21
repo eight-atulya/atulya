@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,18 +21,18 @@ var _ MappedNullable = &OperationResultResponse{}
 
 // OperationResultResponse Response model for retrieving the final result of an async operation.
 type OperationResultResponse struct {
-	OperationId string `json:"operation_id"`
-	Status string `json:"status"`
-	OperationType NullableString `json:"operation_type,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
-	CompletedAt NullableString `json:"completed_at,omitempty"`
-	ErrorMessage NullableString `json:"error_message,omitempty"`
-	QueueState NullableString `json:"queue_state,omitempty"`
-	Stage NullableString `json:"stage,omitempty"`
-	Progress NullableOperationProgressResponse `json:"progress,omitempty"`
-	ResultMetadata map[string]interface{} `json:"result_metadata,omitempty"`
-	Result NullableOperationResultResponseResult `json:"result,omitempty"`
+	OperationId    string                            `json:"operation_id"`
+	Status         string                            `json:"status"`
+	OperationType  NullableString                    `json:"operation_type,omitempty"`
+	CreatedAt      NullableString                    `json:"created_at,omitempty"`
+	UpdatedAt      NullableString                    `json:"updated_at,omitempty"`
+	CompletedAt    NullableString                    `json:"completed_at,omitempty"`
+	ErrorMessage   NullableString                    `json:"error_message,omitempty"`
+	QueueState     NullableString                    `json:"queue_state,omitempty"`
+	Stage          NullableString                    `json:"stage,omitempty"`
+	Progress       NullableOperationProgressResponse `json:"progress,omitempty"`
+	ResultMetadata map[string]interface{}            `json:"result_metadata,omitempty"`
+	Result         NullableResult                    `json:"result,omitempty"`
 }
 
 type _OperationResultResponse OperationResultResponse
@@ -136,6 +136,7 @@ func (o *OperationResultResponse) HasOperationType() bool {
 func (o *OperationResultResponse) SetOperationType(v string) {
 	o.OperationType.Set(&v)
 }
+
 // SetOperationTypeNil sets the value for OperationType to be an explicit nil
 func (o *OperationResultResponse) SetOperationTypeNil() {
 	o.OperationType.Set(nil)
@@ -178,6 +179,7 @@ func (o *OperationResultResponse) HasCreatedAt() bool {
 func (o *OperationResultResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *OperationResultResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -220,6 +222,7 @@ func (o *OperationResultResponse) HasUpdatedAt() bool {
 func (o *OperationResultResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *OperationResultResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -262,6 +265,7 @@ func (o *OperationResultResponse) HasCompletedAt() bool {
 func (o *OperationResultResponse) SetCompletedAt(v string) {
 	o.CompletedAt.Set(&v)
 }
+
 // SetCompletedAtNil sets the value for CompletedAt to be an explicit nil
 func (o *OperationResultResponse) SetCompletedAtNil() {
 	o.CompletedAt.Set(nil)
@@ -304,6 +308,7 @@ func (o *OperationResultResponse) HasErrorMessage() bool {
 func (o *OperationResultResponse) SetErrorMessage(v string) {
 	o.ErrorMessage.Set(&v)
 }
+
 // SetErrorMessageNil sets the value for ErrorMessage to be an explicit nil
 func (o *OperationResultResponse) SetErrorMessageNil() {
 	o.ErrorMessage.Set(nil)
@@ -346,6 +351,7 @@ func (o *OperationResultResponse) HasQueueState() bool {
 func (o *OperationResultResponse) SetQueueState(v string) {
 	o.QueueState.Set(&v)
 }
+
 // SetQueueStateNil sets the value for QueueState to be an explicit nil
 func (o *OperationResultResponse) SetQueueStateNil() {
 	o.QueueState.Set(nil)
@@ -388,6 +394,7 @@ func (o *OperationResultResponse) HasStage() bool {
 func (o *OperationResultResponse) SetStage(v string) {
 	o.Stage.Set(&v)
 }
+
 // SetStageNil sets the value for Stage to be an explicit nil
 func (o *OperationResultResponse) SetStageNil() {
 	o.Stage.Set(nil)
@@ -430,6 +437,7 @@ func (o *OperationResultResponse) HasProgress() bool {
 func (o *OperationResultResponse) SetProgress(v OperationProgressResponse) {
 	o.Progress.Set(&v)
 }
+
 // SetProgressNil sets the value for Progress to be an explicit nil
 func (o *OperationResultResponse) SetProgressNil() {
 	o.Progress.Set(nil)
@@ -474,9 +482,9 @@ func (o *OperationResultResponse) SetResultMetadata(v map[string]interface{}) {
 }
 
 // GetResult returns the Result field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *OperationResultResponse) GetResult() OperationResultResponseResult {
+func (o *OperationResultResponse) GetResult() Result {
 	if o == nil || IsNil(o.Result.Get()) {
-		var ret OperationResultResponseResult
+		var ret Result
 		return ret
 	}
 	return *o.Result.Get()
@@ -485,7 +493,7 @@ func (o *OperationResultResponse) GetResult() OperationResultResponseResult {
 // GetResultOk returns a tuple with the Result field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *OperationResultResponse) GetResultOk() (*OperationResultResponseResult, bool) {
+func (o *OperationResultResponse) GetResultOk() (*Result, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -501,10 +509,11 @@ func (o *OperationResultResponse) HasResult() bool {
 	return false
 }
 
-// SetResult gets a reference to the given NullableOperationResultResponseResult and assigns it to the Result field.
-func (o *OperationResultResponse) SetResult(v OperationResultResponseResult) {
+// SetResult gets a reference to the given NullableResult and assigns it to the Result field.
+func (o *OperationResultResponse) SetResult(v Result) {
 	o.Result.Set(&v)
 }
+
 // SetResultNil sets the value for Result to be an explicit nil
 func (o *OperationResultResponse) SetResultNil() {
 	o.Result.Set(nil)
@@ -516,7 +525,7 @@ func (o *OperationResultResponse) UnsetResult() {
 }
 
 func (o OperationResultResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -574,10 +583,10 @@ func (o *OperationResultResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -633,5 +642,3 @@ func (v *NullableOperationResultResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

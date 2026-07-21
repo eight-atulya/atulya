@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &DocumentResponse{}
 
 // DocumentResponse Response model for get document endpoint.
 type DocumentResponse struct {
-	Id string `json:"id"`
-	BankId string `json:"bank_id"`
-	OriginalText string `json:"original_text"`
-	ContentHash NullableString `json:"content_hash"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-	MemoryUnitCount int32 `json:"memory_unit_count"`
+	Id              string         `json:"id"`
+	BankId          string         `json:"bank_id"`
+	OriginalText    string         `json:"original_text"`
+	ContentHash     NullableString `json:"content_hash"`
+	CreatedAt       string         `json:"created_at"`
+	UpdatedAt       string         `json:"updated_at"`
+	MemoryUnitCount int32          `json:"memory_unit_count"`
 	// Tags associated with this document
 	Tags []string `json:"tags,omitempty"`
 }
@@ -261,7 +261,7 @@ func (o *DocumentResponse) SetTags(v []string) {
 }
 
 func (o DocumentResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -302,10 +302,10 @@ func (o *DocumentResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -361,5 +361,3 @@ func (v *NullableDocumentResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

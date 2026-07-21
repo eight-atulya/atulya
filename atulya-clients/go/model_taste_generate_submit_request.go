@@ -19,8 +19,8 @@ var _ MappedNullable = &TasteGenerateSubmitRequest{}
 
 // TasteGenerateSubmitRequest struct for TasteGenerateSubmitRequest
 type TasteGenerateSubmitRequest struct {
-	SetIds []string `json:"set_ids,omitempty"`
-	Count *int32 `json:"count,omitempty"`
+	SetIds  []string               `json:"set_ids,omitempty"`
+	Count   *int32                 `json:"count,omitempty"`
 	Options map[string]interface{} `json:"options,omitempty"`
 }
 
@@ -30,6 +30,8 @@ type TasteGenerateSubmitRequest struct {
 // will change when the set of required properties is changed
 func NewTasteGenerateSubmitRequest() *TasteGenerateSubmitRequest {
 	this := TasteGenerateSubmitRequest{}
+	var count int32 = 8
+	this.Count = &count
 	return &this
 }
 
@@ -38,6 +40,8 @@ func NewTasteGenerateSubmitRequest() *TasteGenerateSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewTasteGenerateSubmitRequestWithDefaults() *TasteGenerateSubmitRequest {
 	this := TasteGenerateSubmitRequest{}
+	var count int32 = 8
+	this.Count = &count
 	return &this
 }
 
@@ -138,7 +142,7 @@ func (o *TasteGenerateSubmitRequest) SetOptions(v map[string]interface{}) {
 }
 
 func (o TasteGenerateSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -194,5 +198,3 @@ func (v *NullableTasteGenerateSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; operationId: string }> }
 ) {
   try {
     const { bankId, operationId } = await params;
     const res = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/jobs/${operationId}/lineage`,
-      { headers: getDataplaneHeaders() }
+      { headers: getDataplaneHeadersForRequest(request) }
     );
     const data = await res.json();
     if (!res.ok)

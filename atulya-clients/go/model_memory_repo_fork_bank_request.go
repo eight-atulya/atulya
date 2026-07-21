@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,15 +22,15 @@ var _ MappedNullable = &MemoryRepoForkBankRequest{}
 // MemoryRepoForkBankRequest struct for MemoryRepoForkBankRequest
 type MemoryRepoForkBankRequest struct {
 	// Brand-new bank ID that will receive the forked snapshot
-	TargetBankId string `json:"target_bank_id"`
+	TargetBankId   string         `json:"target_bank_id"`
 	TargetBankName NullableString `json:"target_bank_name,omitempty"`
-	SourceBranch NullableString `json:"source_branch,omitempty"`
+	SourceBranch   NullableString `json:"source_branch,omitempty"`
 	SourceCommitId NullableString `json:"source_commit_id,omitempty"`
 	// When true, fork the live branch workspace instead of the branch HEAD commit.
 	IncludeWorkspace *bool `json:"include_workspace,omitempty"`
 	// Enable repo mode on the forked bank after materializing the snapshot.
-	EnableRepo *bool `json:"enable_repo,omitempty"`
-	RepoName NullableString `json:"repo_name,omitempty"`
+	EnableRepo *bool          `json:"enable_repo,omitempty"`
+	RepoName   NullableString `json:"repo_name,omitempty"`
 }
 
 type _MemoryRepoForkBankRequest MemoryRepoForkBankRequest
@@ -42,6 +42,10 @@ type _MemoryRepoForkBankRequest MemoryRepoForkBankRequest
 func NewMemoryRepoForkBankRequest(targetBankId string) *MemoryRepoForkBankRequest {
 	this := MemoryRepoForkBankRequest{}
 	this.TargetBankId = targetBankId
+	var includeWorkspace bool = false
+	this.IncludeWorkspace = &includeWorkspace
+	var enableRepo bool = false
+	this.EnableRepo = &enableRepo
 	return &this
 }
 
@@ -50,6 +54,10 @@ func NewMemoryRepoForkBankRequest(targetBankId string) *MemoryRepoForkBankReques
 // but it doesn't guarantee that properties required by API are set
 func NewMemoryRepoForkBankRequestWithDefaults() *MemoryRepoForkBankRequest {
 	this := MemoryRepoForkBankRequest{}
+	var includeWorkspace bool = false
+	this.IncludeWorkspace = &includeWorkspace
+	var enableRepo bool = false
+	this.EnableRepo = &enableRepo
 	return &this
 }
 
@@ -109,6 +117,7 @@ func (o *MemoryRepoForkBankRequest) HasTargetBankName() bool {
 func (o *MemoryRepoForkBankRequest) SetTargetBankName(v string) {
 	o.TargetBankName.Set(&v)
 }
+
 // SetTargetBankNameNil sets the value for TargetBankName to be an explicit nil
 func (o *MemoryRepoForkBankRequest) SetTargetBankNameNil() {
 	o.TargetBankName.Set(nil)
@@ -151,6 +160,7 @@ func (o *MemoryRepoForkBankRequest) HasSourceBranch() bool {
 func (o *MemoryRepoForkBankRequest) SetSourceBranch(v string) {
 	o.SourceBranch.Set(&v)
 }
+
 // SetSourceBranchNil sets the value for SourceBranch to be an explicit nil
 func (o *MemoryRepoForkBankRequest) SetSourceBranchNil() {
 	o.SourceBranch.Set(nil)
@@ -193,6 +203,7 @@ func (o *MemoryRepoForkBankRequest) HasSourceCommitId() bool {
 func (o *MemoryRepoForkBankRequest) SetSourceCommitId(v string) {
 	o.SourceCommitId.Set(&v)
 }
+
 // SetSourceCommitIdNil sets the value for SourceCommitId to be an explicit nil
 func (o *MemoryRepoForkBankRequest) SetSourceCommitIdNil() {
 	o.SourceCommitId.Set(nil)
@@ -299,6 +310,7 @@ func (o *MemoryRepoForkBankRequest) HasRepoName() bool {
 func (o *MemoryRepoForkBankRequest) SetRepoName(v string) {
 	o.RepoName.Set(&v)
 }
+
 // SetRepoNameNil sets the value for RepoName to be an explicit nil
 func (o *MemoryRepoForkBankRequest) SetRepoNameNil() {
 	o.RepoName.Set(nil)
@@ -310,7 +322,7 @@ func (o *MemoryRepoForkBankRequest) UnsetRepoName() {
 }
 
 func (o MemoryRepoForkBankRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -354,10 +366,10 @@ func (o *MemoryRepoForkBankRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -413,5 +425,3 @@ func (v *NullableMemoryRepoForkBankRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

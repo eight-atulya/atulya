@@ -19,9 +19,9 @@ var _ MappedNullable = &TasteUpdateDatasetRequest{}
 
 // TasteUpdateDatasetRequest struct for TasteUpdateDatasetRequest
 type TasteUpdateDatasetRequest struct {
-	Name NullableString `json:"name,omitempty"`
-	Description NullableString `json:"description,omitempty"`
-	TasteTags []string `json:"taste_tags,omitempty"`
+	Name             NullableString         `json:"name,omitempty"`
+	Description      NullableString         `json:"description,omitempty"`
+	TasteTags        []string               `json:"taste_tags,omitempty"`
 	TasteProfileJson map[string]interface{} `json:"taste_profile_json,omitempty"`
 }
 
@@ -74,6 +74,7 @@ func (o *TasteUpdateDatasetRequest) HasName() bool {
 func (o *TasteUpdateDatasetRequest) SetName(v string) {
 	o.Name.Set(&v)
 }
+
 // SetNameNil sets the value for Name to be an explicit nil
 func (o *TasteUpdateDatasetRequest) SetNameNil() {
 	o.Name.Set(nil)
@@ -116,6 +117,7 @@ func (o *TasteUpdateDatasetRequest) HasDescription() bool {
 func (o *TasteUpdateDatasetRequest) SetDescription(v string) {
 	o.Description.Set(&v)
 }
+
 // SetDescriptionNil sets the value for Description to be an explicit nil
 func (o *TasteUpdateDatasetRequest) SetDescriptionNil() {
 	o.Description.Set(nil)
@@ -193,7 +195,7 @@ func (o *TasteUpdateDatasetRequest) SetTasteProfileJson(v map[string]interface{}
 }
 
 func (o TasteUpdateDatasetRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -252,5 +254,3 @@ func (v *NullableTasteUpdateDatasetRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

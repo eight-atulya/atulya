@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &ChunkResponse{}
 
 // ChunkResponse Response model for get chunk endpoint.
 type ChunkResponse struct {
-	ChunkId string `json:"chunk_id"`
+	ChunkId    string `json:"chunk_id"`
 	DocumentId string `json:"document_id"`
-	BankId string `json:"bank_id"`
-	ChunkIndex int32 `json:"chunk_index"`
-	ChunkText string `json:"chunk_text"`
-	CreatedAt string `json:"created_at"`
+	BankId     string `json:"bank_id"`
+	ChunkIndex int32  `json:"chunk_index"`
+	ChunkText  string `json:"chunk_text"`
+	CreatedAt  string `json:"created_at"`
 }
 
 type _ChunkResponse ChunkResponse
@@ -199,7 +199,7 @@ func (o *ChunkResponse) SetCreatedAt(v string) {
 }
 
 func (o ChunkResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -235,10 +235,10 @@ func (o *ChunkResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -294,5 +294,3 @@ func (v *NullableChunkResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
