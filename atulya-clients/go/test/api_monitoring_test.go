@@ -11,10 +11,10 @@ package atulya
 
 import (
 	"context"
+	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
-	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 )
 
 func Test_atulya_MonitoringAPIService(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_atulya_MonitoringAPIService(t *testing.T) {
 
 	t.Run("Test MonitoringAPIService GetVersion", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.MonitoringAPI.GetVersion(context.Background()).Execute()
 
@@ -36,7 +36,7 @@ func Test_atulya_MonitoringAPIService(t *testing.T) {
 
 	t.Run("Test MonitoringAPIService HealthEndpointHealthGet", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.MonitoringAPI.HealthEndpointHealthGet(context.Background()).Execute()
 
@@ -48,7 +48,7 @@ func Test_atulya_MonitoringAPIService(t *testing.T) {
 
 	t.Run("Test MonitoringAPIService MetricsEndpointMetricsGet", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.MonitoringAPI.MetricsEndpointMetricsGet(context.Background()).Execute()
 

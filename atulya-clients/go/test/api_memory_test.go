@@ -11,10 +11,10 @@ package atulya
 
 import (
 	"context"
+	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
-	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 )
 
 func Test_atulya_MemoryAPIService(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService ClearBankMemories", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -38,7 +38,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService GetGraph", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -52,7 +52,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService GetMemory", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var memoryId string
@@ -67,7 +67,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService ListMemories", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -81,7 +81,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService ListTags", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -95,7 +95,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService RecallMemories", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -109,7 +109,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService Reflect", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -123,7 +123,7 @@ func Test_atulya_MemoryAPIService(t *testing.T) {
 
 	t.Run("Test MemoryAPIService RetainMemories", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &OperationSummaryResponse{}
 
 // OperationSummaryResponse struct for OperationSummaryResponse
 type OperationSummaryResponse struct {
-	OperationId string `json:"operation_id"`
-	BankId string `json:"bank_id"`
-	SchemaName string `json:"schema_name"`
-	OperationType string `json:"operation_type"`
-	Status string `json:"status"`
-	WorkerId NullableString `json:"worker_id"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt NullableString `json:"updated_at"`
-	ErrorMessage NullableString `json:"error_message"`
+	OperationId   string         `json:"operation_id"`
+	BankId        string         `json:"bank_id"`
+	SchemaName    string         `json:"schema_name"`
+	OperationType string         `json:"operation_type"`
+	Status        string         `json:"status"`
+	WorkerId      NullableString `json:"worker_id"`
+	CreatedAt     string         `json:"created_at"`
+	UpdatedAt     NullableString `json:"updated_at"`
+	ErrorMessage  NullableString `json:"error_message"`
 }
 
 type _OperationSummaryResponse OperationSummaryResponse
@@ -283,7 +283,7 @@ func (o *OperationSummaryResponse) SetErrorMessage(v string) {
 }
 
 func (o OperationSummaryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -325,10 +325,10 @@ func (o *OperationSummaryResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -384,5 +384,3 @@ func (v *NullableOperationSummaryResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

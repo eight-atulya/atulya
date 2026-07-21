@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,31 +21,31 @@ var _ MappedNullable = &CodebaseResponse{}
 
 // CodebaseResponse Codebase metadata plus current snapshot summary.
 type CodebaseResponse struct {
-	Id string `json:"id"`
-	BankId string `json:"bank_id"`
-	Name string `json:"name"`
-	SourceType string `json:"source_type"`
-	SourceConfig *CodebaseSourceConfigResponse `json:"source_config,omitempty"`
-	CurrentSnapshotId NullableString `json:"current_snapshot_id,omitempty"`
-	ApprovedSnapshotId NullableString `json:"approved_snapshot_id,omitempty"`
-	SourceRef NullableString `json:"source_ref,omitempty"`
-	SourceCommitSha NullableString `json:"source_commit_sha,omitempty"`
-	SnapshotStatus NullableString `json:"snapshot_status,omitempty"`
-	ApprovedSourceRef NullableString `json:"approved_source_ref,omitempty"`
-	ApprovedSourceCommitSha NullableString `json:"approved_source_commit_sha,omitempty"`
-	ApprovedSnapshotStatus NullableString `json:"approved_snapshot_status,omitempty"`
-	ApprovalStatus NullableString `json:"approval_status,omitempty"`
-	MemoryStatus NullableString `json:"memory_status,omitempty"`
-	Stats *CodebaseSnapshotStatsResponse `json:"stats,omitempty"`
-	ReviewCounts *CodebaseReviewCountsResponse `json:"review_counts,omitempty"`
-	ClusterCount *int32 `json:"cluster_count,omitempty"`
-	RelatedChunkCount *int32 `json:"related_chunk_count,omitempty"`
-	ParseCoverage *float32 `json:"parse_coverage,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
-	SnapshotCreatedAt NullableString `json:"snapshot_created_at,omitempty"`
-	SnapshotUpdatedAt NullableString `json:"snapshot_updated_at,omitempty"`
-	ApprovedSnapshotUpdatedAt NullableString `json:"approved_snapshot_updated_at,omitempty"`
+	Id                        string                         `json:"id"`
+	BankId                    string                         `json:"bank_id"`
+	Name                      string                         `json:"name"`
+	SourceType                string                         `json:"source_type"`
+	SourceConfig              *CodebaseSourceConfigResponse  `json:"source_config,omitempty"`
+	CurrentSnapshotId         NullableString                 `json:"current_snapshot_id,omitempty"`
+	ApprovedSnapshotId        NullableString                 `json:"approved_snapshot_id,omitempty"`
+	SourceRef                 NullableString                 `json:"source_ref,omitempty"`
+	SourceCommitSha           NullableString                 `json:"source_commit_sha,omitempty"`
+	SnapshotStatus            NullableString                 `json:"snapshot_status,omitempty"`
+	ApprovedSourceRef         NullableString                 `json:"approved_source_ref,omitempty"`
+	ApprovedSourceCommitSha   NullableString                 `json:"approved_source_commit_sha,omitempty"`
+	ApprovedSnapshotStatus    NullableString                 `json:"approved_snapshot_status,omitempty"`
+	ApprovalStatus            NullableString                 `json:"approval_status,omitempty"`
+	MemoryStatus              NullableString                 `json:"memory_status,omitempty"`
+	Stats                     *CodebaseSnapshotStatsResponse `json:"stats,omitempty"`
+	ReviewCounts              *CodebaseReviewCountsResponse  `json:"review_counts,omitempty"`
+	ClusterCount              *int32                         `json:"cluster_count,omitempty"`
+	RelatedChunkCount         *int32                         `json:"related_chunk_count,omitempty"`
+	ParseCoverage             *float32                       `json:"parse_coverage,omitempty"`
+	CreatedAt                 NullableString                 `json:"created_at,omitempty"`
+	UpdatedAt                 NullableString                 `json:"updated_at,omitempty"`
+	SnapshotCreatedAt         NullableString                 `json:"snapshot_created_at,omitempty"`
+	SnapshotUpdatedAt         NullableString                 `json:"snapshot_updated_at,omitempty"`
+	ApprovedSnapshotUpdatedAt NullableString                 `json:"approved_snapshot_updated_at,omitempty"`
 }
 
 type _CodebaseResponse CodebaseResponse
@@ -60,6 +60,12 @@ func NewCodebaseResponse(id string, bankId string, name string, sourceType strin
 	this.BankId = bankId
 	this.Name = name
 	this.SourceType = sourceType
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -68,6 +74,12 @@ func NewCodebaseResponse(id string, bankId string, name string, sourceType strin
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseResponseWithDefaults() *CodebaseResponse {
 	this := CodebaseResponse{}
+	var clusterCount int32 = 0
+	this.ClusterCount = &clusterCount
+	var relatedChunkCount int32 = 0
+	this.RelatedChunkCount = &relatedChunkCount
+	var parseCoverage float32 = 0.0
+	this.ParseCoverage = &parseCoverage
 	return &this
 }
 
@@ -231,6 +243,7 @@ func (o *CodebaseResponse) HasCurrentSnapshotId() bool {
 func (o *CodebaseResponse) SetCurrentSnapshotId(v string) {
 	o.CurrentSnapshotId.Set(&v)
 }
+
 // SetCurrentSnapshotIdNil sets the value for CurrentSnapshotId to be an explicit nil
 func (o *CodebaseResponse) SetCurrentSnapshotIdNil() {
 	o.CurrentSnapshotId.Set(nil)
@@ -273,6 +286,7 @@ func (o *CodebaseResponse) HasApprovedSnapshotId() bool {
 func (o *CodebaseResponse) SetApprovedSnapshotId(v string) {
 	o.ApprovedSnapshotId.Set(&v)
 }
+
 // SetApprovedSnapshotIdNil sets the value for ApprovedSnapshotId to be an explicit nil
 func (o *CodebaseResponse) SetApprovedSnapshotIdNil() {
 	o.ApprovedSnapshotId.Set(nil)
@@ -315,6 +329,7 @@ func (o *CodebaseResponse) HasSourceRef() bool {
 func (o *CodebaseResponse) SetSourceRef(v string) {
 	o.SourceRef.Set(&v)
 }
+
 // SetSourceRefNil sets the value for SourceRef to be an explicit nil
 func (o *CodebaseResponse) SetSourceRefNil() {
 	o.SourceRef.Set(nil)
@@ -357,6 +372,7 @@ func (o *CodebaseResponse) HasSourceCommitSha() bool {
 func (o *CodebaseResponse) SetSourceCommitSha(v string) {
 	o.SourceCommitSha.Set(&v)
 }
+
 // SetSourceCommitShaNil sets the value for SourceCommitSha to be an explicit nil
 func (o *CodebaseResponse) SetSourceCommitShaNil() {
 	o.SourceCommitSha.Set(nil)
@@ -399,6 +415,7 @@ func (o *CodebaseResponse) HasSnapshotStatus() bool {
 func (o *CodebaseResponse) SetSnapshotStatus(v string) {
 	o.SnapshotStatus.Set(&v)
 }
+
 // SetSnapshotStatusNil sets the value for SnapshotStatus to be an explicit nil
 func (o *CodebaseResponse) SetSnapshotStatusNil() {
 	o.SnapshotStatus.Set(nil)
@@ -441,6 +458,7 @@ func (o *CodebaseResponse) HasApprovedSourceRef() bool {
 func (o *CodebaseResponse) SetApprovedSourceRef(v string) {
 	o.ApprovedSourceRef.Set(&v)
 }
+
 // SetApprovedSourceRefNil sets the value for ApprovedSourceRef to be an explicit nil
 func (o *CodebaseResponse) SetApprovedSourceRefNil() {
 	o.ApprovedSourceRef.Set(nil)
@@ -483,6 +501,7 @@ func (o *CodebaseResponse) HasApprovedSourceCommitSha() bool {
 func (o *CodebaseResponse) SetApprovedSourceCommitSha(v string) {
 	o.ApprovedSourceCommitSha.Set(&v)
 }
+
 // SetApprovedSourceCommitShaNil sets the value for ApprovedSourceCommitSha to be an explicit nil
 func (o *CodebaseResponse) SetApprovedSourceCommitShaNil() {
 	o.ApprovedSourceCommitSha.Set(nil)
@@ -525,6 +544,7 @@ func (o *CodebaseResponse) HasApprovedSnapshotStatus() bool {
 func (o *CodebaseResponse) SetApprovedSnapshotStatus(v string) {
 	o.ApprovedSnapshotStatus.Set(&v)
 }
+
 // SetApprovedSnapshotStatusNil sets the value for ApprovedSnapshotStatus to be an explicit nil
 func (o *CodebaseResponse) SetApprovedSnapshotStatusNil() {
 	o.ApprovedSnapshotStatus.Set(nil)
@@ -567,6 +587,7 @@ func (o *CodebaseResponse) HasApprovalStatus() bool {
 func (o *CodebaseResponse) SetApprovalStatus(v string) {
 	o.ApprovalStatus.Set(&v)
 }
+
 // SetApprovalStatusNil sets the value for ApprovalStatus to be an explicit nil
 func (o *CodebaseResponse) SetApprovalStatusNil() {
 	o.ApprovalStatus.Set(nil)
@@ -609,6 +630,7 @@ func (o *CodebaseResponse) HasMemoryStatus() bool {
 func (o *CodebaseResponse) SetMemoryStatus(v string) {
 	o.MemoryStatus.Set(&v)
 }
+
 // SetMemoryStatusNil sets the value for MemoryStatus to be an explicit nil
 func (o *CodebaseResponse) SetMemoryStatusNil() {
 	o.MemoryStatus.Set(nil)
@@ -811,6 +833,7 @@ func (o *CodebaseResponse) HasCreatedAt() bool {
 func (o *CodebaseResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *CodebaseResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -853,6 +876,7 @@ func (o *CodebaseResponse) HasUpdatedAt() bool {
 func (o *CodebaseResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *CodebaseResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -895,6 +919,7 @@ func (o *CodebaseResponse) HasSnapshotCreatedAt() bool {
 func (o *CodebaseResponse) SetSnapshotCreatedAt(v string) {
 	o.SnapshotCreatedAt.Set(&v)
 }
+
 // SetSnapshotCreatedAtNil sets the value for SnapshotCreatedAt to be an explicit nil
 func (o *CodebaseResponse) SetSnapshotCreatedAtNil() {
 	o.SnapshotCreatedAt.Set(nil)
@@ -937,6 +962,7 @@ func (o *CodebaseResponse) HasSnapshotUpdatedAt() bool {
 func (o *CodebaseResponse) SetSnapshotUpdatedAt(v string) {
 	o.SnapshotUpdatedAt.Set(&v)
 }
+
 // SetSnapshotUpdatedAtNil sets the value for SnapshotUpdatedAt to be an explicit nil
 func (o *CodebaseResponse) SetSnapshotUpdatedAtNil() {
 	o.SnapshotUpdatedAt.Set(nil)
@@ -979,6 +1005,7 @@ func (o *CodebaseResponse) HasApprovedSnapshotUpdatedAt() bool {
 func (o *CodebaseResponse) SetApprovedSnapshotUpdatedAt(v string) {
 	o.ApprovedSnapshotUpdatedAt.Set(&v)
 }
+
 // SetApprovedSnapshotUpdatedAtNil sets the value for ApprovedSnapshotUpdatedAt to be an explicit nil
 func (o *CodebaseResponse) SetApprovedSnapshotUpdatedAtNil() {
 	o.ApprovedSnapshotUpdatedAt.Set(nil)
@@ -990,7 +1017,7 @@ func (o *CodebaseResponse) UnsetApprovedSnapshotUpdatedAt() {
 }
 
 func (o CodebaseResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1085,10 +1112,10 @@ func (o *CodebaseResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -1144,5 +1171,3 @@ func (v *NullableCodebaseResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

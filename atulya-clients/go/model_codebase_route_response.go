@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &CodebaseRouteResponse{}
 
 // CodebaseRouteResponse Bulk review-route update response.
 type CodebaseRouteResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId string `json:"snapshot_id"`
-	UpdatedCount int32 `json:"updated_count"`
-	Target string `json:"target"`
-	OperationId NullableString `json:"operation_id,omitempty"`
-	QueuedForMemory *bool `json:"queued_for_memory,omitempty"`
-	MemoryIngestMode *string `json:"memory_ingest_mode,omitempty"`
-	ReviewCounts *CodebaseReviewCountsResponse `json:"review_counts,omitempty"`
+	CodebaseId       string                        `json:"codebase_id"`
+	SnapshotId       string                        `json:"snapshot_id"`
+	UpdatedCount     int32                         `json:"updated_count"`
+	Target           string                        `json:"target"`
+	OperationId      NullableString                `json:"operation_id,omitempty"`
+	QueuedForMemory  *bool                         `json:"queued_for_memory,omitempty"`
+	MemoryIngestMode *string                       `json:"memory_ingest_mode,omitempty"`
+	ReviewCounts     *CodebaseReviewCountsResponse `json:"review_counts,omitempty"`
 }
 
 type _CodebaseRouteResponse CodebaseRouteResponse
@@ -43,6 +43,10 @@ func NewCodebaseRouteResponse(codebaseId string, snapshotId string, updatedCount
 	this.SnapshotId = snapshotId
 	this.UpdatedCount = updatedCount
 	this.Target = target
+	var queuedForMemory bool = false
+	this.QueuedForMemory = &queuedForMemory
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -51,6 +55,10 @@ func NewCodebaseRouteResponse(codebaseId string, snapshotId string, updatedCount
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRouteResponseWithDefaults() *CodebaseRouteResponse {
 	this := CodebaseRouteResponse{}
+	var queuedForMemory bool = false
+	this.QueuedForMemory = &queuedForMemory
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -182,6 +190,7 @@ func (o *CodebaseRouteResponse) HasOperationId() bool {
 func (o *CodebaseRouteResponse) SetOperationId(v string) {
 	o.OperationId.Set(&v)
 }
+
 // SetOperationIdNil sets the value for OperationId to be an explicit nil
 func (o *CodebaseRouteResponse) SetOperationIdNil() {
 	o.OperationId.Set(nil)
@@ -289,7 +298,7 @@ func (o *CodebaseRouteResponse) SetReviewCounts(v CodebaseReviewCountsResponse) 
 }
 
 func (o CodebaseRouteResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -333,10 +342,10 @@ func (o *CodebaseRouteResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -392,5 +401,3 @@ func (v *NullableCodebaseRouteResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

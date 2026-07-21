@@ -19,9 +19,9 @@ var _ MappedNullable = &SubRoutineSubmitRequest{}
 
 // SubRoutineSubmitRequest struct for SubRoutineSubmitRequest
 type SubRoutineSubmitRequest struct {
-	Mode *string `json:"mode,omitempty"`
-	HorizonHours *int32 `json:"horizon_hours,omitempty"`
-	ForceRebuild *bool `json:"force_rebuild,omitempty"`
+	Mode         *string `json:"mode,omitempty"`
+	HorizonHours *int32  `json:"horizon_hours,omitempty"`
+	ForceRebuild *bool   `json:"force_rebuild,omitempty"`
 }
 
 // NewSubRoutineSubmitRequest instantiates a new SubRoutineSubmitRequest object
@@ -30,6 +30,12 @@ type SubRoutineSubmitRequest struct {
 // will change when the set of required properties is changed
 func NewSubRoutineSubmitRequest() *SubRoutineSubmitRequest {
 	this := SubRoutineSubmitRequest{}
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
+	var forceRebuild bool = false
+	this.ForceRebuild = &forceRebuild
 	return &this
 }
 
@@ -38,6 +44,12 @@ func NewSubRoutineSubmitRequest() *SubRoutineSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewSubRoutineSubmitRequestWithDefaults() *SubRoutineSubmitRequest {
 	this := SubRoutineSubmitRequest{}
+	var mode string = "incremental"
+	this.Mode = &mode
+	var horizonHours int32 = 24
+	this.HorizonHours = &horizonHours
+	var forceRebuild bool = false
+	this.ForceRebuild = &forceRebuild
 	return &this
 }
 
@@ -138,7 +150,7 @@ func (o *SubRoutineSubmitRequest) SetForceRebuild(v bool) {
 }
 
 func (o SubRoutineSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -194,5 +206,3 @@ func (v *NullableSubRoutineSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

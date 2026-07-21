@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &TasteExportSubmitRequest{}
 
 // TasteExportSubmitRequest struct for TasteExportSubmitRequest
 type TasteExportSubmitRequest struct {
-	DatasetId string `json:"dataset_id"`
-	SetIds []string `json:"set_ids,omitempty"`
-	AdapterId *string `json:"adapter_id,omitempty"`
-	Options map[string]interface{} `json:"options,omitempty"`
+	DatasetId string                 `json:"dataset_id"`
+	SetIds    []string               `json:"set_ids,omitempty"`
+	AdapterId *string                `json:"adapter_id,omitempty"`
+	Options   map[string]interface{} `json:"options,omitempty"`
 }
 
 type _TasteExportSubmitRequest TasteExportSubmitRequest
@@ -36,6 +36,8 @@ type _TasteExportSubmitRequest TasteExportSubmitRequest
 func NewTasteExportSubmitRequest(datasetId string) *TasteExportSubmitRequest {
 	this := TasteExportSubmitRequest{}
 	this.DatasetId = datasetId
+	var adapterId string = "openai_chat_jsonl"
+	this.AdapterId = &adapterId
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewTasteExportSubmitRequest(datasetId string) *TasteExportSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewTasteExportSubmitRequestWithDefaults() *TasteExportSubmitRequest {
 	this := TasteExportSubmitRequest{}
+	var adapterId string = "openai_chat_jsonl"
+	this.AdapterId = &adapterId
 	return &this
 }
 
@@ -168,7 +172,7 @@ func (o *TasteExportSubmitRequest) SetOptions(v map[string]interface{}) {
 }
 
 func (o TasteExportSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -203,10 +207,10 @@ func (o *TasteExportSubmitRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -262,5 +266,3 @@ func (v *NullableTasteExportSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,16 +21,16 @@ var _ MappedNullable = &MemoryRepoSummaryResponse{}
 
 // MemoryRepoSummaryResponse struct for MemoryRepoSummaryResponse
 type MemoryRepoSummaryResponse struct {
-	RepoId string `json:"repo_id"`
-	RootBankId string `json:"root_bank_id"`
-	Name string `json:"name"`
-	ActiveBranch string `json:"active_branch"`
-	HeadCommitId NullableString `json:"head_commit_id,omitempty"`
-	HeadMessage NullableString `json:"head_message,omitempty"`
-	HeadCreatedAt NullableString `json:"head_created_at,omitempty"`
-	CreatedAt NullableString `json:"created_at,omitempty"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
-	Branches []map[string]interface{} `json:"branches,omitempty"`
+	RepoId        string                   `json:"repo_id"`
+	RootBankId    string                   `json:"root_bank_id"`
+	Name          string                   `json:"name"`
+	ActiveBranch  string                   `json:"active_branch"`
+	HeadCommitId  NullableString           `json:"head_commit_id,omitempty"`
+	HeadMessage   NullableString           `json:"head_message,omitempty"`
+	HeadCreatedAt NullableString           `json:"head_created_at,omitempty"`
+	CreatedAt     NullableString           `json:"created_at,omitempty"`
+	UpdatedAt     NullableString           `json:"updated_at,omitempty"`
+	Branches      []map[string]interface{} `json:"branches,omitempty"`
 }
 
 type _MemoryRepoSummaryResponse MemoryRepoSummaryResponse
@@ -184,6 +184,7 @@ func (o *MemoryRepoSummaryResponse) HasHeadCommitId() bool {
 func (o *MemoryRepoSummaryResponse) SetHeadCommitId(v string) {
 	o.HeadCommitId.Set(&v)
 }
+
 // SetHeadCommitIdNil sets the value for HeadCommitId to be an explicit nil
 func (o *MemoryRepoSummaryResponse) SetHeadCommitIdNil() {
 	o.HeadCommitId.Set(nil)
@@ -226,6 +227,7 @@ func (o *MemoryRepoSummaryResponse) HasHeadMessage() bool {
 func (o *MemoryRepoSummaryResponse) SetHeadMessage(v string) {
 	o.HeadMessage.Set(&v)
 }
+
 // SetHeadMessageNil sets the value for HeadMessage to be an explicit nil
 func (o *MemoryRepoSummaryResponse) SetHeadMessageNil() {
 	o.HeadMessage.Set(nil)
@@ -268,6 +270,7 @@ func (o *MemoryRepoSummaryResponse) HasHeadCreatedAt() bool {
 func (o *MemoryRepoSummaryResponse) SetHeadCreatedAt(v string) {
 	o.HeadCreatedAt.Set(&v)
 }
+
 // SetHeadCreatedAtNil sets the value for HeadCreatedAt to be an explicit nil
 func (o *MemoryRepoSummaryResponse) SetHeadCreatedAtNil() {
 	o.HeadCreatedAt.Set(nil)
@@ -310,6 +313,7 @@ func (o *MemoryRepoSummaryResponse) HasCreatedAt() bool {
 func (o *MemoryRepoSummaryResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *MemoryRepoSummaryResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -352,6 +356,7 @@ func (o *MemoryRepoSummaryResponse) HasUpdatedAt() bool {
 func (o *MemoryRepoSummaryResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *MemoryRepoSummaryResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -396,7 +401,7 @@ func (o *MemoryRepoSummaryResponse) SetBranches(v []map[string]interface{}) {
 }
 
 func (o MemoryRepoSummaryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -446,10 +451,10 @@ func (o *MemoryRepoSummaryResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -505,5 +510,3 @@ func (v *NullableMemoryRepoSummaryResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

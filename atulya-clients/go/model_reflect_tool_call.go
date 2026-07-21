@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -24,7 +24,7 @@ type ReflectToolCall struct {
 	// Tool name: lookup, recall, learn, expand
 	Tool string `json:"tool"`
 	// Tool input parameters
-	Input map[string]interface{} `json:"input"`
+	Input  map[string]interface{} `json:"input"`
 	Output map[string]interface{} `json:"output,omitempty"`
 	// Execution time in milliseconds
 	DurationMs int32 `json:"duration_ms"`
@@ -43,6 +43,8 @@ func NewReflectToolCall(tool string, input map[string]interface{}, durationMs in
 	this.Tool = tool
 	this.Input = input
 	this.DurationMs = durationMs
+	var iteration int32 = 0
+	this.Iteration = &iteration
 	return &this
 }
 
@@ -51,6 +53,8 @@ func NewReflectToolCall(tool string, input map[string]interface{}, durationMs in
 // but it doesn't guarantee that properties required by API are set
 func NewReflectToolCallWithDefaults() *ReflectToolCall {
 	this := ReflectToolCall{}
+	var iteration int32 = 0
+	this.Iteration = &iteration
 	return &this
 }
 
@@ -192,7 +196,7 @@ func (o *ReflectToolCall) SetIteration(v int32) {
 }
 
 func (o ReflectToolCall) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -228,10 +232,10 @@ func (o *ReflectToolCall) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -287,5 +291,3 @@ func (v *NullableReflectToolCall) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -22,20 +22,18 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TasteGenerateSubmitRequest(BaseModel):
     """
     TasteGenerateSubmitRequest
     """ # noqa: E501
     set_ids: Optional[List[StrictStr]] = None
-    count: Optional[Annotated[int, Field(le=32, strict=True, ge=1)]] = None
+    count: Optional[Annotated[int, Field(le=32, strict=True, ge=1)]] = 8
     options: Optional[Dict[str, Any]] = None
     __properties: ClassVar[List[str]] = ["set_ids", "count", "options"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class TasteGenerateSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -85,9 +84,7 @@ class TasteGenerateSubmitRequest(BaseModel):
 
         _obj = cls.model_validate({
             "set_ids": obj.get("set_ids"),
-            "count": obj.get("count"),
+            "count": obj.get("count") if obj.get("count") is not None else 8,
             "options": obj.get("options")
         })
         return _obj
-
-

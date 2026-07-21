@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -767,5 +768,3 @@ class MonitoringApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

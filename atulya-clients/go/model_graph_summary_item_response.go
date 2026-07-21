@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &GraphSummaryItemResponse{}
 
 // GraphSummaryItemResponse struct for GraphSummaryItemResponse
 type GraphSummaryItemResponse struct {
-	Id string `json:"id"`
-	Kind string `json:"kind"`
-	Title string `json:"title"`
-	Subtitle NullableString `json:"subtitle,omitempty"`
-	PreviewLabels []string `json:"preview_labels,omitempty"`
-	MemberCount int32 `json:"member_count"`
-	StatusTone *string `json:"status_tone,omitempty"`
-	DisplayPriority float32 `json:"display_priority"`
-	RenderModeHint string `json:"render_mode_hint"`
-	ClusterMembership []string `json:"cluster_membership,omitempty"`
-	NodeRef NullableString `json:"node_ref,omitempty"`
+	Id                string         `json:"id"`
+	Kind              string         `json:"kind"`
+	Title             string         `json:"title"`
+	Subtitle          NullableString `json:"subtitle,omitempty"`
+	PreviewLabels     []string       `json:"preview_labels,omitempty"`
+	MemberCount       int32          `json:"member_count"`
+	StatusTone        *string        `json:"status_tone,omitempty"`
+	DisplayPriority   float32        `json:"display_priority"`
+	RenderModeHint    string         `json:"render_mode_hint"`
+	ClusterMembership []string       `json:"cluster_membership,omitempty"`
+	NodeRef           NullableString `json:"node_ref,omitempty"`
 }
 
 type _GraphSummaryItemResponse GraphSummaryItemResponse
@@ -46,6 +46,8 @@ func NewGraphSummaryItemResponse(id string, kind string, title string, memberCou
 	this.Kind = kind
 	this.Title = title
 	this.MemberCount = memberCount
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
 	this.DisplayPriority = displayPriority
 	this.RenderModeHint = renderModeHint
 	return &this
@@ -56,6 +58,8 @@ func NewGraphSummaryItemResponse(id string, kind string, title string, memberCou
 // but it doesn't guarantee that properties required by API are set
 func NewGraphSummaryItemResponseWithDefaults() *GraphSummaryItemResponse {
 	this := GraphSummaryItemResponse{}
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
 	return &this
 }
 
@@ -163,6 +167,7 @@ func (o *GraphSummaryItemResponse) HasSubtitle() bool {
 func (o *GraphSummaryItemResponse) SetSubtitle(v string) {
 	o.Subtitle.Set(&v)
 }
+
 // SetSubtitleNil sets the value for Subtitle to be an explicit nil
 func (o *GraphSummaryItemResponse) SetSubtitleNil() {
 	o.Subtitle.Set(nil)
@@ -373,6 +378,7 @@ func (o *GraphSummaryItemResponse) HasNodeRef() bool {
 func (o *GraphSummaryItemResponse) SetNodeRef(v string) {
 	o.NodeRef.Set(&v)
 }
+
 // SetNodeRefNil sets the value for NodeRef to be an explicit nil
 func (o *GraphSummaryItemResponse) SetNodeRefNil() {
 	o.NodeRef.Set(nil)
@@ -384,7 +390,7 @@ func (o *GraphSummaryItemResponse) UnsetNodeRef() {
 }
 
 func (o GraphSummaryItemResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -435,10 +441,10 @@ func (o *GraphSummaryItemResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -494,5 +500,3 @@ func (v *NullableGraphSummaryItemResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

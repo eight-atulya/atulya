@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &EntityIntelligenceResponse{}
 
 // EntityIntelligenceResponse Latest bank-level entity intelligence snapshot.
 type EntityIntelligenceResponse struct {
-	BankId string `json:"bank_id"`
-	ComputedAt NullableString `json:"computed_at,omitempty"`
-	EntityCount int32 `json:"entity_count"`
-	SourceEntityCount int32 `json:"source_entity_count"`
-	EntitySnapshotHash *string `json:"entity_snapshot_hash,omitempty"`
-	Content string `json:"content"`
-	StructuredContent map[string]interface{} `json:"structured_content,omitempty"`
-	EntityContext map[string]interface{} `json:"entity_context,omitempty"`
-	DeltaMetadata map[string]interface{} `json:"delta_metadata,omitempty"`
-	LlmModel *string `json:"llm_model,omitempty"`
-	PromptVersion *string `json:"prompt_version,omitempty"`
+	BankId             string                 `json:"bank_id"`
+	ComputedAt         NullableString         `json:"computed_at,omitempty"`
+	EntityCount        int32                  `json:"entity_count"`
+	SourceEntityCount  int32                  `json:"source_entity_count"`
+	EntitySnapshotHash *string                `json:"entity_snapshot_hash,omitempty"`
+	Content            string                 `json:"content"`
+	StructuredContent  map[string]interface{} `json:"structured_content,omitempty"`
+	EntityContext      map[string]interface{} `json:"entity_context,omitempty"`
+	DeltaMetadata      map[string]interface{} `json:"delta_metadata,omitempty"`
+	LlmModel           *string                `json:"llm_model,omitempty"`
+	PromptVersion      *string                `json:"prompt_version,omitempty"`
 }
 
 type _EntityIntelligenceResponse EntityIntelligenceResponse
@@ -45,7 +45,13 @@ func NewEntityIntelligenceResponse(bankId string, entityCount int32, sourceEntit
 	this.BankId = bankId
 	this.EntityCount = entityCount
 	this.SourceEntityCount = sourceEntityCount
+	var entitySnapshotHash string = ""
+	this.EntitySnapshotHash = &entitySnapshotHash
 	this.Content = content
+	var llmModel string = ""
+	this.LlmModel = &llmModel
+	var promptVersion string = ""
+	this.PromptVersion = &promptVersion
 	return &this
 }
 
@@ -54,6 +60,12 @@ func NewEntityIntelligenceResponse(bankId string, entityCount int32, sourceEntit
 // but it doesn't guarantee that properties required by API are set
 func NewEntityIntelligenceResponseWithDefaults() *EntityIntelligenceResponse {
 	this := EntityIntelligenceResponse{}
+	var entitySnapshotHash string = ""
+	this.EntitySnapshotHash = &entitySnapshotHash
+	var llmModel string = ""
+	this.LlmModel = &llmModel
+	var promptVersion string = ""
+	this.PromptVersion = &promptVersion
 	return &this
 }
 
@@ -113,6 +125,7 @@ func (o *EntityIntelligenceResponse) HasComputedAt() bool {
 func (o *EntityIntelligenceResponse) SetComputedAt(v string) {
 	o.ComputedAt.Set(&v)
 }
+
 // SetComputedAtNil sets the value for ComputedAt to be an explicit nil
 func (o *EntityIntelligenceResponse) SetComputedAtNil() {
 	o.ComputedAt.Set(nil)
@@ -388,7 +401,7 @@ func (o *EntityIntelligenceResponse) SetPromptVersion(v string) {
 }
 
 func (o EntityIntelligenceResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -441,10 +454,10 @@ func (o *EntityIntelligenceResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -500,5 +513,3 @@ func (v *NullableEntityIntelligenceResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

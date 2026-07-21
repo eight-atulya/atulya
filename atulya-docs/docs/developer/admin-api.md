@@ -1,158 +1,136 @@
-# Admin API Reference
+# Admin and Access Control
 
-> **Security model**: RBAC (role-based) + ABAC (bank allowlist).  
-> **Default state**: disabled. Set `ATULYA_API_ADMIN_ENABLED=true` to mount routes.
+Atulya uses one database-backed identity and authorization model:
 
----
+- Human users authenticate with email/password and opaque HTTP-only sessions.
+- A global user can belong to multiple organizations.
+- Organization roles provide action bundles; membership scopes limit those actions to an organization or specific memory banks.
+- Services use API keys attached to service principals. Keys do not carry roles or scopes.
+- Platform operators use normal sessions with `system.admin` on `system:*`.
+- The emergency superuser key is reserved for internal recovery and is never configured in the control plane.
 
-## Setup
+## Initial Setup
 
-### 1. Generate a superuser key
+Generate independent secrets and the canonical environment block:
 
 ```bash
-openssl rand -hex 32
+cd atulya-api
+uv run atulya-admin generate-auth-env --environment development
 ```
 
-### 2. Configure environment
+Put the generated root block in the repository `.env`, then migrate:
+
+```bash
+uv run atulya-admin run-db-migration
+```
+
+For production, configure SMTP before startup. The API refuses to start when production verification is required and SMTP is incomplete.
+
+Create the first platform operator interactively:
+
+```bash
+uv run atulya-admin create-platform-admin
+uv run atulya-admin list-platform-admins
+```
+
+Passwords are never accepted as command arguments.
+
+## Environment
 
 ```env
-# atulya-api
+ATULYA_ENVIRONMENT=production
+ATULYA_API_AUTH_MODE=database
 ATULYA_API_ADMIN_ENABLED=true
-ATULYA_API_SUPERUSER_KEY=<generated-key>
-ATULYA_API_SUPERUSER_SCHEMA=public   # schema the superuser context uses
+ATULYA_API_AUTH_SCHEMA=public
 
-# atulya-control-plane (server-side only — never sent to browser)
-ATULYA_CP_ADMIN_API_KEY=<same-key>
+ATULYA_API_KEY_HASH_PEPPER=<stable-generated-secret>
+ATULYA_API_SESSION_HASH_PEPPER=<different-stable-generated-secret>
+ATULYA_API_SUPERUSER_KEY=<offline-emergency-secret>
+
+ATULYA_SIGNUP_MODE=public
+ATULYA_AUTH_EMAIL_VERIFICATION=required
+ATULYA_AUTH_EMAIL_TRANSPORT=smtp
+ATULYA_AUTH_PUBLIC_URL=https://control.example.com
+ATULYA_AUTH_SMTP_HOST=smtp.example.com
+ATULYA_AUTH_SMTP_PORT=587
+ATULYA_AUTH_SMTP_USERNAME=<username>
+ATULYA_AUTH_SMTP_PASSWORD=<secret>
+ATULYA_AUTH_EMAIL_FROM=Atulya <no-reply@example.com>
+ATULYA_AUTH_SMTP_STARTTLS=true
+
+ATULYA_CP_DATAPLANE_API_URL=https://api.example.com
+ATULYA_CP_PUBLIC_URL=https://control.example.com
+ATULYA_CP_COOKIE_SECURE=true
 ```
 
-### 3. Apply the api_keys migration
+The control plane has no platform API key. It forwards the signed-in actor's session, preserving identity in audit events.
+
+## Organization Administration
+
+Canonical routes are under `/v1/orgs/{org_id}` and require explicit organization actions:
+
+| Surface | Required action |
+|---|---|
+| Members and invitations | `admin.users` |
+| Service accounts and keys | `admin.keys` |
+| Roles, scopes, direct grants | `admin.grants` |
+| Audit events | `admin.audit` |
+
+The first verified workspace creator receives the immutable built-in `owner` role. The final active owner cannot be disabled or demoted. Operators and viewers require explicit bank scopes. Administrators can delegate only actions and scopes they possess.
+
+Service keys are created at:
+
+```text
+POST /v1/orgs/{org_id}/service-accounts/{principal_id}/keys
+POST /v1/orgs/{org_id}/service-accounts/{principal_id}/keys/{key_id}/rotate
+DELETE /v1/orgs/{org_id}/service-accounts/{principal_id}/keys/{key_id}
+```
+
+A raw key is returned once. Rotation supports a bounded overlap window.
+
+## Platform Administration
+
+Canonical deployment routes are under `/v1/platform` and require `system.admin` with `system:*`:
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/system/health` | Database, migration, and worker health |
+| `GET/POST/PATCH` | `/orgs` | Provision, enable, or disable organizations |
+| `POST` | `/orgs/{id}/retry-provisioning` | Retry a failed schema migration |
+| `GET` | `/tenants/{schema}/banks` | Inspect tenant banks |
+| `GET` | `/workers` | Inspect worker claims |
+| `POST` | `/workers/{id}/decommission` | Release worker claims |
+| `GET` | `/operations` | Filter asynchronous operations |
+| `POST` | `/consolidate/{schema}` | Queue consolidation for a schema |
+
+Legacy `/v1/admin/*` paths are deprecated aliases for one release. Legacy key mutation routes return `410 Gone`; keys must be managed through organization service accounts.
+
+## Control Plane
+
+- `/admin`: organization overview
+- `/admin/members`: memberships and invitations
+- `/admin/service-accounts`: service identities and one-time keys
+- `/admin/roles`: built-in and custom action bundles
+- `/admin/access`: effective RBAC/ABAC matrix and direct grants
+- `/admin/audit`: actor/action/target/result history
+- `/admin/platform/*`: platform-only health, organizations, workers, and operations
+
+The Admin entry is capability-based through `/v1/auth/me`. Logout revokes the server session and clears the HTTP-only cookie.
+
+## Production Run
+
+1. Take a full database backup with `pg_dump`. Application-level memory-bank archives are not a substitute for an auth/schema backup.
+2. Generate secrets once, store them in a secret manager, and keep both peppers stable.
+3. Apply migrations before starting application replicas.
+4. Configure SMTP and create the first platform admin through the CLI.
+5. Verify signup, email verification, invitation acceptance, workspace switching, service-key rotation, bank isolation, worker recovery, and audit actors.
+6. Monitor authentication failures, `401/403` rates, provisioning failures, and key usage.
+
+The development reset command is deliberately destructive and refuses production:
 
 ```bash
-alembic upgrade 080109b0cbdc
+uv run atulya-admin reset-development-auth-and-banks \
+  --confirm RESET-ATULYA-AUTH-AND-BANKS
 ```
 
----
-
-## Authentication
-
-All `/v1/admin/*` endpoints require the superuser key in one of:
-
-| Method | Header |
-|--------|--------|
-| Bearer token | `Authorization: Bearer <key>` |
-| Direct header | `X-Api-Key: <key>` |
-
-Any key that does not match the superuser key returns **403 Forbidden**.
-
----
-
-## Endpoints
-
-All endpoints are prefixed `/v1/admin`.
-
-### System
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/system/health` | DB pool stats, migration version, worker count |
-
-### Tenants
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/tenants` | List all tenants with bank counts |
-| `GET` | `/tenants/{schema}/banks` | List banks in a schema |
-
-### Workers
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/workers?schema=` | List workers with pending/stuck counts |
-| `POST` | `/workers/{worker_id}/decommission` | Release stuck tasks. Use `__all_stuck__` to clear all. |
-
-Body for `decommission`:
-```json
-{ "release_stuck": true }
-```
-- `release_stuck=true` (default): reset tasks to `pending` so another worker picks them up.
-- `release_stuck=false`: detach worker claim only.
-
-### Operations
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/operations?schema=&status=&limit=` | List async operations. Limit max 500. |
-
-### Bulk Consolidation
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `POST` | `/consolidate/{schema}` | Enqueue consolidation for all banks in schema |
-
-### API Keys
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/api-keys` | List all keys (redacted — no raw key) |
-| `POST` | `/api-keys` | Create key — returns `raw_key` **once** |
-| `DELETE` | `/api-keys/{id}` | Revoke key |
-| `PATCH` | `/api-keys/{id}` | Update name or expiry |
-
-Create API key body:
-```json
-{
-  "name": "ci-runner",
-  "role": "user",
-  "schema_name": "tenant_a",
-  "allowed_bank_ids": ["bank-1", "bank-2"],
-  "expires_at": "2026-12-31T00:00:00Z"
-}
-```
-
-Roles: `superuser` > `admin` > `user` (hierarchical — each role has all permissions of lower roles).
-
----
-
-## Security Notes
-
-| Property | Implementation |
-|----------|---------------|
-| Timing-safe comparison | `hmac.compare_digest()` on all key checks |
-| Key storage | SHA-256 hash stored; raw key never persisted |
-| Raw key exposure | Returned once at creation; not retrievable again |
-| Route mount | Safe-by-default (`admin_enabled=False`); opt-in per deployment |
-| Key rotation | Revoke old key via `DELETE /api-keys/{id}`, create new via `POST /api-keys` |
-| ABAC enforcement | `TenantContext.can_access_bank(bank_id)` — superusers bypass allowlists |
-
----
-
-## Role Reference
-
-| Role | `is_superuser` | Can manage tenants | Bank allowlist enforced |
-|------|---------------|-------------------|------------------------|
-| `superuser` | ✓ | ✓ | ✗ (bypass) |
-| `admin` | ✗ | ✗ | ✓ |
-| `user` | ✗ | ✗ | ✓ |
-
----
-
-## Key Rotation Procedure
-
-1. Create new key: `POST /v1/admin/api-keys` → capture `raw_key`.
-2. Update consumers with the new key.
-3. Revoke old key: `DELETE /v1/admin/api-keys/{old-id}`.
-4. Confirm: `GET /v1/admin/api-keys` shows old key with `revoked_at` set.
-
----
-
-## Admin UI
-
-Available at `/admin` in the control plane when `ATULYA_CP_ADMIN_API_KEY` is set.
-
-Pages:
-- `/admin` — System health
-- `/admin/tenants` — Tenant list + bank counts
-- `/admin/tenants/{schema}` — Banks in a schema
-- `/admin/workers` — Worker status with stuck highlight
-- `/admin/operations` — Cross-schema operation log
-- `/admin/api-keys` — Key list (read-only; mutations via API)
+Rollback after that reset requires restoring the database backup.

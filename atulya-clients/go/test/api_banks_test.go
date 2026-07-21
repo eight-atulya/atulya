@@ -11,10 +11,10 @@ package atulya
 
 import (
 	"context"
+	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
-	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 )
 
 func Test_atulya_BanksAPIService(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService AddBankBackground", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -38,7 +38,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService ClearObservations", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -52,7 +52,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService CreateOrUpdateBank", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -66,7 +66,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService DeleteBank", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -80,7 +80,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService GetAgentStats", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -94,7 +94,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService GetBankConfig", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -108,7 +108,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService GetBankProfile", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -122,7 +122,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService ListBanks", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		resp, httpRes, err := apiClient.BanksAPI.ListBanks(context.Background()).Execute()
 
@@ -134,7 +134,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService ResetBankConfig", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -148,7 +148,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService TriggerConsolidation", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -162,7 +162,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService UpdateBank", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -176,7 +176,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService UpdateBankConfig", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -190,7 +190,7 @@ func Test_atulya_BanksAPIService(t *testing.T) {
 
 	t.Run("Test BanksAPIService UpdateBankDisposition", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 

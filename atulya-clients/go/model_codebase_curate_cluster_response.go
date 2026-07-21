@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &CodebaseCurateClusterResponse{}
 
 // CodebaseCurateClusterResponse struct for CodebaseCurateClusterResponse
 type CodebaseCurateClusterResponse struct {
-	ClusterId string `json:"cluster_id"`
-	ClusterLabel NullableString `json:"cluster_label,omitempty"`
-	Score float32 `json:"score"`
-	Size int32 `json:"size"`
-	Chunks []map[string]interface{} `json:"chunks,omitempty"`
+	ClusterId    string                   `json:"cluster_id"`
+	ClusterLabel NullableString           `json:"cluster_label,omitempty"`
+	Score        float32                  `json:"score"`
+	Size         int32                    `json:"size"`
+	Chunks       []map[string]interface{} `json:"chunks,omitempty"`
 }
 
 type _CodebaseCurateClusterResponse CodebaseCurateClusterResponse
@@ -106,6 +106,7 @@ func (o *CodebaseCurateClusterResponse) HasClusterLabel() bool {
 func (o *CodebaseCurateClusterResponse) SetClusterLabel(v string) {
 	o.ClusterLabel.Set(&v)
 }
+
 // SetClusterLabelNil sets the value for ClusterLabel to be an explicit nil
 func (o *CodebaseCurateClusterResponse) SetClusterLabelNil() {
 	o.ClusterLabel.Set(nil)
@@ -197,7 +198,7 @@ func (o *CodebaseCurateClusterResponse) SetChunks(v []map[string]interface{}) {
 }
 
 func (o CodebaseCurateClusterResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -233,10 +234,10 @@ func (o *CodebaseCurateClusterResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -292,5 +293,3 @@ func (v *NullableCodebaseCurateClusterResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

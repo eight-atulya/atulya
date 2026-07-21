@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &CodebaseChunkRelatedItemResponse{}
 
 // CodebaseChunkRelatedItemResponse Compact related chunk preview.
 type CodebaseChunkRelatedItemResponse struct {
-	Id string `json:"id"`
-	Label string `json:"label"`
-	Path string `json:"path"`
-	Kind string `json:"kind"`
-	StartLine int32 `json:"start_line"`
-	EndLine int32 `json:"end_line"`
+	Id           string         `json:"id"`
+	Label        string         `json:"label"`
+	Path         string         `json:"path"`
+	Kind         string         `json:"kind"`
+	StartLine    int32          `json:"start_line"`
+	EndLine      int32          `json:"end_line"`
 	ClusterLabel NullableString `json:"cluster_label,omitempty"`
-	Score *float32 `json:"score,omitempty"`
+	Score        *float32       `json:"score,omitempty"`
 }
 
 type _CodebaseChunkRelatedItemResponse CodebaseChunkRelatedItemResponse
@@ -45,6 +45,8 @@ func NewCodebaseChunkRelatedItemResponse(id string, label string, path string, k
 	this.Kind = kind
 	this.StartLine = startLine
 	this.EndLine = endLine
+	var score float32 = 0.0
+	this.Score = &score
 	return &this
 }
 
@@ -53,6 +55,8 @@ func NewCodebaseChunkRelatedItemResponse(id string, label string, path string, k
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunkRelatedItemResponseWithDefaults() *CodebaseChunkRelatedItemResponse {
 	this := CodebaseChunkRelatedItemResponse{}
+	var score float32 = 0.0
+	this.Score = &score
 	return &this
 }
 
@@ -232,6 +236,7 @@ func (o *CodebaseChunkRelatedItemResponse) HasClusterLabel() bool {
 func (o *CodebaseChunkRelatedItemResponse) SetClusterLabel(v string) {
 	o.ClusterLabel.Set(&v)
 }
+
 // SetClusterLabelNil sets the value for ClusterLabel to be an explicit nil
 func (o *CodebaseChunkRelatedItemResponse) SetClusterLabelNil() {
 	o.ClusterLabel.Set(nil)
@@ -275,7 +280,7 @@ func (o *CodebaseChunkRelatedItemResponse) SetScore(v float32) {
 }
 
 func (o CodebaseChunkRelatedItemResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -317,10 +322,10 @@ func (o *CodebaseChunkRelatedItemResponse) UnmarshalJSON(data []byte) (err error
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -376,5 +381,3 @@ func (v *NullableCodebaseChunkRelatedItemResponse) UnmarshalJSON(src []byte) err
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

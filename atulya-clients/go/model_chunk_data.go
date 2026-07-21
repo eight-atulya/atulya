@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &ChunkData{}
 
 // ChunkData Chunk data for a single chunk.
 type ChunkData struct {
-	Id string `json:"id"`
-	Text string `json:"text"`
-	ChunkIndex int32 `json:"chunk_index"`
+	Id         string `json:"id"`
+	Text       string `json:"text"`
+	ChunkIndex int32  `json:"chunk_index"`
 	// Whether the chunk text was truncated due to token limits
 	Truncated *bool `json:"truncated,omitempty"`
 }
@@ -39,6 +39,8 @@ func NewChunkData(id string, text string, chunkIndex int32) *ChunkData {
 	this.Id = id
 	this.Text = text
 	this.ChunkIndex = chunkIndex
+	var truncated bool = false
+	this.Truncated = &truncated
 	return &this
 }
 
@@ -47,6 +49,8 @@ func NewChunkData(id string, text string, chunkIndex int32) *ChunkData {
 // but it doesn't guarantee that properties required by API are set
 func NewChunkDataWithDefaults() *ChunkData {
 	this := ChunkData{}
+	var truncated bool = false
+	this.Truncated = &truncated
 	return &this
 }
 
@@ -155,7 +159,7 @@ func (o *ChunkData) SetTruncated(v bool) {
 }
 
 func (o ChunkData) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -188,10 +192,10 @@ func (o *ChunkData) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -247,5 +251,3 @@ func (v *NullableChunkData) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

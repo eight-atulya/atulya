@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,28 +21,28 @@ var _ MappedNullable = &LLMRequestRow{}
 
 // LLMRequestRow A single row in an LLM request trace.
 type LLMRequestRow struct {
-	Id string `json:"id"`
-	BankId NullableString `json:"bank_id,omitempty"`
-	Operation NullableString `json:"operation,omitempty"`
-	Scope NullableString `json:"scope,omitempty"`
-	TraceId NullableString `json:"trace_id,omitempty"`
-	SpanId NullableString `json:"span_id,omitempty"`
-	ParentSpanId NullableString `json:"parent_span_id,omitempty"`
-	Provider NullableString `json:"provider,omitempty"`
-	Model NullableString `json:"model,omitempty"`
-	Status string `json:"status"`
-	StartedAt string `json:"started_at"`
-	EndedAt NullableString `json:"ended_at,omitempty"`
-	DurationMs NullableInt32 `json:"duration_ms,omitempty"`
-	InputTokens NullableInt32 `json:"input_tokens,omitempty"`
-	OutputTokens NullableInt32 `json:"output_tokens,omitempty"`
-	CachedTokens NullableInt32 `json:"cached_tokens,omitempty"`
-	TotalTokens NullableInt32 `json:"total_tokens,omitempty"`
-	Input map[string]interface{} `json:"input,omitempty"`
-	Output map[string]interface{} `json:"output,omitempty"`
-	Error map[string]interface{} `json:"error,omitempty"`
-	LlmInfo map[string]interface{} `json:"llm_info,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	Id           string                 `json:"id"`
+	BankId       NullableString         `json:"bank_id,omitempty"`
+	Operation    NullableString         `json:"operation,omitempty"`
+	Scope        NullableString         `json:"scope,omitempty"`
+	TraceId      NullableString         `json:"trace_id,omitempty"`
+	SpanId       NullableString         `json:"span_id,omitempty"`
+	ParentSpanId NullableString         `json:"parent_span_id,omitempty"`
+	Provider     NullableString         `json:"provider,omitempty"`
+	Model        NullableString         `json:"model,omitempty"`
+	Status       string                 `json:"status"`
+	StartedAt    string                 `json:"started_at"`
+	EndedAt      NullableString         `json:"ended_at,omitempty"`
+	DurationMs   NullableInt32          `json:"duration_ms,omitempty"`
+	InputTokens  NullableInt32          `json:"input_tokens,omitempty"`
+	OutputTokens NullableInt32          `json:"output_tokens,omitempty"`
+	CachedTokens NullableInt32          `json:"cached_tokens,omitempty"`
+	TotalTokens  NullableInt32          `json:"total_tokens,omitempty"`
+	Input        map[string]interface{} `json:"input,omitempty"`
+	Output       map[string]interface{} `json:"output,omitempty"`
+	Error        map[string]interface{} `json:"error,omitempty"`
+	LlmInfo      map[string]interface{} `json:"llm_info,omitempty"`
+	Metadata     map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type _LLMRequestRow LLMRequestRow
@@ -123,6 +123,7 @@ func (o *LLMRequestRow) HasBankId() bool {
 func (o *LLMRequestRow) SetBankId(v string) {
 	o.BankId.Set(&v)
 }
+
 // SetBankIdNil sets the value for BankId to be an explicit nil
 func (o *LLMRequestRow) SetBankIdNil() {
 	o.BankId.Set(nil)
@@ -165,6 +166,7 @@ func (o *LLMRequestRow) HasOperation() bool {
 func (o *LLMRequestRow) SetOperation(v string) {
 	o.Operation.Set(&v)
 }
+
 // SetOperationNil sets the value for Operation to be an explicit nil
 func (o *LLMRequestRow) SetOperationNil() {
 	o.Operation.Set(nil)
@@ -207,6 +209,7 @@ func (o *LLMRequestRow) HasScope() bool {
 func (o *LLMRequestRow) SetScope(v string) {
 	o.Scope.Set(&v)
 }
+
 // SetScopeNil sets the value for Scope to be an explicit nil
 func (o *LLMRequestRow) SetScopeNil() {
 	o.Scope.Set(nil)
@@ -249,6 +252,7 @@ func (o *LLMRequestRow) HasTraceId() bool {
 func (o *LLMRequestRow) SetTraceId(v string) {
 	o.TraceId.Set(&v)
 }
+
 // SetTraceIdNil sets the value for TraceId to be an explicit nil
 func (o *LLMRequestRow) SetTraceIdNil() {
 	o.TraceId.Set(nil)
@@ -291,6 +295,7 @@ func (o *LLMRequestRow) HasSpanId() bool {
 func (o *LLMRequestRow) SetSpanId(v string) {
 	o.SpanId.Set(&v)
 }
+
 // SetSpanIdNil sets the value for SpanId to be an explicit nil
 func (o *LLMRequestRow) SetSpanIdNil() {
 	o.SpanId.Set(nil)
@@ -333,6 +338,7 @@ func (o *LLMRequestRow) HasParentSpanId() bool {
 func (o *LLMRequestRow) SetParentSpanId(v string) {
 	o.ParentSpanId.Set(&v)
 }
+
 // SetParentSpanIdNil sets the value for ParentSpanId to be an explicit nil
 func (o *LLMRequestRow) SetParentSpanIdNil() {
 	o.ParentSpanId.Set(nil)
@@ -375,6 +381,7 @@ func (o *LLMRequestRow) HasProvider() bool {
 func (o *LLMRequestRow) SetProvider(v string) {
 	o.Provider.Set(&v)
 }
+
 // SetProviderNil sets the value for Provider to be an explicit nil
 func (o *LLMRequestRow) SetProviderNil() {
 	o.Provider.Set(nil)
@@ -417,6 +424,7 @@ func (o *LLMRequestRow) HasModel() bool {
 func (o *LLMRequestRow) SetModel(v string) {
 	o.Model.Set(&v)
 }
+
 // SetModelNil sets the value for Model to be an explicit nil
 func (o *LLMRequestRow) SetModelNil() {
 	o.Model.Set(nil)
@@ -507,6 +515,7 @@ func (o *LLMRequestRow) HasEndedAt() bool {
 func (o *LLMRequestRow) SetEndedAt(v string) {
 	o.EndedAt.Set(&v)
 }
+
 // SetEndedAtNil sets the value for EndedAt to be an explicit nil
 func (o *LLMRequestRow) SetEndedAtNil() {
 	o.EndedAt.Set(nil)
@@ -549,6 +558,7 @@ func (o *LLMRequestRow) HasDurationMs() bool {
 func (o *LLMRequestRow) SetDurationMs(v int32) {
 	o.DurationMs.Set(&v)
 }
+
 // SetDurationMsNil sets the value for DurationMs to be an explicit nil
 func (o *LLMRequestRow) SetDurationMsNil() {
 	o.DurationMs.Set(nil)
@@ -591,6 +601,7 @@ func (o *LLMRequestRow) HasInputTokens() bool {
 func (o *LLMRequestRow) SetInputTokens(v int32) {
 	o.InputTokens.Set(&v)
 }
+
 // SetInputTokensNil sets the value for InputTokens to be an explicit nil
 func (o *LLMRequestRow) SetInputTokensNil() {
 	o.InputTokens.Set(nil)
@@ -633,6 +644,7 @@ func (o *LLMRequestRow) HasOutputTokens() bool {
 func (o *LLMRequestRow) SetOutputTokens(v int32) {
 	o.OutputTokens.Set(&v)
 }
+
 // SetOutputTokensNil sets the value for OutputTokens to be an explicit nil
 func (o *LLMRequestRow) SetOutputTokensNil() {
 	o.OutputTokens.Set(nil)
@@ -675,6 +687,7 @@ func (o *LLMRequestRow) HasCachedTokens() bool {
 func (o *LLMRequestRow) SetCachedTokens(v int32) {
 	o.CachedTokens.Set(&v)
 }
+
 // SetCachedTokensNil sets the value for CachedTokens to be an explicit nil
 func (o *LLMRequestRow) SetCachedTokensNil() {
 	o.CachedTokens.Set(nil)
@@ -717,6 +730,7 @@ func (o *LLMRequestRow) HasTotalTokens() bool {
 func (o *LLMRequestRow) SetTotalTokens(v int32) {
 	o.TotalTokens.Set(&v)
 }
+
 // SetTotalTokensNil sets the value for TotalTokens to be an explicit nil
 func (o *LLMRequestRow) SetTotalTokensNil() {
 	o.TotalTokens.Set(nil)
@@ -893,7 +907,7 @@ func (o *LLMRequestRow) SetMetadata(v map[string]interface{}) {
 }
 
 func (o LLMRequestRow) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -980,10 +994,10 @@ func (o *LLMRequestRow) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -1039,5 +1053,3 @@ func (v *NullableLLMRequestRow) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

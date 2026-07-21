@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &EntityTrajectoryRecomputeResponse{}
 
 // EntityTrajectoryRecomputeResponse Queued background trajectory recompute.
 type EntityTrajectoryRecomputeResponse struct {
-	OperationId string `json:"operation_id"`
-	Status *string `json:"status,omitempty"`
+	OperationId string  `json:"operation_id"`
+	Status      *string `json:"status,omitempty"`
 }
 
 type _EntityTrajectoryRecomputeResponse EntityTrajectoryRecomputeResponse
@@ -34,6 +34,8 @@ type _EntityTrajectoryRecomputeResponse EntityTrajectoryRecomputeResponse
 func NewEntityTrajectoryRecomputeResponse(operationId string) *EntityTrajectoryRecomputeResponse {
 	this := EntityTrajectoryRecomputeResponse{}
 	this.OperationId = operationId
+	var status string = "pending"
+	this.Status = &status
 	return &this
 }
 
@@ -42,6 +44,8 @@ func NewEntityTrajectoryRecomputeResponse(operationId string) *EntityTrajectoryR
 // but it doesn't guarantee that properties required by API are set
 func NewEntityTrajectoryRecomputeResponseWithDefaults() *EntityTrajectoryRecomputeResponse {
 	this := EntityTrajectoryRecomputeResponse{}
+	var status string = "pending"
+	this.Status = &status
 	return &this
 }
 
@@ -102,7 +106,7 @@ func (o *EntityTrajectoryRecomputeResponse) SetStatus(v string) {
 }
 
 func (o EntityTrajectoryRecomputeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -131,10 +135,10 @@ func (o *EntityTrajectoryRecomputeResponse) UnmarshalJSON(data []byte) (err erro
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -190,5 +194,3 @@ func (v *NullableEntityTrajectoryRecomputeResponse) UnmarshalJSON(src []byte) er
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

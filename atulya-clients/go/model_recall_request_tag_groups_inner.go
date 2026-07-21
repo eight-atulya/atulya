@@ -15,20 +15,19 @@ import (
 	"fmt"
 )
 
-
 // RecallRequestTagGroupsInner struct for RecallRequestTagGroupsInner
 type RecallRequestTagGroupsInner struct {
-	TagGroupAnd *TagGroupAnd
+	TagGroupAnd  *TagGroupAnd
 	TagGroupLeaf *TagGroupLeaf
-	TagGroupNot *TagGroupNot
-	TagGroupOr *TagGroupOr
+	TagGroupNot  *TagGroupNot
+	TagGroupOr   *TagGroupOr
 }
 
 // Unmarshal JSON data into any of the pointers in the struct
 func (dst *RecallRequestTagGroupsInner) UnmarshalJSON(data []byte) error {
 	var err error
 	// try to unmarshal JSON data into TagGroupAnd
-	err = json.Unmarshal(data, &dst.TagGroupAnd);
+	err = json.Unmarshal(data, &dst.TagGroupAnd)
 	if err == nil {
 		jsonTagGroupAnd, _ := json.Marshal(dst.TagGroupAnd)
 		if string(jsonTagGroupAnd) == "{}" { // empty struct
@@ -41,7 +40,7 @@ func (dst *RecallRequestTagGroupsInner) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into TagGroupLeaf
-	err = json.Unmarshal(data, &dst.TagGroupLeaf);
+	err = json.Unmarshal(data, &dst.TagGroupLeaf)
 	if err == nil {
 		jsonTagGroupLeaf, _ := json.Marshal(dst.TagGroupLeaf)
 		if string(jsonTagGroupLeaf) == "{}" { // empty struct
@@ -54,7 +53,7 @@ func (dst *RecallRequestTagGroupsInner) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into TagGroupNot
-	err = json.Unmarshal(data, &dst.TagGroupNot);
+	err = json.Unmarshal(data, &dst.TagGroupNot)
 	if err == nil {
 		jsonTagGroupNot, _ := json.Marshal(dst.TagGroupNot)
 		if string(jsonTagGroupNot) == "{}" { // empty struct
@@ -67,7 +66,7 @@ func (dst *RecallRequestTagGroupsInner) UnmarshalJSON(data []byte) error {
 	}
 
 	// try to unmarshal JSON data into TagGroupOr
-	err = json.Unmarshal(data, &dst.TagGroupOr);
+	err = json.Unmarshal(data, &dst.TagGroupOr)
 	if err == nil {
 		jsonTagGroupOr, _ := json.Marshal(dst.TagGroupOr)
 		if string(jsonTagGroupOr) == "{}" { // empty struct
@@ -83,7 +82,7 @@ func (dst *RecallRequestTagGroupsInner) UnmarshalJSON(data []byte) error {
 }
 
 // Marshal data from the first non-nil pointers in the struct to JSON
-func (src RecallRequestTagGroupsInner) MarshalJSON() ([]byte, error) {
+func (src *RecallRequestTagGroupsInner) MarshalJSON() ([]byte, error) {
 	if src.TagGroupAnd != nil {
 		return json.Marshal(&src.TagGroupAnd)
 	}
@@ -102,7 +101,6 @@ func (src RecallRequestTagGroupsInner) MarshalJSON() ([]byte, error) {
 
 	return nil, nil // no data in anyOf schemas
 }
-
 
 type NullableRecallRequestTagGroupsInner struct {
 	value *RecallRequestTagGroupsInner
@@ -139,5 +137,3 @@ func (v *NullableRecallRequestTagGroupsInner) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

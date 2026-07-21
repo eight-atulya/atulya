@@ -22,18 +22,17 @@ from typing import Any, ClassVar, Dict, List
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TagGroupAnd(BaseModel):
     """
     Logical AND over a list of nested groups.
     """ # noqa: E501
     var_and: Annotated[List[RecallRequestTagGroupsInner], Field(min_length=1)] = Field(alias="and")
+    additional_properties: Dict[str, Any] = {}
     __properties: ClassVar[List[str]] = ["and"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -45,7 +44,8 @@ class TagGroupAnd(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -61,8 +61,10 @@ class TagGroupAnd(BaseModel):
         * `None` is only added to the output dict for nullable fields that
           were set at model initialization. Other fields with value `None`
           are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
         """
         excluded_fields: Set[str] = set([
+            "additional_properties",
         ])
 
         _dict = self.model_dump(
@@ -77,6 +79,11 @@ class TagGroupAnd(BaseModel):
                 if _item_var_and:
                     _items.append(_item_var_and.to_dict())
             _dict['and'] = _items
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
@@ -91,9 +98,13 @@ class TagGroupAnd(BaseModel):
         _obj = cls.model_validate({
             "and": [RecallRequestTagGroupsInner.from_dict(_item) for _item in obj["and"]] if obj.get("and") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
 from atulya_client_api.models.recall_request_tag_groups_inner import RecallRequestTagGroupsInner
 # TODO: Rewrite to not use raise_errors
 TagGroupAnd.model_rebuild(raise_errors=False)
-

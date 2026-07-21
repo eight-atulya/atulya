@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,20 +21,20 @@ var _ MappedNullable = &EntityTrajectoryResponse{}
 
 // EntityTrajectoryResponse Latest entity trajectory snapshot (LLM vocabulary + HMM-style dynamics).
 type EntityTrajectoryResponse struct {
-	EntityId string `json:"entity_id"`
-	BankId string `json:"bank_id"`
-	ComputedAt NullableString `json:"computed_at,omitempty"`
-	StateVocabulary []string `json:"state_vocabulary"`
-	VocabularyHash *string `json:"vocabulary_hash,omitempty"`
-	TransitionMatrix [][]float32 `json:"transition_matrix"`
-	CurrentState string `json:"current_state"`
-	ViterbiPath []TrajectoryViterbiStepResponse `json:"viterbi_path"`
-	ForecastHorizon int32 `json:"forecast_horizon"`
-	ForecastDistribution map[string]float32 `json:"forecast_distribution"`
-	ForwardLogProb NullableFloat32 `json:"forward_log_prob,omitempty"`
-	AnomalyScore NullableFloat32 `json:"anomaly_score,omitempty"`
-	LlmModel *string `json:"llm_model,omitempty"`
-	PromptVersion *string `json:"prompt_version,omitempty"`
+	EntityId             string                          `json:"entity_id"`
+	BankId               string                          `json:"bank_id"`
+	ComputedAt           NullableString                  `json:"computed_at,omitempty"`
+	StateVocabulary      []string                        `json:"state_vocabulary"`
+	VocabularyHash       *string                         `json:"vocabulary_hash,omitempty"`
+	TransitionMatrix     [][]float32                     `json:"transition_matrix"`
+	CurrentState         string                          `json:"current_state"`
+	ViterbiPath          []TrajectoryViterbiStepResponse `json:"viterbi_path"`
+	ForecastHorizon      int32                           `json:"forecast_horizon"`
+	ForecastDistribution map[string]float32              `json:"forecast_distribution"`
+	ForwardLogProb       NullableFloat32                 `json:"forward_log_prob,omitempty"`
+	AnomalyScore         NullableFloat32                 `json:"anomaly_score,omitempty"`
+	LlmModel             *string                         `json:"llm_model,omitempty"`
+	PromptVersion        *string                         `json:"prompt_version,omitempty"`
 }
 
 type _EntityTrajectoryResponse EntityTrajectoryResponse
@@ -48,11 +48,17 @@ func NewEntityTrajectoryResponse(entityId string, bankId string, stateVocabulary
 	this.EntityId = entityId
 	this.BankId = bankId
 	this.StateVocabulary = stateVocabulary
+	var vocabularyHash string = ""
+	this.VocabularyHash = &vocabularyHash
 	this.TransitionMatrix = transitionMatrix
 	this.CurrentState = currentState
 	this.ViterbiPath = viterbiPath
 	this.ForecastHorizon = forecastHorizon
 	this.ForecastDistribution = forecastDistribution
+	var llmModel string = ""
+	this.LlmModel = &llmModel
+	var promptVersion string = ""
+	this.PromptVersion = &promptVersion
 	return &this
 }
 
@@ -61,6 +67,12 @@ func NewEntityTrajectoryResponse(entityId string, bankId string, stateVocabulary
 // but it doesn't guarantee that properties required by API are set
 func NewEntityTrajectoryResponseWithDefaults() *EntityTrajectoryResponse {
 	this := EntityTrajectoryResponse{}
+	var vocabularyHash string = ""
+	this.VocabularyHash = &vocabularyHash
+	var llmModel string = ""
+	this.LlmModel = &llmModel
+	var promptVersion string = ""
+	this.PromptVersion = &promptVersion
 	return &this
 }
 
@@ -144,6 +156,7 @@ func (o *EntityTrajectoryResponse) HasComputedAt() bool {
 func (o *EntityTrajectoryResponse) SetComputedAt(v string) {
 	o.ComputedAt.Set(&v)
 }
+
 // SetComputedAtNil sets the value for ComputedAt to be an explicit nil
 func (o *EntityTrajectoryResponse) SetComputedAtNil() {
 	o.ComputedAt.Set(nil)
@@ -362,6 +375,7 @@ func (o *EntityTrajectoryResponse) HasForwardLogProb() bool {
 func (o *EntityTrajectoryResponse) SetForwardLogProb(v float32) {
 	o.ForwardLogProb.Set(&v)
 }
+
 // SetForwardLogProbNil sets the value for ForwardLogProb to be an explicit nil
 func (o *EntityTrajectoryResponse) SetForwardLogProbNil() {
 	o.ForwardLogProb.Set(nil)
@@ -404,6 +418,7 @@ func (o *EntityTrajectoryResponse) HasAnomalyScore() bool {
 func (o *EntityTrajectoryResponse) SetAnomalyScore(v float32) {
 	o.AnomalyScore.Set(&v)
 }
+
 // SetAnomalyScoreNil sets the value for AnomalyScore to be an explicit nil
 func (o *EntityTrajectoryResponse) SetAnomalyScoreNil() {
 	o.AnomalyScore.Set(nil)
@@ -479,7 +494,7 @@ func (o *EntityTrajectoryResponse) SetPromptVersion(v string) {
 }
 
 func (o EntityTrajectoryResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -537,10 +552,10 @@ func (o *EntityTrajectoryResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -596,5 +611,3 @@ func (v *NullableEntityTrajectoryResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

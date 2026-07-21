@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &InfluenceRow{}
 
 // InfluenceRow struct for InfluenceRow
 type InfluenceRow struct {
-	Id string `json:"id"`
-	Type string `json:"type"`
-	Text string `json:"text"`
-	AccessCount int32 `json:"access_count"`
-	InfluenceScore float32 `json:"influence_score"`
-	Contribution InfluenceContribution `json:"contribution"`
-	LastAccessedAt NullableString `json:"last_accessed_at,omitempty"`
+	Id             string                `json:"id"`
+	Type           string                `json:"type"`
+	Text           string                `json:"text"`
+	AccessCount    int32                 `json:"access_count"`
+	InfluenceScore float32               `json:"influence_score"`
+	Contribution   InfluenceContribution `json:"contribution"`
+	LastAccessedAt NullableString        `json:"last_accessed_at,omitempty"`
 }
 
 type _InfluenceRow InfluenceRow
@@ -231,6 +231,7 @@ func (o *InfluenceRow) HasLastAccessedAt() bool {
 func (o *InfluenceRow) SetLastAccessedAt(v string) {
 	o.LastAccessedAt.Set(&v)
 }
+
 // SetLastAccessedAtNil sets the value for LastAccessedAt to be an explicit nil
 func (o *InfluenceRow) SetLastAccessedAtNil() {
 	o.LastAccessedAt.Set(nil)
@@ -242,7 +243,7 @@ func (o *InfluenceRow) UnsetLastAccessedAt() {
 }
 
 func (o InfluenceRow) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -281,10 +282,10 @@ func (o *InfluenceRow) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -340,5 +341,3 @@ func (v *NullableInfluenceRow) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

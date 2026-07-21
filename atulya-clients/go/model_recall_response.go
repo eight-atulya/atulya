@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &RecallResponse{}
 
 // RecallResponse Response model for recall endpoints.
 type RecallResponse struct {
-	Results []RecallResult `json:"results"`
-	Trace map[string]interface{} `json:"trace,omitempty"`
-	Entities map[string]EntityStateResponse `json:"entities,omitempty"`
-	Chunks map[string]ChunkData `json:"chunks,omitempty"`
-	SourceFacts map[string]RecallResult `json:"source_facts,omitempty"`
+	Results     []RecallResult                 `json:"results"`
+	Trace       map[string]interface{}         `json:"trace,omitempty"`
+	Entities    map[string]EntityStateResponse `json:"entities,omitempty"`
+	Chunks      map[string]ChunkData           `json:"chunks,omitempty"`
+	SourceFacts map[string]RecallResult        `json:"source_facts,omitempty"`
 }
 
 type _RecallResponse RecallResponse
@@ -205,7 +205,7 @@ func (o *RecallResponse) SetSourceFacts(v map[string]RecallResult) {
 }
 
 func (o RecallResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -243,10 +243,10 @@ func (o *RecallResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -302,5 +302,3 @@ func (v *NullableRecallResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

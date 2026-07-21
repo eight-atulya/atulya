@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &DirectiveResponse{}
 
 // DirectiveResponse Response model for a directive.
 type DirectiveResponse struct {
-	Id string `json:"id"`
-	BankId string `json:"bank_id"`
-	Name string `json:"name"`
-	Content string `json:"content"`
-	Priority *int32 `json:"priority,omitempty"`
-	IsActive *bool `json:"is_active,omitempty"`
-	Tags []string `json:"tags,omitempty"`
+	Id        string         `json:"id"`
+	BankId    string         `json:"bank_id"`
+	Name      string         `json:"name"`
+	Content   string         `json:"content"`
+	Priority  *int32         `json:"priority,omitempty"`
+	IsActive  *bool          `json:"is_active,omitempty"`
+	Tags      []string       `json:"tags,omitempty"`
 	CreatedAt NullableString `json:"created_at,omitempty"`
 	UpdatedAt NullableString `json:"updated_at,omitempty"`
 }
@@ -44,6 +44,10 @@ func NewDirectiveResponse(id string, bankId string, name string, content string)
 	this.BankId = bankId
 	this.Name = name
 	this.Content = content
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -52,6 +56,10 @@ func NewDirectiveResponse(id string, bankId string, name string, content string)
 // but it doesn't guarantee that properties required by API are set
 func NewDirectiveResponseWithDefaults() *DirectiveResponse {
 	this := DirectiveResponse{}
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -279,6 +287,7 @@ func (o *DirectiveResponse) HasCreatedAt() bool {
 func (o *DirectiveResponse) SetCreatedAt(v string) {
 	o.CreatedAt.Set(&v)
 }
+
 // SetCreatedAtNil sets the value for CreatedAt to be an explicit nil
 func (o *DirectiveResponse) SetCreatedAtNil() {
 	o.CreatedAt.Set(nil)
@@ -321,6 +330,7 @@ func (o *DirectiveResponse) HasUpdatedAt() bool {
 func (o *DirectiveResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *DirectiveResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -332,7 +342,7 @@ func (o *DirectiveResponse) UnsetUpdatedAt() {
 }
 
 func (o DirectiveResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -379,10 +389,10 @@ func (o *DirectiveResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -438,5 +448,3 @@ func (v *NullableDirectiveResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

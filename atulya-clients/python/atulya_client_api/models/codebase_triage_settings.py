@@ -22,25 +22,23 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class CodebaseTriageSettings(BaseModel):
     """
     Per-codebase triage thresholds and provider toggles.
     """ # noqa: E501
-    score_threshold_high: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = None
-    centrality_threshold: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = None
-    safety_threshold: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = None
-    embedding_provider: Optional[StrictStr] = None
-    enable_safety_scan: Optional[StrictBool] = None
-    enable_semgrep: Optional[StrictBool] = None
+    score_threshold_high: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = 0.62
+    centrality_threshold: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = 0.35
+    safety_threshold: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = 0.25
+    embedding_provider: Optional[StrictStr] = 'jina_local'
+    enable_safety_scan: Optional[StrictBool] = True
+    enable_semgrep: Optional[StrictBool] = False
     semgrep_rulepack: Optional[StrictStr] = None
     scip_index_path: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["score_threshold_high", "centrality_threshold", "safety_threshold", "embedding_provider", "enable_safety_scan", "enable_semgrep", "semgrep_rulepack", "scip_index_path"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -52,7 +50,8 @@ class CodebaseTriageSettings(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -99,15 +98,13 @@ class CodebaseTriageSettings(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "score_threshold_high": obj.get("score_threshold_high"),
-            "centrality_threshold": obj.get("centrality_threshold"),
-            "safety_threshold": obj.get("safety_threshold"),
-            "embedding_provider": obj.get("embedding_provider"),
-            "enable_safety_scan": obj.get("enable_safety_scan"),
-            "enable_semgrep": obj.get("enable_semgrep"),
+            "score_threshold_high": obj.get("score_threshold_high") if obj.get("score_threshold_high") is not None else 0.62,
+            "centrality_threshold": obj.get("centrality_threshold") if obj.get("centrality_threshold") is not None else 0.35,
+            "safety_threshold": obj.get("safety_threshold") if obj.get("safety_threshold") is not None else 0.25,
+            "embedding_provider": obj.get("embedding_provider") if obj.get("embedding_provider") is not None else 'jina_local',
+            "enable_safety_scan": obj.get("enable_safety_scan") if obj.get("enable_safety_scan") is not None else True,
+            "enable_semgrep": obj.get("enable_semgrep") if obj.get("enable_semgrep") is not None else False,
             "semgrep_rulepack": obj.get("semgrep_rulepack"),
             "scip_index_path": obj.get("scip_index_path")
         })
         return _obj
-
-

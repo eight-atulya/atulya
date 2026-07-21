@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &GraphChangeEventResponse{}
 
 // GraphChangeEventResponse struct for GraphChangeEventResponse
 type GraphChangeEventResponse struct {
-	Id string `json:"id"`
-	NodeId string `json:"node_id"`
-	ChangeType string `json:"change_type"`
+	Id          string         `json:"id"`
+	NodeId      string         `json:"node_id"`
+	ChangeType  string         `json:"change_type"`
 	BeforeState NullableString `json:"before_state,omitempty"`
-	AfterState string `json:"after_state"`
-	Confidence float32 `json:"confidence"`
-	TimeWindow NullableString `json:"time_window,omitempty"`
-	EvidenceIds []string `json:"evidence_ids,omitempty"`
-	Summary string `json:"summary"`
+	AfterState  string         `json:"after_state"`
+	Confidence  float32        `json:"confidence"`
+	TimeWindow  NullableString `json:"time_window,omitempty"`
+	EvidenceIds []string       `json:"evidence_ids,omitempty"`
+	Summary     string         `json:"summary"`
 }
 
 type _GraphChangeEventResponse GraphChangeEventResponse
@@ -161,6 +161,7 @@ func (o *GraphChangeEventResponse) HasBeforeState() bool {
 func (o *GraphChangeEventResponse) SetBeforeState(v string) {
 	o.BeforeState.Set(&v)
 }
+
 // SetBeforeStateNil sets the value for BeforeState to be an explicit nil
 func (o *GraphChangeEventResponse) SetBeforeStateNil() {
 	o.BeforeState.Set(nil)
@@ -251,6 +252,7 @@ func (o *GraphChangeEventResponse) HasTimeWindow() bool {
 func (o *GraphChangeEventResponse) SetTimeWindow(v string) {
 	o.TimeWindow.Set(&v)
 }
+
 // SetTimeWindowNil sets the value for TimeWindow to be an explicit nil
 func (o *GraphChangeEventResponse) SetTimeWindowNil() {
 	o.TimeWindow.Set(nil)
@@ -318,7 +320,7 @@ func (o *GraphChangeEventResponse) SetSummary(v string) {
 }
 
 func (o GraphChangeEventResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -363,10 +365,10 @@ func (o *GraphChangeEventResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -422,5 +424,3 @@ func (v *NullableGraphChangeEventResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

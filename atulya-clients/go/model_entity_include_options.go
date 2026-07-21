@@ -29,6 +29,8 @@ type EntityIncludeOptions struct {
 // will change when the set of required properties is changed
 func NewEntityIncludeOptions() *EntityIncludeOptions {
 	this := EntityIncludeOptions{}
+	var maxTokens int32 = 500
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -37,6 +39,8 @@ func NewEntityIncludeOptions() *EntityIncludeOptions {
 // but it doesn't guarantee that properties required by API are set
 func NewEntityIncludeOptionsWithDefaults() *EntityIncludeOptions {
 	this := EntityIncludeOptions{}
+	var maxTokens int32 = 500
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -73,7 +77,7 @@ func (o *EntityIncludeOptions) SetMaxTokens(v int32) {
 }
 
 func (o EntityIncludeOptions) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -123,5 +127,3 @@ func (v *NullableEntityIncludeOptions) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

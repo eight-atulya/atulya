@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &TasteCreateDatasetRequest{}
 
 // TasteCreateDatasetRequest struct for TasteCreateDatasetRequest
 type TasteCreateDatasetRequest struct {
-	Name string `json:"name"`
+	Name        string         `json:"name"`
 	Description NullableString `json:"description,omitempty"`
-	SchemaType *string `json:"schema_type,omitempty"`
-	TasteTags []string `json:"taste_tags,omitempty"`
+	SchemaType  *string        `json:"schema_type,omitempty"`
+	TasteTags   []string       `json:"taste_tags,omitempty"`
 }
 
 type _TasteCreateDatasetRequest TasteCreateDatasetRequest
@@ -36,6 +36,8 @@ type _TasteCreateDatasetRequest TasteCreateDatasetRequest
 func NewTasteCreateDatasetRequest(name string) *TasteCreateDatasetRequest {
 	this := TasteCreateDatasetRequest{}
 	this.Name = name
+	var schemaType string = "openai_chat"
+	this.SchemaType = &schemaType
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewTasteCreateDatasetRequest(name string) *TasteCreateDatasetRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewTasteCreateDatasetRequestWithDefaults() *TasteCreateDatasetRequest {
 	this := TasteCreateDatasetRequest{}
+	var schemaType string = "openai_chat"
+	this.SchemaType = &schemaType
 	return &this
 }
 
@@ -103,6 +107,7 @@ func (o *TasteCreateDatasetRequest) HasDescription() bool {
 func (o *TasteCreateDatasetRequest) SetDescription(v string) {
 	o.Description.Set(&v)
 }
+
 // SetDescriptionNil sets the value for Description to be an explicit nil
 func (o *TasteCreateDatasetRequest) SetDescriptionNil() {
 	o.Description.Set(nil)
@@ -178,7 +183,7 @@ func (o *TasteCreateDatasetRequest) SetTasteTags(v []string) {
 }
 
 func (o TasteCreateDatasetRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -213,10 +218,10 @@ func (o *TasteCreateDatasetRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -272,5 +277,3 @@ func (v *NullableTasteCreateDatasetRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

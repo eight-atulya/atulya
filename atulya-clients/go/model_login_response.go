@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &LoginResponse{}
 
 // LoginResponse struct for LoginResponse
 type LoginResponse struct {
-	Token string `json:"token"`
-	ExpiresAt string `json:"expires_at"`
-	Principal PrincipalInfo `json:"principal"`
+	Token     string           `json:"token"`
+	ExpiresAt string           `json:"expires_at"`
+	Principal ResolvedIdentity `json:"principal"`
 }
 
 type _LoginResponse LoginResponse
@@ -32,7 +32,7 @@ type _LoginResponse LoginResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewLoginResponse(token string, expiresAt string, principal PrincipalInfo) *LoginResponse {
+func NewLoginResponse(token string, expiresAt string, principal ResolvedIdentity) *LoginResponse {
 	this := LoginResponse{}
 	this.Token = token
 	this.ExpiresAt = expiresAt
@@ -97,9 +97,9 @@ func (o *LoginResponse) SetExpiresAt(v string) {
 }
 
 // GetPrincipal returns the Principal field value
-func (o *LoginResponse) GetPrincipal() PrincipalInfo {
+func (o *LoginResponse) GetPrincipal() ResolvedIdentity {
 	if o == nil {
-		var ret PrincipalInfo
+		var ret ResolvedIdentity
 		return ret
 	}
 
@@ -108,7 +108,7 @@ func (o *LoginResponse) GetPrincipal() PrincipalInfo {
 
 // GetPrincipalOk returns a tuple with the Principal field value
 // and a boolean to check if the value has been set.
-func (o *LoginResponse) GetPrincipalOk() (*PrincipalInfo, bool) {
+func (o *LoginResponse) GetPrincipalOk() (*ResolvedIdentity, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -116,12 +116,12 @@ func (o *LoginResponse) GetPrincipalOk() (*PrincipalInfo, bool) {
 }
 
 // SetPrincipal sets field value
-func (o *LoginResponse) SetPrincipal(v PrincipalInfo) {
+func (o *LoginResponse) SetPrincipal(v ResolvedIdentity) {
 	o.Principal = v
 }
 
 func (o LoginResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -151,10 +151,10 @@ func (o *LoginResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &CodebaseImpactEdgeResponse{}
 
 // CodebaseImpactEdgeResponse Deterministic code graph edge returned for impact analysis.
 type CodebaseImpactEdgeResponse struct {
-	EdgeType string `json:"edge_type"`
-	FromPath string `json:"from_path"`
+	EdgeType   string         `json:"edge_type"`
+	FromPath   string         `json:"from_path"`
 	FromSymbol NullableString `json:"from_symbol,omitempty"`
-	ToPath NullableString `json:"to_path,omitempty"`
-	ToSymbol NullableString `json:"to_symbol,omitempty"`
-	TargetRef NullableString `json:"target_ref,omitempty"`
-	Label NullableString `json:"label,omitempty"`
+	ToPath     NullableString `json:"to_path,omitempty"`
+	ToSymbol   NullableString `json:"to_symbol,omitempty"`
+	TargetRef  NullableString `json:"target_ref,omitempty"`
+	Label      NullableString `json:"label,omitempty"`
 }
 
 type _CodebaseImpactEdgeResponse CodebaseImpactEdgeResponse
@@ -131,6 +131,7 @@ func (o *CodebaseImpactEdgeResponse) HasFromSymbol() bool {
 func (o *CodebaseImpactEdgeResponse) SetFromSymbol(v string) {
 	o.FromSymbol.Set(&v)
 }
+
 // SetFromSymbolNil sets the value for FromSymbol to be an explicit nil
 func (o *CodebaseImpactEdgeResponse) SetFromSymbolNil() {
 	o.FromSymbol.Set(nil)
@@ -173,6 +174,7 @@ func (o *CodebaseImpactEdgeResponse) HasToPath() bool {
 func (o *CodebaseImpactEdgeResponse) SetToPath(v string) {
 	o.ToPath.Set(&v)
 }
+
 // SetToPathNil sets the value for ToPath to be an explicit nil
 func (o *CodebaseImpactEdgeResponse) SetToPathNil() {
 	o.ToPath.Set(nil)
@@ -215,6 +217,7 @@ func (o *CodebaseImpactEdgeResponse) HasToSymbol() bool {
 func (o *CodebaseImpactEdgeResponse) SetToSymbol(v string) {
 	o.ToSymbol.Set(&v)
 }
+
 // SetToSymbolNil sets the value for ToSymbol to be an explicit nil
 func (o *CodebaseImpactEdgeResponse) SetToSymbolNil() {
 	o.ToSymbol.Set(nil)
@@ -257,6 +260,7 @@ func (o *CodebaseImpactEdgeResponse) HasTargetRef() bool {
 func (o *CodebaseImpactEdgeResponse) SetTargetRef(v string) {
 	o.TargetRef.Set(&v)
 }
+
 // SetTargetRefNil sets the value for TargetRef to be an explicit nil
 func (o *CodebaseImpactEdgeResponse) SetTargetRefNil() {
 	o.TargetRef.Set(nil)
@@ -299,6 +303,7 @@ func (o *CodebaseImpactEdgeResponse) HasLabel() bool {
 func (o *CodebaseImpactEdgeResponse) SetLabel(v string) {
 	o.Label.Set(&v)
 }
+
 // SetLabelNil sets the value for Label to be an explicit nil
 func (o *CodebaseImpactEdgeResponse) SetLabelNil() {
 	o.Label.Set(nil)
@@ -310,7 +315,7 @@ func (o *CodebaseImpactEdgeResponse) UnsetLabel() {
 }
 
 func (o CodebaseImpactEdgeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -353,10 +358,10 @@ func (o *CodebaseImpactEdgeResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -412,5 +417,3 @@ func (v *NullableCodebaseImpactEdgeResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

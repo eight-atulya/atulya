@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &LLMRequestStatsResponse{}
 
 // LLMRequestStatsResponse Response model for LLM request statistics.
 type LLMRequestStatsResponse struct {
-	BankId string `json:"bank_id"`
-	Period string `json:"period"`
-	Trunc string `json:"trunc"`
-	Items []LLMRequestStatsBucket `json:"items"`
+	BankId string                  `json:"bank_id"`
+	Period string                  `json:"period"`
+	Trunc  string                  `json:"trunc"`
+	Items  []LLMRequestStatsBucket `json:"items"`
 }
 
 type _LLMRequestStatsResponse LLMRequestStatsResponse
@@ -147,7 +147,7 @@ func (o *LLMRequestStatsResponse) SetItems(v []LLMRequestStatsBucket) {
 }
 
 func (o LLMRequestStatsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -179,10 +179,10 @@ func (o *LLMRequestStatsResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -238,5 +238,3 @@ func (v *NullableLLMRequestStatsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

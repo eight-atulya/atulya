@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &OrgResponse{}
 
 // OrgResponse struct for OrgResponse
 type OrgResponse struct {
-	Id string `json:"id"`
-	Slug string `json:"slug"`
-	Name string `json:"name"`
+	Id         string `json:"id"`
+	Slug       string `json:"slug"`
+	Name       string `json:"name"`
 	SchemaName string `json:"schema_name"`
-	Status string `json:"status"`
-	CreatedAt string `json:"created_at"`
+	Status     string `json:"status"`
+	CreatedAt  string `json:"created_at"`
 }
 
 type _OrgResponse OrgResponse
@@ -199,7 +199,7 @@ func (o *OrgResponse) SetCreatedAt(v string) {
 }
 
 func (o OrgResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -235,10 +235,10 @@ func (o *OrgResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

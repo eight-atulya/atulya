@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &MemoryItem{}
 
 // MemoryItem Single memory item for retain.
 type MemoryItem struct {
-	Content string `json:"content"`
-	Timestamp NullableMemoryItemTimestamp `json:"timestamp,omitempty"`
-	Context NullableString `json:"context,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
-	DocumentId NullableString `json:"document_id,omitempty"`
-	Entities []EntityInput `json:"entities,omitempty"`
-	Tags []string `json:"tags,omitempty"`
-	ObservationScopes NullableMemoryItemObservationScopes `json:"observation_scopes,omitempty"`
-	UpdateMode NullableString `json:"update_mode,omitempty"`
+	Content           string                    `json:"content"`
+	Timestamp         NullableTimestamp         `json:"timestamp,omitempty"`
+	Context           NullableString            `json:"context,omitempty"`
+	Metadata          map[string]string         `json:"metadata,omitempty"`
+	DocumentId        NullableString            `json:"document_id,omitempty"`
+	Entities          []EntityInput             `json:"entities,omitempty"`
+	Tags              []string                  `json:"tags,omitempty"`
+	ObservationScopes NullableObservationScopes `json:"observation_scopes,omitempty"`
+	UpdateMode        NullableString            `json:"update_mode,omitempty"`
 }
 
 type _MemoryItem MemoryItem
@@ -77,9 +77,9 @@ func (o *MemoryItem) SetContent(v string) {
 }
 
 // GetTimestamp returns the Timestamp field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *MemoryItem) GetTimestamp() MemoryItemTimestamp {
+func (o *MemoryItem) GetTimestamp() Timestamp {
 	if o == nil || IsNil(o.Timestamp.Get()) {
-		var ret MemoryItemTimestamp
+		var ret Timestamp
 		return ret
 	}
 	return *o.Timestamp.Get()
@@ -88,7 +88,7 @@ func (o *MemoryItem) GetTimestamp() MemoryItemTimestamp {
 // GetTimestampOk returns a tuple with the Timestamp field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *MemoryItem) GetTimestampOk() (*MemoryItemTimestamp, bool) {
+func (o *MemoryItem) GetTimestampOk() (*Timestamp, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -104,10 +104,11 @@ func (o *MemoryItem) HasTimestamp() bool {
 	return false
 }
 
-// SetTimestamp gets a reference to the given NullableMemoryItemTimestamp and assigns it to the Timestamp field.
-func (o *MemoryItem) SetTimestamp(v MemoryItemTimestamp) {
+// SetTimestamp gets a reference to the given NullableTimestamp and assigns it to the Timestamp field.
+func (o *MemoryItem) SetTimestamp(v Timestamp) {
 	o.Timestamp.Set(&v)
 }
+
 // SetTimestampNil sets the value for Timestamp to be an explicit nil
 func (o *MemoryItem) SetTimestampNil() {
 	o.Timestamp.Set(nil)
@@ -150,6 +151,7 @@ func (o *MemoryItem) HasContext() bool {
 func (o *MemoryItem) SetContext(v string) {
 	o.Context.Set(&v)
 }
+
 // SetContextNil sets the value for Context to be an explicit nil
 func (o *MemoryItem) SetContextNil() {
 	o.Context.Set(nil)
@@ -225,6 +227,7 @@ func (o *MemoryItem) HasDocumentId() bool {
 func (o *MemoryItem) SetDocumentId(v string) {
 	o.DocumentId.Set(&v)
 }
+
 // SetDocumentIdNil sets the value for DocumentId to be an explicit nil
 func (o *MemoryItem) SetDocumentIdNil() {
 	o.DocumentId.Set(nil)
@@ -302,9 +305,9 @@ func (o *MemoryItem) SetTags(v []string) {
 }
 
 // GetObservationScopes returns the ObservationScopes field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *MemoryItem) GetObservationScopes() MemoryItemObservationScopes {
+func (o *MemoryItem) GetObservationScopes() ObservationScopes {
 	if o == nil || IsNil(o.ObservationScopes.Get()) {
-		var ret MemoryItemObservationScopes
+		var ret ObservationScopes
 		return ret
 	}
 	return *o.ObservationScopes.Get()
@@ -313,7 +316,7 @@ func (o *MemoryItem) GetObservationScopes() MemoryItemObservationScopes {
 // GetObservationScopesOk returns a tuple with the ObservationScopes field value if set, nil otherwise
 // and a boolean to check if the value has been set.
 // NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *MemoryItem) GetObservationScopesOk() (*MemoryItemObservationScopes, bool) {
+func (o *MemoryItem) GetObservationScopesOk() (*ObservationScopes, bool) {
 	if o == nil {
 		return nil, false
 	}
@@ -329,10 +332,11 @@ func (o *MemoryItem) HasObservationScopes() bool {
 	return false
 }
 
-// SetObservationScopes gets a reference to the given NullableMemoryItemObservationScopes and assigns it to the ObservationScopes field.
-func (o *MemoryItem) SetObservationScopes(v MemoryItemObservationScopes) {
+// SetObservationScopes gets a reference to the given NullableObservationScopes and assigns it to the ObservationScopes field.
+func (o *MemoryItem) SetObservationScopes(v ObservationScopes) {
 	o.ObservationScopes.Set(&v)
 }
+
 // SetObservationScopesNil sets the value for ObservationScopes to be an explicit nil
 func (o *MemoryItem) SetObservationScopesNil() {
 	o.ObservationScopes.Set(nil)
@@ -375,6 +379,7 @@ func (o *MemoryItem) HasUpdateMode() bool {
 func (o *MemoryItem) SetUpdateMode(v string) {
 	o.UpdateMode.Set(&v)
 }
+
 // SetUpdateModeNil sets the value for UpdateMode to be an explicit nil
 func (o *MemoryItem) SetUpdateModeNil() {
 	o.UpdateMode.Set(nil)
@@ -386,7 +391,7 @@ func (o *MemoryItem) UnsetUpdateMode() {
 }
 
 func (o MemoryItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -436,10 +441,10 @@ func (o *MemoryItem) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -495,5 +500,3 @@ func (v *NullableMemoryItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

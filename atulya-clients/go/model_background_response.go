@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &BackgroundResponse{}
 
 // BackgroundResponse Response model for background update. Deprecated: use MissionResponse instead.
 type BackgroundResponse struct {
-	Mission string `json:"mission"`
-	Background NullableString `json:"background,omitempty"`
+	Mission     string                    `json:"mission"`
+	Background  NullableString            `json:"background,omitempty"`
 	Disposition NullableDispositionTraits `json:"disposition,omitempty"`
 }
 
@@ -102,6 +102,7 @@ func (o *BackgroundResponse) HasBackground() bool {
 func (o *BackgroundResponse) SetBackground(v string) {
 	o.Background.Set(&v)
 }
+
 // SetBackgroundNil sets the value for Background to be an explicit nil
 func (o *BackgroundResponse) SetBackgroundNil() {
 	o.Background.Set(nil)
@@ -144,6 +145,7 @@ func (o *BackgroundResponse) HasDisposition() bool {
 func (o *BackgroundResponse) SetDisposition(v DispositionTraits) {
 	o.Disposition.Set(&v)
 }
+
 // SetDispositionNil sets the value for Disposition to be an explicit nil
 func (o *BackgroundResponse) SetDispositionNil() {
 	o.Disposition.Set(nil)
@@ -155,7 +157,7 @@ func (o *BackgroundResponse) UnsetDisposition() {
 }
 
 func (o BackgroundResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -187,10 +189,10 @@ func (o *BackgroundResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -246,5 +248,3 @@ func (v *NullableBackgroundResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

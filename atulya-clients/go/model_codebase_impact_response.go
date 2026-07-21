@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &CodebaseImpactResponse{}
 
 // CodebaseImpactResponse Impact analysis response.
 type CodebaseImpactResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	Seed NullableCodebaseImpactSeedResponse `json:"seed,omitempty"`
-	ImpactedFiles []CodebaseImpactFileResponse `json:"impacted_files"`
-	MatchedSymbols []CodebaseSymbolMatchResponse `json:"matched_symbols"`
-	Edges []CodebaseImpactEdgeResponse `json:"edges"`
-	Explanation string `json:"explanation"`
+	CodebaseId     string                             `json:"codebase_id"`
+	SnapshotId     NullableString                     `json:"snapshot_id,omitempty"`
+	Seed           NullableCodebaseImpactSeedResponse `json:"seed,omitempty"`
+	ImpactedFiles  []CodebaseImpactFileResponse       `json:"impacted_files"`
+	MatchedSymbols []CodebaseSymbolMatchResponse      `json:"matched_symbols"`
+	Edges          []CodebaseImpactEdgeResponse       `json:"edges"`
+	Explanation    string                             `json:"explanation"`
 }
 
 type _CodebaseImpactResponse CodebaseImpactResponse
@@ -110,6 +110,7 @@ func (o *CodebaseImpactResponse) HasSnapshotId() bool {
 func (o *CodebaseImpactResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseImpactResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -152,6 +153,7 @@ func (o *CodebaseImpactResponse) HasSeed() bool {
 func (o *CodebaseImpactResponse) SetSeed(v CodebaseImpactSeedResponse) {
 	o.Seed.Set(&v)
 }
+
 // SetSeedNil sets the value for Seed to be an explicit nil
 func (o *CodebaseImpactResponse) SetSeedNil() {
 	o.Seed.Set(nil)
@@ -259,7 +261,7 @@ func (o *CodebaseImpactResponse) SetExplanation(v string) {
 }
 
 func (o CodebaseImpactResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -299,10 +301,10 @@ func (o *CodebaseImpactResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -358,5 +360,3 @@ func (v *NullableCodebaseImpactResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,28 +21,28 @@ var _ MappedNullable = &DreamRunResponse{}
 
 // DreamRunResponse struct for DreamRunResponse
 type DreamRunResponse struct {
-	RunId string `json:"run_id"`
-	BankId string `json:"bank_id"`
-	Status string `json:"status"`
-	RunType string `json:"run_type"`
-	TriggerSource string `json:"trigger_source"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt NullableString `json:"updated_at,omitempty"`
-	NarrativeHtml NullableString `json:"narrative_html,omitempty"`
-	Summary NullableString `json:"summary,omitempty"`
-	EvidenceBasis map[string]interface{} `json:"evidence_basis,omitempty"`
-	Signals map[string]interface{} `json:"signals,omitempty"`
-	Predictions []map[string]interface{} `json:"predictions,omitempty"`
-	GrowthHypotheses []map[string]interface{} `json:"growth_hypotheses,omitempty"`
+	RunId              string                   `json:"run_id"`
+	BankId             string                   `json:"bank_id"`
+	Status             string                   `json:"status"`
+	RunType            string                   `json:"run_type"`
+	TriggerSource      string                   `json:"trigger_source"`
+	CreatedAt          string                   `json:"created_at"`
+	UpdatedAt          NullableString           `json:"updated_at,omitempty"`
+	NarrativeHtml      NullableString           `json:"narrative_html,omitempty"`
+	Summary            NullableString           `json:"summary,omitempty"`
+	EvidenceBasis      map[string]interface{}   `json:"evidence_basis,omitempty"`
+	Signals            map[string]interface{}   `json:"signals,omitempty"`
+	Predictions        []map[string]interface{} `json:"predictions,omitempty"`
+	GrowthHypotheses   []map[string]interface{} `json:"growth_hypotheses,omitempty"`
 	PromotionProposals []map[string]interface{} `json:"promotion_proposals,omitempty"`
 	ValidationOutcomes []map[string]interface{} `json:"validation_outcomes,omitempty"`
-	Confidence map[string]interface{} `json:"confidence,omitempty"`
-	NoveltyScore *float32 `json:"novelty_score,omitempty"`
-	MaturityTier *string `json:"maturity_tier,omitempty"`
-	FailureReason NullableString `json:"failure_reason,omitempty"`
-	QualityScore *float32 `json:"quality_score,omitempty"`
-	LegacyRun *bool `json:"legacy_run,omitempty"`
-	SourceArtifactId NullableString `json:"source_artifact_id,omitempty"`
+	Confidence         map[string]interface{}   `json:"confidence,omitempty"`
+	NoveltyScore       *float32                 `json:"novelty_score,omitempty"`
+	MaturityTier       *string                  `json:"maturity_tier,omitempty"`
+	FailureReason      NullableString           `json:"failure_reason,omitempty"`
+	QualityScore       *float32                 `json:"quality_score,omitempty"`
+	LegacyRun          *bool                    `json:"legacy_run,omitempty"`
+	SourceArtifactId   NullableString           `json:"source_artifact_id,omitempty"`
 }
 
 type _DreamRunResponse DreamRunResponse
@@ -59,6 +59,14 @@ func NewDreamRunResponse(runId string, bankId string, status string, runType str
 	this.RunType = runType
 	this.TriggerSource = triggerSource
 	this.CreatedAt = createdAt
+	var noveltyScore float32 = 0.0
+	this.NoveltyScore = &noveltyScore
+	var maturityTier string = "sparse"
+	this.MaturityTier = &maturityTier
+	var qualityScore float32 = 0.0
+	this.QualityScore = &qualityScore
+	var legacyRun bool = false
+	this.LegacyRun = &legacyRun
 	return &this
 }
 
@@ -67,6 +75,14 @@ func NewDreamRunResponse(runId string, bankId string, status string, runType str
 // but it doesn't guarantee that properties required by API are set
 func NewDreamRunResponseWithDefaults() *DreamRunResponse {
 	this := DreamRunResponse{}
+	var noveltyScore float32 = 0.0
+	this.NoveltyScore = &noveltyScore
+	var maturityTier string = "sparse"
+	this.MaturityTier = &maturityTier
+	var qualityScore float32 = 0.0
+	this.QualityScore = &qualityScore
+	var legacyRun bool = false
+	this.LegacyRun = &legacyRun
 	return &this
 }
 
@@ -246,6 +262,7 @@ func (o *DreamRunResponse) HasUpdatedAt() bool {
 func (o *DreamRunResponse) SetUpdatedAt(v string) {
 	o.UpdatedAt.Set(&v)
 }
+
 // SetUpdatedAtNil sets the value for UpdatedAt to be an explicit nil
 func (o *DreamRunResponse) SetUpdatedAtNil() {
 	o.UpdatedAt.Set(nil)
@@ -288,6 +305,7 @@ func (o *DreamRunResponse) HasNarrativeHtml() bool {
 func (o *DreamRunResponse) SetNarrativeHtml(v string) {
 	o.NarrativeHtml.Set(&v)
 }
+
 // SetNarrativeHtmlNil sets the value for NarrativeHtml to be an explicit nil
 func (o *DreamRunResponse) SetNarrativeHtmlNil() {
 	o.NarrativeHtml.Set(nil)
@@ -330,6 +348,7 @@ func (o *DreamRunResponse) HasSummary() bool {
 func (o *DreamRunResponse) SetSummary(v string) {
 	o.Summary.Set(&v)
 }
+
 // SetSummaryNil sets the value for Summary to be an explicit nil
 func (o *DreamRunResponse) SetSummaryNil() {
 	o.Summary.Set(nil)
@@ -660,6 +679,7 @@ func (o *DreamRunResponse) HasFailureReason() bool {
 func (o *DreamRunResponse) SetFailureReason(v string) {
 	o.FailureReason.Set(&v)
 }
+
 // SetFailureReasonNil sets the value for FailureReason to be an explicit nil
 func (o *DreamRunResponse) SetFailureReasonNil() {
 	o.FailureReason.Set(nil)
@@ -766,6 +786,7 @@ func (o *DreamRunResponse) HasSourceArtifactId() bool {
 func (o *DreamRunResponse) SetSourceArtifactId(v string) {
 	o.SourceArtifactId.Set(&v)
 }
+
 // SetSourceArtifactIdNil sets the value for SourceArtifactId to be an explicit nil
 func (o *DreamRunResponse) SetSourceArtifactIdNil() {
 	o.SourceArtifactId.Set(nil)
@@ -777,7 +798,7 @@ func (o *DreamRunResponse) UnsetSourceArtifactId() {
 }
 
 func (o DreamRunResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -861,10 +882,10 @@ func (o *DreamRunResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -920,5 +941,3 @@ func (v *NullableDreamRunResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

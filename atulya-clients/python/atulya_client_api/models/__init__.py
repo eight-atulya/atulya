@@ -12,18 +12,14 @@
     Do not edit the class manually.
 """  # noqa: E501
 
+
 # import models into model package
-from atulya_client_api.models.access_grant_request import AccessGrantRequest
-from atulya_client_api.models.access_grant_response import AccessGrantResponse
 from atulya_client_api.models.add_background_request import AddBackgroundRequest
 from atulya_client_api.models.anomaly_correction_response import AnomalyCorrectionResponse
 from atulya_client_api.models.anomaly_event_response import AnomalyEventResponse
 from atulya_client_api.models.anomaly_intelligence_request import AnomalyIntelligenceRequest
 from atulya_client_api.models.anomaly_intelligence_response import AnomalyIntelligenceResponse
 from atulya_client_api.models.anomaly_intelligence_summary_response import AnomalyIntelligenceSummaryResponse
-from atulya_client_api.models.api_key_create_request import ApiKeyCreateRequest
-from atulya_client_api.models.api_key_response import ApiKeyResponse
-from atulya_client_api.models.api_key_update_request import ApiKeyUpdateRequest
 from atulya_client_api.models.async_operation_submit_response import AsyncOperationSubmitResponse
 from atulya_client_api.models.audit_event_response import AuditEventResponse
 from atulya_client_api.models.background_response import BackgroundResponse
@@ -96,6 +92,7 @@ from atulya_client_api.models.decommission_request import DecommissionRequest
 from atulya_client_api.models.decommission_response import DecommissionResponse
 from atulya_client_api.models.delete_document_response import DeleteDocumentResponse
 from atulya_client_api.models.delete_response import DeleteResponse
+from atulya_client_api.models.direct_grant_request import DirectGrantRequest
 from atulya_client_api.models.directive_list_response import DirectiveListResponse
 from atulya_client_api.models.directive_response import DirectiveResponse
 from atulya_client_api.models.disposition_traits import DispositionTraits
@@ -106,6 +103,7 @@ from atulya_client_api.models.dream_run_list_response import DreamRunListRespons
 from atulya_client_api.models.dream_run_response import DreamRunResponse
 from atulya_client_api.models.dream_stats_response import DreamStatsResponse
 from atulya_client_api.models.dream_submit_request import DreamSubmitRequest
+from atulya_client_api.models.email_request import EmailRequest
 from atulya_client_api.models.entity_detail_response import EntityDetailResponse
 from atulya_client_api.models.entity_include_options import EntityIncludeOptions
 from atulya_client_api.models.entity_input import EntityInput
@@ -143,6 +141,10 @@ from atulya_client_api.models.influence_row import InfluenceRow
 from atulya_client_api.models.influence_trend_point import InfluenceTrendPoint
 from atulya_client_api.models.internet_research_request import InternetResearchRequest
 from atulya_client_api.models.internet_research_response import InternetResearchResponse
+from atulya_client_api.models.invitation_accept_request import InvitationAcceptRequest
+from atulya_client_api.models.invitation_create_request import InvitationCreateRequest
+from atulya_client_api.models.key_create_request import KeyCreateRequest
+from atulya_client_api.models.key_secret_response import KeySecretResponse
 from atulya_client_api.models.llm_request_list_response import LLMRequestListResponse
 from atulya_client_api.models.llm_request_row import LLMRequestRow
 from atulya_client_api.models.llm_request_stats_bucket import LLMRequestStatsBucket
@@ -152,9 +154,9 @@ from atulya_client_api.models.list_memory_units_response import ListMemoryUnitsR
 from atulya_client_api.models.list_tags_response import ListTagsResponse
 from atulya_client_api.models.login_request import LoginRequest
 from atulya_client_api.models.login_response import LoginResponse
+from atulya_client_api.models.membership_info import MembershipInfo
+from atulya_client_api.models.membership_update_request import MembershipUpdateRequest
 from atulya_client_api.models.memory_item import MemoryItem
-from atulya_client_api.models.memory_item_observation_scopes import MemoryItemObservationScopes
-from atulya_client_api.models.memory_item_timestamp import MemoryItemTimestamp
 from atulya_client_api.models.memory_repo_branch_create_request import MemoryRepoBranchCreateRequest
 from atulya_client_api.models.memory_repo_branches_response import MemoryRepoBranchesResponse
 from atulya_client_api.models.memory_repo_checkout_request import MemoryRepoCheckoutRequest
@@ -174,20 +176,19 @@ from atulya_client_api.models.mental_model_list_response import MentalModelListR
 from atulya_client_api.models.mental_model_response import MentalModelResponse
 from atulya_client_api.models.mental_model_trigger import MentalModelTrigger
 from atulya_client_api.models.min_scores import MinScores
+from atulya_client_api.models.model_not import ModelNot
+from atulya_client_api.models.observation_scopes import ObservationScopes
 from atulya_client_api.models.operation_progress_response import OperationProgressResponse
 from atulya_client_api.models.operation_response import OperationResponse
 from atulya_client_api.models.operation_result_response import OperationResultResponse
-from atulya_client_api.models.operation_result_response_result import OperationResultResponseResult
 from atulya_client_api.models.operation_status_response import OperationStatusResponse
 from atulya_client_api.models.operation_summary_response import OperationSummaryResponse
 from atulya_client_api.models.operations_list_response import OperationsListResponse
 from atulya_client_api.models.org_create_request import OrgCreateRequest
 from atulya_client_api.models.org_response import OrgResponse
 from atulya_client_api.models.password_reset_request import PasswordResetRequest
+from atulya_client_api.models.pending_auth_response import PendingAuthResponse
 from atulya_client_api.models.prediction_point import PredictionPoint
-from atulya_client_api.models.principal_create_request import PrincipalCreateRequest
-from atulya_client_api.models.principal_info import PrincipalInfo
-from atulya_client_api.models.principal_response import PrincipalResponse
 from atulya_client_api.models.recall_request import RecallRequest
 from atulya_client_api.models.recall_request_tag_groups_inner import RecallRequestTagGroupsInner
 from atulya_client_api.models.recall_response import RecallResponse
@@ -202,9 +203,17 @@ from atulya_client_api.models.reflect_request import ReflectRequest
 from atulya_client_api.models.reflect_response import ReflectResponse
 from atulya_client_api.models.reflect_tool_call import ReflectToolCall
 from atulya_client_api.models.reflect_trace import ReflectTrace
+from atulya_client_api.models.resolved_identity import ResolvedIdentity
+from atulya_client_api.models.response_auth_signup import ResponseAuthSignup
+from atulya_client_api.models.result import Result
 from atulya_client_api.models.retain_request import RetainRequest
 from atulya_client_api.models.retain_response import RetainResponse
 from atulya_client_api.models.retry_operation_response import RetryOperationResponse
+from atulya_client_api.models.role_create_request import RoleCreateRequest
+from atulya_client_api.models.role_update_request import RoleUpdateRequest
+from atulya_client_api.models.service_account_create_request import ServiceAccountCreateRequest
+from atulya_client_api.models.service_account_update_request import ServiceAccountUpdateRequest
+from atulya_client_api.models.session_response import SessionResponse
 from atulya_client_api.models.signup_request import SignupRequest
 from atulya_client_api.models.signup_state_response import SignupStateResponse
 from atulya_client_api.models.source_facts_include_options import SourceFactsIncludeOptions
@@ -215,7 +224,6 @@ from atulya_client_api.models.system_health_response import SystemHealthResponse
 from atulya_client_api.models.tag_group_and import TagGroupAnd
 from atulya_client_api.models.tag_group_leaf import TagGroupLeaf
 from atulya_client_api.models.tag_group_not import TagGroupNot
-from atulya_client_api.models.tag_group_not_not import TagGroupNotNot
 from atulya_client_api.models.tag_group_or import TagGroupOr
 from atulya_client_api.models.tag_item import TagItem
 from atulya_client_api.models.taste_create_dataset_request import TasteCreateDatasetRequest
@@ -231,6 +239,8 @@ from atulya_client_api.models.timeline_edge_response import TimelineEdgeResponse
 from atulya_client_api.models.timeline_item_response import TimelineItemResponse
 from atulya_client_api.models.timeline_response import TimelineResponse
 from atulya_client_api.models.timeline_temporal_response import TimelineTemporalResponse
+from atulya_client_api.models.timestamp import Timestamp
+from atulya_client_api.models.token_request import TokenRequest
 from atulya_client_api.models.token_usage import TokenUsage
 from atulya_client_api.models.tool_calls_include_options import ToolCallsIncludeOptions
 from atulya_client_api.models.trajectory_viterbi_step_response import TrajectoryViterbiStepResponse
@@ -247,4 +257,5 @@ from atulya_client_api.models.webhook_http_config import WebhookHttpConfig
 from atulya_client_api.models.webhook_list_response import WebhookListResponse
 from atulya_client_api.models.webhook_response import WebhookResponse
 from atulya_client_api.models.worker_status_response import WorkerStatusResponse
-
+from atulya_client_api.models.workspace_create_request import WorkspaceCreateRequest
+from atulya_client_api.models.workspace_switch_request import WorkspaceSwitchRequest

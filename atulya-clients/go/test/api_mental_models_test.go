@@ -11,10 +11,10 @@ package atulya
 
 import (
 	"context"
+	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"testing"
-	openapiclient "github.com/eight-atulya/atulya/atulya-clients/go"
 )
 
 func Test_atulya_MentalModelsAPIService(t *testing.T) {
@@ -24,7 +24,7 @@ func Test_atulya_MentalModelsAPIService(t *testing.T) {
 
 	t.Run("Test MentalModelsAPIService CreateMentalModel", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -38,7 +38,7 @@ func Test_atulya_MentalModelsAPIService(t *testing.T) {
 
 	t.Run("Test MentalModelsAPIService DeleteMentalModel", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var mentalModelId string
@@ -53,7 +53,7 @@ func Test_atulya_MentalModelsAPIService(t *testing.T) {
 
 	t.Run("Test MentalModelsAPIService GetMentalModel", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var mentalModelId string
@@ -68,7 +68,7 @@ func Test_atulya_MentalModelsAPIService(t *testing.T) {
 
 	t.Run("Test MentalModelsAPIService ListMentalModels", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 
@@ -82,7 +82,7 @@ func Test_atulya_MentalModelsAPIService(t *testing.T) {
 
 	t.Run("Test MentalModelsAPIService RefreshMentalModel", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var mentalModelId string
@@ -97,7 +97,7 @@ func Test_atulya_MentalModelsAPIService(t *testing.T) {
 
 	t.Run("Test MentalModelsAPIService UpdateMentalModel", func(t *testing.T) {
 
-		t.Skip("skip test")  // remove to run test
+		t.Skip("skip test") // remove to run test
 
 		var bankId string
 		var mentalModelId string

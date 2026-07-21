@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &CodebaseRouteRequest{}
 
 // CodebaseRouteRequest Bulk review-route update request.
 type CodebaseRouteRequest struct {
-	ItemIds []string `json:"item_ids"`
-	Target string `json:"target"`
-	QueueMemoryImport *bool `json:"queue_memory_import,omitempty"`
-	MemoryIngestMode *string `json:"memory_ingest_mode,omitempty"`
+	ItemIds           []string `json:"item_ids"`
+	Target            string   `json:"target"`
+	QueueMemoryImport *bool    `json:"queue_memory_import,omitempty"`
+	MemoryIngestMode  *string  `json:"memory_ingest_mode,omitempty"`
 }
 
 type _CodebaseRouteRequest CodebaseRouteRequest
@@ -37,6 +37,10 @@ func NewCodebaseRouteRequest(itemIds []string, target string) *CodebaseRouteRequ
 	this := CodebaseRouteRequest{}
 	this.ItemIds = itemIds
 	this.Target = target
+	var queueMemoryImport bool = false
+	this.QueueMemoryImport = &queueMemoryImport
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -45,6 +49,10 @@ func NewCodebaseRouteRequest(itemIds []string, target string) *CodebaseRouteRequ
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRouteRequestWithDefaults() *CodebaseRouteRequest {
 	this := CodebaseRouteRequest{}
+	var queueMemoryImport bool = false
+	this.QueueMemoryImport = &queueMemoryImport
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -161,7 +169,7 @@ func (o *CodebaseRouteRequest) SetMemoryIngestMode(v string) {
 }
 
 func (o CodebaseRouteRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -195,10 +203,10 @@ func (o *CodebaseRouteRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -254,5 +262,3 @@ func (v *NullableCodebaseRouteRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

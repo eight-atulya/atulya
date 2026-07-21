@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,20 +21,20 @@ var _ MappedNullable = &DreamStatsResponse{}
 
 // DreamStatsResponse struct for DreamStatsResponse
 type DreamStatsResponse struct {
-	BankId string `json:"bank_id"`
-	TotalRuns int32 `json:"total_runs"`
-	LastRunAt NullableString `json:"last_run_at"`
-	AvgQuality float32 `json:"avg_quality"`
-	AvgTokens float32 `json:"avg_tokens"`
-	AvgOutputTokens float32 `json:"avg_output_tokens"`
-	DistillationPassRate float32 `json:"distillation_pass_rate"`
-	DistilledCount int32 `json:"distilled_count"`
-	ValidationRate *float32 `json:"validation_rate,omitempty"`
-	AvgNovelty *float32 `json:"avg_novelty,omitempty"`
-	FailedRunCount *int32 `json:"failed_run_count,omitempty"`
-	DuplicateSuppressionCount *int32 `json:"duplicate_suppression_count,omitempty"`
-	PredictionConfirmationRate *float32 `json:"prediction_confirmation_rate,omitempty"`
-	UnresolvedPredictionBacklog *int32 `json:"unresolved_prediction_backlog,omitempty"`
+	BankId                      string         `json:"bank_id"`
+	TotalRuns                   int32          `json:"total_runs"`
+	LastRunAt                   NullableString `json:"last_run_at"`
+	AvgQuality                  float32        `json:"avg_quality"`
+	AvgTokens                   float32        `json:"avg_tokens"`
+	AvgOutputTokens             float32        `json:"avg_output_tokens"`
+	DistillationPassRate        float32        `json:"distillation_pass_rate"`
+	DistilledCount              int32          `json:"distilled_count"`
+	ValidationRate              *float32       `json:"validation_rate,omitempty"`
+	AvgNovelty                  *float32       `json:"avg_novelty,omitempty"`
+	FailedRunCount              *int32         `json:"failed_run_count,omitempty"`
+	DuplicateSuppressionCount   *int32         `json:"duplicate_suppression_count,omitempty"`
+	PredictionConfirmationRate  *float32       `json:"prediction_confirmation_rate,omitempty"`
+	UnresolvedPredictionBacklog *int32         `json:"unresolved_prediction_backlog,omitempty"`
 }
 
 type _DreamStatsResponse DreamStatsResponse
@@ -53,6 +53,18 @@ func NewDreamStatsResponse(bankId string, totalRuns int32, lastRunAt NullableStr
 	this.AvgOutputTokens = avgOutputTokens
 	this.DistillationPassRate = distillationPassRate
 	this.DistilledCount = distilledCount
+	var validationRate float32 = 0.0
+	this.ValidationRate = &validationRate
+	var avgNovelty float32 = 0.0
+	this.AvgNovelty = &avgNovelty
+	var failedRunCount int32 = 0
+	this.FailedRunCount = &failedRunCount
+	var duplicateSuppressionCount int32 = 0
+	this.DuplicateSuppressionCount = &duplicateSuppressionCount
+	var predictionConfirmationRate float32 = 0.0
+	this.PredictionConfirmationRate = &predictionConfirmationRate
+	var unresolvedPredictionBacklog int32 = 0
+	this.UnresolvedPredictionBacklog = &unresolvedPredictionBacklog
 	return &this
 }
 
@@ -61,6 +73,18 @@ func NewDreamStatsResponse(bankId string, totalRuns int32, lastRunAt NullableStr
 // but it doesn't guarantee that properties required by API are set
 func NewDreamStatsResponseWithDefaults() *DreamStatsResponse {
 	this := DreamStatsResponse{}
+	var validationRate float32 = 0.0
+	this.ValidationRate = &validationRate
+	var avgNovelty float32 = 0.0
+	this.AvgNovelty = &avgNovelty
+	var failedRunCount int32 = 0
+	this.FailedRunCount = &failedRunCount
+	var duplicateSuppressionCount int32 = 0
+	this.DuplicateSuppressionCount = &duplicateSuppressionCount
+	var predictionConfirmationRate float32 = 0.0
+	this.PredictionConfirmationRate = &predictionConfirmationRate
+	var unresolvedPredictionBacklog int32 = 0
+	this.UnresolvedPredictionBacklog = &unresolvedPredictionBacklog
 	return &this
 }
 
@@ -451,7 +475,7 @@ func (o *DreamStatsResponse) SetUnresolvedPredictionBacklog(v int32) {
 }
 
 func (o DreamStatsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -509,10 +533,10 @@ func (o *DreamStatsResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -568,5 +592,3 @@ func (v *NullableDreamStatsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

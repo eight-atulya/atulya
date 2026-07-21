@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &CodebaseRefreshResponse{}
 
 // CodebaseRefreshResponse Explicit codebase refresh response.
 type CodebaseRefreshResponse struct {
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	OperationId NullableString `json:"operation_id,omitempty"`
-	Status string `json:"status"`
-	ChangedFiles *int32 `json:"changed_files,omitempty"`
-	AddedFiles *int32 `json:"added_files,omitempty"`
-	DeletedFiles *int32 `json:"deleted_files,omitempty"`
-	Noop *bool `json:"noop,omitempty"`
+	SnapshotId   NullableString `json:"snapshot_id,omitempty"`
+	OperationId  NullableString `json:"operation_id,omitempty"`
+	Status       string         `json:"status"`
+	ChangedFiles *int32         `json:"changed_files,omitempty"`
+	AddedFiles   *int32         `json:"added_files,omitempty"`
+	DeletedFiles *int32         `json:"deleted_files,omitempty"`
+	Noop         *bool          `json:"noop,omitempty"`
 }
 
 type _CodebaseRefreshResponse CodebaseRefreshResponse
@@ -39,6 +39,14 @@ type _CodebaseRefreshResponse CodebaseRefreshResponse
 func NewCodebaseRefreshResponse(status string) *CodebaseRefreshResponse {
 	this := CodebaseRefreshResponse{}
 	this.Status = status
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var noop bool = false
+	this.Noop = &noop
 	return &this
 }
 
@@ -47,6 +55,14 @@ func NewCodebaseRefreshResponse(status string) *CodebaseRefreshResponse {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseRefreshResponseWithDefaults() *CodebaseRefreshResponse {
 	this := CodebaseRefreshResponse{}
+	var changedFiles int32 = 0
+	this.ChangedFiles = &changedFiles
+	var addedFiles int32 = 0
+	this.AddedFiles = &addedFiles
+	var deletedFiles int32 = 0
+	this.DeletedFiles = &deletedFiles
+	var noop bool = false
+	this.Noop = &noop
 	return &this
 }
 
@@ -82,6 +98,7 @@ func (o *CodebaseRefreshResponse) HasSnapshotId() bool {
 func (o *CodebaseRefreshResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseRefreshResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -124,6 +141,7 @@ func (o *CodebaseRefreshResponse) HasOperationId() bool {
 func (o *CodebaseRefreshResponse) SetOperationId(v string) {
 	o.OperationId.Set(&v)
 }
+
 // SetOperationIdNil sets the value for OperationId to be an explicit nil
 func (o *CodebaseRefreshResponse) SetOperationIdNil() {
 	o.OperationId.Set(nil)
@@ -287,7 +305,7 @@ func (o *CodebaseRefreshResponse) SetNoop(v bool) {
 }
 
 func (o CodebaseRefreshResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -331,10 +349,10 @@ func (o *CodebaseRefreshResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -390,5 +408,3 @@ func (v *NullableCodebaseRefreshResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

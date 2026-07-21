@@ -19,15 +19,14 @@ import (
 	"strings"
 )
 
-
 // EntitiesAPIService EntitiesAPI service
 type EntitiesAPIService service
 
 type ApiGetEntityRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
-	entityId string
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
+	entityId      string
 	authorization *string
 }
 
@@ -45,28 +44,29 @@ GetEntity Get entity details
 
 Get detailed information about an entity including observations (mental model).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param entityId
- @return ApiGetEntityRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param entityId
+	@return ApiGetEntityRequest
 */
 func (a *EntitiesAPIService) GetEntity(ctx context.Context, bankId string, entityId string) ApiGetEntityRequest {
 	return ApiGetEntityRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		entityId: entityId,
+		ctx:        ctx,
+		bankId:     bankId,
+		entityId:   entityId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityDetailResponse
+//
+//	@return EntityDetailResponse
 func (a *EntitiesAPIService) GetEntityExecute(r ApiGetEntityRequest) (*EntityDetailResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityDetailResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityDetailResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.GetEntity")
@@ -131,8 +131,8 @@ func (a *EntitiesAPIService) GetEntityExecute(r ApiGetEntityRequest) (*EntityDet
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -150,9 +150,9 @@ func (a *EntitiesAPIService) GetEntityExecute(r ApiGetEntityRequest) (*EntityDet
 }
 
 type ApiGetEntityIntelligenceRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -170,26 +170,27 @@ GetEntityIntelligence Get entity intelligence
 
 Return the latest bank-level entity intelligence snapshot, if computed.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetEntityIntelligenceRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetEntityIntelligenceRequest
 */
 func (a *EntitiesAPIService) GetEntityIntelligence(ctx context.Context, bankId string) ApiGetEntityIntelligenceRequest {
 	return ApiGetEntityIntelligenceRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityIntelligenceResponse
+//
+//	@return EntityIntelligenceResponse
 func (a *EntitiesAPIService) GetEntityIntelligenceExecute(r ApiGetEntityIntelligenceRequest) (*EntityIntelligenceResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityIntelligenceResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityIntelligenceResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.GetEntityIntelligence")
@@ -253,8 +254,8 @@ func (a *EntitiesAPIService) GetEntityIntelligenceExecute(r ApiGetEntityIntellig
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -272,10 +273,10 @@ func (a *EntitiesAPIService) GetEntityIntelligenceExecute(r ApiGetEntityIntellig
 }
 
 type ApiGetEntityTrajectoryRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
-	entityId string
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
+	entityId      string
 	authorization *string
 }
 
@@ -293,28 +294,29 @@ GetEntityTrajectory Get entity trajectory
 
 Return the latest LLM+HMM-style progression snapshot for an entity, if computed.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param entityId
- @return ApiGetEntityTrajectoryRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param entityId
+	@return ApiGetEntityTrajectoryRequest
 */
 func (a *EntitiesAPIService) GetEntityTrajectory(ctx context.Context, bankId string, entityId string) ApiGetEntityTrajectoryRequest {
 	return ApiGetEntityTrajectoryRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		entityId: entityId,
+		ctx:        ctx,
+		bankId:     bankId,
+		entityId:   entityId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityTrajectoryResponse
+//
+//	@return EntityTrajectoryResponse
 func (a *EntitiesAPIService) GetEntityTrajectoryExecute(r ApiGetEntityTrajectoryRequest) (*EntityTrajectoryResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityTrajectoryResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityTrajectoryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.GetEntityTrajectory")
@@ -379,8 +381,8 @@ func (a *EntitiesAPIService) GetEntityTrajectoryExecute(r ApiGetEntityTrajectory
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -398,11 +400,11 @@ func (a *EntitiesAPIService) GetEntityTrajectoryExecute(r ApiGetEntityTrajectory
 }
 
 type ApiListEntitiesRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -432,26 +434,27 @@ ListEntities List entities
 
 List all entities (people, organizations, etc.) known by the bank, ordered by mention count. Supports pagination.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListEntitiesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListEntitiesRequest
 */
 func (a *EntitiesAPIService) ListEntities(ctx context.Context, bankId string) ApiListEntitiesRequest {
 	return ApiListEntitiesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityListResponse
+//
+//	@return EntityListResponse
 func (a *EntitiesAPIService) ListEntitiesExecute(r ApiListEntitiesRequest) (*EntityListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.ListEntities")
@@ -468,9 +471,15 @@ func (a *EntitiesAPIService) ListEntitiesExecute(r ApiListEntitiesRequest) (*Ent
 
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -521,8 +530,8 @@ func (a *EntitiesAPIService) ListEntitiesExecute(r ApiListEntitiesRequest) (*Ent
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -540,9 +549,9 @@ func (a *EntitiesAPIService) ListEntitiesExecute(r ApiListEntitiesRequest) (*Ent
 }
 
 type ApiPostEntityIntelligenceRecomputeRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -560,26 +569,27 @@ PostEntityIntelligenceRecompute Queue entity intelligence recompute
 
 Enqueue a background job to recompute bank-level entity intelligence.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiPostEntityIntelligenceRecomputeRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiPostEntityIntelligenceRecomputeRequest
 */
 func (a *EntitiesAPIService) PostEntityIntelligenceRecompute(ctx context.Context, bankId string) ApiPostEntityIntelligenceRecomputeRequest {
 	return ApiPostEntityIntelligenceRecomputeRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityIntelligenceRecomputeResponse
+//
+//	@return EntityIntelligenceRecomputeResponse
 func (a *EntitiesAPIService) PostEntityIntelligenceRecomputeExecute(r ApiPostEntityIntelligenceRecomputeRequest) (*EntityIntelligenceRecomputeResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityIntelligenceRecomputeResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityIntelligenceRecomputeResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.PostEntityIntelligenceRecompute")
@@ -643,8 +653,8 @@ func (a *EntitiesAPIService) PostEntityIntelligenceRecomputeExecute(r ApiPostEnt
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -662,10 +672,10 @@ func (a *EntitiesAPIService) PostEntityIntelligenceRecomputeExecute(r ApiPostEnt
 }
 
 type ApiPostEntityTrajectoryRecomputeRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
-	entityId string
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
+	entityId      string
 	authorization *string
 }
 
@@ -683,28 +693,29 @@ PostEntityTrajectoryRecompute Queue entity trajectory recompute
 
 Enqueue a background job to recompute the trajectory for this entity.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param entityId
- @return ApiPostEntityTrajectoryRecomputeRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param entityId
+	@return ApiPostEntityTrajectoryRecomputeRequest
 */
 func (a *EntitiesAPIService) PostEntityTrajectoryRecompute(ctx context.Context, bankId string, entityId string) ApiPostEntityTrajectoryRecomputeRequest {
 	return ApiPostEntityTrajectoryRecomputeRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		entityId: entityId,
+		ctx:        ctx,
+		bankId:     bankId,
+		entityId:   entityId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityTrajectoryRecomputeResponse
+//
+//	@return EntityTrajectoryRecomputeResponse
 func (a *EntitiesAPIService) PostEntityTrajectoryRecomputeExecute(r ApiPostEntityTrajectoryRecomputeRequest) (*EntityTrajectoryRecomputeResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityTrajectoryRecomputeResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityTrajectoryRecomputeResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.PostEntityTrajectoryRecompute")
@@ -769,8 +780,8 @@ func (a *EntitiesAPIService) PostEntityTrajectoryRecomputeExecute(r ApiPostEntit
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -788,10 +799,10 @@ func (a *EntitiesAPIService) PostEntityTrajectoryRecomputeExecute(r ApiPostEntit
 }
 
 type ApiRegenerateEntityObservationsRequest struct {
-	ctx context.Context
-	ApiService *EntitiesAPIService
-	bankId string
-	entityId string
+	ctx           context.Context
+	ApiService    *EntitiesAPIService
+	bankId        string
+	entityId      string
 	authorization *string
 }
 
@@ -809,31 +820,33 @@ RegenerateEntityObservations Regenerate entity observations (deprecated)
 
 This endpoint is deprecated. Entity observations have been replaced by mental models.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param entityId
- @return ApiRegenerateEntityObservationsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param entityId
+	@return ApiRegenerateEntityObservationsRequest
 
 Deprecated
 */
 func (a *EntitiesAPIService) RegenerateEntityObservations(ctx context.Context, bankId string, entityId string) ApiRegenerateEntityObservationsRequest {
 	return ApiRegenerateEntityObservationsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
-		entityId: entityId,
+		ctx:        ctx,
+		bankId:     bankId,
+		entityId:   entityId,
 	}
 }
 
 // Execute executes the request
-//  @return EntityDetailResponse
+//
+//	@return EntityDetailResponse
+//
 // Deprecated
 func (a *EntitiesAPIService) RegenerateEntityObservationsExecute(r ApiRegenerateEntityObservationsRequest) (*EntityDetailResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *EntityDetailResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *EntityDetailResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EntitiesAPIService.RegenerateEntityObservations")
@@ -898,8 +911,8 @@ func (a *EntitiesAPIService) RegenerateEntityObservationsExecute(r ApiRegenerate
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

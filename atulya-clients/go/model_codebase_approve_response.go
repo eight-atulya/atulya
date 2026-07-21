@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &CodebaseApproveResponse{}
 
 // CodebaseApproveResponse Queued codebase approval response.
 type CodebaseApproveResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId string `json:"snapshot_id"`
-	OperationId string `json:"operation_id"`
-	Status string `json:"status"`
+	CodebaseId       string  `json:"codebase_id"`
+	SnapshotId       string  `json:"snapshot_id"`
+	OperationId      string  `json:"operation_id"`
+	Status           string  `json:"status"`
 	MemoryIngestMode *string `json:"memory_ingest_mode,omitempty"`
 }
 
@@ -40,6 +40,8 @@ func NewCodebaseApproveResponse(codebaseId string, snapshotId string, operationI
 	this.SnapshotId = snapshotId
 	this.OperationId = operationId
 	this.Status = status
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -48,6 +50,8 @@ func NewCodebaseApproveResponse(codebaseId string, snapshotId string, operationI
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseApproveResponseWithDefaults() *CodebaseApproveResponse {
 	this := CodebaseApproveResponse{}
+	var memoryIngestMode string = "direct"
+	this.MemoryIngestMode = &memoryIngestMode
 	return &this
 }
 
@@ -180,7 +184,7 @@ func (o *CodebaseApproveResponse) SetMemoryIngestMode(v string) {
 }
 
 func (o CodebaseApproveResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -215,10 +219,10 @@ func (o *CodebaseApproveResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -274,5 +278,3 @@ func (v *NullableCodebaseApproveResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

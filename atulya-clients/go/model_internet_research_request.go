@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,7 +22,7 @@ var _ MappedNullable = &InternetResearchRequest{}
 // InternetResearchRequest Request live-web research (optional SearXNG + Firecrawl stack). Does not use bank memory as context.
 type InternetResearchRequest struct {
 	// Question to answer using the public web only
-	Query string `json:"query"`
+	Query  string  `json:"query"`
 	Budget *Budget `json:"budget,omitempty"`
 	// Max completion tokens for each LLM step where supported
 	MaxTokens *int32 `json:"max_tokens,omitempty"`
@@ -39,6 +39,8 @@ type _InternetResearchRequest InternetResearchRequest
 func NewInternetResearchRequest(query string) *InternetResearchRequest {
 	this := InternetResearchRequest{}
 	this.Query = query
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -47,6 +49,8 @@ func NewInternetResearchRequest(query string) *InternetResearchRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewInternetResearchRequestWithDefaults() *InternetResearchRequest {
 	this := InternetResearchRequest{}
+	var maxTokens int32 = 4096
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -171,7 +175,7 @@ func (o *InternetResearchRequest) SetInclude(v ReflectIncludeOptions) {
 }
 
 func (o InternetResearchRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -206,10 +210,10 @@ func (o *InternetResearchRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -265,5 +269,3 @@ func (v *NullableInternetResearchRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

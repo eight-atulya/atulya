@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &GraphSummaryEdgeResponse{}
 
 // GraphSummaryEdgeResponse struct for GraphSummaryEdgeResponse
 type GraphSummaryEdgeResponse struct {
-	Id string `json:"id"`
-	SourceId string `json:"source_id"`
-	TargetId string `json:"target_id"`
-	Weight float32 `json:"weight"`
-	Label NullableString `json:"label,omitempty"`
+	Id       string         `json:"id"`
+	SourceId string         `json:"source_id"`
+	TargetId string         `json:"target_id"`
+	Weight   float32        `json:"weight"`
+	Label    NullableString `json:"label,omitempty"`
 }
 
 type _GraphSummaryEdgeResponse GraphSummaryEdgeResponse
@@ -179,6 +179,7 @@ func (o *GraphSummaryEdgeResponse) HasLabel() bool {
 func (o *GraphSummaryEdgeResponse) SetLabel(v string) {
 	o.Label.Set(&v)
 }
+
 // SetLabelNil sets the value for Label to be an explicit nil
 func (o *GraphSummaryEdgeResponse) SetLabelNil() {
 	o.Label.Set(nil)
@@ -190,7 +191,7 @@ func (o *GraphSummaryEdgeResponse) UnsetLabel() {
 }
 
 func (o GraphSummaryEdgeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -225,10 +226,10 @@ func (o *GraphSummaryEdgeResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -284,5 +285,3 @@ func (v *NullableGraphSummaryEdgeResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

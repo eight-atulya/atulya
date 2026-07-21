@@ -31,6 +31,10 @@ type DreamSubmitRequest struct {
 // will change when the set of required properties is changed
 func NewDreamSubmitRequest() *DreamSubmitRequest {
 	this := DreamSubmitRequest{}
+	var triggerSource string = "manual"
+	this.TriggerSource = &triggerSource
+	var runType string = "dream"
+	this.RunType = &runType
 	return &this
 }
 
@@ -39,6 +43,10 @@ func NewDreamSubmitRequest() *DreamSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewDreamSubmitRequestWithDefaults() *DreamSubmitRequest {
 	this := DreamSubmitRequest{}
+	var triggerSource string = "manual"
+	this.TriggerSource = &triggerSource
+	var runType string = "dream"
+	this.RunType = &runType
 	return &this
 }
 
@@ -107,7 +115,7 @@ func (o *DreamSubmitRequest) SetRunType(v string) {
 }
 
 func (o DreamSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -160,5 +168,3 @@ func (v *NullableDreamSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

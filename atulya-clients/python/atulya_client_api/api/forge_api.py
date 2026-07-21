@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -884,9 +885,9 @@ class ForgeApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if domain_tags is not None:
-            
+
             _query_params.append(('domain_tags', domain_tags))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1202,17 +1203,17 @@ class ForgeApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if operation_id is not None:
-            
+
             _query_params.append(('operation_id', operation_id))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1550,5 +1551,3 @@ class ForgeApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

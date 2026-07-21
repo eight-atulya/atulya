@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TasteExportSubmitRequest(BaseModel):
     """
@@ -29,13 +28,12 @@ class TasteExportSubmitRequest(BaseModel):
     """ # noqa: E501
     dataset_id: StrictStr
     set_ids: Optional[List[StrictStr]] = None
-    adapter_id: Optional[StrictStr] = None
+    adapter_id: Optional[StrictStr] = 'openai_chat_jsonl'
     options: Optional[Dict[str, Any]] = None
     __properties: ClassVar[List[str]] = ["dataset_id", "set_ids", "adapter_id", "options"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -47,7 +45,8 @@ class TasteExportSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -86,9 +85,7 @@ class TasteExportSubmitRequest(BaseModel):
         _obj = cls.model_validate({
             "dataset_id": obj.get("dataset_id"),
             "set_ids": obj.get("set_ids"),
-            "adapter_id": obj.get("adapter_id"),
+            "adapter_id": obj.get("adapter_id") if obj.get("adapter_id") is not None else 'openai_chat_jsonl',
             "options": obj.get("options")
         })
         return _obj
-
-

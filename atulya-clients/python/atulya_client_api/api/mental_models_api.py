@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -1522,21 +1523,21 @@ class MentalModelsApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -2185,5 +2186,3 @@ class MentalModelsApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

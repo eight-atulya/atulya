@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &EntityListItem{}
 
 // EntityListItem Entity list item with summary.
 type EntityListItem struct {
-	Id string `json:"id"`
-	CanonicalName string `json:"canonical_name"`
-	MentionCount int32 `json:"mention_count"`
-	FirstSeen NullableString `json:"first_seen,omitempty"`
-	LastSeen NullableString `json:"last_seen,omitempty"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
+	Id            string                 `json:"id"`
+	CanonicalName string                 `json:"canonical_name"`
+	MentionCount  int32                  `json:"mention_count"`
+	FirstSeen     NullableString         `json:"first_seen,omitempty"`
+	LastSeen      NullableString         `json:"last_seen,omitempty"`
+	Metadata      map[string]interface{} `json:"metadata,omitempty"`
 }
 
 type _EntityListItem EntityListItem
@@ -155,6 +155,7 @@ func (o *EntityListItem) HasFirstSeen() bool {
 func (o *EntityListItem) SetFirstSeen(v string) {
 	o.FirstSeen.Set(&v)
 }
+
 // SetFirstSeenNil sets the value for FirstSeen to be an explicit nil
 func (o *EntityListItem) SetFirstSeenNil() {
 	o.FirstSeen.Set(nil)
@@ -197,6 +198,7 @@ func (o *EntityListItem) HasLastSeen() bool {
 func (o *EntityListItem) SetLastSeen(v string) {
 	o.LastSeen.Set(&v)
 }
+
 // SetLastSeenNil sets the value for LastSeen to be an explicit nil
 func (o *EntityListItem) SetLastSeenNil() {
 	o.LastSeen.Set(nil)
@@ -241,7 +243,7 @@ func (o *EntityListItem) SetMetadata(v map[string]interface{}) {
 }
 
 func (o EntityListItem) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -280,10 +282,10 @@ func (o *EntityListItem) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -339,5 +341,3 @@ func (v *NullableEntityListItem) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

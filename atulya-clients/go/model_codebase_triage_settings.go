@@ -19,14 +19,14 @@ var _ MappedNullable = &CodebaseTriageSettings{}
 
 // CodebaseTriageSettings Per-codebase triage thresholds and provider toggles.
 type CodebaseTriageSettings struct {
-	ScoreThresholdHigh *float32 `json:"score_threshold_high,omitempty"`
-	CentralityThreshold *float32 `json:"centrality_threshold,omitempty"`
-	SafetyThreshold *float32 `json:"safety_threshold,omitempty"`
-	EmbeddingProvider *string `json:"embedding_provider,omitempty"`
-	EnableSafetyScan *bool `json:"enable_safety_scan,omitempty"`
-	EnableSemgrep *bool `json:"enable_semgrep,omitempty"`
-	SemgrepRulepack NullableString `json:"semgrep_rulepack,omitempty"`
-	ScipIndexPath NullableString `json:"scip_index_path,omitempty"`
+	ScoreThresholdHigh  *float32       `json:"score_threshold_high,omitempty"`
+	CentralityThreshold *float32       `json:"centrality_threshold,omitempty"`
+	SafetyThreshold     *float32       `json:"safety_threshold,omitempty"`
+	EmbeddingProvider   *string        `json:"embedding_provider,omitempty"`
+	EnableSafetyScan    *bool          `json:"enable_safety_scan,omitempty"`
+	EnableSemgrep       *bool          `json:"enable_semgrep,omitempty"`
+	SemgrepRulepack     NullableString `json:"semgrep_rulepack,omitempty"`
+	ScipIndexPath       NullableString `json:"scip_index_path,omitempty"`
 }
 
 // NewCodebaseTriageSettings instantiates a new CodebaseTriageSettings object
@@ -35,6 +35,18 @@ type CodebaseTriageSettings struct {
 // will change when the set of required properties is changed
 func NewCodebaseTriageSettings() *CodebaseTriageSettings {
 	this := CodebaseTriageSettings{}
+	var scoreThresholdHigh float32 = 0.62
+	this.ScoreThresholdHigh = &scoreThresholdHigh
+	var centralityThreshold float32 = 0.35
+	this.CentralityThreshold = &centralityThreshold
+	var safetyThreshold float32 = 0.25
+	this.SafetyThreshold = &safetyThreshold
+	var embeddingProvider string = "jina_local"
+	this.EmbeddingProvider = &embeddingProvider
+	var enableSafetyScan bool = true
+	this.EnableSafetyScan = &enableSafetyScan
+	var enableSemgrep bool = false
+	this.EnableSemgrep = &enableSemgrep
 	return &this
 }
 
@@ -43,6 +55,18 @@ func NewCodebaseTriageSettings() *CodebaseTriageSettings {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseTriageSettingsWithDefaults() *CodebaseTriageSettings {
 	this := CodebaseTriageSettings{}
+	var scoreThresholdHigh float32 = 0.62
+	this.ScoreThresholdHigh = &scoreThresholdHigh
+	var centralityThreshold float32 = 0.35
+	this.CentralityThreshold = &centralityThreshold
+	var safetyThreshold float32 = 0.25
+	this.SafetyThreshold = &safetyThreshold
+	var embeddingProvider string = "jina_local"
+	this.EmbeddingProvider = &embeddingProvider
+	var enableSafetyScan bool = true
+	this.EnableSafetyScan = &enableSafetyScan
+	var enableSemgrep bool = false
+	this.EnableSemgrep = &enableSemgrep
 	return &this
 }
 
@@ -270,6 +294,7 @@ func (o *CodebaseTriageSettings) HasSemgrepRulepack() bool {
 func (o *CodebaseTriageSettings) SetSemgrepRulepack(v string) {
 	o.SemgrepRulepack.Set(&v)
 }
+
 // SetSemgrepRulepackNil sets the value for SemgrepRulepack to be an explicit nil
 func (o *CodebaseTriageSettings) SetSemgrepRulepackNil() {
 	o.SemgrepRulepack.Set(nil)
@@ -312,6 +337,7 @@ func (o *CodebaseTriageSettings) HasScipIndexPath() bool {
 func (o *CodebaseTriageSettings) SetScipIndexPath(v string) {
 	o.ScipIndexPath.Set(&v)
 }
+
 // SetScipIndexPathNil sets the value for ScipIndexPath to be an explicit nil
 func (o *CodebaseTriageSettings) SetScipIndexPathNil() {
 	o.ScipIndexPath.Set(nil)
@@ -323,7 +349,7 @@ func (o *CodebaseTriageSettings) UnsetScipIndexPath() {
 }
 
 func (o CodebaseTriageSettings) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -394,5 +420,3 @@ func (v *NullableCodebaseTriageSettings) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

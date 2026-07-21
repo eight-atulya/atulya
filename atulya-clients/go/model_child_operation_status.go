@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &ChildOperationStatus{}
 
 // ChildOperationStatus Status of a child operation (for batch operations).
 type ChildOperationStatus struct {
-	OperationId string `json:"operation_id"`
-	Status string `json:"status"`
-	QueueState NullableString `json:"queue_state,omitempty"`
-	Stage NullableString `json:"stage,omitempty"`
-	Progress NullableOperationProgressResponse `json:"progress,omitempty"`
-	SubBatchIndex NullableInt32 `json:"sub_batch_index,omitempty"`
-	ItemsCount NullableInt32 `json:"items_count,omitempty"`
-	ErrorMessage NullableString `json:"error_message,omitempty"`
+	OperationId   string                            `json:"operation_id"`
+	Status        string                            `json:"status"`
+	QueueState    NullableString                    `json:"queue_state,omitempty"`
+	Stage         NullableString                    `json:"stage,omitempty"`
+	Progress      NullableOperationProgressResponse `json:"progress,omitempty"`
+	SubBatchIndex NullableInt32                     `json:"sub_batch_index,omitempty"`
+	ItemsCount    NullableInt32                     `json:"items_count,omitempty"`
+	ErrorMessage  NullableString                    `json:"error_message,omitempty"`
 }
 
 type _ChildOperationStatus ChildOperationStatus
@@ -132,6 +132,7 @@ func (o *ChildOperationStatus) HasQueueState() bool {
 func (o *ChildOperationStatus) SetQueueState(v string) {
 	o.QueueState.Set(&v)
 }
+
 // SetQueueStateNil sets the value for QueueState to be an explicit nil
 func (o *ChildOperationStatus) SetQueueStateNil() {
 	o.QueueState.Set(nil)
@@ -174,6 +175,7 @@ func (o *ChildOperationStatus) HasStage() bool {
 func (o *ChildOperationStatus) SetStage(v string) {
 	o.Stage.Set(&v)
 }
+
 // SetStageNil sets the value for Stage to be an explicit nil
 func (o *ChildOperationStatus) SetStageNil() {
 	o.Stage.Set(nil)
@@ -216,6 +218,7 @@ func (o *ChildOperationStatus) HasProgress() bool {
 func (o *ChildOperationStatus) SetProgress(v OperationProgressResponse) {
 	o.Progress.Set(&v)
 }
+
 // SetProgressNil sets the value for Progress to be an explicit nil
 func (o *ChildOperationStatus) SetProgressNil() {
 	o.Progress.Set(nil)
@@ -258,6 +261,7 @@ func (o *ChildOperationStatus) HasSubBatchIndex() bool {
 func (o *ChildOperationStatus) SetSubBatchIndex(v int32) {
 	o.SubBatchIndex.Set(&v)
 }
+
 // SetSubBatchIndexNil sets the value for SubBatchIndex to be an explicit nil
 func (o *ChildOperationStatus) SetSubBatchIndexNil() {
 	o.SubBatchIndex.Set(nil)
@@ -300,6 +304,7 @@ func (o *ChildOperationStatus) HasItemsCount() bool {
 func (o *ChildOperationStatus) SetItemsCount(v int32) {
 	o.ItemsCount.Set(&v)
 }
+
 // SetItemsCountNil sets the value for ItemsCount to be an explicit nil
 func (o *ChildOperationStatus) SetItemsCountNil() {
 	o.ItemsCount.Set(nil)
@@ -342,6 +347,7 @@ func (o *ChildOperationStatus) HasErrorMessage() bool {
 func (o *ChildOperationStatus) SetErrorMessage(v string) {
 	o.ErrorMessage.Set(&v)
 }
+
 // SetErrorMessageNil sets the value for ErrorMessage to be an explicit nil
 func (o *ChildOperationStatus) SetErrorMessageNil() {
 	o.ErrorMessage.Set(nil)
@@ -353,7 +359,7 @@ func (o *ChildOperationStatus) UnsetErrorMessage() {
 }
 
 func (o ChildOperationStatus) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -399,10 +405,10 @@ func (o *ChildOperationStatus) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -458,5 +464,3 @@ func (v *NullableChildOperationStatus) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,10 +22,10 @@ var _ MappedNullable = &InfluenceContribution{}
 // InfluenceContribution struct for InfluenceContribution
 type InfluenceContribution struct {
 	Recency float32 `json:"recency"`
-	Freq float32 `json:"freq"`
-	Graph float32 `json:"graph"`
-	Rerank float32 `json:"rerank"`
-	Dream float32 `json:"dream"`
+	Freq    float32 `json:"freq"`
+	Graph   float32 `json:"graph"`
+	Rerank  float32 `json:"rerank"`
+	Dream   float32 `json:"dream"`
 }
 
 type _InfluenceContribution InfluenceContribution
@@ -173,7 +173,7 @@ func (o *InfluenceContribution) SetDream(v float32) {
 }
 
 func (o InfluenceContribution) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -207,10 +207,10 @@ func (o *InfluenceContribution) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -266,5 +266,3 @@ func (v *NullableInfluenceContribution) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

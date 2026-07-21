@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &CodebaseFileItemResponse{}
 
 // CodebaseFileItemResponse Single file entry in a codebase snapshot.
 type CodebaseFileItemResponse struct {
-	Path string `json:"path"`
-	Language NullableString `json:"language,omitempty"`
-	SizeBytes int32 `json:"size_bytes"`
-	ContentHash string `json:"content_hash"`
-	DocumentId NullableString `json:"document_id,omitempty"`
-	Status string `json:"status"`
-	ChangeKind string `json:"change_kind"`
-	Reason NullableString `json:"reason,omitempty"`
-	ChunkCount *int32 `json:"chunk_count,omitempty"`
+	Path        string         `json:"path"`
+	Language    NullableString `json:"language,omitempty"`
+	SizeBytes   int32          `json:"size_bytes"`
+	ContentHash string         `json:"content_hash"`
+	DocumentId  NullableString `json:"document_id,omitempty"`
+	Status      string         `json:"status"`
+	ChangeKind  string         `json:"change_kind"`
+	Reason      NullableString `json:"reason,omitempty"`
+	ChunkCount  *int32         `json:"chunk_count,omitempty"`
 }
 
 type _CodebaseFileItemResponse CodebaseFileItemResponse
@@ -45,6 +45,8 @@ func NewCodebaseFileItemResponse(path string, sizeBytes int32, contentHash strin
 	this.ContentHash = contentHash
 	this.Status = status
 	this.ChangeKind = changeKind
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	return &this
 }
 
@@ -53,6 +55,8 @@ func NewCodebaseFileItemResponse(path string, sizeBytes int32, contentHash strin
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseFileItemResponseWithDefaults() *CodebaseFileItemResponse {
 	this := CodebaseFileItemResponse{}
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	return &this
 }
 
@@ -112,6 +116,7 @@ func (o *CodebaseFileItemResponse) HasLanguage() bool {
 func (o *CodebaseFileItemResponse) SetLanguage(v string) {
 	o.Language.Set(&v)
 }
+
 // SetLanguageNil sets the value for Language to be an explicit nil
 func (o *CodebaseFileItemResponse) SetLanguageNil() {
 	o.Language.Set(nil)
@@ -202,6 +207,7 @@ func (o *CodebaseFileItemResponse) HasDocumentId() bool {
 func (o *CodebaseFileItemResponse) SetDocumentId(v string) {
 	o.DocumentId.Set(&v)
 }
+
 // SetDocumentIdNil sets the value for DocumentId to be an explicit nil
 func (o *CodebaseFileItemResponse) SetDocumentIdNil() {
 	o.DocumentId.Set(nil)
@@ -292,6 +298,7 @@ func (o *CodebaseFileItemResponse) HasReason() bool {
 func (o *CodebaseFileItemResponse) SetReason(v string) {
 	o.Reason.Set(&v)
 }
+
 // SetReasonNil sets the value for Reason to be an explicit nil
 func (o *CodebaseFileItemResponse) SetReasonNil() {
 	o.Reason.Set(nil)
@@ -335,7 +342,7 @@ func (o *CodebaseFileItemResponse) SetChunkCount(v int32) {
 }
 
 func (o CodebaseFileItemResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -381,10 +388,10 @@ func (o *CodebaseFileItemResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -440,5 +447,3 @@ func (v *NullableCodebaseFileItemResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

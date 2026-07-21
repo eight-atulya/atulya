@@ -392,6 +392,13 @@ else:
 PATCH_SCRIPT
 fi
 
+# OpenAPI Generator can leave trailing spaces and multiple blank lines at EOF.
+# Normalize only whitespace so regenerated files pass repository diff checks
+# without rewriting generator-owned syntax.
+find "$PYTHON_CLIENT_DIR/atulya_client_api" -type f -name '*.py' \
+    -exec perl -pi -e 's/[ \t]+$//' {} + \
+    -exec perl -0pi -e 's/\n+\z/\n/' {} +
+
 echo "✓ Python client generated at $PYTHON_CLIENT_DIR"
 echo ""
 
@@ -501,6 +508,8 @@ else
 
     # Initialize module and build
     echo "Building Go client..."
+    gofmt -w ./*.go ./test/*.go
+    find . -type f -name '*.go' -exec perl -0pi -e 's/\n+\z/\n/' {} +
     go mod tidy
     go build ./...
 

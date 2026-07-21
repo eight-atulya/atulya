@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &CodebaseCurateRequest{}
 
 // CodebaseCurateRequest Intent-driven curation request body.
 type CodebaseCurateRequest struct {
-	Intent string `json:"intent"`
-	ScopeHint NullableString `json:"scope_hint,omitempty"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	TopKClusters *int32 `json:"top_k_clusters,omitempty"`
-	TopKSymbols *int32 `json:"top_k_symbols,omitempty"`
-	IncludeDismissed *bool `json:"include_dismissed,omitempty"`
+	Intent           string         `json:"intent"`
+	ScopeHint        NullableString `json:"scope_hint,omitempty"`
+	SnapshotId       NullableString `json:"snapshot_id,omitempty"`
+	TopKClusters     *int32         `json:"top_k_clusters,omitempty"`
+	TopKSymbols      *int32         `json:"top_k_symbols,omitempty"`
+	IncludeDismissed *bool          `json:"include_dismissed,omitempty"`
 }
 
 type _CodebaseCurateRequest CodebaseCurateRequest
@@ -38,6 +38,12 @@ type _CodebaseCurateRequest CodebaseCurateRequest
 func NewCodebaseCurateRequest(intent string) *CodebaseCurateRequest {
 	this := CodebaseCurateRequest{}
 	this.Intent = intent
+	var topKClusters int32 = 10
+	this.TopKClusters = &topKClusters
+	var topKSymbols int32 = 20
+	this.TopKSymbols = &topKSymbols
+	var includeDismissed bool = false
+	this.IncludeDismissed = &includeDismissed
 	return &this
 }
 
@@ -46,6 +52,12 @@ func NewCodebaseCurateRequest(intent string) *CodebaseCurateRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseCurateRequestWithDefaults() *CodebaseCurateRequest {
 	this := CodebaseCurateRequest{}
+	var topKClusters int32 = 10
+	this.TopKClusters = &topKClusters
+	var topKSymbols int32 = 20
+	this.TopKSymbols = &topKSymbols
+	var includeDismissed bool = false
+	this.IncludeDismissed = &includeDismissed
 	return &this
 }
 
@@ -105,6 +117,7 @@ func (o *CodebaseCurateRequest) HasScopeHint() bool {
 func (o *CodebaseCurateRequest) SetScopeHint(v string) {
 	o.ScopeHint.Set(&v)
 }
+
 // SetScopeHintNil sets the value for ScopeHint to be an explicit nil
 func (o *CodebaseCurateRequest) SetScopeHintNil() {
 	o.ScopeHint.Set(nil)
@@ -147,6 +160,7 @@ func (o *CodebaseCurateRequest) HasSnapshotId() bool {
 func (o *CodebaseCurateRequest) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseCurateRequest) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -254,7 +268,7 @@ func (o *CodebaseCurateRequest) SetIncludeDismissed(v bool) {
 }
 
 func (o CodebaseCurateRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -295,10 +309,10 @@ func (o *CodebaseCurateRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -354,5 +368,3 @@ func (v *NullableCodebaseCurateRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

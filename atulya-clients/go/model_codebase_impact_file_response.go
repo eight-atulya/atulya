@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &CodebaseImpactFileResponse{}
 
 // CodebaseImpactFileResponse Impacted file entry with traversal depth.
 type CodebaseImpactFileResponse struct {
-	Path string `json:"path"`
-	Language NullableString `json:"language,omitempty"`
-	SizeBytes int32 `json:"size_bytes"`
-	ContentHash string `json:"content_hash"`
-	DocumentId NullableString `json:"document_id,omitempty"`
-	Status string `json:"status"`
-	ChangeKind string `json:"change_kind"`
-	ChunkCount *int32 `json:"chunk_count,omitempty"`
-	Depth int32 `json:"depth"`
+	Path        string         `json:"path"`
+	Language    NullableString `json:"language,omitempty"`
+	SizeBytes   int32          `json:"size_bytes"`
+	ContentHash string         `json:"content_hash"`
+	DocumentId  NullableString `json:"document_id,omitempty"`
+	Status      string         `json:"status"`
+	ChangeKind  string         `json:"change_kind"`
+	ChunkCount  *int32         `json:"chunk_count,omitempty"`
+	Depth       int32          `json:"depth"`
 }
 
 type _CodebaseImpactFileResponse CodebaseImpactFileResponse
@@ -45,6 +45,8 @@ func NewCodebaseImpactFileResponse(path string, sizeBytes int32, contentHash str
 	this.ContentHash = contentHash
 	this.Status = status
 	this.ChangeKind = changeKind
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	this.Depth = depth
 	return &this
 }
@@ -54,6 +56,8 @@ func NewCodebaseImpactFileResponse(path string, sizeBytes int32, contentHash str
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseImpactFileResponseWithDefaults() *CodebaseImpactFileResponse {
 	this := CodebaseImpactFileResponse{}
+	var chunkCount int32 = 0
+	this.ChunkCount = &chunkCount
 	return &this
 }
 
@@ -113,6 +117,7 @@ func (o *CodebaseImpactFileResponse) HasLanguage() bool {
 func (o *CodebaseImpactFileResponse) SetLanguage(v string) {
 	o.Language.Set(&v)
 }
+
 // SetLanguageNil sets the value for Language to be an explicit nil
 func (o *CodebaseImpactFileResponse) SetLanguageNil() {
 	o.Language.Set(nil)
@@ -203,6 +208,7 @@ func (o *CodebaseImpactFileResponse) HasDocumentId() bool {
 func (o *CodebaseImpactFileResponse) SetDocumentId(v string) {
 	o.DocumentId.Set(&v)
 }
+
 // SetDocumentIdNil sets the value for DocumentId to be an explicit nil
 func (o *CodebaseImpactFileResponse) SetDocumentIdNil() {
 	o.DocumentId.Set(nil)
@@ -318,7 +324,7 @@ func (o *CodebaseImpactFileResponse) SetDepth(v int32) {
 }
 
 func (o CodebaseImpactFileResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -363,10 +369,10 @@ func (o *CodebaseImpactFileResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -422,5 +428,3 @@ func (v *NullableCodebaseImpactFileResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

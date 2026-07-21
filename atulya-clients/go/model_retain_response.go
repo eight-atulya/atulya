@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &RetainResponse{}
 
 // RetainResponse Response model for retain endpoint.
 type RetainResponse struct {
-	Success bool `json:"success"`
-	BankId string `json:"bank_id"`
-	ItemsCount int32 `json:"items_count"`
+	Success    bool   `json:"success"`
+	BankId     string `json:"bank_id"`
+	ItemsCount int32  `json:"items_count"`
 	// Whether the operation was processed asynchronously
-	Async bool `json:"async"`
-	OperationId NullableString `json:"operation_id,omitempty"`
-	Usage NullableTokenUsage `json:"usage,omitempty"`
+	Async       bool               `json:"async"`
+	OperationId NullableString     `json:"operation_id,omitempty"`
+	Usage       NullableTokenUsage `json:"usage,omitempty"`
 }
 
 type _RetainResponse RetainResponse
@@ -181,6 +181,7 @@ func (o *RetainResponse) HasOperationId() bool {
 func (o *RetainResponse) SetOperationId(v string) {
 	o.OperationId.Set(&v)
 }
+
 // SetOperationIdNil sets the value for OperationId to be an explicit nil
 func (o *RetainResponse) SetOperationIdNil() {
 	o.OperationId.Set(nil)
@@ -223,6 +224,7 @@ func (o *RetainResponse) HasUsage() bool {
 func (o *RetainResponse) SetUsage(v TokenUsage) {
 	o.Usage.Set(&v)
 }
+
 // SetUsageNil sets the value for Usage to be an explicit nil
 func (o *RetainResponse) SetUsageNil() {
 	o.Usage.Set(nil)
@@ -234,7 +236,7 @@ func (o *RetainResponse) UnsetUsage() {
 }
 
 func (o RetainResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -272,10 +274,10 @@ func (o *RetainResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -331,5 +333,3 @@ func (v *NullableRetainResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

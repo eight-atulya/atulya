@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &TimelineEdgeResponse{}
 
 // TimelineEdgeResponse struct for TimelineEdgeResponse
 type TimelineEdgeResponse struct {
-	Source string `json:"source"`
-	Target string `json:"target"`
-	EdgeKind string `json:"edge_kind"`
-	Weight *float32 `json:"weight,omitempty"`
+	Source   string   `json:"source"`
+	Target   string   `json:"target"`
+	EdgeKind string   `json:"edge_kind"`
+	Weight   *float32 `json:"weight,omitempty"`
 }
 
 type _TimelineEdgeResponse TimelineEdgeResponse
@@ -38,6 +38,8 @@ func NewTimelineEdgeResponse(source string, target string, edgeKind string) *Tim
 	this.Source = source
 	this.Target = target
 	this.EdgeKind = edgeKind
+	var weight float32 = 1.0
+	this.Weight = &weight
 	return &this
 }
 
@@ -46,6 +48,8 @@ func NewTimelineEdgeResponse(source string, target string, edgeKind string) *Tim
 // but it doesn't guarantee that properties required by API are set
 func NewTimelineEdgeResponseWithDefaults() *TimelineEdgeResponse {
 	this := TimelineEdgeResponse{}
+	var weight float32 = 1.0
+	this.Weight = &weight
 	return &this
 }
 
@@ -154,7 +158,7 @@ func (o *TimelineEdgeResponse) SetWeight(v float32) {
 }
 
 func (o TimelineEdgeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -187,10 +191,10 @@ func (o *TimelineEdgeResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -246,5 +250,3 @@ func (v *NullableTimelineEdgeResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

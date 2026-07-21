@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &TasteTransformSubmitRequest{}
 
 // TasteTransformSubmitRequest struct for TasteTransformSubmitRequest
 type TasteTransformSubmitRequest struct {
-	DatasetId string `json:"dataset_id"`
-	SetIds []string `json:"set_ids,omitempty"`
-	ChainId NullableString `json:"chain_id,omitempty"`
-	Ops []map[string]interface{} `json:"ops,omitempty"`
-	Preview *bool `json:"preview,omitempty"`
+	DatasetId string                   `json:"dataset_id"`
+	SetIds    []string                 `json:"set_ids,omitempty"`
+	ChainId   NullableString           `json:"chain_id,omitempty"`
+	Ops       []map[string]interface{} `json:"ops,omitempty"`
+	Preview   *bool                    `json:"preview,omitempty"`
 }
 
 type _TasteTransformSubmitRequest TasteTransformSubmitRequest
@@ -37,6 +37,8 @@ type _TasteTransformSubmitRequest TasteTransformSubmitRequest
 func NewTasteTransformSubmitRequest(datasetId string) *TasteTransformSubmitRequest {
 	this := TasteTransformSubmitRequest{}
 	this.DatasetId = datasetId
+	var preview bool = false
+	this.Preview = &preview
 	return &this
 }
 
@@ -45,6 +47,8 @@ func NewTasteTransformSubmitRequest(datasetId string) *TasteTransformSubmitReque
 // but it doesn't guarantee that properties required by API are set
 func NewTasteTransformSubmitRequestWithDefaults() *TasteTransformSubmitRequest {
 	this := TasteTransformSubmitRequest{}
+	var preview bool = false
+	this.Preview = &preview
 	return &this
 }
 
@@ -136,6 +140,7 @@ func (o *TasteTransformSubmitRequest) HasChainId() bool {
 func (o *TasteTransformSubmitRequest) SetChainId(v string) {
 	o.ChainId.Set(&v)
 }
+
 // SetChainIdNil sets the value for ChainId to be an explicit nil
 func (o *TasteTransformSubmitRequest) SetChainIdNil() {
 	o.ChainId.Set(nil)
@@ -211,7 +216,7 @@ func (o *TasteTransformSubmitRequest) SetPreview(v bool) {
 }
 
 func (o TasteTransformSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -249,10 +254,10 @@ func (o *TasteTransformSubmitRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -308,5 +313,3 @@ func (v *NullableTasteTransformSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

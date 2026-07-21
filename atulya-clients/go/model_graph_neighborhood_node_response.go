@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,24 +21,24 @@ var _ MappedNullable = &GraphNeighborhoodNodeResponse{}
 
 // GraphNeighborhoodNodeResponse struct for GraphNeighborhoodNodeResponse
 type GraphNeighborhoodNodeResponse struct {
-	Id string `json:"id"`
-	NodeType string `json:"node_type"`
-	Title string `json:"title"`
-	Subtitle NullableString `json:"subtitle,omitempty"`
-	Preview NullableString `json:"preview,omitempty"`
-	StatusLabel NullableString `json:"status_label,omitempty"`
-	StatusTone *string `json:"status_tone,omitempty"`
-	Confidence NullableFloat32 `json:"confidence,omitempty"`
-	EvidenceCount NullableInt32 `json:"evidence_count,omitempty"`
-	KindLabel NullableString `json:"kind_label,omitempty"`
-	Meta NullableString `json:"meta,omitempty"`
-	TimestampLabel NullableString `json:"timestamp_label,omitempty"`
-	Reason NullableString `json:"reason,omitempty"`
-	AccentColor NullableString `json:"accent_color,omitempty"`
-	DisplayPriority *float32 `json:"display_priority,omitempty"`
-	NodeDensityHint *float32 `json:"node_density_hint,omitempty"`
-	ClusterMembership NullableString `json:"cluster_membership,omitempty"`
-	RenderModeHint *string `json:"render_mode_hint,omitempty"`
+	Id                string          `json:"id"`
+	NodeType          string          `json:"node_type"`
+	Title             string          `json:"title"`
+	Subtitle          NullableString  `json:"subtitle,omitempty"`
+	Preview           NullableString  `json:"preview,omitempty"`
+	StatusLabel       NullableString  `json:"status_label,omitempty"`
+	StatusTone        *string         `json:"status_tone,omitempty"`
+	Confidence        NullableFloat32 `json:"confidence,omitempty"`
+	EvidenceCount     NullableInt32   `json:"evidence_count,omitempty"`
+	KindLabel         NullableString  `json:"kind_label,omitempty"`
+	Meta              NullableString  `json:"meta,omitempty"`
+	TimestampLabel    NullableString  `json:"timestamp_label,omitempty"`
+	Reason            NullableString  `json:"reason,omitempty"`
+	AccentColor       NullableString  `json:"accent_color,omitempty"`
+	DisplayPriority   *float32        `json:"display_priority,omitempty"`
+	NodeDensityHint   *float32        `json:"node_density_hint,omitempty"`
+	ClusterMembership NullableString  `json:"cluster_membership,omitempty"`
+	RenderModeHint    *string         `json:"render_mode_hint,omitempty"`
 }
 
 type _GraphNeighborhoodNodeResponse GraphNeighborhoodNodeResponse
@@ -52,6 +52,14 @@ func NewGraphNeighborhoodNodeResponse(id string, nodeType string, title string) 
 	this.Id = id
 	this.NodeType = nodeType
 	this.Title = title
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
+	var displayPriority float32 = 0.0
+	this.DisplayPriority = &displayPriority
+	var nodeDensityHint float32 = 0.0
+	this.NodeDensityHint = &nodeDensityHint
+	var renderModeHint string = "detail"
+	this.RenderModeHint = &renderModeHint
 	return &this
 }
 
@@ -60,6 +68,14 @@ func NewGraphNeighborhoodNodeResponse(id string, nodeType string, title string) 
 // but it doesn't guarantee that properties required by API are set
 func NewGraphNeighborhoodNodeResponseWithDefaults() *GraphNeighborhoodNodeResponse {
 	this := GraphNeighborhoodNodeResponse{}
+	var statusTone string = "neutral"
+	this.StatusTone = &statusTone
+	var displayPriority float32 = 0.0
+	this.DisplayPriority = &displayPriority
+	var nodeDensityHint float32 = 0.0
+	this.NodeDensityHint = &nodeDensityHint
+	var renderModeHint string = "detail"
+	this.RenderModeHint = &renderModeHint
 	return &this
 }
 
@@ -167,6 +183,7 @@ func (o *GraphNeighborhoodNodeResponse) HasSubtitle() bool {
 func (o *GraphNeighborhoodNodeResponse) SetSubtitle(v string) {
 	o.Subtitle.Set(&v)
 }
+
 // SetSubtitleNil sets the value for Subtitle to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetSubtitleNil() {
 	o.Subtitle.Set(nil)
@@ -209,6 +226,7 @@ func (o *GraphNeighborhoodNodeResponse) HasPreview() bool {
 func (o *GraphNeighborhoodNodeResponse) SetPreview(v string) {
 	o.Preview.Set(&v)
 }
+
 // SetPreviewNil sets the value for Preview to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetPreviewNil() {
 	o.Preview.Set(nil)
@@ -251,6 +269,7 @@ func (o *GraphNeighborhoodNodeResponse) HasStatusLabel() bool {
 func (o *GraphNeighborhoodNodeResponse) SetStatusLabel(v string) {
 	o.StatusLabel.Set(&v)
 }
+
 // SetStatusLabelNil sets the value for StatusLabel to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetStatusLabelNil() {
 	o.StatusLabel.Set(nil)
@@ -325,6 +344,7 @@ func (o *GraphNeighborhoodNodeResponse) HasConfidence() bool {
 func (o *GraphNeighborhoodNodeResponse) SetConfidence(v float32) {
 	o.Confidence.Set(&v)
 }
+
 // SetConfidenceNil sets the value for Confidence to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetConfidenceNil() {
 	o.Confidence.Set(nil)
@@ -367,6 +387,7 @@ func (o *GraphNeighborhoodNodeResponse) HasEvidenceCount() bool {
 func (o *GraphNeighborhoodNodeResponse) SetEvidenceCount(v int32) {
 	o.EvidenceCount.Set(&v)
 }
+
 // SetEvidenceCountNil sets the value for EvidenceCount to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetEvidenceCountNil() {
 	o.EvidenceCount.Set(nil)
@@ -409,6 +430,7 @@ func (o *GraphNeighborhoodNodeResponse) HasKindLabel() bool {
 func (o *GraphNeighborhoodNodeResponse) SetKindLabel(v string) {
 	o.KindLabel.Set(&v)
 }
+
 // SetKindLabelNil sets the value for KindLabel to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetKindLabelNil() {
 	o.KindLabel.Set(nil)
@@ -451,6 +473,7 @@ func (o *GraphNeighborhoodNodeResponse) HasMeta() bool {
 func (o *GraphNeighborhoodNodeResponse) SetMeta(v string) {
 	o.Meta.Set(&v)
 }
+
 // SetMetaNil sets the value for Meta to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetMetaNil() {
 	o.Meta.Set(nil)
@@ -493,6 +516,7 @@ func (o *GraphNeighborhoodNodeResponse) HasTimestampLabel() bool {
 func (o *GraphNeighborhoodNodeResponse) SetTimestampLabel(v string) {
 	o.TimestampLabel.Set(&v)
 }
+
 // SetTimestampLabelNil sets the value for TimestampLabel to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetTimestampLabelNil() {
 	o.TimestampLabel.Set(nil)
@@ -535,6 +559,7 @@ func (o *GraphNeighborhoodNodeResponse) HasReason() bool {
 func (o *GraphNeighborhoodNodeResponse) SetReason(v string) {
 	o.Reason.Set(&v)
 }
+
 // SetReasonNil sets the value for Reason to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetReasonNil() {
 	o.Reason.Set(nil)
@@ -577,6 +602,7 @@ func (o *GraphNeighborhoodNodeResponse) HasAccentColor() bool {
 func (o *GraphNeighborhoodNodeResponse) SetAccentColor(v string) {
 	o.AccentColor.Set(&v)
 }
+
 // SetAccentColorNil sets the value for AccentColor to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetAccentColorNil() {
 	o.AccentColor.Set(nil)
@@ -683,6 +709,7 @@ func (o *GraphNeighborhoodNodeResponse) HasClusterMembership() bool {
 func (o *GraphNeighborhoodNodeResponse) SetClusterMembership(v string) {
 	o.ClusterMembership.Set(&v)
 }
+
 // SetClusterMembershipNil sets the value for ClusterMembership to be an explicit nil
 func (o *GraphNeighborhoodNodeResponse) SetClusterMembershipNil() {
 	o.ClusterMembership.Set(nil)
@@ -726,7 +753,7 @@ func (o *GraphNeighborhoodNodeResponse) SetRenderModeHint(v string) {
 }
 
 func (o GraphNeighborhoodNodeResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -801,10 +828,10 @@ func (o *GraphNeighborhoodNodeResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -860,5 +887,3 @@ func (v *NullableGraphNeighborhoodNodeResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

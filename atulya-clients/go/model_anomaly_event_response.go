@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,18 +21,18 @@ var _ MappedNullable = &AnomalyEventResponse{}
 
 // AnomalyEventResponse struct for AnomalyEventResponse
 type AnomalyEventResponse struct {
-	Id string `json:"id"`
-	BankId string `json:"bank_id"`
-	AnomalyType string `json:"anomaly_type"`
-	Severity float32 `json:"severity"`
-	Status string `json:"status"`
-	UnitIds []string `json:"unit_ids,omitempty"`
-	EntityIds []string `json:"entity_ids,omitempty"`
-	Description string `json:"description"`
-	Metadata map[string]interface{} `json:"metadata,omitempty"`
-	DetectedAt NullableString `json:"detected_at,omitempty"`
-	ResolvedAt NullableString `json:"resolved_at,omitempty"`
-	ResolvedBy NullableString `json:"resolved_by,omitempty"`
+	Id          string                      `json:"id"`
+	BankId      string                      `json:"bank_id"`
+	AnomalyType string                      `json:"anomaly_type"`
+	Severity    float32                     `json:"severity"`
+	Status      string                      `json:"status"`
+	UnitIds     []string                    `json:"unit_ids,omitempty"`
+	EntityIds   []string                    `json:"entity_ids,omitempty"`
+	Description string                      `json:"description"`
+	Metadata    map[string]interface{}      `json:"metadata,omitempty"`
+	DetectedAt  NullableString              `json:"detected_at,omitempty"`
+	ResolvedAt  NullableString              `json:"resolved_at,omitempty"`
+	ResolvedBy  NullableString              `json:"resolved_by,omitempty"`
 	Corrections []AnomalyCorrectionResponse `json:"corrections,omitempty"`
 }
 
@@ -333,6 +333,7 @@ func (o *AnomalyEventResponse) HasDetectedAt() bool {
 func (o *AnomalyEventResponse) SetDetectedAt(v string) {
 	o.DetectedAt.Set(&v)
 }
+
 // SetDetectedAtNil sets the value for DetectedAt to be an explicit nil
 func (o *AnomalyEventResponse) SetDetectedAtNil() {
 	o.DetectedAt.Set(nil)
@@ -375,6 +376,7 @@ func (o *AnomalyEventResponse) HasResolvedAt() bool {
 func (o *AnomalyEventResponse) SetResolvedAt(v string) {
 	o.ResolvedAt.Set(&v)
 }
+
 // SetResolvedAtNil sets the value for ResolvedAt to be an explicit nil
 func (o *AnomalyEventResponse) SetResolvedAtNil() {
 	o.ResolvedAt.Set(nil)
@@ -417,6 +419,7 @@ func (o *AnomalyEventResponse) HasResolvedBy() bool {
 func (o *AnomalyEventResponse) SetResolvedBy(v string) {
 	o.ResolvedBy.Set(&v)
 }
+
 // SetResolvedByNil sets the value for ResolvedBy to be an explicit nil
 func (o *AnomalyEventResponse) SetResolvedByNil() {
 	o.ResolvedBy.Set(nil)
@@ -460,7 +463,7 @@ func (o *AnomalyEventResponse) SetCorrections(v []AnomalyCorrectionResponse) {
 }
 
 func (o AnomalyEventResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -517,10 +520,10 @@ func (o *AnomalyEventResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -576,5 +579,3 @@ func (v *NullableAnomalyEventResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

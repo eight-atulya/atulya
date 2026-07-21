@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,19 +21,19 @@ var _ MappedNullable = &RecallResult{}
 
 // RecallResult Single recall result item.
 type RecallResult struct {
-	Id string `json:"id"`
-	Text string `json:"text"`
-	Type NullableString `json:"type,omitempty"`
-	Entities []string `json:"entities,omitempty"`
-	Context NullableString `json:"context,omitempty"`
-	OccurredStart NullableString `json:"occurred_start,omitempty"`
-	OccurredEnd NullableString `json:"occurred_end,omitempty"`
-	MentionedAt NullableString `json:"mentioned_at,omitempty"`
-	DocumentId NullableString `json:"document_id,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
-	ChunkId NullableString `json:"chunk_id,omitempty"`
-	Tags []string `json:"tags,omitempty"`
-	SourceFactIds []string `json:"source_fact_ids,omitempty"`
+	Id            string            `json:"id"`
+	Text          string            `json:"text"`
+	Type          NullableString    `json:"type,omitempty"`
+	Entities      []string          `json:"entities,omitempty"`
+	Context       NullableString    `json:"context,omitempty"`
+	OccurredStart NullableString    `json:"occurred_start,omitempty"`
+	OccurredEnd   NullableString    `json:"occurred_end,omitempty"`
+	MentionedAt   NullableString    `json:"mentioned_at,omitempty"`
+	DocumentId    NullableString    `json:"document_id,omitempty"`
+	Metadata      map[string]string `json:"metadata,omitempty"`
+	ChunkId       NullableString    `json:"chunk_id,omitempty"`
+	Tags          []string          `json:"tags,omitempty"`
+	SourceFactIds []string          `json:"source_fact_ids,omitempty"`
 }
 
 type _RecallResult RecallResult
@@ -137,6 +137,7 @@ func (o *RecallResult) HasType() bool {
 func (o *RecallResult) SetType(v string) {
 	o.Type.Set(&v)
 }
+
 // SetTypeNil sets the value for Type to be an explicit nil
 func (o *RecallResult) SetTypeNil() {
 	o.Type.Set(nil)
@@ -212,6 +213,7 @@ func (o *RecallResult) HasContext() bool {
 func (o *RecallResult) SetContext(v string) {
 	o.Context.Set(&v)
 }
+
 // SetContextNil sets the value for Context to be an explicit nil
 func (o *RecallResult) SetContextNil() {
 	o.Context.Set(nil)
@@ -254,6 +256,7 @@ func (o *RecallResult) HasOccurredStart() bool {
 func (o *RecallResult) SetOccurredStart(v string) {
 	o.OccurredStart.Set(&v)
 }
+
 // SetOccurredStartNil sets the value for OccurredStart to be an explicit nil
 func (o *RecallResult) SetOccurredStartNil() {
 	o.OccurredStart.Set(nil)
@@ -296,6 +299,7 @@ func (o *RecallResult) HasOccurredEnd() bool {
 func (o *RecallResult) SetOccurredEnd(v string) {
 	o.OccurredEnd.Set(&v)
 }
+
 // SetOccurredEndNil sets the value for OccurredEnd to be an explicit nil
 func (o *RecallResult) SetOccurredEndNil() {
 	o.OccurredEnd.Set(nil)
@@ -338,6 +342,7 @@ func (o *RecallResult) HasMentionedAt() bool {
 func (o *RecallResult) SetMentionedAt(v string) {
 	o.MentionedAt.Set(&v)
 }
+
 // SetMentionedAtNil sets the value for MentionedAt to be an explicit nil
 func (o *RecallResult) SetMentionedAtNil() {
 	o.MentionedAt.Set(nil)
@@ -380,6 +385,7 @@ func (o *RecallResult) HasDocumentId() bool {
 func (o *RecallResult) SetDocumentId(v string) {
 	o.DocumentId.Set(&v)
 }
+
 // SetDocumentIdNil sets the value for DocumentId to be an explicit nil
 func (o *RecallResult) SetDocumentIdNil() {
 	o.DocumentId.Set(nil)
@@ -455,6 +461,7 @@ func (o *RecallResult) HasChunkId() bool {
 func (o *RecallResult) SetChunkId(v string) {
 	o.ChunkId.Set(&v)
 }
+
 // SetChunkIdNil sets the value for ChunkId to be an explicit nil
 func (o *RecallResult) SetChunkIdNil() {
 	o.ChunkId.Set(nil)
@@ -532,7 +539,7 @@ func (o *RecallResult) SetSourceFactIds(v []string) {
 }
 
 func (o RecallResult) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -593,10 +600,10 @@ func (o *RecallResult) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -652,5 +659,3 @@ func (v *NullableRecallResult) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

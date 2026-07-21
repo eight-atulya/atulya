@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &LLMRequestListResponse{}
 
 // LLMRequestListResponse Response model for listing LLM request traces.
 type LLMRequestListResponse struct {
-	Items []LLMRequestRow `json:"items"`
-	Total int32 `json:"total"`
-	Limit int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Items  []LLMRequestRow `json:"items"`
+	Total  int32           `json:"total"`
+	Limit  int32           `json:"limit"`
+	Offset int32           `json:"offset"`
 }
 
 type _LLMRequestListResponse LLMRequestListResponse
@@ -147,7 +147,7 @@ func (o *LLMRequestListResponse) SetOffset(v int32) {
 }
 
 func (o LLMRequestListResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -179,10 +179,10 @@ func (o *LLMRequestListResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -238,5 +238,3 @@ func (v *NullableLLMRequestListResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

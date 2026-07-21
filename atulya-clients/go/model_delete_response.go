@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &DeleteResponse{}
 
 // DeleteResponse Response model for delete operations.
 type DeleteResponse struct {
-	Success bool `json:"success"`
-	Message NullableString `json:"message,omitempty"`
-	DeletedCount NullableInt32 `json:"deleted_count,omitempty"`
+	Success      bool           `json:"success"`
+	Message      NullableString `json:"message,omitempty"`
+	DeletedCount NullableInt32  `json:"deleted_count,omitempty"`
 }
 
 type _DeleteResponse DeleteResponse
@@ -102,6 +102,7 @@ func (o *DeleteResponse) HasMessage() bool {
 func (o *DeleteResponse) SetMessage(v string) {
 	o.Message.Set(&v)
 }
+
 // SetMessageNil sets the value for Message to be an explicit nil
 func (o *DeleteResponse) SetMessageNil() {
 	o.Message.Set(nil)
@@ -144,6 +145,7 @@ func (o *DeleteResponse) HasDeletedCount() bool {
 func (o *DeleteResponse) SetDeletedCount(v int32) {
 	o.DeletedCount.Set(&v)
 }
+
 // SetDeletedCountNil sets the value for DeletedCount to be an explicit nil
 func (o *DeleteResponse) SetDeletedCountNil() {
 	o.DeletedCount.Set(nil)
@@ -155,7 +157,7 @@ func (o *DeleteResponse) UnsetDeletedCount() {
 }
 
 func (o DeleteResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -187,10 +189,10 @@ func (o *DeleteResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -246,5 +248,3 @@ func (v *NullableDeleteResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

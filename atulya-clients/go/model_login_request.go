@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,7 @@ var _ MappedNullable = &LoginRequest{}
 
 // LoginRequest struct for LoginRequest
 type LoginRequest struct {
-	Org NullableString `json:"org,omitempty"`
-	Email string `json:"email"`
+	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
@@ -45,48 +44,6 @@ func NewLoginRequest(email string, password string) *LoginRequest {
 func NewLoginRequestWithDefaults() *LoginRequest {
 	this := LoginRequest{}
 	return &this
-}
-
-// GetOrg returns the Org field value if set, zero value otherwise (both if not set or set to explicit null).
-func (o *LoginRequest) GetOrg() string {
-	if o == nil || IsNil(o.Org.Get()) {
-		var ret string
-		return ret
-	}
-	return *o.Org.Get()
-}
-
-// GetOrgOk returns a tuple with the Org field value if set, nil otherwise
-// and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
-func (o *LoginRequest) GetOrgOk() (*string, bool) {
-	if o == nil {
-		return nil, false
-	}
-	return o.Org.Get(), o.Org.IsSet()
-}
-
-// HasOrg returns a boolean if a field has been set.
-func (o *LoginRequest) HasOrg() bool {
-	if o != nil && o.Org.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetOrg gets a reference to the given NullableString and assigns it to the Org field.
-func (o *LoginRequest) SetOrg(v string) {
-	o.Org.Set(&v)
-}
-// SetOrgNil sets the value for Org to be an explicit nil
-func (o *LoginRequest) SetOrgNil() {
-	o.Org.Set(nil)
-}
-
-// UnsetOrg ensures that no value is present for Org, not even an explicit nil
-func (o *LoginRequest) UnsetOrg() {
-	o.Org.Unset()
 }
 
 // GetEmail returns the Email field value
@@ -138,7 +95,7 @@ func (o *LoginRequest) SetPassword(v string) {
 }
 
 func (o LoginRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -147,9 +104,6 @@ func (o LoginRequest) MarshalJSON() ([]byte, error) {
 
 func (o LoginRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	if o.Org.IsSet() {
-		toSerialize["org"] = o.Org.Get()
-	}
 	toSerialize["email"] = o.Email
 	toSerialize["password"] = o.Password
 	return toSerialize, nil
@@ -169,10 +123,10 @@ func (o *LoginRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

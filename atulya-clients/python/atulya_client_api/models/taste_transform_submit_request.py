@@ -21,7 +21,6 @@ from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TasteTransformSubmitRequest(BaseModel):
     """
@@ -31,12 +30,11 @@ class TasteTransformSubmitRequest(BaseModel):
     set_ids: Optional[List[StrictStr]] = None
     chain_id: Optional[StrictStr] = None
     ops: Optional[List[Dict[str, Any]]] = None
-    preview: Optional[StrictBool] = None
+    preview: Optional[StrictBool] = False
     __properties: ClassVar[List[str]] = ["dataset_id", "set_ids", "chain_id", "ops", "preview"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -48,7 +46,8 @@ class TasteTransformSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -94,8 +93,6 @@ class TasteTransformSubmitRequest(BaseModel):
             "set_ids": obj.get("set_ids"),
             "chain_id": obj.get("chain_id"),
             "ops": obj.get("ops"),
-            "preview": obj.get("preview")
+            "preview": obj.get("preview") if obj.get("preview") is not None else False
         })
         return _obj
-
-

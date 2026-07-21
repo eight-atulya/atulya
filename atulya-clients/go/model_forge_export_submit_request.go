@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &ForgeExportSubmitRequest{}
 
 // ForgeExportSubmitRequest struct for ForgeExportSubmitRequest
 type ForgeExportSubmitRequest struct {
-	OperationId string `json:"operation_id"`
-	AdapterId *string `json:"adapter_id,omitempty"`
-	QualityThreshold NullableFloat32 `json:"quality_threshold,omitempty"`
-	Options map[string]interface{} `json:"options,omitempty"`
+	OperationId      string                 `json:"operation_id"`
+	AdapterId        *string                `json:"adapter_id,omitempty"`
+	QualityThreshold NullableFloat32        `json:"quality_threshold,omitempty"`
+	Options          map[string]interface{} `json:"options,omitempty"`
 }
 
 type _ForgeExportSubmitRequest ForgeExportSubmitRequest
@@ -36,6 +36,8 @@ type _ForgeExportSubmitRequest ForgeExportSubmitRequest
 func NewForgeExportSubmitRequest(operationId string) *ForgeExportSubmitRequest {
 	this := ForgeExportSubmitRequest{}
 	this.OperationId = operationId
+	var adapterId string = "atr_jsonl"
+	this.AdapterId = &adapterId
 	return &this
 }
 
@@ -44,6 +46,8 @@ func NewForgeExportSubmitRequest(operationId string) *ForgeExportSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewForgeExportSubmitRequestWithDefaults() *ForgeExportSubmitRequest {
 	this := ForgeExportSubmitRequest{}
+	var adapterId string = "atr_jsonl"
+	this.AdapterId = &adapterId
 	return &this
 }
 
@@ -135,6 +139,7 @@ func (o *ForgeExportSubmitRequest) HasQualityThreshold() bool {
 func (o *ForgeExportSubmitRequest) SetQualityThreshold(v float32) {
 	o.QualityThreshold.Set(&v)
 }
+
 // SetQualityThresholdNil sets the value for QualityThreshold to be an explicit nil
 func (o *ForgeExportSubmitRequest) SetQualityThresholdNil() {
 	o.QualityThreshold.Set(nil)
@@ -178,7 +183,7 @@ func (o *ForgeExportSubmitRequest) SetOptions(v map[string]interface{}) {
 }
 
 func (o ForgeExportSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -213,10 +218,10 @@ func (o *ForgeExportSubmitRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -272,5 +277,3 @@ func (v *NullableForgeExportSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -19,15 +19,14 @@ import (
 	"strings"
 )
 
-
 // OperationsAPIService OperationsAPI service
 type OperationsAPIService service
 
 type ApiCancelOperationRequest struct {
-	ctx context.Context
-	ApiService *OperationsAPIService
-	bankId string
-	operationId string
+	ctx           context.Context
+	ApiService    *OperationsAPIService
+	bankId        string
+	operationId   string
 	authorization *string
 }
 
@@ -45,28 +44,29 @@ CancelOperation Cancel a pending async operation
 
 Cancel a pending async operation by removing it from the queue
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param operationId
- @return ApiCancelOperationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param operationId
+	@return ApiCancelOperationRequest
 */
 func (a *OperationsAPIService) CancelOperation(ctx context.Context, bankId string, operationId string) ApiCancelOperationRequest {
 	return ApiCancelOperationRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		operationId: operationId,
 	}
 }
 
 // Execute executes the request
-//  @return CancelOperationResponse
+//
+//	@return CancelOperationResponse
 func (a *OperationsAPIService) CancelOperationExecute(r ApiCancelOperationRequest) (*CancelOperationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CancelOperationResponse
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CancelOperationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OperationsAPIService.CancelOperation")
@@ -131,8 +131,8 @@ func (a *OperationsAPIService) CancelOperationExecute(r ApiCancelOperationReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -150,10 +150,10 @@ func (a *OperationsAPIService) CancelOperationExecute(r ApiCancelOperationReques
 }
 
 type ApiGetOperationResultRequest struct {
-	ctx context.Context
-	ApiService *OperationsAPIService
-	bankId string
-	operationId string
+	ctx           context.Context
+	ApiService    *OperationsAPIService
+	bankId        string
+	operationId   string
 	authorization *string
 }
 
@@ -171,28 +171,29 @@ GetOperationResult Get operation result
 
 Get the final user-facing result payload for an async operation.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param operationId
- @return ApiGetOperationResultRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param operationId
+	@return ApiGetOperationResultRequest
 */
 func (a *OperationsAPIService) GetOperationResult(ctx context.Context, bankId string, operationId string) ApiGetOperationResultRequest {
 	return ApiGetOperationResultRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		operationId: operationId,
 	}
 }
 
 // Execute executes the request
-//  @return OperationResultResponse
+//
+//	@return OperationResultResponse
 func (a *OperationsAPIService) GetOperationResultExecute(r ApiGetOperationResultRequest) (*OperationResultResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *OperationResultResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *OperationResultResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OperationsAPIService.GetOperationResult")
@@ -257,8 +258,8 @@ func (a *OperationsAPIService) GetOperationResultExecute(r ApiGetOperationResult
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -276,10 +277,10 @@ func (a *OperationsAPIService) GetOperationResultExecute(r ApiGetOperationResult
 }
 
 type ApiGetOperationStatusRequest struct {
-	ctx context.Context
-	ApiService *OperationsAPIService
-	bankId string
-	operationId string
+	ctx           context.Context
+	ApiService    *OperationsAPIService
+	bankId        string
+	operationId   string
 	authorization *string
 }
 
@@ -297,28 +298,29 @@ GetOperationStatus Get operation status
 
 Get the status of a specific async operation. Returns 'pending', 'completed', or 'failed'. Completed operations are removed from storage, so 'completed' means the operation finished successfully.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param operationId
- @return ApiGetOperationStatusRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param operationId
+	@return ApiGetOperationStatusRequest
 */
 func (a *OperationsAPIService) GetOperationStatus(ctx context.Context, bankId string, operationId string) ApiGetOperationStatusRequest {
 	return ApiGetOperationStatusRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		operationId: operationId,
 	}
 }
 
 // Execute executes the request
-//  @return OperationStatusResponse
+//
+//	@return OperationStatusResponse
 func (a *OperationsAPIService) GetOperationStatusExecute(r ApiGetOperationStatusRequest) (*OperationStatusResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *OperationStatusResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *OperationStatusResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OperationsAPIService.GetOperationStatus")
@@ -383,8 +385,8 @@ func (a *OperationsAPIService) GetOperationStatusExecute(r ApiGetOperationStatus
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -402,13 +404,13 @@ func (a *OperationsAPIService) GetOperationStatusExecute(r ApiGetOperationStatus
 }
 
 type ApiListOperationsRequest struct {
-	ctx context.Context
-	ApiService *OperationsAPIService
-	bankId string
-	status *string
-	type_ *string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *OperationsAPIService
+	bankId        string
+	status        *string
+	type_         *string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -450,26 +452,27 @@ ListOperations List async operations
 
 Get a list of async operations for a specific agent, with optional filtering by status and operation type. Results are sorted by most recent first.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListOperationsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListOperationsRequest
 */
 func (a *OperationsAPIService) ListOperations(ctx context.Context, bankId string) ApiListOperationsRequest {
 	return ApiListOperationsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return OperationsListResponse
+//
+//	@return OperationsListResponse
 func (a *OperationsAPIService) ListOperationsExecute(r ApiListOperationsRequest) (*OperationsListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *OperationsListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *OperationsListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OperationsAPIService.ListOperations")
@@ -492,9 +495,15 @@ func (a *OperationsAPIService) ListOperationsExecute(r ApiListOperationsRequest)
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 20
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -545,8 +554,8 @@ func (a *OperationsAPIService) ListOperationsExecute(r ApiListOperationsRequest)
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -564,10 +573,10 @@ func (a *OperationsAPIService) ListOperationsExecute(r ApiListOperationsRequest)
 }
 
 type ApiRetryOperationRequest struct {
-	ctx context.Context
-	ApiService *OperationsAPIService
-	bankId string
-	operationId string
+	ctx           context.Context
+	ApiService    *OperationsAPIService
+	bankId        string
+	operationId   string
 	authorization *string
 }
 
@@ -585,28 +594,29 @@ RetryOperation Retry a failed async operation
 
 Create a new pending operation by re-queueing a failed async operation using its original task payload.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param operationId
- @return ApiRetryOperationRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param operationId
+	@return ApiRetryOperationRequest
 */
 func (a *OperationsAPIService) RetryOperation(ctx context.Context, bankId string, operationId string) ApiRetryOperationRequest {
 	return ApiRetryOperationRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		operationId: operationId,
 	}
 }
 
 // Execute executes the request
-//  @return RetryOperationResponse
+//
+//	@return RetryOperationResponse
 func (a *OperationsAPIService) RetryOperationExecute(r ApiRetryOperationRequest) (*RetryOperationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *RetryOperationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *RetryOperationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "OperationsAPIService.RetryOperation")
@@ -671,8 +681,8 @@ func (a *OperationsAPIService) RetryOperationExecute(r ApiRetryOperationRequest)
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

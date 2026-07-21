@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &GraphEvidencePathStepResponse{}
 
 // GraphEvidencePathStepResponse struct for GraphEvidencePathStepResponse
 type GraphEvidencePathStepResponse struct {
-	Kind string `json:"kind"`
-	Id string `json:"id"`
-	Label string `json:"label"`
+	Kind      string         `json:"kind"`
+	Id        string         `json:"id"`
+	Label     string         `json:"label"`
 	Timestamp NullableString `json:"timestamp,omitempty"`
 }
 
@@ -153,6 +153,7 @@ func (o *GraphEvidencePathStepResponse) HasTimestamp() bool {
 func (o *GraphEvidencePathStepResponse) SetTimestamp(v string) {
 	o.Timestamp.Set(&v)
 }
+
 // SetTimestampNil sets the value for Timestamp to be an explicit nil
 func (o *GraphEvidencePathStepResponse) SetTimestampNil() {
 	o.Timestamp.Set(nil)
@@ -164,7 +165,7 @@ func (o *GraphEvidencePathStepResponse) UnsetTimestamp() {
 }
 
 func (o GraphEvidencePathStepResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -197,10 +198,10 @@ func (o *GraphEvidencePathStepResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -256,5 +257,3 @@ func (v *NullableGraphEvidencePathStepResponse) UnmarshalJSON(src []byte) error 
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

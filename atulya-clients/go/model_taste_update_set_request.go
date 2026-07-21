@@ -20,8 +20,8 @@ var _ MappedNullable = &TasteUpdateSetRequest{}
 // TasteUpdateSetRequest struct for TasteUpdateSetRequest
 type TasteUpdateSetRequest struct {
 	WorkingPayload map[string]interface{} `json:"working_payload,omitempty"`
-	TasteTags []string `json:"taste_tags,omitempty"`
-	Status NullableString `json:"status,omitempty"`
+	TasteTags      []string               `json:"taste_tags,omitempty"`
+	Status         NullableString         `json:"status,omitempty"`
 }
 
 // NewTasteUpdateSetRequest instantiates a new TasteUpdateSetRequest object
@@ -139,6 +139,7 @@ func (o *TasteUpdateSetRequest) HasStatus() bool {
 func (o *TasteUpdateSetRequest) SetStatus(v string) {
 	o.Status.Set(&v)
 }
+
 // SetStatusNil sets the value for Status to be an explicit nil
 func (o *TasteUpdateSetRequest) SetStatusNil() {
 	o.Status.Set(nil)
@@ -150,7 +151,7 @@ func (o *TasteUpdateSetRequest) UnsetStatus() {
 }
 
 func (o TasteUpdateSetRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -206,5 +207,3 @@ func (v *NullableTasteUpdateSetRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

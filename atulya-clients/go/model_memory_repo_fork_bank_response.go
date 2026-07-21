@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &MemoryRepoForkBankResponse{}
 
 // MemoryRepoForkBankResponse struct for MemoryRepoForkBankResponse
 type MemoryRepoForkBankResponse struct {
-	BankId string `json:"bank_id"`
-	BankName NullableString `json:"bank_name,omitempty"`
-	SourceRepoId string `json:"source_repo_id"`
-	SourceRef string `json:"source_ref"`
-	SourceBranch NullableString `json:"source_branch,omitempty"`
-	SourceCommitId NullableString `json:"source_commit_id,omitempty"`
-	IncludeWorkspace bool `json:"include_workspace"`
-	RepoEnabled bool `json:"repo_enabled"`
-	Repo NullableMemoryRepoSummaryResponse `json:"repo,omitempty"`
+	BankId           string                            `json:"bank_id"`
+	BankName         NullableString                    `json:"bank_name,omitempty"`
+	SourceRepoId     string                            `json:"source_repo_id"`
+	SourceRef        string                            `json:"source_ref"`
+	SourceBranch     NullableString                    `json:"source_branch,omitempty"`
+	SourceCommitId   NullableString                    `json:"source_commit_id,omitempty"`
+	IncludeWorkspace bool                              `json:"include_workspace"`
+	RepoEnabled      bool                              `json:"repo_enabled"`
+	Repo             NullableMemoryRepoSummaryResponse `json:"repo,omitempty"`
 }
 
 type _MemoryRepoForkBankResponse MemoryRepoForkBankResponse
@@ -112,6 +112,7 @@ func (o *MemoryRepoForkBankResponse) HasBankName() bool {
 func (o *MemoryRepoForkBankResponse) SetBankName(v string) {
 	o.BankName.Set(&v)
 }
+
 // SetBankNameNil sets the value for BankName to be an explicit nil
 func (o *MemoryRepoForkBankResponse) SetBankNameNil() {
 	o.BankName.Set(nil)
@@ -202,6 +203,7 @@ func (o *MemoryRepoForkBankResponse) HasSourceBranch() bool {
 func (o *MemoryRepoForkBankResponse) SetSourceBranch(v string) {
 	o.SourceBranch.Set(&v)
 }
+
 // SetSourceBranchNil sets the value for SourceBranch to be an explicit nil
 func (o *MemoryRepoForkBankResponse) SetSourceBranchNil() {
 	o.SourceBranch.Set(nil)
@@ -244,6 +246,7 @@ func (o *MemoryRepoForkBankResponse) HasSourceCommitId() bool {
 func (o *MemoryRepoForkBankResponse) SetSourceCommitId(v string) {
 	o.SourceCommitId.Set(&v)
 }
+
 // SetSourceCommitIdNil sets the value for SourceCommitId to be an explicit nil
 func (o *MemoryRepoForkBankResponse) SetSourceCommitIdNil() {
 	o.SourceCommitId.Set(nil)
@@ -334,6 +337,7 @@ func (o *MemoryRepoForkBankResponse) HasRepo() bool {
 func (o *MemoryRepoForkBankResponse) SetRepo(v MemoryRepoSummaryResponse) {
 	o.Repo.Set(&v)
 }
+
 // SetRepoNil sets the value for Repo to be an explicit nil
 func (o *MemoryRepoForkBankResponse) SetRepoNil() {
 	o.Repo.Set(nil)
@@ -345,7 +349,7 @@ func (o *MemoryRepoForkBankResponse) UnsetRepo() {
 }
 
 func (o MemoryRepoForkBankResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -391,10 +395,10 @@ func (o *MemoryRepoForkBankResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -450,5 +454,3 @@ func (v *NullableMemoryRepoForkBankResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

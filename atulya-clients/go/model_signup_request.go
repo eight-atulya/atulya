@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &SignupRequest{}
 
 // SignupRequest struct for SignupRequest
 type SignupRequest struct {
-	OrgSlug string `json:"org_slug"`
-	OrgName string `json:"org_name"`
-	OwnerEmail string `json:"owner_email"`
-	OwnerName NullableString `json:"owner_name,omitempty"`
+	OrgSlug       string `json:"org_slug"`
+	OrgName       string `json:"org_name"`
+	OwnerEmail    string `json:"owner_email"`
+	OwnerName     string `json:"owner_name"`
 	OwnerPassword string `json:"owner_password"`
 }
 
@@ -34,11 +34,12 @@ type _SignupRequest SignupRequest
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSignupRequest(orgSlug string, orgName string, ownerEmail string, ownerPassword string) *SignupRequest {
+func NewSignupRequest(orgSlug string, orgName string, ownerEmail string, ownerName string, ownerPassword string) *SignupRequest {
 	this := SignupRequest{}
 	this.OrgSlug = orgSlug
 	this.OrgName = orgName
 	this.OwnerEmail = ownerEmail
+	this.OwnerName = ownerName
 	this.OwnerPassword = ownerPassword
 	return &this
 }
@@ -123,46 +124,28 @@ func (o *SignupRequest) SetOwnerEmail(v string) {
 	o.OwnerEmail = v
 }
 
-// GetOwnerName returns the OwnerName field value if set, zero value otherwise (both if not set or set to explicit null).
+// GetOwnerName returns the OwnerName field value
 func (o *SignupRequest) GetOwnerName() string {
-	if o == nil || IsNil(o.OwnerName.Get()) {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.OwnerName.Get()
+
+	return o.OwnerName
 }
 
-// GetOwnerNameOk returns a tuple with the OwnerName field value if set, nil otherwise
+// GetOwnerNameOk returns a tuple with the OwnerName field value
 // and a boolean to check if the value has been set.
-// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *SignupRequest) GetOwnerNameOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return o.OwnerName.Get(), o.OwnerName.IsSet()
+	return &o.OwnerName, true
 }
 
-// HasOwnerName returns a boolean if a field has been set.
-func (o *SignupRequest) HasOwnerName() bool {
-	if o != nil && o.OwnerName.IsSet() {
-		return true
-	}
-
-	return false
-}
-
-// SetOwnerName gets a reference to the given NullableString and assigns it to the OwnerName field.
+// SetOwnerName sets field value
 func (o *SignupRequest) SetOwnerName(v string) {
-	o.OwnerName.Set(&v)
-}
-// SetOwnerNameNil sets the value for OwnerName to be an explicit nil
-func (o *SignupRequest) SetOwnerNameNil() {
-	o.OwnerName.Set(nil)
-}
-
-// UnsetOwnerName ensures that no value is present for OwnerName, not even an explicit nil
-func (o *SignupRequest) UnsetOwnerName() {
-	o.OwnerName.Unset()
+	o.OwnerName = v
 }
 
 // GetOwnerPassword returns the OwnerPassword field value
@@ -190,7 +173,7 @@ func (o *SignupRequest) SetOwnerPassword(v string) {
 }
 
 func (o SignupRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -202,9 +185,7 @@ func (o SignupRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["org_slug"] = o.OrgSlug
 	toSerialize["org_name"] = o.OrgName
 	toSerialize["owner_email"] = o.OwnerEmail
-	if o.OwnerName.IsSet() {
-		toSerialize["owner_name"] = o.OwnerName.Get()
-	}
+	toSerialize["owner_name"] = o.OwnerName
 	toSerialize["owner_password"] = o.OwnerPassword
 	return toSerialize, nil
 }
@@ -217,6 +198,7 @@ func (o *SignupRequest) UnmarshalJSON(data []byte) (err error) {
 		"org_slug",
 		"org_name",
 		"owner_email",
+		"owner_name",
 		"owner_password",
 	}
 
@@ -225,10 +207,10 @@ func (o *SignupRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

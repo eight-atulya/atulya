@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &ListDocumentsResponse{}
 
 // ListDocumentsResponse Response model for list documents endpoint.
 type ListDocumentsResponse struct {
-	Items []map[string]interface{} `json:"items"`
-	Total int32 `json:"total"`
-	Limit int32 `json:"limit"`
-	Offset int32 `json:"offset"`
+	Items  []map[string]interface{} `json:"items"`
+	Total  int32                    `json:"total"`
+	Limit  int32                    `json:"limit"`
+	Offset int32                    `json:"offset"`
 }
 
 type _ListDocumentsResponse ListDocumentsResponse
@@ -147,7 +147,7 @@ func (o *ListDocumentsResponse) SetOffset(v int32) {
 }
 
 func (o ListDocumentsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -179,10 +179,10 @@ func (o *ListDocumentsResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -238,5 +238,3 @@ func (v *NullableListDocumentsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

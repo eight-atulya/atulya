@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &SubRoutineHistogramResponse{}
 
 // SubRoutineHistogramResponse struct for SubRoutineHistogramResponse
 type SubRoutineHistogramResponse struct {
-	BankId string `json:"bank_id"`
-	Histogram []PredictionPoint `json:"histogram"`
-	SampleCount *int32 `json:"sample_count,omitempty"`
-	SourceSnapshotId NullableString `json:"source_snapshot_id,omitempty"`
-	ModelSignature NullableString `json:"model_signature,omitempty"`
+	BankId           string            `json:"bank_id"`
+	Histogram        []PredictionPoint `json:"histogram"`
+	SampleCount      *int32            `json:"sample_count,omitempty"`
+	SourceSnapshotId NullableString    `json:"source_snapshot_id,omitempty"`
+	ModelSignature   NullableString    `json:"model_signature,omitempty"`
 }
 
 type _SubRoutineHistogramResponse SubRoutineHistogramResponse
@@ -38,6 +38,8 @@ func NewSubRoutineHistogramResponse(bankId string, histogram []PredictionPoint) 
 	this := SubRoutineHistogramResponse{}
 	this.BankId = bankId
 	this.Histogram = histogram
+	var sampleCount int32 = 0
+	this.SampleCount = &sampleCount
 	return &this
 }
 
@@ -46,6 +48,8 @@ func NewSubRoutineHistogramResponse(bankId string, histogram []PredictionPoint) 
 // but it doesn't guarantee that properties required by API are set
 func NewSubRoutineHistogramResponseWithDefaults() *SubRoutineHistogramResponse {
 	this := SubRoutineHistogramResponse{}
+	var sampleCount int32 = 0
+	this.SampleCount = &sampleCount
 	return &this
 }
 
@@ -161,6 +165,7 @@ func (o *SubRoutineHistogramResponse) HasSourceSnapshotId() bool {
 func (o *SubRoutineHistogramResponse) SetSourceSnapshotId(v string) {
 	o.SourceSnapshotId.Set(&v)
 }
+
 // SetSourceSnapshotIdNil sets the value for SourceSnapshotId to be an explicit nil
 func (o *SubRoutineHistogramResponse) SetSourceSnapshotIdNil() {
 	o.SourceSnapshotId.Set(nil)
@@ -203,6 +208,7 @@ func (o *SubRoutineHistogramResponse) HasModelSignature() bool {
 func (o *SubRoutineHistogramResponse) SetModelSignature(v string) {
 	o.ModelSignature.Set(&v)
 }
+
 // SetModelSignatureNil sets the value for ModelSignature to be an explicit nil
 func (o *SubRoutineHistogramResponse) SetModelSignatureNil() {
 	o.ModelSignature.Set(nil)
@@ -214,7 +220,7 @@ func (o *SubRoutineHistogramResponse) UnsetModelSignature() {
 }
 
 func (o SubRoutineHistogramResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -251,10 +257,10 @@ func (o *SubRoutineHistogramResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -310,5 +316,3 @@ func (v *NullableSubRoutineHistogramResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

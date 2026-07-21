@@ -22,7 +22,6 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing_extensions import Annotated
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class ForgeJobSubmitRequest(BaseModel):
     """
@@ -31,17 +30,16 @@ class ForgeJobSubmitRequest(BaseModel):
     recipe_id: StrictStr
     domain_tags: Optional[List[StrictStr]] = None
     source: Optional[Dict[str, Any]] = None
-    quality_threshold: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = None
-    wait_consolidation: Optional[StrictBool] = None
-    max_records: Optional[Annotated[int, Field(le=10000, strict=True, ge=1)]] = None
-    repo_commit_on_complete: Optional[StrictBool] = None
+    quality_threshold: Optional[Union[Annotated[float, Field(le=1.0, strict=True, ge=0.0)], Annotated[int, Field(le=1, strict=True, ge=0)]]] = 0.6
+    wait_consolidation: Optional[StrictBool] = True
+    max_records: Optional[Annotated[int, Field(le=10000, strict=True, ge=1)]] = 500
+    repo_commit_on_complete: Optional[StrictBool] = False
     commit_message: Optional[StrictStr] = None
     options: Optional[Dict[str, Any]] = None
     __properties: ClassVar[List[str]] = ["recipe_id", "domain_tags", "source", "quality_threshold", "wait_consolidation", "max_records", "repo_commit_on_complete", "commit_message", "options"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -53,7 +51,8 @@ class ForgeJobSubmitRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -103,13 +102,11 @@ class ForgeJobSubmitRequest(BaseModel):
             "recipe_id": obj.get("recipe_id"),
             "domain_tags": obj.get("domain_tags"),
             "source": obj.get("source"),
-            "quality_threshold": obj.get("quality_threshold"),
-            "wait_consolidation": obj.get("wait_consolidation"),
-            "max_records": obj.get("max_records"),
-            "repo_commit_on_complete": obj.get("repo_commit_on_complete"),
+            "quality_threshold": obj.get("quality_threshold") if obj.get("quality_threshold") is not None else 0.6,
+            "wait_consolidation": obj.get("wait_consolidation") if obj.get("wait_consolidation") is not None else True,
+            "max_records": obj.get("max_records") if obj.get("max_records") is not None else 500,
+            "repo_commit_on_complete": obj.get("repo_commit_on_complete") if obj.get("repo_commit_on_complete") is not None else False,
             "commit_message": obj.get("commit_message"),
             "options": obj.get("options")
         })
         return _obj
-
-

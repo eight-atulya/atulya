@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,34 +21,34 @@ var _ MappedNullable = &CodebaseChunkItemResponse{}
 
 // CodebaseChunkItemResponse Single reviewable code chunk.
 type CodebaseChunkItemResponse struct {
-	Id string `json:"id"`
-	ChunkKey string `json:"chunk_key"`
-	Path string `json:"path"`
-	Language NullableString `json:"language,omitempty"`
-	Kind string `json:"kind"`
-	Label string `json:"label"`
-	PreviewText string `json:"preview_text"`
-	StartLine int32 `json:"start_line"`
-	EndLine int32 `json:"end_line"`
-	Container NullableString `json:"container,omitempty"`
-	ParentSymbol NullableString `json:"parent_symbol,omitempty"`
-	ParentFqName NullableString `json:"parent_fq_name,omitempty"`
-	ParseConfidence *float32 `json:"parse_confidence,omitempty"`
-	ClusterId NullableString `json:"cluster_id,omitempty"`
-	ClusterLabel NullableString `json:"cluster_label,omitempty"`
-	RouteTarget string `json:"route_target"`
-	RouteSource NullableString `json:"route_source,omitempty"`
-	ChangeKind string `json:"change_kind"`
-	RelatedCount *int32 `json:"related_count,omitempty"`
-	DocumentId NullableString `json:"document_id,omitempty"`
-	SignificanceScore *float32 `json:"significance_score,omitempty"`
+	Id                     string                 `json:"id"`
+	ChunkKey               string                 `json:"chunk_key"`
+	Path                   string                 `json:"path"`
+	Language               NullableString         `json:"language,omitempty"`
+	Kind                   string                 `json:"kind"`
+	Label                  string                 `json:"label"`
+	PreviewText            string                 `json:"preview_text"`
+	StartLine              int32                  `json:"start_line"`
+	EndLine                int32                  `json:"end_line"`
+	Container              NullableString         `json:"container,omitempty"`
+	ParentSymbol           NullableString         `json:"parent_symbol,omitempty"`
+	ParentFqName           NullableString         `json:"parent_fq_name,omitempty"`
+	ParseConfidence        *float32               `json:"parse_confidence,omitempty"`
+	ClusterId              NullableString         `json:"cluster_id,omitempty"`
+	ClusterLabel           NullableString         `json:"cluster_label,omitempty"`
+	RouteTarget            string                 `json:"route_target"`
+	RouteSource            NullableString         `json:"route_source,omitempty"`
+	ChangeKind             string                 `json:"change_kind"`
+	RelatedCount           *int32                 `json:"related_count,omitempty"`
+	DocumentId             NullableString         `json:"document_id,omitempty"`
+	SignificanceScore      *float32               `json:"significance_score,omitempty"`
 	SignificanceComponents map[string]interface{} `json:"significance_components,omitempty"`
-	FileRole NullableString `json:"file_role,omitempty"`
-	AutoRouteReason NullableString `json:"auto_route_reason,omitempty"`
-	ComplexityScore NullableFloat32 `json:"complexity_score,omitempty"`
-	SafetyTags []string `json:"safety_tags,omitempty"`
-	PagerankCentrality NullableFloat32 `json:"pagerank_centrality,omitempty"`
-	FaninCount *int32 `json:"fanin_count,omitempty"`
+	FileRole               NullableString         `json:"file_role,omitempty"`
+	AutoRouteReason        NullableString         `json:"auto_route_reason,omitempty"`
+	ComplexityScore        NullableFloat32        `json:"complexity_score,omitempty"`
+	SafetyTags             []string               `json:"safety_tags,omitempty"`
+	PagerankCentrality     NullableFloat32        `json:"pagerank_centrality,omitempty"`
+	FaninCount             *int32                 `json:"fanin_count,omitempty"`
 }
 
 type _CodebaseChunkItemResponse CodebaseChunkItemResponse
@@ -67,8 +67,16 @@ func NewCodebaseChunkItemResponse(id string, chunkKey string, path string, kind 
 	this.PreviewText = previewText
 	this.StartLine = startLine
 	this.EndLine = endLine
+	var parseConfidence float32 = 0.0
+	this.ParseConfidence = &parseConfidence
 	this.RouteTarget = routeTarget
 	this.ChangeKind = changeKind
+	var relatedCount int32 = 0
+	this.RelatedCount = &relatedCount
+	var significanceScore float32 = 0.0
+	this.SignificanceScore = &significanceScore
+	var faninCount int32 = 0
+	this.FaninCount = &faninCount
 	return &this
 }
 
@@ -77,6 +85,14 @@ func NewCodebaseChunkItemResponse(id string, chunkKey string, path string, kind 
 // but it doesn't guarantee that properties required by API are set
 func NewCodebaseChunkItemResponseWithDefaults() *CodebaseChunkItemResponse {
 	this := CodebaseChunkItemResponse{}
+	var parseConfidence float32 = 0.0
+	this.ParseConfidence = &parseConfidence
+	var relatedCount int32 = 0
+	this.RelatedCount = &relatedCount
+	var significanceScore float32 = 0.0
+	this.SignificanceScore = &significanceScore
+	var faninCount int32 = 0
+	this.FaninCount = &faninCount
 	return &this
 }
 
@@ -184,6 +200,7 @@ func (o *CodebaseChunkItemResponse) HasLanguage() bool {
 func (o *CodebaseChunkItemResponse) SetLanguage(v string) {
 	o.Language.Set(&v)
 }
+
 // SetLanguageNil sets the value for Language to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetLanguageNil() {
 	o.Language.Set(nil)
@@ -346,6 +363,7 @@ func (o *CodebaseChunkItemResponse) HasContainer() bool {
 func (o *CodebaseChunkItemResponse) SetContainer(v string) {
 	o.Container.Set(&v)
 }
+
 // SetContainerNil sets the value for Container to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetContainerNil() {
 	o.Container.Set(nil)
@@ -388,6 +406,7 @@ func (o *CodebaseChunkItemResponse) HasParentSymbol() bool {
 func (o *CodebaseChunkItemResponse) SetParentSymbol(v string) {
 	o.ParentSymbol.Set(&v)
 }
+
 // SetParentSymbolNil sets the value for ParentSymbol to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetParentSymbolNil() {
 	o.ParentSymbol.Set(nil)
@@ -430,6 +449,7 @@ func (o *CodebaseChunkItemResponse) HasParentFqName() bool {
 func (o *CodebaseChunkItemResponse) SetParentFqName(v string) {
 	o.ParentFqName.Set(&v)
 }
+
 // SetParentFqNameNil sets the value for ParentFqName to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetParentFqNameNil() {
 	o.ParentFqName.Set(nil)
@@ -504,6 +524,7 @@ func (o *CodebaseChunkItemResponse) HasClusterId() bool {
 func (o *CodebaseChunkItemResponse) SetClusterId(v string) {
 	o.ClusterId.Set(&v)
 }
+
 // SetClusterIdNil sets the value for ClusterId to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetClusterIdNil() {
 	o.ClusterId.Set(nil)
@@ -546,6 +567,7 @@ func (o *CodebaseChunkItemResponse) HasClusterLabel() bool {
 func (o *CodebaseChunkItemResponse) SetClusterLabel(v string) {
 	o.ClusterLabel.Set(&v)
 }
+
 // SetClusterLabelNil sets the value for ClusterLabel to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetClusterLabelNil() {
 	o.ClusterLabel.Set(nil)
@@ -612,6 +634,7 @@ func (o *CodebaseChunkItemResponse) HasRouteSource() bool {
 func (o *CodebaseChunkItemResponse) SetRouteSource(v string) {
 	o.RouteSource.Set(&v)
 }
+
 // SetRouteSourceNil sets the value for RouteSource to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetRouteSourceNil() {
 	o.RouteSource.Set(nil)
@@ -710,6 +733,7 @@ func (o *CodebaseChunkItemResponse) HasDocumentId() bool {
 func (o *CodebaseChunkItemResponse) SetDocumentId(v string) {
 	o.DocumentId.Set(&v)
 }
+
 // SetDocumentIdNil sets the value for DocumentId to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetDocumentIdNil() {
 	o.DocumentId.Set(nil)
@@ -817,6 +841,7 @@ func (o *CodebaseChunkItemResponse) HasFileRole() bool {
 func (o *CodebaseChunkItemResponse) SetFileRole(v string) {
 	o.FileRole.Set(&v)
 }
+
 // SetFileRoleNil sets the value for FileRole to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetFileRoleNil() {
 	o.FileRole.Set(nil)
@@ -859,6 +884,7 @@ func (o *CodebaseChunkItemResponse) HasAutoRouteReason() bool {
 func (o *CodebaseChunkItemResponse) SetAutoRouteReason(v string) {
 	o.AutoRouteReason.Set(&v)
 }
+
 // SetAutoRouteReasonNil sets the value for AutoRouteReason to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetAutoRouteReasonNil() {
 	o.AutoRouteReason.Set(nil)
@@ -901,6 +927,7 @@ func (o *CodebaseChunkItemResponse) HasComplexityScore() bool {
 func (o *CodebaseChunkItemResponse) SetComplexityScore(v float32) {
 	o.ComplexityScore.Set(&v)
 }
+
 // SetComplexityScoreNil sets the value for ComplexityScore to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetComplexityScoreNil() {
 	o.ComplexityScore.Set(nil)
@@ -975,6 +1002,7 @@ func (o *CodebaseChunkItemResponse) HasPagerankCentrality() bool {
 func (o *CodebaseChunkItemResponse) SetPagerankCentrality(v float32) {
 	o.PagerankCentrality.Set(&v)
 }
+
 // SetPagerankCentralityNil sets the value for PagerankCentrality to be an explicit nil
 func (o *CodebaseChunkItemResponse) SetPagerankCentralityNil() {
 	o.PagerankCentrality.Set(nil)
@@ -1018,7 +1046,7 @@ func (o *CodebaseChunkItemResponse) SetFaninCount(v int32) {
 }
 
 func (o CodebaseChunkItemResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -1116,10 +1144,10 @@ func (o *CodebaseChunkItemResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -1175,5 +1203,3 @@ func (v *NullableCodebaseChunkItemResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

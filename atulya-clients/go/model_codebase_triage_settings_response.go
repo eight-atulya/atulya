@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,8 +21,8 @@ var _ MappedNullable = &CodebaseTriageSettingsResponse{}
 
 // CodebaseTriageSettingsResponse struct for CodebaseTriageSettingsResponse
 type CodebaseTriageSettingsResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	Settings CodebaseTriageSettings `json:"settings"`
+	CodebaseId string                 `json:"codebase_id"`
+	Settings   CodebaseTriageSettings `json:"settings"`
 }
 
 type _CodebaseTriageSettingsResponse CodebaseTriageSettingsResponse
@@ -95,7 +95,7 @@ func (o *CodebaseTriageSettingsResponse) SetSettings(v CodebaseTriageSettings) {
 }
 
 func (o CodebaseTriageSettingsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -123,10 +123,10 @@ func (o *CodebaseTriageSettingsResponse) UnmarshalJSON(data []byte) (err error) 
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -182,5 +182,3 @@ func (v *NullableCodebaseTriageSettingsResponse) UnmarshalJSON(src []byte) error
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

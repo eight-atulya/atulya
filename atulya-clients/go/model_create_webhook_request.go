@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,7 +22,7 @@ var _ MappedNullable = &CreateWebhookRequest{}
 // CreateWebhookRequest Request model for registering a webhook.
 type CreateWebhookRequest struct {
 	// HTTP(S) endpoint URL to deliver events to
-	Url string `json:"url"`
+	Url    string         `json:"url"`
 	Secret NullableString `json:"secret,omitempty"`
 	// List of event types to deliver. Currently supported: 'consolidation.completed'
 	EventTypes []string `json:"event_types,omitempty"`
@@ -41,6 +41,8 @@ type _CreateWebhookRequest CreateWebhookRequest
 func NewCreateWebhookRequest(url string) *CreateWebhookRequest {
 	this := CreateWebhookRequest{}
 	this.Url = url
+	var enabled bool = true
+	this.Enabled = &enabled
 	return &this
 }
 
@@ -49,6 +51,8 @@ func NewCreateWebhookRequest(url string) *CreateWebhookRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewCreateWebhookRequestWithDefaults() *CreateWebhookRequest {
 	this := CreateWebhookRequest{}
+	var enabled bool = true
+	this.Enabled = &enabled
 	return &this
 }
 
@@ -108,6 +112,7 @@ func (o *CreateWebhookRequest) HasSecret() bool {
 func (o *CreateWebhookRequest) SetSecret(v string) {
 	o.Secret.Set(&v)
 }
+
 // SetSecretNil sets the value for Secret to be an explicit nil
 func (o *CreateWebhookRequest) SetSecretNil() {
 	o.Secret.Set(nil)
@@ -215,7 +220,7 @@ func (o *CreateWebhookRequest) SetHttpConfig(v WebhookHttpConfig) {
 }
 
 func (o CreateWebhookRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -253,10 +258,10 @@ func (o *CreateWebhookRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -312,5 +317,3 @@ func (v *NullableCreateWebhookRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

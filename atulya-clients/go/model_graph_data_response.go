@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,11 +21,11 @@ var _ MappedNullable = &GraphDataResponse{}
 
 // GraphDataResponse Response model for graph data endpoint.
 type GraphDataResponse struct {
-	Nodes []map[string]interface{} `json:"nodes"`
-	Edges []map[string]interface{} `json:"edges"`
-	TableRows []map[string]interface{} `json:"table_rows"`
-	TotalUnits int32 `json:"total_units"`
-	Limit int32 `json:"limit"`
+	Nodes      []map[string]interface{} `json:"nodes"`
+	Edges      []map[string]interface{} `json:"edges"`
+	TableRows  []map[string]interface{} `json:"table_rows"`
+	TotalUnits int32                    `json:"total_units"`
+	Limit      int32                    `json:"limit"`
 }
 
 type _GraphDataResponse GraphDataResponse
@@ -173,7 +173,7 @@ func (o *GraphDataResponse) SetLimit(v int32) {
 }
 
 func (o GraphDataResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -207,10 +207,10 @@ func (o *GraphDataResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -266,5 +266,3 @@ func (v *NullableGraphDataResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

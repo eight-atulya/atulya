@@ -19,10 +19,10 @@ var _ MappedNullable = &AnomalyIntelligenceRequest{}
 
 // AnomalyIntelligenceRequest struct for AnomalyIntelligenceRequest
 type AnomalyIntelligenceRequest struct {
-	Limit *int32 `json:"limit,omitempty"`
-	Status NullableString `json:"status,omitempty"`
-	AnomalyTypes []string `json:"anomaly_types,omitempty"`
-	MinSeverity *float32 `json:"min_severity,omitempty"`
+	Limit        *int32         `json:"limit,omitempty"`
+	Status       NullableString `json:"status,omitempty"`
+	AnomalyTypes []string       `json:"anomaly_types,omitempty"`
+	MinSeverity  *float32       `json:"min_severity,omitempty"`
 }
 
 // NewAnomalyIntelligenceRequest instantiates a new AnomalyIntelligenceRequest object
@@ -31,6 +31,10 @@ type AnomalyIntelligenceRequest struct {
 // will change when the set of required properties is changed
 func NewAnomalyIntelligenceRequest() *AnomalyIntelligenceRequest {
 	this := AnomalyIntelligenceRequest{}
+	var limit int32 = 50
+	this.Limit = &limit
+	var minSeverity float32 = 0.0
+	this.MinSeverity = &minSeverity
 	return &this
 }
 
@@ -39,6 +43,10 @@ func NewAnomalyIntelligenceRequest() *AnomalyIntelligenceRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewAnomalyIntelligenceRequestWithDefaults() *AnomalyIntelligenceRequest {
 	this := AnomalyIntelligenceRequest{}
+	var limit int32 = 50
+	this.Limit = &limit
+	var minSeverity float32 = 0.0
+	this.MinSeverity = &minSeverity
 	return &this
 }
 
@@ -106,6 +114,7 @@ func (o *AnomalyIntelligenceRequest) HasStatus() bool {
 func (o *AnomalyIntelligenceRequest) SetStatus(v string) {
 	o.Status.Set(&v)
 }
+
 // SetStatusNil sets the value for Status to be an explicit nil
 func (o *AnomalyIntelligenceRequest) SetStatusNil() {
 	o.Status.Set(nil)
@@ -182,7 +191,7 @@ func (o *AnomalyIntelligenceRequest) SetMinSeverity(v float32) {
 }
 
 func (o AnomalyIntelligenceRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -241,5 +250,3 @@ func (v *NullableAnomalyIntelligenceRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

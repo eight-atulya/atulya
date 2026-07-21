@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,10 +21,10 @@ var _ MappedNullable = &CodebaseRepoMapResponse{}
 
 // CodebaseRepoMapResponse Snapshot Repo Map artifact response.
 type CodebaseRepoMapResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	GeneratedAt NullableString `json:"generated_at,omitempty"`
-	RepoMap map[string]interface{} `json:"repo_map,omitempty"`
+	CodebaseId  string                 `json:"codebase_id"`
+	SnapshotId  NullableString         `json:"snapshot_id,omitempty"`
+	GeneratedAt NullableString         `json:"generated_at,omitempty"`
+	RepoMap     map[string]interface{} `json:"repo_map,omitempty"`
 }
 
 type _CodebaseRepoMapResponse CodebaseRepoMapResponse
@@ -103,6 +103,7 @@ func (o *CodebaseRepoMapResponse) HasSnapshotId() bool {
 func (o *CodebaseRepoMapResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseRepoMapResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -145,6 +146,7 @@ func (o *CodebaseRepoMapResponse) HasGeneratedAt() bool {
 func (o *CodebaseRepoMapResponse) SetGeneratedAt(v string) {
 	o.GeneratedAt.Set(&v)
 }
+
 // SetGeneratedAtNil sets the value for GeneratedAt to be an explicit nil
 func (o *CodebaseRepoMapResponse) SetGeneratedAtNil() {
 	o.GeneratedAt.Set(nil)
@@ -189,7 +191,7 @@ func (o *CodebaseRepoMapResponse) SetRepoMap(v map[string]interface{}) {
 }
 
 func (o CodebaseRepoMapResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -224,10 +226,10 @@ func (o *CodebaseRepoMapResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -283,5 +285,3 @@ func (v *NullableCodebaseRepoMapResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

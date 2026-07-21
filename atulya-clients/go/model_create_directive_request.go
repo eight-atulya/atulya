@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -43,6 +43,10 @@ func NewCreateDirectiveRequest(name string, content string) *CreateDirectiveRequ
 	this := CreateDirectiveRequest{}
 	this.Name = name
 	this.Content = content
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -51,6 +55,10 @@ func NewCreateDirectiveRequest(name string, content string) *CreateDirectiveRequ
 // but it doesn't guarantee that properties required by API are set
 func NewCreateDirectiveRequestWithDefaults() *CreateDirectiveRequest {
 	this := CreateDirectiveRequest{}
+	var priority int32 = 0
+	this.Priority = &priority
+	var isActive bool = true
+	this.IsActive = &isActive
 	return &this
 }
 
@@ -199,7 +207,7 @@ func (o *CreateDirectiveRequest) SetTags(v []string) {
 }
 
 func (o CreateDirectiveRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -236,10 +244,10 @@ func (o *CreateDirectiveRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -295,5 +303,3 @@ func (v *NullableCreateDirectiveRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

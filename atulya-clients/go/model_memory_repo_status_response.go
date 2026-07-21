@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,13 +21,13 @@ var _ MappedNullable = &MemoryRepoStatusResponse{}
 
 // MemoryRepoStatusResponse struct for MemoryRepoStatusResponse
 type MemoryRepoStatusResponse struct {
-	RepoId string `json:"repo_id"`
-	BranchName string `json:"branch_name"`
-	WorkspaceBankId string `json:"workspace_bank_id"`
-	HeadCommitId NullableString `json:"head_commit_id,omitempty"`
-	Dirty bool `json:"dirty"`
-	ChangedComponents []string `json:"changed_components"`
-	TableDeltas map[string]map[string]int32 `json:"table_deltas"`
+	RepoId            string                      `json:"repo_id"`
+	BranchName        string                      `json:"branch_name"`
+	WorkspaceBankId   string                      `json:"workspace_bank_id"`
+	HeadCommitId      NullableString              `json:"head_commit_id,omitempty"`
+	Dirty             bool                        `json:"dirty"`
+	ChangedComponents []string                    `json:"changed_components"`
+	TableDeltas       map[string]map[string]int32 `json:"table_deltas"`
 }
 
 type _MemoryRepoStatusResponse MemoryRepoStatusResponse
@@ -159,6 +159,7 @@ func (o *MemoryRepoStatusResponse) HasHeadCommitId() bool {
 func (o *MemoryRepoStatusResponse) SetHeadCommitId(v string) {
 	o.HeadCommitId.Set(&v)
 }
+
 // SetHeadCommitIdNil sets the value for HeadCommitId to be an explicit nil
 func (o *MemoryRepoStatusResponse) SetHeadCommitIdNil() {
 	o.HeadCommitId.Set(nil)
@@ -242,7 +243,7 @@ func (o *MemoryRepoStatusResponse) SetTableDeltas(v map[string]map[string]int32)
 }
 
 func (o MemoryRepoStatusResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -281,10 +282,10 @@ func (o *MemoryRepoStatusResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -340,5 +341,3 @@ func (v *NullableMemoryRepoStatusResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,10 @@ var _ MappedNullable = &SignupStateResponse{}
 
 // SignupStateResponse struct for SignupStateResponse
 type SignupStateResponse struct {
-	Mode string `json:"mode"`
-	Available bool `json:"available"`
-	OrgCount int32 `json:"org_count"`
+	Mode                 string `json:"mode"`
+	Available            bool   `json:"available"`
+	OrgCount             int32  `json:"org_count"`
+	VerificationRequired bool   `json:"verification_required"`
 }
 
 type _SignupStateResponse SignupStateResponse
@@ -32,11 +33,12 @@ type _SignupStateResponse SignupStateResponse
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSignupStateResponse(mode string, available bool, orgCount int32) *SignupStateResponse {
+func NewSignupStateResponse(mode string, available bool, orgCount int32, verificationRequired bool) *SignupStateResponse {
 	this := SignupStateResponse{}
 	this.Mode = mode
 	this.Available = available
 	this.OrgCount = orgCount
+	this.VerificationRequired = verificationRequired
 	return &this
 }
 
@@ -120,8 +122,32 @@ func (o *SignupStateResponse) SetOrgCount(v int32) {
 	o.OrgCount = v
 }
 
+// GetVerificationRequired returns the VerificationRequired field value
+func (o *SignupStateResponse) GetVerificationRequired() bool {
+	if o == nil {
+		var ret bool
+		return ret
+	}
+
+	return o.VerificationRequired
+}
+
+// GetVerificationRequiredOk returns a tuple with the VerificationRequired field value
+// and a boolean to check if the value has been set.
+func (o *SignupStateResponse) GetVerificationRequiredOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return &o.VerificationRequired, true
+}
+
+// SetVerificationRequired sets field value
+func (o *SignupStateResponse) SetVerificationRequired(v bool) {
+	o.VerificationRequired = v
+}
+
 func (o SignupStateResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -133,6 +159,7 @@ func (o SignupStateResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["mode"] = o.Mode
 	toSerialize["available"] = o.Available
 	toSerialize["org_count"] = o.OrgCount
+	toSerialize["verification_required"] = o.VerificationRequired
 	return toSerialize, nil
 }
 
@@ -144,6 +171,7 @@ func (o *SignupStateResponse) UnmarshalJSON(data []byte) (err error) {
 		"mode",
 		"available",
 		"org_count",
+		"verification_required",
 	}
 
 	allProperties := make(map[string]interface{})
@@ -151,10 +179,10 @@ func (o *SignupStateResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}

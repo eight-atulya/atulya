@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,9 +21,9 @@ var _ MappedNullable = &CodebaseSymbolsResponse{}
 
 // CodebaseSymbolsResponse Symbol search results for a codebase.
 type CodebaseSymbolsResponse struct {
-	CodebaseId string `json:"codebase_id"`
-	SnapshotId NullableString `json:"snapshot_id,omitempty"`
-	Items []CodebaseSymbolMatchResponse `json:"items"`
+	CodebaseId string                        `json:"codebase_id"`
+	SnapshotId NullableString                `json:"snapshot_id,omitempty"`
+	Items      []CodebaseSymbolMatchResponse `json:"items"`
 }
 
 type _CodebaseSymbolsResponse CodebaseSymbolsResponse
@@ -103,6 +103,7 @@ func (o *CodebaseSymbolsResponse) HasSnapshotId() bool {
 func (o *CodebaseSymbolsResponse) SetSnapshotId(v string) {
 	o.SnapshotId.Set(&v)
 }
+
 // SetSnapshotIdNil sets the value for SnapshotId to be an explicit nil
 func (o *CodebaseSymbolsResponse) SetSnapshotIdNil() {
 	o.SnapshotId.Set(nil)
@@ -138,7 +139,7 @@ func (o *CodebaseSymbolsResponse) SetItems(v []CodebaseSymbolMatchResponse) {
 }
 
 func (o CodebaseSymbolsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -169,10 +170,10 @@ func (o *CodebaseSymbolsResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -228,5 +229,3 @@ func (v *NullableCodebaseSymbolsResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

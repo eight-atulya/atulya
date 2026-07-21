@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,15 +21,15 @@ var _ MappedNullable = &ForgeJobSubmitRequest{}
 
 // ForgeJobSubmitRequest struct for ForgeJobSubmitRequest
 type ForgeJobSubmitRequest struct {
-	RecipeId string `json:"recipe_id"`
-	DomainTags []string `json:"domain_tags,omitempty"`
-	Source map[string]interface{} `json:"source,omitempty"`
-	QualityThreshold *float32 `json:"quality_threshold,omitempty"`
-	WaitConsolidation *bool `json:"wait_consolidation,omitempty"`
-	MaxRecords *int32 `json:"max_records,omitempty"`
-	RepoCommitOnComplete *bool `json:"repo_commit_on_complete,omitempty"`
-	CommitMessage NullableString `json:"commit_message,omitempty"`
-	Options map[string]interface{} `json:"options,omitempty"`
+	RecipeId             string                 `json:"recipe_id"`
+	DomainTags           []string               `json:"domain_tags,omitempty"`
+	Source               map[string]interface{} `json:"source,omitempty"`
+	QualityThreshold     *float32               `json:"quality_threshold,omitempty"`
+	WaitConsolidation    *bool                  `json:"wait_consolidation,omitempty"`
+	MaxRecords           *int32                 `json:"max_records,omitempty"`
+	RepoCommitOnComplete *bool                  `json:"repo_commit_on_complete,omitempty"`
+	CommitMessage        NullableString         `json:"commit_message,omitempty"`
+	Options              map[string]interface{} `json:"options,omitempty"`
 }
 
 type _ForgeJobSubmitRequest ForgeJobSubmitRequest
@@ -41,6 +41,14 @@ type _ForgeJobSubmitRequest ForgeJobSubmitRequest
 func NewForgeJobSubmitRequest(recipeId string) *ForgeJobSubmitRequest {
 	this := ForgeJobSubmitRequest{}
 	this.RecipeId = recipeId
+	var qualityThreshold float32 = 0.6
+	this.QualityThreshold = &qualityThreshold
+	var waitConsolidation bool = true
+	this.WaitConsolidation = &waitConsolidation
+	var maxRecords int32 = 500
+	this.MaxRecords = &maxRecords
+	var repoCommitOnComplete bool = false
+	this.RepoCommitOnComplete = &repoCommitOnComplete
 	return &this
 }
 
@@ -49,6 +57,14 @@ func NewForgeJobSubmitRequest(recipeId string) *ForgeJobSubmitRequest {
 // but it doesn't guarantee that properties required by API are set
 func NewForgeJobSubmitRequestWithDefaults() *ForgeJobSubmitRequest {
 	this := ForgeJobSubmitRequest{}
+	var qualityThreshold float32 = 0.6
+	this.QualityThreshold = &qualityThreshold
+	var waitConsolidation bool = true
+	this.WaitConsolidation = &waitConsolidation
+	var maxRecords int32 = 500
+	this.MaxRecords = &maxRecords
+	var repoCommitOnComplete bool = false
+	this.RepoCommitOnComplete = &repoCommitOnComplete
 	return &this
 }
 
@@ -301,6 +317,7 @@ func (o *ForgeJobSubmitRequest) HasCommitMessage() bool {
 func (o *ForgeJobSubmitRequest) SetCommitMessage(v string) {
 	o.CommitMessage.Set(&v)
 }
+
 // SetCommitMessageNil sets the value for CommitMessage to be an explicit nil
 func (o *ForgeJobSubmitRequest) SetCommitMessageNil() {
 	o.CommitMessage.Set(nil)
@@ -344,7 +361,7 @@ func (o *ForgeJobSubmitRequest) SetOptions(v map[string]interface{}) {
 }
 
 func (o ForgeJobSubmitRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -394,10 +411,10 @@ func (o *ForgeJobSubmitRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -453,5 +470,3 @@ func (v *NullableForgeJobSubmitRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

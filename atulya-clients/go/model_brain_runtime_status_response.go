@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,21 +21,21 @@ var _ MappedNullable = &BrainRuntimeStatusResponse{}
 
 // BrainRuntimeStatusResponse struct for BrainRuntimeStatusResponse
 type BrainRuntimeStatusResponse struct {
-	Enabled bool `json:"enabled"`
-	CircuitOpen bool `json:"circuit_open"`
-	FailureCount int32 `json:"failure_count"`
-	BankId string `json:"bank_id"`
-	FilePath string `json:"file_path"`
-	Exists bool `json:"exists"`
-	SizeBytes int32 `json:"size_bytes"`
-	LastModifiedAt NullableString `json:"last_modified_at,omitempty"`
-	SourceSnapshotId NullableString `json:"source_snapshot_id,omitempty"`
-	GeneratedAt NullableString `json:"generated_at,omitempty"`
-	NativeLibraryLoaded bool `json:"native_library_loaded"`
-	FormatVersion NullableInt32 `json:"format_version,omitempty"`
-	ModelSignature NullableString `json:"model_signature,omitempty"`
-	CompatibilityReason NullableString `json:"compatibility_reason,omitempty"`
-	Metrics map[string]int32 `json:"metrics,omitempty"`
+	Enabled             bool             `json:"enabled"`
+	CircuitOpen         bool             `json:"circuit_open"`
+	FailureCount        int32            `json:"failure_count"`
+	BankId              string           `json:"bank_id"`
+	FilePath            string           `json:"file_path"`
+	Exists              bool             `json:"exists"`
+	SizeBytes           int32            `json:"size_bytes"`
+	LastModifiedAt      NullableString   `json:"last_modified_at,omitempty"`
+	SourceSnapshotId    NullableString   `json:"source_snapshot_id,omitempty"`
+	GeneratedAt         NullableString   `json:"generated_at,omitempty"`
+	NativeLibraryLoaded bool             `json:"native_library_loaded"`
+	FormatVersion       NullableInt32    `json:"format_version,omitempty"`
+	ModelSignature      NullableString   `json:"model_signature,omitempty"`
+	CompatibilityReason NullableString   `json:"compatibility_reason,omitempty"`
+	Metrics             map[string]int32 `json:"metrics,omitempty"`
 }
 
 type _BrainRuntimeStatusResponse BrainRuntimeStatusResponse
@@ -265,6 +265,7 @@ func (o *BrainRuntimeStatusResponse) HasLastModifiedAt() bool {
 func (o *BrainRuntimeStatusResponse) SetLastModifiedAt(v string) {
 	o.LastModifiedAt.Set(&v)
 }
+
 // SetLastModifiedAtNil sets the value for LastModifiedAt to be an explicit nil
 func (o *BrainRuntimeStatusResponse) SetLastModifiedAtNil() {
 	o.LastModifiedAt.Set(nil)
@@ -307,6 +308,7 @@ func (o *BrainRuntimeStatusResponse) HasSourceSnapshotId() bool {
 func (o *BrainRuntimeStatusResponse) SetSourceSnapshotId(v string) {
 	o.SourceSnapshotId.Set(&v)
 }
+
 // SetSourceSnapshotIdNil sets the value for SourceSnapshotId to be an explicit nil
 func (o *BrainRuntimeStatusResponse) SetSourceSnapshotIdNil() {
 	o.SourceSnapshotId.Set(nil)
@@ -349,6 +351,7 @@ func (o *BrainRuntimeStatusResponse) HasGeneratedAt() bool {
 func (o *BrainRuntimeStatusResponse) SetGeneratedAt(v string) {
 	o.GeneratedAt.Set(&v)
 }
+
 // SetGeneratedAtNil sets the value for GeneratedAt to be an explicit nil
 func (o *BrainRuntimeStatusResponse) SetGeneratedAtNil() {
 	o.GeneratedAt.Set(nil)
@@ -415,6 +418,7 @@ func (o *BrainRuntimeStatusResponse) HasFormatVersion() bool {
 func (o *BrainRuntimeStatusResponse) SetFormatVersion(v int32) {
 	o.FormatVersion.Set(&v)
 }
+
 // SetFormatVersionNil sets the value for FormatVersion to be an explicit nil
 func (o *BrainRuntimeStatusResponse) SetFormatVersionNil() {
 	o.FormatVersion.Set(nil)
@@ -457,6 +461,7 @@ func (o *BrainRuntimeStatusResponse) HasModelSignature() bool {
 func (o *BrainRuntimeStatusResponse) SetModelSignature(v string) {
 	o.ModelSignature.Set(&v)
 }
+
 // SetModelSignatureNil sets the value for ModelSignature to be an explicit nil
 func (o *BrainRuntimeStatusResponse) SetModelSignatureNil() {
 	o.ModelSignature.Set(nil)
@@ -499,6 +504,7 @@ func (o *BrainRuntimeStatusResponse) HasCompatibilityReason() bool {
 func (o *BrainRuntimeStatusResponse) SetCompatibilityReason(v string) {
 	o.CompatibilityReason.Set(&v)
 }
+
 // SetCompatibilityReasonNil sets the value for CompatibilityReason to be an explicit nil
 func (o *BrainRuntimeStatusResponse) SetCompatibilityReasonNil() {
 	o.CompatibilityReason.Set(nil)
@@ -542,7 +548,7 @@ func (o *BrainRuntimeStatusResponse) SetMetrics(v map[string]int32) {
 }
 
 func (o BrainRuntimeStatusResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -603,10 +609,10 @@ func (o *BrainRuntimeStatusResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -662,5 +668,3 @@ func (v *NullableBrainRuntimeStatusResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

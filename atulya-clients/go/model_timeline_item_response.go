@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,25 +21,25 @@ var _ MappedNullable = &TimelineItemResponse{}
 
 // TimelineItemResponse struct for TimelineItemResponse
 type TimelineItemResponse struct {
-	Id string `json:"id"`
-	Kind string `json:"kind"`
-	FactType string `json:"fact_type"`
-	Text string `json:"text"`
-	Context NullableString `json:"context,omitempty"`
-	Title NullableString `json:"title,omitempty"`
-	AnchorAt NullableString `json:"anchor_at,omitempty"`
-	AnchorKind string `json:"anchor_kind"`
-	RecordedAt NullableString `json:"recorded_at,omitempty"`
-	OccurredStart NullableString `json:"occurred_start,omitempty"`
-	OccurredEnd NullableString `json:"occurred_end,omitempty"`
-	TemporalDirection string `json:"temporal_direction"`
-	TemporalConfidence NullableFloat32 `json:"temporal_confidence,omitempty"`
-	TemporalReferenceText NullableString `json:"temporal_reference_text,omitempty"`
-	Temporal TimelineTemporalResponse `json:"temporal"`
-	Entities []string `json:"entities,omitempty"`
-	Tags []string `json:"tags,omitempty"`
-	SourceMemoryIds []string `json:"source_memory_ids,omitempty"`
-	ProofCount *int32 `json:"proof_count,omitempty"`
+	Id                    string                   `json:"id"`
+	Kind                  string                   `json:"kind"`
+	FactType              string                   `json:"fact_type"`
+	Text                  string                   `json:"text"`
+	Context               NullableString           `json:"context,omitempty"`
+	Title                 NullableString           `json:"title,omitempty"`
+	AnchorAt              NullableString           `json:"anchor_at,omitempty"`
+	AnchorKind            string                   `json:"anchor_kind"`
+	RecordedAt            NullableString           `json:"recorded_at,omitempty"`
+	OccurredStart         NullableString           `json:"occurred_start,omitempty"`
+	OccurredEnd           NullableString           `json:"occurred_end,omitempty"`
+	TemporalDirection     string                   `json:"temporal_direction"`
+	TemporalConfidence    NullableFloat32          `json:"temporal_confidence,omitempty"`
+	TemporalReferenceText NullableString           `json:"temporal_reference_text,omitempty"`
+	Temporal              TimelineTemporalResponse `json:"temporal"`
+	Entities              []string                 `json:"entities,omitempty"`
+	Tags                  []string                 `json:"tags,omitempty"`
+	SourceMemoryIds       []string                 `json:"source_memory_ids,omitempty"`
+	ProofCount            *int32                   `json:"proof_count,omitempty"`
 }
 
 type _TimelineItemResponse TimelineItemResponse
@@ -57,6 +57,8 @@ func NewTimelineItemResponse(id string, kind string, factType string, text strin
 	this.AnchorKind = anchorKind
 	this.TemporalDirection = temporalDirection
 	this.Temporal = temporal
+	var proofCount int32 = 0
+	this.ProofCount = &proofCount
 	return &this
 }
 
@@ -65,6 +67,8 @@ func NewTimelineItemResponse(id string, kind string, factType string, text strin
 // but it doesn't guarantee that properties required by API are set
 func NewTimelineItemResponseWithDefaults() *TimelineItemResponse {
 	this := TimelineItemResponse{}
+	var proofCount int32 = 0
+	this.ProofCount = &proofCount
 	return &this
 }
 
@@ -196,6 +200,7 @@ func (o *TimelineItemResponse) HasContext() bool {
 func (o *TimelineItemResponse) SetContext(v string) {
 	o.Context.Set(&v)
 }
+
 // SetContextNil sets the value for Context to be an explicit nil
 func (o *TimelineItemResponse) SetContextNil() {
 	o.Context.Set(nil)
@@ -238,6 +243,7 @@ func (o *TimelineItemResponse) HasTitle() bool {
 func (o *TimelineItemResponse) SetTitle(v string) {
 	o.Title.Set(&v)
 }
+
 // SetTitleNil sets the value for Title to be an explicit nil
 func (o *TimelineItemResponse) SetTitleNil() {
 	o.Title.Set(nil)
@@ -280,6 +286,7 @@ func (o *TimelineItemResponse) HasAnchorAt() bool {
 func (o *TimelineItemResponse) SetAnchorAt(v string) {
 	o.AnchorAt.Set(&v)
 }
+
 // SetAnchorAtNil sets the value for AnchorAt to be an explicit nil
 func (o *TimelineItemResponse) SetAnchorAtNil() {
 	o.AnchorAt.Set(nil)
@@ -346,6 +353,7 @@ func (o *TimelineItemResponse) HasRecordedAt() bool {
 func (o *TimelineItemResponse) SetRecordedAt(v string) {
 	o.RecordedAt.Set(&v)
 }
+
 // SetRecordedAtNil sets the value for RecordedAt to be an explicit nil
 func (o *TimelineItemResponse) SetRecordedAtNil() {
 	o.RecordedAt.Set(nil)
@@ -388,6 +396,7 @@ func (o *TimelineItemResponse) HasOccurredStart() bool {
 func (o *TimelineItemResponse) SetOccurredStart(v string) {
 	o.OccurredStart.Set(&v)
 }
+
 // SetOccurredStartNil sets the value for OccurredStart to be an explicit nil
 func (o *TimelineItemResponse) SetOccurredStartNil() {
 	o.OccurredStart.Set(nil)
@@ -430,6 +439,7 @@ func (o *TimelineItemResponse) HasOccurredEnd() bool {
 func (o *TimelineItemResponse) SetOccurredEnd(v string) {
 	o.OccurredEnd.Set(&v)
 }
+
 // SetOccurredEndNil sets the value for OccurredEnd to be an explicit nil
 func (o *TimelineItemResponse) SetOccurredEndNil() {
 	o.OccurredEnd.Set(nil)
@@ -496,6 +506,7 @@ func (o *TimelineItemResponse) HasTemporalConfidence() bool {
 func (o *TimelineItemResponse) SetTemporalConfidence(v float32) {
 	o.TemporalConfidence.Set(&v)
 }
+
 // SetTemporalConfidenceNil sets the value for TemporalConfidence to be an explicit nil
 func (o *TimelineItemResponse) SetTemporalConfidenceNil() {
 	o.TemporalConfidence.Set(nil)
@@ -538,6 +549,7 @@ func (o *TimelineItemResponse) HasTemporalReferenceText() bool {
 func (o *TimelineItemResponse) SetTemporalReferenceText(v string) {
 	o.TemporalReferenceText.Set(&v)
 }
+
 // SetTemporalReferenceTextNil sets the value for TemporalReferenceText to be an explicit nil
 func (o *TimelineItemResponse) SetTemporalReferenceTextNil() {
 	o.TemporalReferenceText.Set(nil)
@@ -701,7 +713,7 @@ func (o *TimelineItemResponse) SetProofCount(v int32) {
 }
 
 func (o TimelineItemResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -775,10 +787,10 @@ func (o *TimelineItemResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -834,5 +846,3 @@ func (v *NullableTimelineItemResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -24,7 +24,7 @@ type ReflectMentalModel struct {
 	// Mental model ID
 	Id string `json:"id"`
 	// Mental model content
-	Text string `json:"text"`
+	Text    string         `json:"text"`
 	Context NullableString `json:"context,omitempty"`
 }
 
@@ -129,6 +129,7 @@ func (o *ReflectMentalModel) HasContext() bool {
 func (o *ReflectMentalModel) SetContext(v string) {
 	o.Context.Set(&v)
 }
+
 // SetContextNil sets the value for Context to be an explicit nil
 func (o *ReflectMentalModel) SetContextNil() {
 	o.Context.Set(nil)
@@ -140,7 +141,7 @@ func (o *ReflectMentalModel) UnsetContext() {
 }
 
 func (o ReflectMentalModel) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -171,10 +172,10 @@ func (o *ReflectMentalModel) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -230,5 +231,3 @@ func (v *NullableReflectMentalModel) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

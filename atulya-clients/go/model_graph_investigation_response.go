@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,12 +21,12 @@ var _ MappedNullable = &GraphInvestigationResponse{}
 
 // GraphInvestigationResponse struct for GraphInvestigationResponse
 type GraphInvestigationResponse struct {
-	Answer string `json:"answer"`
-	FocalNodeIds []string `json:"focal_node_ids,omitempty"`
-	FocalEdgeIds []string `json:"focal_edge_ids,omitempty"`
-	ChangeEvents []GraphChangeEventResponse `json:"change_events,omitempty"`
-	EvidencePath []GraphEvidencePathStepResponse `json:"evidence_path,omitempty"`
-	RecommendedChecks []string `json:"recommended_checks,omitempty"`
+	Answer            string                          `json:"answer"`
+	FocalNodeIds      []string                        `json:"focal_node_ids,omitempty"`
+	FocalEdgeIds      []string                        `json:"focal_edge_ids,omitempty"`
+	ChangeEvents      []GraphChangeEventResponse      `json:"change_events,omitempty"`
+	EvidencePath      []GraphEvidencePathStepResponse `json:"evidence_path,omitempty"`
+	RecommendedChecks []string                        `json:"recommended_checks,omitempty"`
 }
 
 type _GraphInvestigationResponse GraphInvestigationResponse
@@ -234,7 +234,7 @@ func (o *GraphInvestigationResponse) SetRecommendedChecks(v []string) {
 }
 
 func (o GraphInvestigationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -275,10 +275,10 @@ func (o *GraphInvestigationResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -334,5 +334,3 @@ func (v *NullableGraphInvestigationResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

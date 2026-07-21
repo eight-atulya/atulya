@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -22,8 +22,8 @@ var _ MappedNullable = &MemoryRepoCreateRequest{}
 // MemoryRepoCreateRequest struct for MemoryRepoCreateRequest
 type MemoryRepoCreateRequest struct {
 	// Root bank ID that will become the repo working tree
-	BankId string `json:"bank_id"`
-	RepoName NullableString `json:"repo_name,omitempty"`
+	BankId       string         `json:"bank_id"`
+	RepoName     NullableString `json:"repo_name,omitempty"`
 	SourceBankId NullableString `json:"source_bank_id,omitempty"`
 }
 
@@ -103,6 +103,7 @@ func (o *MemoryRepoCreateRequest) HasRepoName() bool {
 func (o *MemoryRepoCreateRequest) SetRepoName(v string) {
 	o.RepoName.Set(&v)
 }
+
 // SetRepoNameNil sets the value for RepoName to be an explicit nil
 func (o *MemoryRepoCreateRequest) SetRepoNameNil() {
 	o.RepoName.Set(nil)
@@ -145,6 +146,7 @@ func (o *MemoryRepoCreateRequest) HasSourceBankId() bool {
 func (o *MemoryRepoCreateRequest) SetSourceBankId(v string) {
 	o.SourceBankId.Set(&v)
 }
+
 // SetSourceBankIdNil sets the value for SourceBankId to be an explicit nil
 func (o *MemoryRepoCreateRequest) SetSourceBankIdNil() {
 	o.SourceBankId.Set(nil)
@@ -156,7 +158,7 @@ func (o *MemoryRepoCreateRequest) UnsetSourceBankId() {
 }
 
 func (o MemoryRepoCreateRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -188,10 +190,10 @@ func (o *MemoryRepoCreateRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -247,5 +249,3 @@ func (v *NullableMemoryRepoCreateRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

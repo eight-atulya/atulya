@@ -19,16 +19,15 @@ import (
 	"strings"
 )
 
-
 // MemoryReposAPIService MemoryReposAPI service
 type MemoryReposAPIService service
 
 type ApiCheckoutMemoryRepoBranchRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx                       context.Context
+	ApiService                *MemoryReposAPIService
+	repoId                    string
 	memoryRepoCheckoutRequest *MemoryRepoCheckoutRequest
-	authorization *string
+	authorization             *string
 }
 
 func (r ApiCheckoutMemoryRepoBranchRequest) MemoryRepoCheckoutRequest(memoryRepoCheckoutRequest MemoryRepoCheckoutRequest) ApiCheckoutMemoryRepoBranchRequest {
@@ -48,26 +47,27 @@ func (r ApiCheckoutMemoryRepoBranchRequest) Execute() (*MemoryRepoSummaryRespons
 /*
 CheckoutMemoryRepoBranch Checkout memory repo branch
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiCheckoutMemoryRepoBranchRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiCheckoutMemoryRepoBranchRequest
 */
 func (a *MemoryReposAPIService) CheckoutMemoryRepoBranch(ctx context.Context, repoId string) ApiCheckoutMemoryRepoBranchRequest {
 	return ApiCheckoutMemoryRepoBranchRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoSummaryResponse
+//
+//	@return MemoryRepoSummaryResponse
 func (a *MemoryReposAPIService) CheckoutMemoryRepoBranchExecute(r ApiCheckoutMemoryRepoBranchRequest) (*MemoryRepoSummaryResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoSummaryResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.CheckoutMemoryRepoBranch")
@@ -136,8 +136,8 @@ func (a *MemoryReposAPIService) CheckoutMemoryRepoBranchExecute(r ApiCheckoutMem
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -155,11 +155,11 @@ func (a *MemoryReposAPIService) CheckoutMemoryRepoBranchExecute(r ApiCheckoutMem
 }
 
 type ApiCommitMemoryRepoRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx                     context.Context
+	ApiService              *MemoryReposAPIService
+	repoId                  string
 	memoryRepoCommitRequest *MemoryRepoCommitRequest
-	authorization *string
+	authorization           *string
 }
 
 func (r ApiCommitMemoryRepoRequest) MemoryRepoCommitRequest(memoryRepoCommitRequest MemoryRepoCommitRequest) ApiCommitMemoryRepoRequest {
@@ -179,26 +179,27 @@ func (r ApiCommitMemoryRepoRequest) Execute() (map[string]interface{}, *http.Res
 /*
 CommitMemoryRepo Commit active memory repo workspace
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiCommitMemoryRepoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiCommitMemoryRepoRequest
 */
 func (a *MemoryReposAPIService) CommitMemoryRepo(ctx context.Context, repoId string) ApiCommitMemoryRepoRequest {
 	return ApiCommitMemoryRepoRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
+//
+//	@return map[string]interface{}
 func (a *MemoryReposAPIService) CommitMemoryRepoExecute(r ApiCommitMemoryRepoRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.CommitMemoryRepo")
@@ -267,8 +268,8 @@ func (a *MemoryReposAPIService) CommitMemoryRepoExecute(r ApiCommitMemoryRepoReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -286,10 +287,10 @@ func (a *MemoryReposAPIService) CommitMemoryRepoExecute(r ApiCommitMemoryRepoReq
 }
 
 type ApiCreateMemoryRepoRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
+	ctx                     context.Context
+	ApiService              *MemoryReposAPIService
 	memoryRepoCreateRequest *MemoryRepoCreateRequest
-	authorization *string
+	authorization           *string
 }
 
 func (r ApiCreateMemoryRepoRequest) MemoryRepoCreateRequest(memoryRepoCreateRequest MemoryRepoCreateRequest) ApiCreateMemoryRepoRequest {
@@ -311,24 +312,25 @@ CreateMemoryRepo Create a memory repo
 
 Create an opt-in git-like memory repo rooted at a bank, optionally cloning from another bank first.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiCreateMemoryRepoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiCreateMemoryRepoRequest
 */
 func (a *MemoryReposAPIService) CreateMemoryRepo(ctx context.Context) ApiCreateMemoryRepoRequest {
 	return ApiCreateMemoryRepoRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoSummaryResponse
+//
+//	@return MemoryRepoSummaryResponse
 func (a *MemoryReposAPIService) CreateMemoryRepoExecute(r ApiCreateMemoryRepoRequest) (*MemoryRepoSummaryResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoSummaryResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.CreateMemoryRepo")
@@ -396,8 +398,8 @@ func (a *MemoryReposAPIService) CreateMemoryRepoExecute(r ApiCreateMemoryRepoReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -415,11 +417,11 @@ func (a *MemoryReposAPIService) CreateMemoryRepoExecute(r ApiCreateMemoryRepoReq
 }
 
 type ApiCreateMemoryRepoBranchRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx                           context.Context
+	ApiService                    *MemoryReposAPIService
+	repoId                        string
 	memoryRepoBranchCreateRequest *MemoryRepoBranchCreateRequest
-	authorization *string
+	authorization                 *string
 }
 
 func (r ApiCreateMemoryRepoBranchRequest) MemoryRepoBranchCreateRequest(memoryRepoBranchCreateRequest MemoryRepoBranchCreateRequest) ApiCreateMemoryRepoBranchRequest {
@@ -439,26 +441,27 @@ func (r ApiCreateMemoryRepoBranchRequest) Execute() (map[string]interface{}, *ht
 /*
 CreateMemoryRepoBranch Create memory repo branch
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiCreateMemoryRepoBranchRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiCreateMemoryRepoBranchRequest
 */
 func (a *MemoryReposAPIService) CreateMemoryRepoBranch(ctx context.Context, repoId string) ApiCreateMemoryRepoBranchRequest {
 	return ApiCreateMemoryRepoBranchRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return map[string]interface{}
+//
+//	@return map[string]interface{}
 func (a *MemoryReposAPIService) CreateMemoryRepoBranchExecute(r ApiCreateMemoryRepoBranchRequest) (map[string]interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  map[string]interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue map[string]interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.CreateMemoryRepoBranch")
@@ -527,8 +530,8 @@ func (a *MemoryReposAPIService) CreateMemoryRepoBranchExecute(r ApiCreateMemoryR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -546,15 +549,15 @@ func (a *MemoryReposAPIService) CreateMemoryRepoBranchExecute(r ApiCreateMemoryR
 }
 
 type ApiDiffMemoryRepoRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
-	fromCommitId *string
-	toCommitId *string
-	fromBranch *string
-	toBranch *string
+	ctx              context.Context
+	ApiService       *MemoryReposAPIService
+	repoId           string
+	fromCommitId     *string
+	toCommitId       *string
+	fromBranch       *string
+	toBranch         *string
 	includeWorkspace *bool
-	authorization *string
+	authorization    *string
 }
 
 func (r ApiDiffMemoryRepoRequest) FromCommitId(fromCommitId string) ApiDiffMemoryRepoRequest {
@@ -594,26 +597,27 @@ func (r ApiDiffMemoryRepoRequest) Execute() (*MemoryRepoDiffResponse, *http.Resp
 /*
 DiffMemoryRepo Diff memory repo commits, branches, or workspace
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiDiffMemoryRepoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiDiffMemoryRepoRequest
 */
 func (a *MemoryReposAPIService) DiffMemoryRepo(ctx context.Context, repoId string) ApiDiffMemoryRepoRequest {
 	return ApiDiffMemoryRepoRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoDiffResponse
+//
+//	@return MemoryRepoDiffResponse
 func (a *MemoryReposAPIService) DiffMemoryRepoExecute(r ApiDiffMemoryRepoRequest) (*MemoryRepoDiffResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoDiffResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoDiffResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.DiffMemoryRepo")
@@ -642,6 +646,9 @@ func (a *MemoryReposAPIService) DiffMemoryRepoExecute(r ApiDiffMemoryRepoRequest
 	}
 	if r.includeWorkspace != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "include_workspace", r.includeWorkspace, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.includeWorkspace = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -692,8 +699,8 @@ func (a *MemoryReposAPIService) DiffMemoryRepoExecute(r ApiDiffMemoryRepoRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -711,11 +718,11 @@ func (a *MemoryReposAPIService) DiffMemoryRepoExecute(r ApiDiffMemoryRepoRequest
 }
 
 type ApiEnableMemoryRepoRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	bankId string
+	ctx                     context.Context
+	ApiService              *MemoryReposAPIService
+	bankId                  string
 	memoryRepoEnableRequest *MemoryRepoEnableRequest
-	authorization *string
+	authorization           *string
 }
 
 func (r ApiEnableMemoryRepoRequest) MemoryRepoEnableRequest(memoryRepoEnableRequest MemoryRepoEnableRequest) ApiEnableMemoryRepoRequest {
@@ -735,26 +742,27 @@ func (r ApiEnableMemoryRepoRequest) Execute() (*MemoryRepoSummaryResponse, *http
 /*
 EnableMemoryRepo Enable repo mode on a bank
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiEnableMemoryRepoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiEnableMemoryRepoRequest
 */
 func (a *MemoryReposAPIService) EnableMemoryRepo(ctx context.Context, bankId string) ApiEnableMemoryRepoRequest {
 	return ApiEnableMemoryRepoRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoSummaryResponse
+//
+//	@return MemoryRepoSummaryResponse
 func (a *MemoryReposAPIService) EnableMemoryRepoExecute(r ApiEnableMemoryRepoRequest) (*MemoryRepoSummaryResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoSummaryResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.EnableMemoryRepo")
@@ -823,8 +831,8 @@ func (a *MemoryReposAPIService) EnableMemoryRepoExecute(r ApiEnableMemoryRepoReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -842,11 +850,11 @@ func (a *MemoryReposAPIService) EnableMemoryRepoExecute(r ApiEnableMemoryRepoReq
 }
 
 type ApiForkMemoryRepoBankRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx                       context.Context
+	ApiService                *MemoryReposAPIService
+	repoId                    string
 	memoryRepoForkBankRequest *MemoryRepoForkBankRequest
-	authorization *string
+	authorization             *string
 }
 
 func (r ApiForkMemoryRepoBankRequest) MemoryRepoForkBankRequest(memoryRepoForkBankRequest MemoryRepoForkBankRequest) ApiForkMemoryRepoBankRequest {
@@ -866,26 +874,27 @@ func (r ApiForkMemoryRepoBankRequest) Execute() (*MemoryRepoForkBankResponse, *h
 /*
 ForkMemoryRepoBank Fork a memory repo version into a new bank
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiForkMemoryRepoBankRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiForkMemoryRepoBankRequest
 */
 func (a *MemoryReposAPIService) ForkMemoryRepoBank(ctx context.Context, repoId string) ApiForkMemoryRepoBankRequest {
 	return ApiForkMemoryRepoBankRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoForkBankResponse
+//
+//	@return MemoryRepoForkBankResponse
 func (a *MemoryReposAPIService) ForkMemoryRepoBankExecute(r ApiForkMemoryRepoBankRequest) (*MemoryRepoForkBankResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoForkBankResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoForkBankResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.ForkMemoryRepoBank")
@@ -954,8 +963,8 @@ func (a *MemoryReposAPIService) ForkMemoryRepoBankExecute(r ApiForkMemoryRepoBan
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -973,9 +982,9 @@ func (a *MemoryReposAPIService) ForkMemoryRepoBankExecute(r ApiForkMemoryRepoBan
 }
 
 type ApiGetMemoryRepoRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
+	repoId        string
 	authorization *string
 }
 
@@ -991,26 +1000,27 @@ func (r ApiGetMemoryRepoRequest) Execute() (*MemoryRepoSummaryResponse, *http.Re
 /*
 GetMemoryRepo Get memory repo summary
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiGetMemoryRepoRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiGetMemoryRepoRequest
 */
 func (a *MemoryReposAPIService) GetMemoryRepo(ctx context.Context, repoId string) ApiGetMemoryRepoRequest {
 	return ApiGetMemoryRepoRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoSummaryResponse
+//
+//	@return MemoryRepoSummaryResponse
 func (a *MemoryReposAPIService) GetMemoryRepoExecute(r ApiGetMemoryRepoRequest) (*MemoryRepoSummaryResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoSummaryResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoSummaryResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.GetMemoryRepo")
@@ -1074,8 +1084,8 @@ func (a *MemoryReposAPIService) GetMemoryRepoExecute(r ApiGetMemoryRepoRequest) 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1093,9 +1103,9 @@ func (a *MemoryReposAPIService) GetMemoryRepoExecute(r ApiGetMemoryRepoRequest) 
 }
 
 type ApiGetMemoryRepoForBankRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1111,26 +1121,27 @@ func (r ApiGetMemoryRepoForBankRequest) Execute() (*MemoryRepoLookupResponse, *h
 /*
 GetMemoryRepoForBank Get memory repo for a bank
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiGetMemoryRepoForBankRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiGetMemoryRepoForBankRequest
 */
 func (a *MemoryReposAPIService) GetMemoryRepoForBank(ctx context.Context, bankId string) ApiGetMemoryRepoForBankRequest {
 	return ApiGetMemoryRepoForBankRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoLookupResponse
+//
+//	@return MemoryRepoLookupResponse
 func (a *MemoryReposAPIService) GetMemoryRepoForBankExecute(r ApiGetMemoryRepoForBankRequest) (*MemoryRepoLookupResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoLookupResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoLookupResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.GetMemoryRepoForBank")
@@ -1194,8 +1205,8 @@ func (a *MemoryReposAPIService) GetMemoryRepoForBankExecute(r ApiGetMemoryRepoFo
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1213,11 +1224,11 @@ func (a *MemoryReposAPIService) GetMemoryRepoForBankExecute(r ApiGetMemoryRepoFo
 }
 
 type ApiGetMemoryRepoLogRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
-	branchName *string
-	limit *int32
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
+	repoId        string
+	branchName    *string
+	limit         *int32
 	authorization *string
 }
 
@@ -1243,26 +1254,27 @@ func (r ApiGetMemoryRepoLogRequest) Execute() (*MemoryRepoLogResponse, *http.Res
 /*
 GetMemoryRepoLog Get memory repo commit log
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiGetMemoryRepoLogRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiGetMemoryRepoLogRequest
 */
 func (a *MemoryReposAPIService) GetMemoryRepoLog(ctx context.Context, repoId string) ApiGetMemoryRepoLogRequest {
 	return ApiGetMemoryRepoLogRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoLogResponse
+//
+//	@return MemoryRepoLogResponse
 func (a *MemoryReposAPIService) GetMemoryRepoLogExecute(r ApiGetMemoryRepoLogRequest) (*MemoryRepoLogResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoLogResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoLogResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.GetMemoryRepoLog")
@@ -1282,6 +1294,9 @@ func (a *MemoryReposAPIService) GetMemoryRepoLogExecute(r ApiGetMemoryRepoLogReq
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -1332,8 +1347,8 @@ func (a *MemoryReposAPIService) GetMemoryRepoLogExecute(r ApiGetMemoryRepoLogReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1351,10 +1366,10 @@ func (a *MemoryReposAPIService) GetMemoryRepoLogExecute(r ApiGetMemoryRepoLogReq
 }
 
 type ApiGetMemoryRepoStatusRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
-	branchName *string
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
+	repoId        string
+	branchName    *string
 	authorization *string
 }
 
@@ -1375,26 +1390,27 @@ func (r ApiGetMemoryRepoStatusRequest) Execute() (*MemoryRepoStatusResponse, *ht
 /*
 GetMemoryRepoStatus Get memory repo status
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiGetMemoryRepoStatusRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiGetMemoryRepoStatusRequest
 */
 func (a *MemoryReposAPIService) GetMemoryRepoStatus(ctx context.Context, repoId string) ApiGetMemoryRepoStatusRequest {
 	return ApiGetMemoryRepoStatusRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoStatusResponse
+//
+//	@return MemoryRepoStatusResponse
 func (a *MemoryReposAPIService) GetMemoryRepoStatusExecute(r ApiGetMemoryRepoStatusRequest) (*MemoryRepoStatusResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoStatusResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoStatusResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.GetMemoryRepoStatus")
@@ -1461,8 +1477,8 @@ func (a *MemoryReposAPIService) GetMemoryRepoStatusExecute(r ApiGetMemoryRepoSta
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1480,9 +1496,9 @@ func (a *MemoryReposAPIService) GetMemoryRepoStatusExecute(r ApiGetMemoryRepoSta
 }
 
 type ApiListMemoryRepoBranchesRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
+	repoId        string
 	authorization *string
 }
 
@@ -1498,26 +1514,27 @@ func (r ApiListMemoryRepoBranchesRequest) Execute() (*MemoryRepoBranchesResponse
 /*
 ListMemoryRepoBranches List memory repo branches
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiListMemoryRepoBranchesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiListMemoryRepoBranchesRequest
 */
 func (a *MemoryReposAPIService) ListMemoryRepoBranches(ctx context.Context, repoId string) ApiListMemoryRepoBranchesRequest {
 	return ApiListMemoryRepoBranchesRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoBranchesResponse
+//
+//	@return MemoryRepoBranchesResponse
 func (a *MemoryReposAPIService) ListMemoryRepoBranchesExecute(r ApiListMemoryRepoBranchesRequest) (*MemoryRepoBranchesResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoBranchesResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoBranchesResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.ListMemoryRepoBranches")
@@ -1581,8 +1598,8 @@ func (a *MemoryReposAPIService) ListMemoryRepoBranchesExecute(r ApiListMemoryRep
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1600,9 +1617,9 @@ func (a *MemoryReposAPIService) ListMemoryRepoBranchesExecute(r ApiListMemoryRep
 }
 
 type ApiListMemoryRepoBranchesForBankRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -1618,26 +1635,27 @@ func (r ApiListMemoryRepoBranchesForBankRequest) Execute() (*MemoryRepoBranchesR
 /*
 ListMemoryRepoBranchesForBank List memory repo branches for a bank
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListMemoryRepoBranchesForBankRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListMemoryRepoBranchesForBankRequest
 */
 func (a *MemoryReposAPIService) ListMemoryRepoBranchesForBank(ctx context.Context, bankId string) ApiListMemoryRepoBranchesForBankRequest {
 	return ApiListMemoryRepoBranchesForBankRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoBranchesResponse
+//
+//	@return MemoryRepoBranchesResponse
 func (a *MemoryReposAPIService) ListMemoryRepoBranchesForBankExecute(r ApiListMemoryRepoBranchesForBankRequest) (*MemoryRepoBranchesResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoBranchesResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoBranchesResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.ListMemoryRepoBranchesForBank")
@@ -1701,8 +1719,8 @@ func (a *MemoryReposAPIService) ListMemoryRepoBranchesForBankExecute(r ApiListMe
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1720,8 +1738,8 @@ func (a *MemoryReposAPIService) ListMemoryRepoBranchesForBankExecute(r ApiListMe
 }
 
 type ApiListMemoryReposRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
+	ctx           context.Context
+	ApiService    *MemoryReposAPIService
 	authorization *string
 }
 
@@ -1737,24 +1755,25 @@ func (r ApiListMemoryReposRequest) Execute() (*MemoryRepoListResponse, *http.Res
 /*
 ListMemoryRepos List memory repos
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiListMemoryReposRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiListMemoryReposRequest
 */
 func (a *MemoryReposAPIService) ListMemoryRepos(ctx context.Context) ApiListMemoryReposRequest {
 	return ApiListMemoryReposRequest{
 		ApiService: a,
-		ctx: ctx,
+		ctx:        ctx,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoListResponse
+//
+//	@return MemoryRepoListResponse
 func (a *MemoryReposAPIService) ListMemoryReposExecute(r ApiListMemoryReposRequest) (*MemoryRepoListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.ListMemoryRepos")
@@ -1817,8 +1836,8 @@ func (a *MemoryReposAPIService) ListMemoryReposExecute(r ApiListMemoryReposReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1836,11 +1855,11 @@ func (a *MemoryReposAPIService) ListMemoryReposExecute(r ApiListMemoryReposReque
 }
 
 type ApiResetMemoryRepoHardRequest struct {
-	ctx context.Context
-	ApiService *MemoryReposAPIService
-	repoId string
+	ctx                        context.Context
+	ApiService                 *MemoryReposAPIService
+	repoId                     string
 	memoryRepoResetHardRequest *MemoryRepoResetHardRequest
-	authorization *string
+	authorization              *string
 }
 
 func (r ApiResetMemoryRepoHardRequest) MemoryRepoResetHardRequest(memoryRepoResetHardRequest MemoryRepoResetHardRequest) ApiResetMemoryRepoHardRequest {
@@ -1860,26 +1879,27 @@ func (r ApiResetMemoryRepoHardRequest) Execute() (*MemoryRepoStatusResponse, *ht
 /*
 ResetMemoryRepoHard Reset active memory repo branch hard
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param repoId
- @return ApiResetMemoryRepoHardRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param repoId
+	@return ApiResetMemoryRepoHardRequest
 */
 func (a *MemoryReposAPIService) ResetMemoryRepoHard(ctx context.Context, repoId string) ApiResetMemoryRepoHardRequest {
 	return ApiResetMemoryRepoHardRequest{
 		ApiService: a,
-		ctx: ctx,
-		repoId: repoId,
+		ctx:        ctx,
+		repoId:     repoId,
 	}
 }
 
 // Execute executes the request
-//  @return MemoryRepoStatusResponse
+//
+//	@return MemoryRepoStatusResponse
 func (a *MemoryReposAPIService) ResetMemoryRepoHardExecute(r ApiResetMemoryRepoHardRequest) (*MemoryRepoStatusResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *MemoryRepoStatusResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *MemoryRepoStatusResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "MemoryReposAPIService.ResetMemoryRepoHard")
@@ -1948,8 +1968,8 @@ func (a *MemoryReposAPIService) ResetMemoryRepoHardExecute(r ApiResetMemoryRepoH
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

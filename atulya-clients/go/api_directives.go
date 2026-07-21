@@ -16,20 +16,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"reflect"
+	"strings"
 )
-
 
 // DirectivesAPIService DirectivesAPI service
 type DirectivesAPIService service
 
 type ApiCreateDirectiveRequest struct {
-	ctx context.Context
-	ApiService *DirectivesAPIService
-	bankId string
+	ctx                    context.Context
+	ApiService             *DirectivesAPIService
+	bankId                 string
 	createDirectiveRequest *CreateDirectiveRequest
-	authorization *string
+	authorization          *string
 }
 
 func (r ApiCreateDirectiveRequest) CreateDirectiveRequest(createDirectiveRequest CreateDirectiveRequest) ApiCreateDirectiveRequest {
@@ -51,26 +50,27 @@ CreateDirective Create directive
 
 Create a hard rule that will be injected into prompts.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiCreateDirectiveRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiCreateDirectiveRequest
 */
 func (a *DirectivesAPIService) CreateDirective(ctx context.Context, bankId string) ApiCreateDirectiveRequest {
 	return ApiCreateDirectiveRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DirectiveResponse
+//
+//	@return DirectiveResponse
 func (a *DirectivesAPIService) CreateDirectiveExecute(r ApiCreateDirectiveRequest) (*DirectiveResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DirectiveResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DirectiveResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DirectivesAPIService.CreateDirective")
@@ -139,8 +139,8 @@ func (a *DirectivesAPIService) CreateDirectiveExecute(r ApiCreateDirectiveReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -158,10 +158,10 @@ func (a *DirectivesAPIService) CreateDirectiveExecute(r ApiCreateDirectiveReques
 }
 
 type ApiDeleteDirectiveRequest struct {
-	ctx context.Context
-	ApiService *DirectivesAPIService
-	bankId string
-	directiveId string
+	ctx           context.Context
+	ApiService    *DirectivesAPIService
+	bankId        string
+	directiveId   string
 	authorization *string
 }
 
@@ -179,28 +179,29 @@ DeleteDirective Delete directive
 
 Delete a directive.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param directiveId
- @return ApiDeleteDirectiveRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param directiveId
+	@return ApiDeleteDirectiveRequest
 */
 func (a *DirectivesAPIService) DeleteDirective(ctx context.Context, bankId string, directiveId string) ApiDeleteDirectiveRequest {
 	return ApiDeleteDirectiveRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		directiveId: directiveId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *DirectivesAPIService) DeleteDirectiveExecute(r ApiDeleteDirectiveRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodDelete
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodDelete
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DirectivesAPIService.DeleteDirective")
@@ -265,8 +266,8 @@ func (a *DirectivesAPIService) DeleteDirectiveExecute(r ApiDeleteDirectiveReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -284,10 +285,10 @@ func (a *DirectivesAPIService) DeleteDirectiveExecute(r ApiDeleteDirectiveReques
 }
 
 type ApiGetDirectiveRequest struct {
-	ctx context.Context
-	ApiService *DirectivesAPIService
-	bankId string
-	directiveId string
+	ctx           context.Context
+	ApiService    *DirectivesAPIService
+	bankId        string
+	directiveId   string
 	authorization *string
 }
 
@@ -305,28 +306,29 @@ GetDirective Get directive
 
 Get a specific directive by ID.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param directiveId
- @return ApiGetDirectiveRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param directiveId
+	@return ApiGetDirectiveRequest
 */
 func (a *DirectivesAPIService) GetDirective(ctx context.Context, bankId string, directiveId string) ApiGetDirectiveRequest {
 	return ApiGetDirectiveRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		directiveId: directiveId,
 	}
 }
 
 // Execute executes the request
-//  @return DirectiveResponse
+//
+//	@return DirectiveResponse
 func (a *DirectivesAPIService) GetDirectiveExecute(r ApiGetDirectiveRequest) (*DirectiveResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DirectiveResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DirectiveResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DirectivesAPIService.GetDirective")
@@ -391,8 +393,8 @@ func (a *DirectivesAPIService) GetDirectiveExecute(r ApiGetDirectiveRequest) (*D
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -410,14 +412,14 @@ func (a *DirectivesAPIService) GetDirectiveExecute(r ApiGetDirectiveRequest) (*D
 }
 
 type ApiListDirectivesRequest struct {
-	ctx context.Context
-	ApiService *DirectivesAPIService
-	bankId string
-	tags *[]string
-	tagsMatch *string
-	activeOnly *bool
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *DirectivesAPIService
+	bankId        string
+	tags          *[]string
+	tagsMatch     *string
+	activeOnly    *bool
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -463,26 +465,27 @@ ListDirectives List directives
 
 List hard rules that are injected into prompts.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListDirectivesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListDirectivesRequest
 */
 func (a *DirectivesAPIService) ListDirectives(ctx context.Context, bankId string) ApiListDirectivesRequest {
 	return ApiListDirectivesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return DirectiveListResponse
+//
+//	@return DirectiveListResponse
 func (a *DirectivesAPIService) ListDirectivesExecute(r ApiListDirectivesRequest) (*DirectiveListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DirectiveListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DirectiveListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DirectivesAPIService.ListDirectives")
@@ -510,15 +513,27 @@ func (a *DirectivesAPIService) ListDirectivesExecute(r ApiListDirectivesRequest)
 	}
 	if r.tagsMatch != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "tags_match", r.tagsMatch, "form", "")
+	} else {
+		var defaultValue string = "any"
+		r.tagsMatch = &defaultValue
 	}
 	if r.activeOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "active_only", r.activeOnly, "form", "")
+	} else {
+		var defaultValue bool = true
+		r.activeOnly = &defaultValue
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -569,8 +584,8 @@ func (a *DirectivesAPIService) ListDirectivesExecute(r ApiListDirectivesRequest)
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -588,12 +603,12 @@ func (a *DirectivesAPIService) ListDirectivesExecute(r ApiListDirectivesRequest)
 }
 
 type ApiUpdateDirectiveRequest struct {
-	ctx context.Context
-	ApiService *DirectivesAPIService
-	bankId string
-	directiveId string
+	ctx                    context.Context
+	ApiService             *DirectivesAPIService
+	bankId                 string
+	directiveId            string
 	updateDirectiveRequest *UpdateDirectiveRequest
-	authorization *string
+	authorization          *string
 }
 
 func (r ApiUpdateDirectiveRequest) UpdateDirectiveRequest(updateDirectiveRequest UpdateDirectiveRequest) ApiUpdateDirectiveRequest {
@@ -615,28 +630,29 @@ UpdateDirective Update directive
 
 Update a directive's properties.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param directiveId
- @return ApiUpdateDirectiveRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param directiveId
+	@return ApiUpdateDirectiveRequest
 */
 func (a *DirectivesAPIService) UpdateDirective(ctx context.Context, bankId string, directiveId string) ApiUpdateDirectiveRequest {
 	return ApiUpdateDirectiveRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		directiveId: directiveId,
 	}
 }
 
 // Execute executes the request
-//  @return DirectiveResponse
+//
+//	@return DirectiveResponse
 func (a *DirectivesAPIService) UpdateDirectiveExecute(r ApiUpdateDirectiveRequest) (*DirectiveResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPatch
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *DirectiveResponse
+		localVarHTTPMethod  = http.MethodPatch
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *DirectiveResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "DirectivesAPIService.UpdateDirective")
@@ -706,8 +722,8 @@ func (a *DirectivesAPIService) UpdateDirectiveExecute(r ApiUpdateDirectiveReques
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

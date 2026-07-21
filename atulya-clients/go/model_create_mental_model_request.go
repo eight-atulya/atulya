@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -44,6 +44,8 @@ func NewCreateMentalModelRequest(name string, sourceQuery string) *CreateMentalM
 	this := CreateMentalModelRequest{}
 	this.Name = name
 	this.SourceQuery = sourceQuery
+	var maxTokens int32 = 2048
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -52,6 +54,8 @@ func NewCreateMentalModelRequest(name string, sourceQuery string) *CreateMentalM
 // but it doesn't guarantee that properties required by API are set
 func NewCreateMentalModelRequestWithDefaults() *CreateMentalModelRequest {
 	this := CreateMentalModelRequest{}
+	var maxTokens int32 = 2048
+	this.MaxTokens = &maxTokens
 	return &this
 }
 
@@ -87,6 +91,7 @@ func (o *CreateMentalModelRequest) HasId() bool {
 func (o *CreateMentalModelRequest) SetId(v string) {
 	o.Id.Set(&v)
 }
+
 // SetIdNil sets the value for Id to be an explicit nil
 func (o *CreateMentalModelRequest) SetIdNil() {
 	o.Id.Set(nil)
@@ -242,7 +247,7 @@ func (o *CreateMentalModelRequest) SetTrigger(v MentalModelTrigger) {
 }
 
 func (o CreateMentalModelRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -282,10 +287,10 @@ func (o *CreateMentalModelRequest) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -341,5 +346,3 @@ func (v *NullableCreateMentalModelRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

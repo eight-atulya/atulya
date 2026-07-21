@@ -19,11 +19,11 @@ var _ MappedNullable = &UpdateDirectiveRequest{}
 
 // UpdateDirectiveRequest Request model for updating a directive.
 type UpdateDirectiveRequest struct {
-	Name NullableString `json:"name,omitempty"`
-	Content NullableString `json:"content,omitempty"`
-	Priority NullableInt32 `json:"priority,omitempty"`
-	IsActive NullableBool `json:"is_active,omitempty"`
-	Tags []string `json:"tags,omitempty"`
+	Name     NullableString `json:"name,omitempty"`
+	Content  NullableString `json:"content,omitempty"`
+	Priority NullableInt32  `json:"priority,omitempty"`
+	IsActive NullableBool   `json:"is_active,omitempty"`
+	Tags     []string       `json:"tags,omitempty"`
 }
 
 // NewUpdateDirectiveRequest instantiates a new UpdateDirectiveRequest object
@@ -75,6 +75,7 @@ func (o *UpdateDirectiveRequest) HasName() bool {
 func (o *UpdateDirectiveRequest) SetName(v string) {
 	o.Name.Set(&v)
 }
+
 // SetNameNil sets the value for Name to be an explicit nil
 func (o *UpdateDirectiveRequest) SetNameNil() {
 	o.Name.Set(nil)
@@ -117,6 +118,7 @@ func (o *UpdateDirectiveRequest) HasContent() bool {
 func (o *UpdateDirectiveRequest) SetContent(v string) {
 	o.Content.Set(&v)
 }
+
 // SetContentNil sets the value for Content to be an explicit nil
 func (o *UpdateDirectiveRequest) SetContentNil() {
 	o.Content.Set(nil)
@@ -159,6 +161,7 @@ func (o *UpdateDirectiveRequest) HasPriority() bool {
 func (o *UpdateDirectiveRequest) SetPriority(v int32) {
 	o.Priority.Set(&v)
 }
+
 // SetPriorityNil sets the value for Priority to be an explicit nil
 func (o *UpdateDirectiveRequest) SetPriorityNil() {
 	o.Priority.Set(nil)
@@ -201,6 +204,7 @@ func (o *UpdateDirectiveRequest) HasIsActive() bool {
 func (o *UpdateDirectiveRequest) SetIsActive(v bool) {
 	o.IsActive.Set(&v)
 }
+
 // SetIsActiveNil sets the value for IsActive to be an explicit nil
 func (o *UpdateDirectiveRequest) SetIsActiveNil() {
 	o.IsActive.Set(nil)
@@ -245,7 +249,7 @@ func (o *UpdateDirectiveRequest) SetTags(v []string) {
 }
 
 func (o UpdateDirectiveRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -307,5 +311,3 @@ func (v *NullableUpdateDirectiveRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

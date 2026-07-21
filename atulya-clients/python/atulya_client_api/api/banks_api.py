@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -2931,17 +2932,17 @@ class BanksApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if window_days is not None:
-            
+
             _query_params.append(('window_days', window_days))
-            
+
         if top_k is not None:
-            
+
             _query_params.append(('top_k', top_k))
-            
+
         if entity_type is not None:
-            
+
             _query_params.append(('entity_type', entity_type))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -4065,9 +4066,9 @@ class BanksApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if horizon_hours is not None:
-            
+
             _query_params.append(('horizon_hours', horizon_hours))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -4132,7 +4133,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -4208,7 +4209,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -4284,7 +4285,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -4926,9 +4927,9 @@ class BanksApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -7715,7 +7716,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -7791,7 +7792,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -7867,7 +7868,7 @@ class BanksApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Brain snapshot payload (required)
-        :type file: bytes
+        :type file: bytearray
         :param authorization:
         :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
@@ -7991,5 +7992,3 @@ class BanksApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

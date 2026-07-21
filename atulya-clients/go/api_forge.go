@@ -16,20 +16,19 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"reflect"
+	"strings"
 )
-
 
 // ForgeAPIService ForgeAPI service
 type ForgeAPIService service
 
 type ApiExportForgeJobRequest struct {
-	ctx context.Context
-	ApiService *ForgeAPIService
-	bankId string
+	ctx                      context.Context
+	ApiService               *ForgeAPIService
+	bankId                   string
 	forgeExportSubmitRequest *ForgeExportSubmitRequest
-	authorization *string
+	authorization            *string
 }
 
 func (r ApiExportForgeJobRequest) ForgeExportSubmitRequest(forgeExportSubmitRequest ForgeExportSubmitRequest) ApiExportForgeJobRequest {
@@ -49,26 +48,27 @@ func (r ApiExportForgeJobRequest) Execute() (interface{}, *http.Response, error)
 /*
 ExportForgeJob Export forge records via adapter
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiExportForgeJobRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiExportForgeJobRequest
 */
 func (a *ForgeAPIService) ExportForgeJob(ctx context.Context, bankId string) ApiExportForgeJobRequest {
 	return ApiExportForgeJobRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *ForgeAPIService) ExportForgeJobExecute(r ApiExportForgeJobRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ForgeAPIService.ExportForgeJob")
@@ -137,8 +137,8 @@ func (a *ForgeAPIService) ExportForgeJobExecute(r ApiExportForgeJobRequest) (int
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -156,10 +156,10 @@ func (a *ForgeAPIService) ExportForgeJobExecute(r ApiExportForgeJobRequest) (int
 }
 
 type ApiGetForgeJobLineageRequest struct {
-	ctx context.Context
-	ApiService *ForgeAPIService
-	bankId string
-	operationId string
+	ctx           context.Context
+	ApiService    *ForgeAPIService
+	bankId        string
+	operationId   string
 	authorization *string
 }
 
@@ -175,28 +175,29 @@ func (r ApiGetForgeJobLineageRequest) Execute() (interface{}, *http.Response, er
 /*
 GetForgeJobLineage Forge job lineage and repo version
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param operationId
- @return ApiGetForgeJobLineageRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param operationId
+	@return ApiGetForgeJobLineageRequest
 */
 func (a *ForgeAPIService) GetForgeJobLineage(ctx context.Context, bankId string, operationId string) ApiGetForgeJobLineageRequest {
 	return ApiGetForgeJobLineageRequest{
-		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ApiService:  a,
+		ctx:         ctx,
+		bankId:      bankId,
 		operationId: operationId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *ForgeAPIService) GetForgeJobLineageExecute(r ApiGetForgeJobLineageRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ForgeAPIService.GetForgeJobLineage")
@@ -261,8 +262,8 @@ func (a *ForgeAPIService) GetForgeJobLineageExecute(r ApiGetForgeJobLineageReque
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -280,10 +281,10 @@ func (a *ForgeAPIService) GetForgeJobLineageExecute(r ApiGetForgeJobLineageReque
 }
 
 type ApiListForgeRecipesRequest struct {
-	ctx context.Context
-	ApiService *ForgeAPIService
-	bankId string
-	domainTags *[]string
+	ctx           context.Context
+	ApiService    *ForgeAPIService
+	bankId        string
+	domainTags    *[]string
 	authorization *string
 }
 
@@ -304,26 +305,27 @@ func (r ApiListForgeRecipesRequest) Execute() (interface{}, *http.Response, erro
 /*
 ListForgeRecipes List forge recipes and exporters
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListForgeRecipesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListForgeRecipesRequest
 */
 func (a *ForgeAPIService) ListForgeRecipes(ctx context.Context, bankId string) ApiListForgeRecipesRequest {
 	return ApiListForgeRecipesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *ForgeAPIService) ListForgeRecipesExecute(r ApiListForgeRecipesRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ForgeAPIService.ListForgeRecipes")
@@ -398,8 +400,8 @@ func (a *ForgeAPIService) ListForgeRecipesExecute(r ApiListForgeRecipesRequest) 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -417,12 +419,12 @@ func (a *ForgeAPIService) ListForgeRecipesExecute(r ApiListForgeRecipesRequest) 
 }
 
 type ApiListForgeRecordsRequest struct {
-	ctx context.Context
-	ApiService *ForgeAPIService
-	bankId string
-	operationId *string
-	limit *int32
-	offset *int32
+	ctx           context.Context
+	ApiService    *ForgeAPIService
+	bankId        string
+	operationId   *string
+	limit         *int32
+	offset        *int32
 	authorization *string
 }
 
@@ -453,26 +455,27 @@ func (r ApiListForgeRecordsRequest) Execute() (interface{}, *http.Response, erro
 /*
 ListForgeRecords List forge training records
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListForgeRecordsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListForgeRecordsRequest
 */
 func (a *ForgeAPIService) ListForgeRecords(ctx context.Context, bankId string) ApiListForgeRecordsRequest {
 	return ApiListForgeRecordsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return interface{}
+//
+//	@return interface{}
 func (a *ForgeAPIService) ListForgeRecordsExecute(r ApiListForgeRecordsRequest) (interface{}, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  interface{}
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ForgeAPIService.ListForgeRecords")
@@ -492,9 +495,15 @@ func (a *ForgeAPIService) ListForgeRecordsExecute(r ApiListForgeRecordsRequest) 
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	if r.offset != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "offset", r.offset, "form", "")
+	} else {
+		var defaultValue int32 = 0
+		r.offset = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -545,8 +554,8 @@ func (a *ForgeAPIService) ListForgeRecordsExecute(r ApiListForgeRecordsRequest) 
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -564,11 +573,11 @@ func (a *ForgeAPIService) ListForgeRecordsExecute(r ApiListForgeRecordsRequest) 
 }
 
 type ApiSubmitForgeJobRequest struct {
-	ctx context.Context
-	ApiService *ForgeAPIService
-	bankId string
+	ctx                   context.Context
+	ApiService            *ForgeAPIService
+	bankId                string
 	forgeJobSubmitRequest *ForgeJobSubmitRequest
-	authorization *string
+	authorization         *string
 }
 
 func (r ApiSubmitForgeJobRequest) ForgeJobSubmitRequest(forgeJobSubmitRequest ForgeJobSubmitRequest) ApiSubmitForgeJobRequest {
@@ -588,26 +597,27 @@ func (r ApiSubmitForgeJobRequest) Execute() (*ConsolidationResponse, *http.Respo
 /*
 SubmitForgeJob Start a Data Forge job
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiSubmitForgeJobRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiSubmitForgeJobRequest
 */
 func (a *ForgeAPIService) SubmitForgeJob(ctx context.Context, bankId string) ApiSubmitForgeJobRequest {
 	return ApiSubmitForgeJobRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return ConsolidationResponse
+//
+//	@return ConsolidationResponse
 func (a *ForgeAPIService) SubmitForgeJobExecute(r ApiSubmitForgeJobRequest) (*ConsolidationResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *ConsolidationResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *ConsolidationResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "ForgeAPIService.SubmitForgeJob")
@@ -676,8 +686,8 @@ func (a *ForgeAPIService) SubmitForgeJobExecute(r ApiSubmitForgeJobRequest) (*Co
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

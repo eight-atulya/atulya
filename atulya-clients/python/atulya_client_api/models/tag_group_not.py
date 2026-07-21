@@ -21,18 +21,17 @@ from pydantic import BaseModel, ConfigDict, Field
 from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class TagGroupNot(BaseModel):
     """
     Logical NOT around a single nested group.
     """ # noqa: E501
-    var_not: TagGroupNotNot = Field(alias="not")
+    var_not: ModelNot = Field(alias="not")
+    additional_properties: Dict[str, Any] = {}
     __properties: ClassVar[List[str]] = ["not"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -44,7 +43,8 @@ class TagGroupNot(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -60,8 +60,10 @@ class TagGroupNot(BaseModel):
         * `None` is only added to the output dict for nullable fields that
           were set at model initialization. Other fields with value `None`
           are ignored.
+        * Fields in `self.additional_properties` are added to the output dict.
         """
         excluded_fields: Set[str] = set([
+            "additional_properties",
         ])
 
         _dict = self.model_dump(
@@ -72,6 +74,11 @@ class TagGroupNot(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of var_not
         if self.var_not:
             _dict['not'] = self.var_not.to_dict()
+        # puts key-value pairs in additional_properties in the top level
+        if self.additional_properties is not None:
+            for _key, _value in self.additional_properties.items():
+                _dict[_key] = _value
+
         return _dict
 
     @classmethod
@@ -84,11 +91,15 @@ class TagGroupNot(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "not": TagGroupNotNot.from_dict(obj["not"]) if obj.get("not") is not None else None
+            "not": ModelNot.from_dict(obj["not"]) if obj.get("not") is not None else None
         })
+        # store additional fields in additional_properties
+        for _key in obj.keys():
+            if _key not in cls.__properties:
+                _obj.additional_properties[_key] = obj.get(_key)
+
         return _obj
 
-from atulya_client_api.models.tag_group_not_not import TagGroupNotNot
+from atulya_client_api.models.model_not import ModelNot
 # TODO: Rewrite to not use raise_errors
 TagGroupNot.model_rebuild(raise_errors=False)
-

@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -1897,9 +1898,9 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if snapshot_id is not None:
-            
+
             _query_params.append(('snapshot_id', snapshot_id))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -2515,9 +2516,9 @@ class CodebasesApi:
             _path_params['symbol_id'] = symbol_id
         # process the query parameters
         if snapshot_id is not None:
-            
+
             _query_params.append(('snapshot_id', snapshot_id))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -2876,7 +2877,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Source file to import (required)
-        :type file: bytes
+        :type file: bytearray
         :param request: JSON string with CodebaseImportFileRequest model (required)
         :type request: str
         :param authorization:
@@ -2956,7 +2957,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Source file to import (required)
-        :type file: bytes
+        :type file: bytearray
         :param request: JSON string with CodebaseImportFileRequest model (required)
         :type request: str
         :param authorization:
@@ -3036,7 +3037,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param file: Source file to import (required)
-        :type file: bytes
+        :type file: bytearray
         :param request: JSON string with CodebaseImportFileRequest model (required)
         :type request: str
         :param authorization:
@@ -3503,7 +3504,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param archive: Repository ZIP archive (required)
-        :type archive: bytes
+        :type archive: bytearray
         :param request: JSON string with CodebaseImportZipRequest model (required)
         :type request: str
         :param authorization:
@@ -3583,7 +3584,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param archive: Repository ZIP archive (required)
-        :type archive: bytes
+        :type archive: bytearray
         :param request: JSON string with CodebaseImportZipRequest model (required)
         :type request: str
         :param authorization:
@@ -3663,7 +3664,7 @@ class CodebasesApi:
         :param bank_id: (required)
         :type bank_id: str
         :param archive: Repository ZIP archive (required)
-        :type archive: bytes
+        :type archive: bytearray
         :param request: JSON string with CodebaseImportZipRequest model (required)
         :type request: str
         :param authorization:
@@ -4274,73 +4275,73 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if path_prefix is not None:
-            
+
             _query_params.append(('path_prefix', path_prefix))
-            
+
         if language is not None:
-            
+
             _query_params.append(('language', language))
-            
+
         if cluster_id is not None:
-            
+
             _query_params.append(('cluster_id', cluster_id))
-            
+
         if route_target is not None:
-            
+
             _query_params.append(('route_target', route_target))
-            
+
         if changed_only is not None:
-            
+
             _query_params.append(('changed_only', changed_only))
-            
+
         if kind is not None:
-            
+
             _query_params.append(('kind', kind))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if cursor is not None:
-            
+
             _query_params.append(('cursor', cursor))
-            
+
         if snapshot_id is not None:
-            
+
             _query_params.append(('snapshot_id', snapshot_id))
-            
+
         if min_significance is not None:
-            
+
             _query_params.append(('min_significance', min_significance))
-            
+
         if max_significance is not None:
-            
+
             _query_params.append(('max_significance', max_significance))
-            
+
         if file_role is not None:
-            
+
             _query_params.append(('file_role', file_role))
-            
+
         if auto_route_reason is not None:
-            
+
             _query_params.append(('auto_route_reason', auto_route_reason))
-            
+
         if has_safety_tag is not None:
-            
+
             _query_params.append(('has_safety_tag', has_safety_tag))
-            
+
         if route_source is not None:
-            
+
             _query_params.append(('route_source', route_source))
-            
+
         if order_by is not None:
-            
+
             _query_params.append(('order_by', order_by))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -4687,21 +4688,21 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if path_prefix is not None:
-            
+
             _query_params.append(('path_prefix', path_prefix))
-            
+
         if language is not None:
-            
+
             _query_params.append(('language', language))
-            
+
         if changed_only is not None:
-            
+
             _query_params.append(('changed_only', changed_only))
-            
+
         if snapshot_id is not None:
-            
+
             _query_params.append(('snapshot_id', snapshot_id))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -5022,13 +5023,13 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if snapshot_id is not None:
-            
+
             _query_params.append(('snapshot_id', snapshot_id))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -5349,13 +5350,13 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if cursor is not None:
-            
+
             _query_params.append(('cursor', cursor))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -5689,17 +5690,17 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if snapshot_id is not None:
-            
+
             _query_params.append(('snapshot_id', snapshot_id))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if cursor is not None:
-            
+
             _query_params.append(('cursor', cursor))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -6979,25 +6980,25 @@ class CodebasesApi:
             _path_params['codebase_id'] = codebase_id
         # process the query parameters
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if kind is not None:
-            
+
             _query_params.append(('kind', kind))
-            
+
         if path_prefix is not None:
-            
+
             _query_params.append(('path_prefix', path_prefix))
-            
+
         if language is not None:
-            
+
             _query_params.append(('language', language))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -7353,5 +7354,3 @@ class CodebasesApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

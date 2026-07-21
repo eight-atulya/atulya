@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,14 +21,14 @@ var _ MappedNullable = &BrainInfluenceResponse{}
 
 // BrainInfluenceResponse struct for BrainInfluenceResponse
 type BrainInfluenceResponse struct {
-	BankId string `json:"bank_id"`
-	WindowDays int32 `json:"window_days"`
-	EntityType string `json:"entity_type"`
-	Leaderboard []InfluenceRow `json:"leaderboard"`
-	Heatmap []InfluenceHeatmapPoint `json:"heatmap"`
-	Trend []InfluenceTrendPoint `json:"trend"`
-	Anomalies []map[string]interface{} `json:"anomalies"`
-	Summary map[string]interface{} `json:"summary"`
+	BankId      string                   `json:"bank_id"`
+	WindowDays  int32                    `json:"window_days"`
+	EntityType  string                   `json:"entity_type"`
+	Leaderboard []InfluenceRow           `json:"leaderboard"`
+	Heatmap     []InfluenceHeatmapPoint  `json:"heatmap"`
+	Trend       []InfluenceTrendPoint    `json:"trend"`
+	Anomalies   []map[string]interface{} `json:"anomalies"`
+	Summary     map[string]interface{}   `json:"summary"`
 }
 
 type _BrainInfluenceResponse BrainInfluenceResponse
@@ -251,7 +251,7 @@ func (o *BrainInfluenceResponse) SetSummary(v map[string]interface{}) {
 }
 
 func (o BrainInfluenceResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -291,10 +291,10 @@ func (o *BrainInfluenceResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -350,5 +350,3 @@ func (v *NullableBrainInfluenceResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

@@ -16,21 +16,20 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"os"
+	"strings"
 )
-
 
 // CodebasesAPIService CodebasesAPI service
 type CodebasesAPIService service
 
 type ApiAnalyzeCodebaseImpactRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx                   context.Context
+	ApiService            *CodebasesAPIService
+	bankId                string
+	codebaseId            string
 	codebaseImpactRequest *CodebaseImpactRequest
-	authorization *string
+	authorization         *string
 }
 
 func (r ApiAnalyzeCodebaseImpactRequest) CodebaseImpactRequest(codebaseImpactRequest CodebaseImpactRequest) ApiAnalyzeCodebaseImpactRequest {
@@ -52,28 +51,29 @@ AnalyzeCodebaseImpact Analyze codebase impact
 
 Run deterministic impact analysis from a path, symbol, or query over the codebase graph.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiAnalyzeCodebaseImpactRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiAnalyzeCodebaseImpactRequest
 */
 func (a *CodebasesAPIService) AnalyzeCodebaseImpact(ctx context.Context, bankId string, codebaseId string) ApiAnalyzeCodebaseImpactRequest {
 	return ApiAnalyzeCodebaseImpactRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseImpactResponse
+//
+//	@return CodebaseImpactResponse
 func (a *CodebasesAPIService) AnalyzeCodebaseImpactExecute(r ApiAnalyzeCodebaseImpactRequest) (*CodebaseImpactResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseImpactResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseImpactResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.AnalyzeCodebaseImpact")
@@ -143,8 +143,8 @@ func (a *CodebasesAPIService) AnalyzeCodebaseImpactExecute(r ApiAnalyzeCodebaseI
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -162,12 +162,12 @@ func (a *CodebasesAPIService) AnalyzeCodebaseImpactExecute(r ApiAnalyzeCodebaseI
 }
 
 type ApiApproveCodebaseRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx                    context.Context
+	ApiService             *CodebasesAPIService
+	bankId                 string
+	codebaseId             string
 	codebaseApproveRequest *CodebaseApproveRequest
-	authorization *string
+	authorization          *string
 }
 
 func (r ApiApproveCodebaseRequest) CodebaseApproveRequest(codebaseApproveRequest CodebaseApproveRequest) ApiApproveCodebaseRequest {
@@ -189,28 +189,29 @@ ApproveCodebase Approve a codebase snapshot for memory hydration
 
 Explicitly approve the current or selected reviewable codebase snapshot so Atulya can hydrate source-file text into memory.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiApproveCodebaseRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiApproveCodebaseRequest
 */
 func (a *CodebasesAPIService) ApproveCodebase(ctx context.Context, bankId string, codebaseId string) ApiApproveCodebaseRequest {
 	return ApiApproveCodebaseRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseApproveResponse
+//
+//	@return CodebaseApproveResponse
 func (a *CodebasesAPIService) ApproveCodebaseExecute(r ApiApproveCodebaseRequest) (*CodebaseApproveResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseApproveResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseApproveResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ApproveCodebase")
@@ -280,8 +281,8 @@ func (a *CodebasesAPIService) ApproveCodebaseExecute(r ApiApproveCodebaseRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -299,12 +300,12 @@ func (a *CodebasesAPIService) ApproveCodebaseExecute(r ApiApproveCodebaseRequest
 }
 
 type ApiCurateCodebaseByIntentRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx                   context.Context
+	ApiService            *CodebasesAPIService
+	bankId                string
+	codebaseId            string
 	codebaseCurateRequest *CodebaseCurateRequest
-	authorization *string
+	authorization         *string
 }
 
 func (r ApiCurateCodebaseByIntentRequest) CodebaseCurateRequest(codebaseCurateRequest CodebaseCurateRequest) ApiCurateCodebaseByIntentRequest {
@@ -326,28 +327,29 @@ CurateCodebaseByIntent Curate codebase by intent
 
 Rank Symbol Cards + chunks against a free-text intent. Returns top clusters and symbol cards.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiCurateCodebaseByIntentRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiCurateCodebaseByIntentRequest
 */
 func (a *CodebasesAPIService) CurateCodebaseByIntent(ctx context.Context, bankId string, codebaseId string) ApiCurateCodebaseByIntentRequest {
 	return ApiCurateCodebaseByIntentRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseCurateResponse
+//
+//	@return CodebaseCurateResponse
 func (a *CodebasesAPIService) CurateCodebaseByIntentExecute(r ApiCurateCodebaseByIntentRequest) (*CodebaseCurateResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseCurateResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseCurateResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.CurateCodebaseByIntent")
@@ -417,8 +419,8 @@ func (a *CodebasesAPIService) CurateCodebaseByIntentExecute(r ApiCurateCodebaseB
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -436,10 +438,10 @@ func (a *CodebasesAPIService) CurateCodebaseByIntentExecute(r ApiCurateCodebaseB
 }
 
 type ApiGetCodebaseRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
 	authorization *string
 }
 
@@ -457,28 +459,29 @@ GetCodebase Get codebase
 
 Get codebase metadata plus current snapshot summary.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiGetCodebaseRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiGetCodebaseRequest
 */
 func (a *CodebasesAPIService) GetCodebase(ctx context.Context, bankId string, codebaseId string) ApiGetCodebaseRequest {
 	return ApiGetCodebaseRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseResponse
+//
+//	@return CodebaseResponse
 func (a *CodebasesAPIService) GetCodebaseExecute(r ApiGetCodebaseRequest) (*CodebaseResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebase")
@@ -543,8 +546,8 @@ func (a *CodebasesAPIService) GetCodebaseExecute(r ApiGetCodebaseRequest) (*Code
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -562,11 +565,11 @@ func (a *CodebasesAPIService) GetCodebaseExecute(r ApiGetCodebaseRequest) (*Code
 }
 
 type ApiGetCodebaseChunkDetailRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	chunkId string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	chunkId       string
 	authorization *string
 }
 
@@ -584,30 +587,31 @@ GetCodebaseChunkDetail Get codebase chunk detail
 
 Return detailed code preview, related chunks, symbols, and impact edges for one chunk.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @param chunkId
- @return ApiGetCodebaseChunkDetailRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@param chunkId
+	@return ApiGetCodebaseChunkDetailRequest
 */
 func (a *CodebasesAPIService) GetCodebaseChunkDetail(ctx context.Context, bankId string, codebaseId string, chunkId string) ApiGetCodebaseChunkDetailRequest {
 	return ApiGetCodebaseChunkDetailRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
-		chunkId: chunkId,
+		chunkId:    chunkId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseChunkDetailResponse
+//
+//	@return CodebaseChunkDetailResponse
 func (a *CodebasesAPIService) GetCodebaseChunkDetailExecute(r ApiGetCodebaseChunkDetailRequest) (*CodebaseChunkDetailResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseChunkDetailResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseChunkDetailResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseChunkDetail")
@@ -673,8 +677,8 @@ func (a *CodebasesAPIService) GetCodebaseChunkDetailExecute(r ApiGetCodebaseChun
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -692,11 +696,11 @@ func (a *CodebasesAPIService) GetCodebaseChunkDetailExecute(r ApiGetCodebaseChun
 }
 
 type ApiGetCodebaseRepoMapRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	snapshotId *string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	snapshotId    *string
 	authorization *string
 }
 
@@ -719,28 +723,29 @@ GetCodebaseRepoMap Get codebase Repo Map
 
 Return the snapshot Repo Map artifact (top-K ranked tags + module dependency edges).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiGetCodebaseRepoMapRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiGetCodebaseRepoMapRequest
 */
 func (a *CodebasesAPIService) GetCodebaseRepoMap(ctx context.Context, bankId string, codebaseId string) ApiGetCodebaseRepoMapRequest {
 	return ApiGetCodebaseRepoMapRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseRepoMapResponse
+//
+//	@return CodebaseRepoMapResponse
 func (a *CodebasesAPIService) GetCodebaseRepoMapExecute(r ApiGetCodebaseRepoMapRequest) (*CodebaseRepoMapResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseRepoMapResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseRepoMapResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseRepoMap")
@@ -808,8 +813,8 @@ func (a *CodebasesAPIService) GetCodebaseRepoMapExecute(r ApiGetCodebaseRepoMapR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -827,10 +832,10 @@ func (a *CodebasesAPIService) GetCodebaseRepoMapExecute(r ApiGetCodebaseRepoMapR
 }
 
 type ApiGetCodebaseReviewRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
 	authorization *string
 }
 
@@ -848,28 +853,29 @@ GetCodebaseReview Get codebase review summary
 
 Return review queue counts, parse coverage, related chunk counts, and deterministic diagnostics for the current snapshot.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiGetCodebaseReviewRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiGetCodebaseReviewRequest
 */
 func (a *CodebasesAPIService) GetCodebaseReview(ctx context.Context, bankId string, codebaseId string) ApiGetCodebaseReviewRequest {
 	return ApiGetCodebaseReviewRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseReviewResponse
+//
+//	@return CodebaseReviewResponse
 func (a *CodebasesAPIService) GetCodebaseReviewExecute(r ApiGetCodebaseReviewRequest) (*CodebaseReviewResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseReviewResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseReviewResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseReview")
@@ -934,8 +940,8 @@ func (a *CodebasesAPIService) GetCodebaseReviewExecute(r ApiGetCodebaseReviewReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -953,12 +959,12 @@ func (a *CodebasesAPIService) GetCodebaseReviewExecute(r ApiGetCodebaseReviewReq
 }
 
 type ApiGetCodebaseSymbolCardRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	symbolId string
-	snapshotId *string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	symbolId      string
+	snapshotId    *string
 	authorization *string
 }
 
@@ -981,30 +987,31 @@ GetCodebaseSymbolCard Get a Symbol Card
 
 Return one Symbol Card artifact by fully-qualified symbol id.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @param symbolId
- @return ApiGetCodebaseSymbolCardRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@param symbolId
+	@return ApiGetCodebaseSymbolCardRequest
 */
 func (a *CodebasesAPIService) GetCodebaseSymbolCard(ctx context.Context, bankId string, codebaseId string, symbolId string) ApiGetCodebaseSymbolCardRequest {
 	return ApiGetCodebaseSymbolCardRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
-		symbolId: symbolId,
+		symbolId:   symbolId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseSymbolCardResponse
+//
+//	@return CodebaseSymbolCardResponse
 func (a *CodebasesAPIService) GetCodebaseSymbolCardExecute(r ApiGetCodebaseSymbolCardRequest) (*CodebaseSymbolCardResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseSymbolCardResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseSymbolCardResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseSymbolCard")
@@ -1073,8 +1080,8 @@ func (a *CodebasesAPIService) GetCodebaseSymbolCardExecute(r ApiGetCodebaseSymbo
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1092,10 +1099,10 @@ func (a *CodebasesAPIService) GetCodebaseSymbolCardExecute(r ApiGetCodebaseSymbo
 }
 
 type ApiGetCodebaseTriageSettingsRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
 	authorization *string
 }
 
@@ -1113,28 +1120,29 @@ GetCodebaseTriageSettings Get triage settings
 
 Return per-codebase auto-triage settings.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiGetCodebaseTriageSettingsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiGetCodebaseTriageSettingsRequest
 */
 func (a *CodebasesAPIService) GetCodebaseTriageSettings(ctx context.Context, bankId string, codebaseId string) ApiGetCodebaseTriageSettingsRequest {
 	return ApiGetCodebaseTriageSettingsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseTriageSettingsResponse
+//
+//	@return CodebaseTriageSettingsResponse
 func (a *CodebasesAPIService) GetCodebaseTriageSettingsExecute(r ApiGetCodebaseTriageSettingsRequest) (*CodebaseTriageSettingsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseTriageSettingsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseTriageSettingsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.GetCodebaseTriageSettings")
@@ -1199,8 +1207,8 @@ func (a *CodebasesAPIService) GetCodebaseTriageSettingsExecute(r ApiGetCodebaseT
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1218,11 +1226,11 @@ func (a *CodebasesAPIService) GetCodebaseTriageSettingsExecute(r ApiGetCodebaseT
 }
 
 type ApiImportCodebaseFileRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	file *os.File
-	request *string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	file          *os.File
+	request       *string
 	authorization *string
 }
 
@@ -1250,28 +1258,29 @@ func (r ApiImportCodebaseFileRequest) Execute() (*CodebaseImportFileResponse, *h
 /*
 ImportCodebaseFile Import a single source file as a codebase
 
-Upload one source file and run the full ASD parse → chunk → code-intel → review pipeline on it. Useful for self-contained scripts, single-file applications, or files too granular for a full ZIP import. ``virtual_path`` controls the logical path recorded in the snapshot (defaults to the uploaded filename).
+Upload one source file and run the full ASD parse → chunk → code-intel → review pipeline on it. Useful for self-contained scripts, single-file applications, or files too granular for a full ZIP import. “virtual_path“ controls the logical path recorded in the snapshot (defaults to the uploaded filename).
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiImportCodebaseFileRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiImportCodebaseFileRequest
 */
 func (a *CodebasesAPIService) ImportCodebaseFile(ctx context.Context, bankId string) ApiImportCodebaseFileRequest {
 	return ApiImportCodebaseFileRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseImportFileResponse
+//
+//	@return CodebaseImportFileResponse
 func (a *CodebasesAPIService) ImportCodebaseFileExecute(r ApiImportCodebaseFileRequest) (*CodebaseImportFileResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseImportFileResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseImportFileResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ImportCodebaseFile")
@@ -1313,8 +1322,8 @@ func (a *CodebasesAPIService) ImportCodebaseFileExecute(r ApiImportCodebaseFileR
 		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
 	}
 	var fileLocalVarFormFileName string
-	var fileLocalVarFileName     string
-	var fileLocalVarFileBytes    []byte
+	var fileLocalVarFileName string
+	var fileLocalVarFileBytes []byte
 
 	fileLocalVarFormFileName = "file"
 	fileLocalVarFile := r.file
@@ -1357,8 +1366,8 @@ func (a *CodebasesAPIService) ImportCodebaseFileExecute(r ApiImportCodebaseFileR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1376,11 +1385,11 @@ func (a *CodebasesAPIService) ImportCodebaseFileExecute(r ApiImportCodebaseFileR
 }
 
 type ApiImportCodebaseGithubRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
+	ctx                         context.Context
+	ApiService                  *CodebasesAPIService
+	bankId                      string
 	codebaseImportGithubRequest *CodebaseImportGithubRequest
-	authorization *string
+	authorization               *string
 }
 
 func (r ApiImportCodebaseGithubRequest) CodebaseImportGithubRequest(codebaseImportGithubRequest CodebaseImportGithubRequest) ApiImportCodebaseGithubRequest {
@@ -1402,26 +1411,27 @@ ImportCodebaseGithub Import a public GitHub codebase
 
 Resolve a public GitHub ref, download its archive, and build a deterministic codebase snapshot.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiImportCodebaseGithubRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiImportCodebaseGithubRequest
 */
 func (a *CodebasesAPIService) ImportCodebaseGithub(ctx context.Context, bankId string) ApiImportCodebaseGithubRequest {
 	return ApiImportCodebaseGithubRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseGithubImportResponse
+//
+//	@return CodebaseGithubImportResponse
 func (a *CodebasesAPIService) ImportCodebaseGithubExecute(r ApiImportCodebaseGithubRequest) (*CodebaseGithubImportResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseGithubImportResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseGithubImportResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ImportCodebaseGithub")
@@ -1490,8 +1500,8 @@ func (a *CodebasesAPIService) ImportCodebaseGithubExecute(r ApiImportCodebaseGit
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1509,11 +1519,11 @@ func (a *CodebasesAPIService) ImportCodebaseGithubExecute(r ApiImportCodebaseGit
 }
 
 type ApiImportCodebaseZipRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	archive *os.File
-	request *string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	archive       *os.File
+	request       *string
 	authorization *string
 }
 
@@ -1543,26 +1553,27 @@ ImportCodebaseZip Import a codebase from ZIP
 
 Upload a repository ZIP archive and build a deterministic codebase snapshot without cloning or LLM indexing.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiImportCodebaseZipRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiImportCodebaseZipRequest
 */
 func (a *CodebasesAPIService) ImportCodebaseZip(ctx context.Context, bankId string) ApiImportCodebaseZipRequest {
 	return ApiImportCodebaseZipRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseImportResponse
+//
+//	@return CodebaseImportResponse
 func (a *CodebasesAPIService) ImportCodebaseZipExecute(r ApiImportCodebaseZipRequest) (*CodebaseImportResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseImportResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseImportResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ImportCodebaseZip")
@@ -1604,8 +1615,8 @@ func (a *CodebasesAPIService) ImportCodebaseZipExecute(r ApiImportCodebaseZipReq
 		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
 	}
 	var archiveLocalVarFormFileName string
-	var archiveLocalVarFileName     string
-	var archiveLocalVarFileBytes    []byte
+	var archiveLocalVarFileName string
+	var archiveLocalVarFileBytes []byte
 
 	archiveLocalVarFormFileName = "archive"
 	archiveLocalVarFile := r.archive
@@ -1648,8 +1659,8 @@ func (a *CodebasesAPIService) ImportCodebaseZipExecute(r ApiImportCodebaseZipReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1667,28 +1678,28 @@ func (a *CodebasesAPIService) ImportCodebaseZipExecute(r ApiImportCodebaseZipReq
 }
 
 type ApiListCodebaseChunksRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	pathPrefix *string
-	language *string
-	clusterId *string
-	routeTarget *string
-	changedOnly *bool
-	kind *string
-	q *string
-	limit *int32
-	cursor *string
-	snapshotId *string
+	ctx             context.Context
+	ApiService      *CodebasesAPIService
+	bankId          string
+	codebaseId      string
+	pathPrefix      *string
+	language        *string
+	clusterId       *string
+	routeTarget     *string
+	changedOnly     *bool
+	kind            *string
+	q               *string
+	limit           *int32
+	cursor          *string
+	snapshotId      *string
 	minSignificance *float32
 	maxSignificance *float32
-	fileRole *string
+	fileRole        *string
 	autoRouteReason *string
-	hasSafetyTag *bool
-	routeSource *string
-	orderBy *string
-	authorization *string
+	hasSafetyTag    *bool
+	routeSource     *string
+	orderBy         *string
+	authorization   *string
 }
 
 func (r ApiListCodebaseChunksRequest) PathPrefix(pathPrefix string) ApiListCodebaseChunksRequest {
@@ -1791,28 +1802,29 @@ ListCodebaseChunks List codebase review chunks
 
 Return cursor-paginated semantic chunks for the current codebase snapshot.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiListCodebaseChunksRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiListCodebaseChunksRequest
 */
 func (a *CodebasesAPIService) ListCodebaseChunks(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseChunksRequest {
 	return ApiListCodebaseChunksRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseChunksResponse
+//
+//	@return CodebaseChunksResponse
 func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksRequest) (*CodebaseChunksResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseChunksResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseChunksResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseChunks")
@@ -1842,6 +1854,9 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.changedOnly = &defaultValue
 	}
 	if r.kind != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "kind", r.kind, "form", "")
@@ -1851,6 +1866,9 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 25
+		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
@@ -1928,8 +1946,8 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -1947,14 +1965,14 @@ func (a *CodebasesAPIService) ListCodebaseChunksExecute(r ApiListCodebaseChunksR
 }
 
 type ApiListCodebaseFilesRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	pathPrefix *string
-	language *string
-	changedOnly *bool
-	snapshotId *string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	pathPrefix    *string
+	language      *string
+	changedOnly   *bool
+	snapshotId    *string
 	authorization *string
 }
 
@@ -1996,28 +2014,29 @@ ListCodebaseFiles List codebase files
 
 Return the repo map and filtered file listing for a codebase snapshot.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiListCodebaseFilesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiListCodebaseFilesRequest
 */
 func (a *CodebasesAPIService) ListCodebaseFiles(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseFilesRequest {
 	return ApiListCodebaseFilesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseFilesResponse
+//
+//	@return CodebaseFilesResponse
 func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesRequest) (*CodebaseFilesResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseFilesResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseFilesResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseFiles")
@@ -2041,6 +2060,9 @@ func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesReq
 	}
 	if r.changedOnly != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "changed_only", r.changedOnly, "form", "")
+	} else {
+		var defaultValue bool = false
+		r.changedOnly = &defaultValue
 	}
 	if r.snapshotId != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "snapshot_id", r.snapshotId, "form", "")
@@ -2094,8 +2116,8 @@ func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesReq
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2113,12 +2135,12 @@ func (a *CodebasesAPIService) ListCodebaseFilesExecute(r ApiListCodebaseFilesReq
 }
 
 type ApiListCodebaseModulesRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	snapshotId *string
-	limit *int32
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	snapshotId    *string
+	limit         *int32
 	authorization *string
 }
 
@@ -2146,28 +2168,29 @@ ListCodebaseModules List Module Briefs
 
 Return Module Brief artifacts for a snapshot.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiListCodebaseModulesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiListCodebaseModulesRequest
 */
 func (a *CodebasesAPIService) ListCodebaseModules(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseModulesRequest {
 	return ApiListCodebaseModulesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseModuleBriefsResponse
+//
+//	@return CodebaseModuleBriefsResponse
 func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModulesRequest) (*CodebaseModuleBriefsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseModuleBriefsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseModuleBriefsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseModules")
@@ -2188,6 +2211,9 @@ func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModule
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2238,8 +2264,8 @@ func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModule
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2257,12 +2283,12 @@ func (a *CodebasesAPIService) ListCodebaseModulesExecute(r ApiListCodebaseModule
 }
 
 type ApiListCodebaseResearchQueueRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	cursor *string
-	limit *int32
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	cursor        *string
+	limit         *int32
 	authorization *string
 }
 
@@ -2290,28 +2316,29 @@ ListCodebaseResearchQueue List research queue items
 
 Return chunks currently routed to the codebase research queue.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiListCodebaseResearchQueueRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiListCodebaseResearchQueueRequest
 */
 func (a *CodebasesAPIService) ListCodebaseResearchQueue(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseResearchQueueRequest {
 	return ApiListCodebaseResearchQueueRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseChunksResponse
+//
+//	@return CodebaseChunksResponse
 func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebaseResearchQueueRequest) (*CodebaseChunksResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseChunksResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseChunksResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseResearchQueue")
@@ -2332,6 +2359,9 @@ func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebase
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 25
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -2382,8 +2412,8 @@ func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebase
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2401,13 +2431,13 @@ func (a *CodebasesAPIService) ListCodebaseResearchQueueExecute(r ApiListCodebase
 }
 
 type ApiListCodebaseSymbolCardsRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	snapshotId *string
-	limit *int32
-	cursor *string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	snapshotId    *string
+	limit         *int32
+	cursor        *string
 	authorization *string
 }
 
@@ -2440,28 +2470,29 @@ ListCodebaseSymbolCards List Symbol Cards
 
 Return paginated Symbol Card artifacts ordered by significance.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiListCodebaseSymbolCardsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiListCodebaseSymbolCardsRequest
 */
 func (a *CodebasesAPIService) ListCodebaseSymbolCards(ctx context.Context, bankId string, codebaseId string) ApiListCodebaseSymbolCardsRequest {
 	return ApiListCodebaseSymbolCardsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseSymbolCardListResponse
+//
+//	@return CodebaseSymbolCardListResponse
 func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSymbolCardsRequest) (*CodebaseSymbolCardListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseSymbolCardListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseSymbolCardListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebaseSymbolCards")
@@ -2482,6 +2513,9 @@ func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 100
+		r.limit = &defaultValue
 	}
 	if r.cursor != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "cursor", r.cursor, "form", "")
@@ -2535,8 +2569,8 @@ func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSy
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2554,9 +2588,9 @@ func (a *CodebasesAPIService) ListCodebaseSymbolCardsExecute(r ApiListCodebaseSy
 }
 
 type ApiListCodebasesRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
 	authorization *string
 }
 
@@ -2574,26 +2608,27 @@ ListCodebases List codebases
 
 List imported codebases for a bank.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @return ApiListCodebasesRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@return ApiListCodebasesRequest
 */
 func (a *CodebasesAPIService) ListCodebases(ctx context.Context, bankId string) ApiListCodebasesRequest {
 	return ApiListCodebasesRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseListResponse
+//
+//	@return CodebaseListResponse
 func (a *CodebasesAPIService) ListCodebasesExecute(r ApiListCodebasesRequest) (*CodebaseListResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseListResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseListResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.ListCodebases")
@@ -2657,8 +2692,8 @@ func (a *CodebasesAPIService) ListCodebasesExecute(r ApiListCodebasesRequest) (*
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2676,12 +2711,12 @@ func (a *CodebasesAPIService) ListCodebasesExecute(r ApiListCodebasesRequest) (*
 }
 
 type ApiRefreshCodebaseRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx                    context.Context
+	ApiService             *CodebasesAPIService
+	bankId                 string
+	codebaseId             string
 	codebaseRefreshRequest *CodebaseRefreshRequest
-	authorization *string
+	authorization          *string
 }
 
 func (r ApiRefreshCodebaseRequest) CodebaseRefreshRequest(codebaseRefreshRequest CodebaseRefreshRequest) ApiRefreshCodebaseRequest {
@@ -2703,28 +2738,29 @@ RefreshCodebase Refresh a codebase snapshot
 
 Refresh a GitHub-backed codebase by resolving the latest commit SHA and rebuilding a new reviewable ASD snapshot.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiRefreshCodebaseRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiRefreshCodebaseRequest
 */
 func (a *CodebasesAPIService) RefreshCodebase(ctx context.Context, bankId string, codebaseId string) ApiRefreshCodebaseRequest {
 	return ApiRefreshCodebaseRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseRefreshResponse
+//
+//	@return CodebaseRefreshResponse
 func (a *CodebasesAPIService) RefreshCodebaseExecute(r ApiRefreshCodebaseRequest) (*CodebaseRefreshResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseRefreshResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseRefreshResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.RefreshCodebase")
@@ -2794,8 +2830,8 @@ func (a *CodebasesAPIService) RefreshCodebaseExecute(r ApiRefreshCodebaseRequest
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2813,12 +2849,12 @@ func (a *CodebasesAPIService) RefreshCodebaseExecute(r ApiRefreshCodebaseRequest
 }
 
 type ApiRouteCodebaseReviewItemsRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx                  context.Context
+	ApiService           *CodebasesAPIService
+	bankId               string
+	codebaseId           string
 	codebaseRouteRequest *CodebaseRouteRequest
-	authorization *string
+	authorization        *string
 }
 
 func (r ApiRouteCodebaseReviewItemsRequest) CodebaseRouteRequest(codebaseRouteRequest CodebaseRouteRequest) ApiRouteCodebaseReviewItemsRequest {
@@ -2840,28 +2876,29 @@ RouteCodebaseReviewItems Route review items
 
 Bulk-route chunk review items to memory, research, dismissed, or back to unrouted.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiRouteCodebaseReviewItemsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiRouteCodebaseReviewItemsRequest
 */
 func (a *CodebasesAPIService) RouteCodebaseReviewItems(ctx context.Context, bankId string, codebaseId string) ApiRouteCodebaseReviewItemsRequest {
 	return ApiRouteCodebaseReviewItemsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseRouteResponse
+//
+//	@return CodebaseRouteResponse
 func (a *CodebasesAPIService) RouteCodebaseReviewItemsExecute(r ApiRouteCodebaseReviewItemsRequest) (*CodebaseRouteResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseRouteResponse
+		localVarHTTPMethod  = http.MethodPost
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseRouteResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.RouteCodebaseReviewItems")
@@ -2931,8 +2968,8 @@ func (a *CodebasesAPIService) RouteCodebaseReviewItemsExecute(r ApiRouteCodebase
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -2950,15 +2987,15 @@ func (a *CodebasesAPIService) RouteCodebaseReviewItemsExecute(r ApiRouteCodebase
 }
 
 type ApiSearchCodebaseSymbolsRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
-	q *string
-	kind *string
-	pathPrefix *string
-	language *string
-	limit *int32
+	ctx           context.Context
+	ApiService    *CodebasesAPIService
+	bankId        string
+	codebaseId    string
+	q             *string
+	kind          *string
+	pathPrefix    *string
+	language      *string
+	limit         *int32
 	authorization *string
 }
 
@@ -3006,28 +3043,29 @@ SearchCodebaseSymbols Search codebase symbols
 
 Search deterministic symbols by exact, prefix, or fuzzy match.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiSearchCodebaseSymbolsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiSearchCodebaseSymbolsRequest
 */
 func (a *CodebasesAPIService) SearchCodebaseSymbols(ctx context.Context, bankId string, codebaseId string) ApiSearchCodebaseSymbolsRequest {
 	return ApiSearchCodebaseSymbolsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseSymbolsResponse
+//
+//	@return CodebaseSymbolsResponse
 func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSymbolsRequest) (*CodebaseSymbolsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodGet
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseSymbolsResponse
+		localVarHTTPMethod  = http.MethodGet
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseSymbolsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.SearchCodebaseSymbols")
@@ -3061,6 +3099,9 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 	}
 	if r.limit != nil {
 		parameterAddToHeaderOrQuery(localVarQueryParams, "limit", r.limit, "form", "")
+	} else {
+		var defaultValue int32 = 50
+		r.limit = &defaultValue
 	}
 	// to determine the Content-Type header
 	localVarHTTPContentTypes := []string{}
@@ -3111,8 +3152,8 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
@@ -3130,12 +3171,12 @@ func (a *CodebasesAPIService) SearchCodebaseSymbolsExecute(r ApiSearchCodebaseSy
 }
 
 type ApiUpdateCodebaseTriageSettingsRequest struct {
-	ctx context.Context
-	ApiService *CodebasesAPIService
-	bankId string
-	codebaseId string
+	ctx                    context.Context
+	ApiService             *CodebasesAPIService
+	bankId                 string
+	codebaseId             string
 	codebaseTriageSettings *CodebaseTriageSettings
-	authorization *string
+	authorization          *string
 }
 
 func (r ApiUpdateCodebaseTriageSettingsRequest) CodebaseTriageSettings(codebaseTriageSettings CodebaseTriageSettings) ApiUpdateCodebaseTriageSettingsRequest {
@@ -3157,28 +3198,29 @@ UpdateCodebaseTriageSettings Update triage settings
 
 Replace per-codebase auto-triage settings.
 
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @param bankId
- @param codebaseId
- @return ApiUpdateCodebaseTriageSettingsRequest
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@param bankId
+	@param codebaseId
+	@return ApiUpdateCodebaseTriageSettingsRequest
 */
 func (a *CodebasesAPIService) UpdateCodebaseTriageSettings(ctx context.Context, bankId string, codebaseId string) ApiUpdateCodebaseTriageSettingsRequest {
 	return ApiUpdateCodebaseTriageSettingsRequest{
 		ApiService: a,
-		ctx: ctx,
-		bankId: bankId,
+		ctx:        ctx,
+		bankId:     bankId,
 		codebaseId: codebaseId,
 	}
 }
 
 // Execute executes the request
-//  @return CodebaseTriageSettingsResponse
+//
+//	@return CodebaseTriageSettingsResponse
 func (a *CodebasesAPIService) UpdateCodebaseTriageSettingsExecute(r ApiUpdateCodebaseTriageSettingsRequest) (*CodebaseTriageSettingsResponse, *http.Response, error) {
 	var (
-		localVarHTTPMethod   = http.MethodPut
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *CodebaseTriageSettingsResponse
+		localVarHTTPMethod  = http.MethodPut
+		localVarPostBody    interface{}
+		formFiles           []formFile
+		localVarReturnValue *CodebaseTriageSettingsResponse
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "CodebasesAPIService.UpdateCodebaseTriageSettings")
@@ -3248,8 +3290,8 @@ func (a *CodebasesAPIService) UpdateCodebaseTriageSettingsExecute(r ApiUpdateCod
 				newErr.error = err.Error()
 				return localVarReturnValue, localVarHTTPResponse, newErr
 			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
+			newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+			newErr.model = v
 		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}

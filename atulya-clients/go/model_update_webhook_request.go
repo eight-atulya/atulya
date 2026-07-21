@@ -19,10 +19,10 @@ var _ MappedNullable = &UpdateWebhookRequest{}
 
 // UpdateWebhookRequest Request model for updating a webhook. Only provided fields are updated.
 type UpdateWebhookRequest struct {
-	Url NullableString `json:"url,omitempty"`
-	Secret NullableString `json:"secret,omitempty"`
-	EventTypes []string `json:"event_types,omitempty"`
-	Enabled NullableBool `json:"enabled,omitempty"`
+	Url        NullableString            `json:"url,omitempty"`
+	Secret     NullableString            `json:"secret,omitempty"`
+	EventTypes []string                  `json:"event_types,omitempty"`
+	Enabled    NullableBool              `json:"enabled,omitempty"`
 	HttpConfig NullableWebhookHttpConfig `json:"http_config,omitempty"`
 }
 
@@ -75,6 +75,7 @@ func (o *UpdateWebhookRequest) HasUrl() bool {
 func (o *UpdateWebhookRequest) SetUrl(v string) {
 	o.Url.Set(&v)
 }
+
 // SetUrlNil sets the value for Url to be an explicit nil
 func (o *UpdateWebhookRequest) SetUrlNil() {
 	o.Url.Set(nil)
@@ -117,6 +118,7 @@ func (o *UpdateWebhookRequest) HasSecret() bool {
 func (o *UpdateWebhookRequest) SetSecret(v string) {
 	o.Secret.Set(&v)
 }
+
 // SetSecretNil sets the value for Secret to be an explicit nil
 func (o *UpdateWebhookRequest) SetSecretNil() {
 	o.Secret.Set(nil)
@@ -192,6 +194,7 @@ func (o *UpdateWebhookRequest) HasEnabled() bool {
 func (o *UpdateWebhookRequest) SetEnabled(v bool) {
 	o.Enabled.Set(&v)
 }
+
 // SetEnabledNil sets the value for Enabled to be an explicit nil
 func (o *UpdateWebhookRequest) SetEnabledNil() {
 	o.Enabled.Set(nil)
@@ -234,6 +237,7 @@ func (o *UpdateWebhookRequest) HasHttpConfig() bool {
 func (o *UpdateWebhookRequest) SetHttpConfig(v WebhookHttpConfig) {
 	o.HttpConfig.Set(&v)
 }
+
 // SetHttpConfigNil sets the value for HttpConfig to be an explicit nil
 func (o *UpdateWebhookRequest) SetHttpConfigNil() {
 	o.HttpConfig.Set(nil)
@@ -245,7 +249,7 @@ func (o *UpdateWebhookRequest) UnsetHttpConfig() {
 }
 
 func (o UpdateWebhookRequest) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -307,5 +311,3 @@ func (v *NullableUpdateWebhookRequest) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-

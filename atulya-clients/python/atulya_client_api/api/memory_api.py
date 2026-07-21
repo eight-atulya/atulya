@@ -1,3 +1,5 @@
+# coding: utf-8
+
 """
     Atulya HTTP API
 
@@ -8,7 +10,6 @@
 
     Do not edit the class manually.
 """  # noqa: E501
-
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -315,9 +316,9 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1259,25 +1260,25 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -1662,37 +1663,37 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         if confidence_min is not None:
-            
+
             _query_params.append(('confidence_min', confidence_min))
-            
+
         if node_kind is not None:
-            
+
             _query_params.append(('node_kind', node_kind))
-            
+
         if window_days is not None:
-            
+
             _query_params.append(('window_days', window_days))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -2130,53 +2131,53 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if surface is not None:
-            
+
             _query_params.append(('surface', surface))
-            
+
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         if confidence_min is not None:
-            
+
             _query_params.append(('confidence_min', confidence_min))
-            
+
         if node_kind is not None:
-            
+
             _query_params.append(('node_kind', node_kind))
-            
+
         if window_days is not None:
-            
+
             _query_params.append(('window_days', window_days))
-            
+
         if focus_ids is not None:
-            
+
             _query_params.append(('focus_ids', focus_ids))
-            
+
         if depth is not None:
-            
+
             _query_params.append(('depth', depth))
-            
+
         if limit_nodes is not None:
-            
+
             _query_params.append(('limit_nodes', limit_nodes))
-            
+
         if limit_edges is not None:
-            
+
             _query_params.append(('limit_edges', limit_edges))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -2561,37 +2562,37 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if surface is not None:
-            
+
             _query_params.append(('surface', surface))
-            
+
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         if confidence_min is not None:
-            
+
             _query_params.append(('confidence_min', confidence_min))
-            
+
         if node_kind is not None:
-            
+
             _query_params.append(('node_kind', node_kind))
-            
+
         if window_days is not None:
-            
+
             _query_params.append(('window_days', window_days))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -2897,13 +2898,13 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if period_hours is not None:
-            
+
             _query_params.append(('period_hours', period_hours))
-            
+
         if trunc is not None:
-            
+
             _query_params.append(('trunc', trunc))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -3211,9 +3212,9 @@ class MemoryApi:
             _path_params['memory_id'] = memory_id
         # process the query parameters
         if branch_name is not None:
-            
+
             _query_params.append(('branch_name', branch_name))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -3852,25 +3853,25 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if tags is not None:
-            
+
             _query_params.append(('tags', tags))
-            
+
         if tags_match is not None:
-            
+
             _query_params.append(('tags_match', tags_match))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -4840,29 +4841,29 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         if trace_id is not None:
-            
+
             _query_params.append(('trace_id', trace_id))
-            
+
         if status is not None:
-            
+
             _query_params.append(('status', status))
-            
+
         if operation is not None:
-            
+
             _query_params.append(('operation', operation))
-            
+
         if provider is not None:
-            
+
             _query_params.append(('provider', provider))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -5207,25 +5208,25 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if type is not None:
-            
+
             _query_params.append(('type', type))
-            
+
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if branch_name is not None:
-            
+
             _query_params.append(('branch_name', branch_name))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -5544,17 +5545,17 @@ class MemoryApi:
             _path_params['bank_id'] = bank_id
         # process the query parameters
         if q is not None:
-            
+
             _query_params.append(('q', q))
-            
+
         if limit is not None:
-            
+
             _query_params.append(('limit', limit))
-            
+
         if offset is not None:
-            
+
             _query_params.append(('offset', offset))
-            
+
         # process the header parameters
         if authorization is not None:
             _header_params['authorization'] = authorization
@@ -6813,5 +6814,3 @@ class MemoryApi:
             _host=_host,
             _request_auth=_request_auth
         )
-
-

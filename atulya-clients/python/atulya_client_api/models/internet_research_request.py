@@ -23,7 +23,6 @@ from atulya_client_api.models.budget import Budget
 from atulya_client_api.models.reflect_include_options import ReflectIncludeOptions
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class InternetResearchRequest(BaseModel):
     """
@@ -31,13 +30,12 @@ class InternetResearchRequest(BaseModel):
     """ # noqa: E501
     query: StrictStr = Field(description="Question to answer using the public web only")
     budget: Optional[Budget] = None
-    max_tokens: Optional[StrictInt] = Field(default=None, description="Max completion tokens for each LLM step where supported")
+    max_tokens: Optional[StrictInt] = Field(default=4096, description="Max completion tokens for each LLM step where supported")
     include: Optional[ReflectIncludeOptions] = Field(default=None, description="Optional tool trace (include.facts is ignored).")
     __properties: ClassVar[List[str]] = ["query", "budget", "max_tokens", "include"]
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -49,7 +47,8 @@ class InternetResearchRequest(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -91,9 +90,7 @@ class InternetResearchRequest(BaseModel):
         _obj = cls.model_validate({
             "query": obj.get("query"),
             "budget": obj.get("budget"),
-            "max_tokens": obj.get("max_tokens"),
+            "max_tokens": obj.get("max_tokens") if obj.get("max_tokens") is not None else 4096,
             "include": ReflectIncludeOptions.from_dict(obj["include"]) if obj.get("include") is not None else None
         })
         return _obj
-
-

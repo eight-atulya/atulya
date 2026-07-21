@@ -23,7 +23,6 @@ from atulya_client_api.models.child_operation_status import ChildOperationStatus
 from atulya_client_api.models.operation_progress_response import OperationProgressResponse
 from typing import Optional, Set
 from typing_extensions import Self
-from pydantic_core import to_jsonable_python
 
 class OperationStatusResponse(BaseModel):
     """
@@ -61,8 +60,7 @@ class OperationStatusResponse(BaseModel):
         return value
 
     model_config = ConfigDict(
-        validate_by_name=True,
-        validate_by_alias=True,
+        populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
@@ -74,7 +72,8 @@ class OperationStatusResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
-        return json.dumps(to_jsonable_python(self.to_dict()))
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
+        return json.dumps(self.to_dict())
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
@@ -185,5 +184,3 @@ class OperationStatusResponse(BaseModel):
             "child_operations": [ChildOperationStatus.from_dict(_item) for _item in obj["child_operations"]] if obj.get("child_operations") is not None else None
         })
         return _obj
-
-

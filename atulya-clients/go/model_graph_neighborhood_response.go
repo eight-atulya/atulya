@@ -11,8 +11,8 @@ API version: 0.8.7
 package atulya
 
 import (
-	"encoding/json"
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -21,17 +21,17 @@ var _ MappedNullable = &GraphNeighborhoodResponse{}
 
 // GraphNeighborhoodResponse struct for GraphNeighborhoodResponse
 type GraphNeighborhoodResponse struct {
-	Surface string `json:"surface"`
-	ModeHint string `json:"mode_hint"`
-	FocusIds []string `json:"focus_ids,omitempty"`
-	Nodes []GraphNeighborhoodNodeResponse `json:"nodes,omitempty"`
-	Edges []GraphNeighborhoodEdgeResponse `json:"edges,omitempty"`
-	TotalNodes int32 `json:"total_nodes"`
-	TotalEdges int32 `json:"total_edges"`
-	HasMore *bool `json:"has_more,omitempty"`
-	Cursor NullableString `json:"cursor,omitempty"`
-	GeneratedAt string `json:"generated_at"`
-	Cached *bool `json:"cached,omitempty"`
+	Surface     string                          `json:"surface"`
+	ModeHint    string                          `json:"mode_hint"`
+	FocusIds    []string                        `json:"focus_ids,omitempty"`
+	Nodes       []GraphNeighborhoodNodeResponse `json:"nodes,omitempty"`
+	Edges       []GraphNeighborhoodEdgeResponse `json:"edges,omitempty"`
+	TotalNodes  int32                           `json:"total_nodes"`
+	TotalEdges  int32                           `json:"total_edges"`
+	HasMore     *bool                           `json:"has_more,omitempty"`
+	Cursor      NullableString                  `json:"cursor,omitempty"`
+	GeneratedAt string                          `json:"generated_at"`
+	Cached      *bool                           `json:"cached,omitempty"`
 }
 
 type _GraphNeighborhoodResponse GraphNeighborhoodResponse
@@ -46,7 +46,11 @@ func NewGraphNeighborhoodResponse(surface string, modeHint string, totalNodes in
 	this.ModeHint = modeHint
 	this.TotalNodes = totalNodes
 	this.TotalEdges = totalEdges
+	var hasMore bool = false
+	this.HasMore = &hasMore
 	this.GeneratedAt = generatedAt
+	var cached bool = false
+	this.Cached = &cached
 	return &this
 }
 
@@ -55,6 +59,10 @@ func NewGraphNeighborhoodResponse(surface string, modeHint string, totalNodes in
 // but it doesn't guarantee that properties required by API are set
 func NewGraphNeighborhoodResponseWithDefaults() *GraphNeighborhoodResponse {
 	this := GraphNeighborhoodResponse{}
+	var hasMore bool = false
+	this.HasMore = &hasMore
+	var cached bool = false
+	this.Cached = &cached
 	return &this
 }
 
@@ -314,6 +322,7 @@ func (o *GraphNeighborhoodResponse) HasCursor() bool {
 func (o *GraphNeighborhoodResponse) SetCursor(v string) {
 	o.Cursor.Set(&v)
 }
+
 // SetCursorNil sets the value for Cursor to be an explicit nil
 func (o *GraphNeighborhoodResponse) SetCursorNil() {
 	o.Cursor.Set(nil)
@@ -381,7 +390,7 @@ func (o *GraphNeighborhoodResponse) SetCached(v bool) {
 }
 
 func (o GraphNeighborhoodResponse) MarshalJSON() ([]byte, error) {
-	toSerialize,err := o.ToMap()
+	toSerialize, err := o.ToMap()
 	if err != nil {
 		return []byte{}, err
 	}
@@ -433,10 +442,10 @@ func (o *GraphNeighborhoodResponse) UnmarshalJSON(data []byte) (err error) {
 	err = json.Unmarshal(data, &allProperties)
 
 	if err != nil {
-		return err;
+		return err
 	}
 
-	for _, requiredProperty := range(requiredProperties) {
+	for _, requiredProperty := range requiredProperties {
 		if _, exists := allProperties[requiredProperty]; !exists {
 			return fmt.Errorf("no value given for required property %v", requiredProperty)
 		}
@@ -492,5 +501,3 @@ func (v *NullableGraphNeighborhoodResponse) UnmarshalJSON(src []byte) error {
 	v.isSet = true
 	return json.Unmarshal(src, &v.value)
 }
-
-
