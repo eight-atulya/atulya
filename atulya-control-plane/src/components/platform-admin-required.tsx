@@ -16,7 +16,7 @@ export function PlatformAdminRequired() {
             service keys, grants, and audit for their own workspace.
           </p>
           <Button asChild className="mt-5">
-            <Link href="/admin/api-keys">Manage organization access</Link>
+            <Link href="/admin">Manage organization access</Link>
           </Button>
         </div>
       </div>

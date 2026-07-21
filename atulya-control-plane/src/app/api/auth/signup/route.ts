@@ -21,14 +21,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(data, { status: res.status });
   }
 
-  const response = NextResponse.json(data, { status: 200 });
-  response.cookies.set(ATULYA_SESSION_COOKIE, data.token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: data.expires_at ? new Date(data.expires_at) : undefined,
-  });
+  const response = NextResponse.json(data, { status: res.status });
+  if (data.token) {
+    response.cookies.set(ATULYA_SESSION_COOKIE, data.token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure:
+        process.env.ATULYA_CP_COOKIE_SECURE === "true" || process.env.NODE_ENV === "production",
+      path: "/",
+      expires: data.expires_at ? new Date(data.expires_at) : undefined,
+    });
+  }
   response.cookies.delete(ATULYA_LOGGED_OUT_COOKIE);
   return response;
 }

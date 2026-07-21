@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; datasetId: string }> }
 ) {
   try {
     const { bankId, datasetId } = await params;
     const res = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}`,
-      { headers: getDataplaneHeaders() }
+      { headers: getDataplaneHeadersForRequest(request) }
     );
     const data = await res.json();
     if (!res.ok)
@@ -32,7 +32,7 @@ export async function PATCH(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}`,
       {
         method: "PATCH",
-        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
         body: JSON.stringify(body),
       }
     );
@@ -47,14 +47,14 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; datasetId: string }> }
 ) {
   try {
     const { bankId, datasetId } = await params;
     const res = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets/${datasetId}`,
-      { method: "DELETE", headers: getDataplaneHeaders() }
+      { method: "DELETE", headers: getDataplaneHeadersForRequest(request) }
     );
     const data = await res.json();
     if (!res.ok)

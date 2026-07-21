@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -13,7 +13,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ bank
     query.set("limit", limit);
     query.set("offset", offset);
     const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/records?${query}`, {
-      headers: getDataplaneHeaders(),
+      headers: getDataplaneHeadersForRequest(request),
     });
     const data = await res.json();
     if (!res.ok)

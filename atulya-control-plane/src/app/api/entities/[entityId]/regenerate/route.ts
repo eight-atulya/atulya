@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function POST(
   request: NextRequest,
@@ -17,7 +17,7 @@ export async function POST(
     const decodedEntityId = decodeURIComponent(entityId);
 
     const response = await sdk.regenerateEntityObservations({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: {
         bank_id: bankId,
         entity_id: decodedEntityId,

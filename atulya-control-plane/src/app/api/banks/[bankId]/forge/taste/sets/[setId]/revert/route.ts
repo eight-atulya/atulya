@@ -1,15 +1,15 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function POST(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ bankId: string; setId: string }> }
 ) {
   try {
     const { bankId, setId } = await params;
     const res = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/sets/${setId}/revert`,
-      { method: "POST", headers: getDataplaneHeaders() }
+      { method: "POST", headers: getDataplaneHeadersForRequest(request) }
     );
     const data = await res.json();
     if (!res.ok)

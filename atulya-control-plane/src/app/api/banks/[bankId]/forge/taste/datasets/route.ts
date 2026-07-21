@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ bankId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
     const { bankId } = await params;
     const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets`, {
-      headers: getDataplaneHeaders(),
+      headers: getDataplaneHeadersForRequest(request),
     });
     const data = await res.json();
     if (!res.ok)
@@ -23,7 +23,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
     const body = await request.json();
     const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/taste/datasets`, {
       method: "POST",
-      headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+      headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
       body: JSON.stringify(body),
     });
     const data = await res.json();

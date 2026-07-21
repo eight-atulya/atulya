@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: NextRequest,
@@ -15,7 +15,7 @@ export async function GET(
     const query = { status, limit, offset, ...(type ? { type } : {}) };
 
     const response = await sdk.listOperations({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: agentId },
       // Keep compatibility while control-plane may consume either previous or regenerated SDK types.
       query: query as any,
@@ -41,7 +41,7 @@ export async function DELETE(
     }
 
     const response = await sdk.cancelOperation({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: agentId, operation_id: operationId },
     });
 

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { createClient, createConfig, sdk } from "@eight-atulya/atulya-client";
+import { DATAPLANE_URL } from "@/lib/atulya-client";
 
 export async function GET() {
   try {
     const response = await sdk.getVersion({
-      client: lowLevelClient,
+      client: createClient(createConfig({ baseUrl: DATAPLANE_URL })),
     });
 
     if (response.error) {

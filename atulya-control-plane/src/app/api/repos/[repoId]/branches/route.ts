@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { fetchDataplaneJson } from "@/lib/dataplane-proxy";
 import { dataplaneErrorResponse } from "@/lib/dataplane-route";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ repoId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ repoId: string }> }) {
   const { repoId } = await params;
   const response = await fetchDataplaneJson({
+    request,
     path: `/v1/default/repos/${encodeURIComponent(repoId)}/branches`,
     method: "GET",
   });
@@ -18,6 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ rep
   const { repoId } = await params;
   const body = await request.json();
   const response = await fetchDataplaneJson({
+    request,
     path: `/v1/default/repos/${encodeURIComponent(repoId)}/branches`,
     method: "POST",
     headers: { "Content-Type": "application/json" },

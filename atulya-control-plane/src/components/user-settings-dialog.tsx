@@ -7,9 +7,11 @@ import {
   CircleAlert,
   Database,
   LogOut,
+  MonitorSmartphone,
   Moon,
   ShieldCheck,
   Sun,
+  Trash2,
   UserCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -33,11 +35,23 @@ type SessionInfo = {
     display_name: string;
     role: string;
     identity_source: string;
+    email: string | null;
+    workspace: string | null;
+    workspace_count: number;
   };
   auth: {
     mode: string;
     configured: boolean;
     logout_mode: "session" | "local";
+    sessions: Array<{
+      id: string;
+      current: boolean;
+      created_at: string;
+      expires_at: string;
+      last_used_at: string | null;
+      ip_address: string | null;
+      user_agent: string | null;
+    }>;
   };
   tenancy: {
     provider: string;
@@ -138,6 +152,35 @@ export function UserSettingsDialog() {
     }
   };
 
+  const revokeSession = async (sessionId: string, current: boolean) => {
+    try {
+      const response = await fetch(`/api/auth/sessions/${encodeURIComponent(sessionId)}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      if (current) {
+        setOpen(false);
+        router.replace("/login");
+        router.refresh();
+        return;
+      }
+      setSession((value) =>
+        value
+          ? {
+              ...value,
+              auth: {
+                ...value.auth,
+                sessions: value.auth.sessions.filter((item) => item.id !== sessionId),
+              },
+            }
+          : value
+      );
+      toast.success("Session revoked");
+    } catch {
+      toast.error("Could not revoke session");
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -195,6 +238,8 @@ export function UserSettingsDialog() {
                     label="Identity source"
                     value={session?.user.identity_source ?? "local"}
                   />
+                  <InfoRow label="Workspace" value={session?.user.workspace ?? "None"} />
+                  <InfoRow label="Active sessions" value={session?.auth.sessions.length ?? 0} />
                 </div>
               </section>
 
@@ -207,7 +252,7 @@ export function UserSettingsDialog() {
                   <InfoRow label="Auth mode" value={session?.auth.mode ?? "unknown"} />
                   <InfoRow
                     label="Admin"
-                    value={session?.admin.configured ? "Configured" : "Not configured"}
+                    value={session?.admin.configured ? "Granted" : "Not granted"}
                   />
                   <InfoRow
                     label="Logout"
@@ -247,6 +292,44 @@ export function UserSettingsDialog() {
                     </div>
                   </div>
                   <Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />
+                </div>
+              </section>
+
+              <section className="rounded-lg border border-border/80 bg-card/55 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <MonitorSmartphone className="h-4 w-4 text-primary" />
+                  <p className="text-sm font-semibold">Sessions</p>
+                </div>
+                <div className="divide-y rounded-md border">
+                  {(session?.auth.sessions || []).map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 px-3 py-2.5">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <p className="truncate text-xs font-medium">
+                            {item.user_agent || "Unknown browser"}
+                          </p>
+                          {item.current && <StatusPill active label="Current" />}
+                        </div>
+                        <p className="mt-1 text-[11px] text-muted-foreground">
+                          {item.ip_address || "Unknown IP"} · Last used{" "}
+                          {item.last_used_at
+                            ? new Date(item.last_used_at).toLocaleString()
+                            : new Date(item.created_at).toLocaleString()}
+                        </p>
+                      </div>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        title={item.current ? "Sign out this session" : "Revoke session"}
+                        onClick={() => void revokeSession(item.id, item.current)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {!session?.auth.sessions.length && (
+                    <p className="p-3 text-xs text-muted-foreground">No active sessions.</p>
+                  )}
                 </div>
               </section>
 

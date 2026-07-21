@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { createClient, createConfig, sdk } from "@eight-atulya/atulya-client";
-import { getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL } from "@/lib/atulya-client";
 
 const HEALTH_CHECK_TIMEOUT_MS = 3000;
 
@@ -19,21 +18,17 @@ export async function GET() {
   };
 
   // Check dataplane connectivity with a short timeout
-  const dataplaneUrl = process.env.ATULYA_CP_DATAPLANE_API_URL || "http://localhost:8888";
+  const dataplaneUrl = DATAPLANE_URL;
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), HEALTH_CHECK_TIMEOUT_MS);
 
-    const healthClient = createClient(
-      createConfig({
-        baseUrl: dataplaneUrl,
-        signal: controller.signal,
-        headers: getDataplaneHeaders(),
-      })
-    );
-
     try {
-      await sdk.listBanks({ client: healthClient });
+      const response = await fetch(`${dataplaneUrl}/health`, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+      if (!response.ok) throw new Error(`Dataplane health returned ${response.status}`);
       status.dataplane = {
         status: "connected",
         url: dataplaneUrl,

@@ -6,6 +6,18 @@ const PROTECTED_PREFIXES = ["/dashboard", "/banks", "/admin"];
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  if (
+    pathname.startsWith("/api/") &&
+    !["GET", "HEAD", "OPTIONS"].includes(request.method) &&
+    request.cookies.has(ATULYA_SESSION_COOKIE)
+  ) {
+    const origin = request.headers.get("origin");
+    const configuredOrigin = process.env.ATULYA_CP_PUBLIC_URL?.replace(/\/$/, "");
+    const allowedOrigin = configuredOrigin || request.nextUrl.origin;
+    if (origin && origin !== allowedOrigin) {
+      return NextResponse.json({ detail: { code: "origin_not_allowed" } }, { status: 403 });
+    }
+  }
   const protectedRoute = PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
@@ -26,5 +38,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/banks/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/banks/:path*", "/admin/:path*", "/api/:path*"],
 };

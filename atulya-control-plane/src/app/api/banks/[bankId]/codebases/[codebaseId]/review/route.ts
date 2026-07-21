@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 function parseJsonOrText(text: string): unknown {
   if (!text) return {};
@@ -20,7 +20,7 @@ export async function GET(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/codebases/${codebaseId}/review${request.nextUrl.search}`,
       {
         method: "GET",
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
         cache: "no-store",
       }
     );

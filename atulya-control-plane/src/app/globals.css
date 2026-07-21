@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap");
 @import "@xyflow/react/dist/style.css";
 @import "tailwindcss";
 :root {
@@ -8,10 +8,10 @@
   --card-foreground: oklch(0.2046 0 0);
   --popover: oklch(0.9911 0 0);
   --popover-foreground: oklch(0.4386 0 0);
-  --primary: oklch(0.50 0.20 25);
+  --primary: oklch(0.5 0.2 25);
   --primary-foreground: oklch(0.98 0.01 25);
   --primary-gradient: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
-  --secondary: oklch(0.9940 0 0);
+  --secondary: oklch(0.994 0 0);
   --secondary-foreground: oklch(0.2046 0 0);
   --muted: oklch(0.9461 0 0);
   --muted-foreground: oklch(0.2435 0 0);
@@ -21,23 +21,26 @@
   --destructive-foreground: oklch(0.9934 0.0032 17.2118);
   --border: oklch(0.9037 0 0);
   --input: oklch(0.9731 0 0);
-  --ring: oklch(0.50 0.20 25);
-  --chart-1: oklch(0.50 0.20 25);
+  --ring: oklch(0.5 0.2 25);
+  --chart-1: oklch(0.5 0.2 25);
   --chart-2: oklch(0.55 0.18 20);
   --chart-3: oklch(0.45 0.15 30);
-  --chart-4: oklch(0.60 0.12 35);
-  --chart-5: oklch(0.40 0.10 15);
+  --chart-4: oklch(0.6 0.12 35);
+  --chart-5: oklch(0.4 0.1 15);
   --sidebar: oklch(0.9911 0 0);
   --sidebar-foreground: oklch(0.5452 0 0);
-  --sidebar-primary: oklch(0.50 0.20 25);
+  --sidebar-primary: oklch(0.5 0.2 25);
   --sidebar-primary-foreground: oklch(0.98 0.01 25);
   --sidebar-accent: oklch(0.9461 0 0);
   --sidebar-accent-foreground: oklch(0.2435 0 0);
   --sidebar-border: oklch(0.9037 0 0);
-  --sidebar-ring: oklch(0.50 0.20 25);
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --font-heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --sidebar-ring: oklch(0.5 0.2 25);
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    sans-serif;
+  --font-heading:
+    "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
   --radius: 0.5rem;
   --shadow-x: 0px;
   --shadow-y: 1px;
@@ -76,9 +79,9 @@
   --shell-content: rgba(255, 255, 255, 0.72);
   --shell-border: rgba(15, 23, 42, 0.06);
   --shell-shadow: 0 16px 36px rgba(15, 23, 42, 0.06), 0 1px 0 rgba(255, 255, 255, 0.45) inset;
-  --shell-header-shadow: 0 14px 34px rgba(15, 23, 42, 0.07), 0 1px 0 rgba(255, 255, 255, 0.52) inset;
-  --shell-backdrop:
-    linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(241, 245, 249, 0.98));
+  --shell-header-shadow:
+    0 14px 34px rgba(15, 23, 42, 0.07), 0 1px 0 rgba(255, 255, 255, 0.52) inset;
+  --shell-backdrop: linear-gradient(180deg, rgba(248, 250, 252, 0.94), rgba(241, 245, 249, 0.98));
 }
 
 .dark {
@@ -88,7 +91,7 @@
   --card-foreground: oklch(0.9288 0.0126 255.5078);
   --popover: #121214;
   --popover-foreground: oklch(0.7348 0 0);
-  --primary: oklch(0.58 0.20 25);
+  --primary: oklch(0.58 0.2 25);
   --primary-foreground: oklch(0.98 0.01 25);
   --primary-gradient: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
   --secondary: #151516;
@@ -101,20 +104,20 @@
   --destructive-foreground: oklch(0.9368 0.0045 34.3092);
   --border: #27272a;
   --input: #111113;
-  --ring: oklch(0.58 0.20 25);
-  --chart-1: oklch(0.58 0.20 25);
+  --ring: oklch(0.58 0.2 25);
+  --chart-1: oklch(0.58 0.2 25);
   --chart-2: oklch(0.63 0.18 20);
-  --chart-3: oklch(0.50 0.15 30);
+  --chart-3: oklch(0.5 0.15 30);
   --chart-4: oklch(0.68 0.12 35);
-  --chart-5: oklch(0.45 0.10 15);
+  --chart-5: oklch(0.45 0.1 15);
   --sidebar: #050505;
   --sidebar-foreground: oklch(0.6301 0 0);
-  --sidebar-primary: oklch(0.58 0.20 25);
+  --sidebar-primary: oklch(0.58 0.2 25);
   --sidebar-primary-foreground: oklch(0.98 0.01 25);
   --sidebar-accent: #1a1a1c;
   --sidebar-accent-foreground: oklch(0.9851 0 0);
   --sidebar-border: #27272a;
-  --sidebar-ring: oklch(0.58 0.20 25);
+  --sidebar-ring: oklch(0.58 0.2 25);
   --graph-surface-bg: linear-gradient(180deg, rgba(8, 8, 9, 0.98), rgba(0, 0, 0, 0.98));
   --graph-surface-accent: rgba(239, 68, 68, 0.08);
   --graph-overview-accent: rgba(239, 68, 68, 0.07);
@@ -134,8 +137,7 @@
   --shell-border: rgba(255, 255, 255, 0.09);
   --shell-shadow: 0 18px 44px rgba(0, 0, 0, 0.34), 0 1px 0 rgba(255, 255, 255, 0.08) inset;
   --shell-header-shadow: 0 16px 38px rgba(0, 0, 0, 0.34), 0 1px 0 rgba(255, 255, 255, 0.09) inset;
-  --shell-backdrop:
-    linear-gradient(180deg, #000000, #050505);
+  --shell-backdrop: linear-gradient(180deg, #000000, #050505);
 }
 
 @theme inline {
@@ -269,12 +271,18 @@ html.scrollbars-active *::-webkit-scrollbar-thumb:active {
   }
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
   font-weight: 600;
 }
 
-code, pre {
+code,
+pre {
   font-family: var(--font-mono);
 }
 
@@ -359,6 +367,18 @@ code, pre {
   .control-plane-sidebar-slot > * {
     width: 4rem;
     max-width: 4rem;
+  }
+
+  .control-plane-shell[data-shell-variant="admin"][data-has-sidebar="true"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .control-plane-shell[data-shell-variant="admin"] .control-plane-sidebar-slot {
+    display: none;
+  }
+
+  .control-plane-shell[data-shell-variant="admin"] .control-plane-main {
+    grid-column: 1;
   }
 }
 

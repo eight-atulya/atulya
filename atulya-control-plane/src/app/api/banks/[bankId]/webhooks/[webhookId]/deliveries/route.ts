@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: Request,
@@ -14,7 +14,7 @@ export async function GET(
   const res = await fetch(
     `${DATAPLANE_URL}/v1/default/banks/${bankId}/webhooks/${webhookId}/deliveries?${qs}`,
     {
-      headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+      headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
     }
   );
   const data = await res.json();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function GET(
     const { chunkId } = await params;
 
     const response = await sdk.getChunk({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { chunk_id: chunkId },
     });
 

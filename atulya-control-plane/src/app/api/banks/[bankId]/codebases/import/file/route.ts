@@ -4,7 +4,7 @@
  *
  */
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 function parseJsonOrText(text: string): unknown {
   if (!text) return {};
@@ -28,7 +28,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/codebases/import/file`,
       {
         method: "POST",
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
         body: formData,
       }
     );

@@ -6,6 +6,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ rep
   const { repoId } = await params;
   const body = await request.json();
   const response = await fetchDataplaneJson({
+    request,
     path: `/v1/default/repos/${encodeURIComponent(repoId)}/fork-bank`,
     method: "POST",
     headers: { "Content-Type": "application/json" },

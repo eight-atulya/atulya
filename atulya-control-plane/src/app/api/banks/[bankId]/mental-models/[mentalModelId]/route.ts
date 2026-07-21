@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: Request,
@@ -17,7 +17,7 @@ export async function GET(
 
     const response = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models/${mentalModelId}`,
-      { method: "GET", headers: getDataplaneHeaders() }
+      { method: "GET", headers: getDataplaneHeadersForRequest(request) }
     );
 
     if (!response.ok) {
@@ -57,7 +57,7 @@ export async function PATCH(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models/${mentalModelId}`,
       {
         method: "PATCH",
-        headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+        headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
         body: JSON.stringify(body),
       }
     );
@@ -95,7 +95,7 @@ export async function DELETE(
 
     const response = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${bankId}/mental-models/${mentalModelId}`,
-      { method: "DELETE", headers: getDataplaneHeaders() }
+      { method: "DELETE", headers: getDataplaneHeadersForRequest(request) }
     );
 
     if (!response.ok) {

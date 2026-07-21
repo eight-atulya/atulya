@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient, DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import {
+  sdk,
+  createLowLevelClientForRequest,
+  DATAPLANE_URL,
+  getDataplaneHeadersForRequest,
+} from "@/lib/atulya-client";
 
 export async function GET(
   request: NextRequest,
@@ -10,9 +15,12 @@ export async function GET(
 
     // Fetch stats + operations in parallel
     const [statsResponse, opsRes] = await Promise.all([
-      sdk.getAgentStats({ client: lowLevelClient, path: { bank_id: agentId } }),
+      sdk.getAgentStats({
+        client: createLowLevelClientForRequest(request),
+        path: { bank_id: agentId },
+      }),
       fetch(`${DATAPLANE_URL}/v1/default/banks/${agentId}/operations?limit=100`, {
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
       }),
     ]);
 

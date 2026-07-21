@@ -6,9 +6,10 @@
  *
  */
 
-import { AlertTriangle, CheckCircle2, Clock, Cpu, XCircle } from "lucide-react";
+import { AlertTriangle, Clock, Cpu, XCircle } from "lucide-react";
 import { PlatformAdminRequired } from "@/components/platform-admin-required";
-import { adminFetch, WorkerStatusResponse } from "@/lib/admin-api";
+import { DecommissionWorkerButton } from "@/components/decommission-worker-button";
+import { adminFetch, TenantSummaryResponse, WorkerStatusResponse } from "@/lib/admin-api";
 import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 export default async function AdminWorkersPage({
@@ -22,10 +23,14 @@ export default async function AdminWorkersPage({
   const { schema: schemaParam } = await searchParams;
   const schema = schemaParam ?? "public";
   let workers: WorkerStatusResponse[] = [];
+  let tenants: TenantSummaryResponse[] = [];
   let error: string | null = null;
 
   try {
-    workers = await adminFetch<WorkerStatusResponse[]>(`/workers?schema=${schema}`);
+    [workers, tenants] = await Promise.all([
+      adminFetch<WorkerStatusResponse[]>(`/workers?schema=${schema}`),
+      adminFetch<TenantSummaryResponse[]>("/tenants"),
+    ]);
   } catch (e) {
     error = e instanceof Error ? e.message : "Unknown error";
   }
@@ -36,16 +41,33 @@ export default async function AdminWorkersPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Workers</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Schema: <code className="text-xs bg-muted px-1 py-0.5 rounded">{schema}</code>
           </p>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-          <Cpu className="h-4 w-4 text-muted-foreground" />
-        </div>
+        <form className="flex items-center gap-2" action="/admin/platform/workers">
+          <label htmlFor="worker-schema" className="sr-only">
+            Schema
+          </label>
+          <select
+            id="worker-schema"
+            name="schema"
+            defaultValue={schema}
+            className="h-9 min-w-44 rounded-md border bg-background px-3 text-sm"
+          >
+            {tenants.map((tenant) => (
+              <option key={tenant.schema_name} value={tenant.schema_name}>
+                {tenant.schema_name}
+              </option>
+            ))}
+          </select>
+          <button className="h-9 rounded-md border px-3 text-sm hover:bg-accent" type="submit">
+            Apply
+          </button>
+        </form>
       </div>
 
       {error && (
@@ -57,19 +79,22 @@ export default async function AdminWorkersPage({
 
       {/* Alert banner for stuck workers */}
       {stuckCount > 0 && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 flex items-center gap-3">
+        <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-50 px-4 py-3 dark:bg-amber-950/20">
           <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
           <div>
             <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
               {stuckCount} stuck task{stuckCount !== 1 ? "s" : ""} detected
             </p>
-            <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
-              Call{" "}
-              <code className="bg-amber-100 dark:bg-amber-900 px-1 rounded">
-                POST /v1/admin/workers/__all_stuck__/decommission
-              </code>{" "}
-              to re-queue
+            <p className="mt-0.5 text-xs text-amber-600 dark:text-amber-400">
+              Release stale claims so healthy workers can continue them.
             </p>
+          </div>
+          <div className="ml-auto">
+            <DecommissionWorkerButton
+              workerId="__all_stuck__"
+              schema={schema}
+              label="Release stuck"
+            />
           </div>
         </div>
       )}
@@ -128,11 +153,7 @@ export default async function AdminWorkersPage({
               <span className="text-xs text-muted-foreground font-mono">
                 {w.last_seen_at?.slice(0, 19) ?? "—"}
               </span>
-              {w.stuck_count > 0 ? (
-                <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-              ) : (
-                <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />
-              )}
+              <DecommissionWorkerButton workerId={w.worker_id} schema={schema} />
             </div>
           ))}
         </div>
@@ -143,18 +164,6 @@ export default async function AdminWorkersPage({
           No active workers found in schema <code>{schema}</code>.
         </div>
       )}
-
-      {/* Decommission hint */}
-      <div className="rounded-lg border bg-muted/30 px-4 py-3">
-        <p className="text-xs text-muted-foreground font-medium mb-1">Decommission a worker</p>
-        <code className="text-xs font-mono text-foreground">
-          POST /v1/admin/workers/&#123;worker_id&#125;/decommission
-        </code>
-        <p className="text-xs text-muted-foreground mt-1">
-          Body: <code className="bg-muted px-1 rounded">{`{"release_stuck": true}`}</code> —
-          re-queues tasks to healthy workers.
-        </p>
-      </div>
     </div>
   );
 }

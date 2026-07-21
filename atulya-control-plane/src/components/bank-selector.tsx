@@ -7,6 +7,7 @@ import { useBank } from "@/lib/bank-context";
 import { client } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AdminButton } from "@/components/admin-button";
+import { WorkspaceSwitcher } from "@/components/workspace-switcher";
 import {
   Command,
   CommandEmpty,
@@ -574,7 +575,7 @@ function BankSelectorInner() {
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Admin Panel Button */}
+        <WorkspaceSwitcher />
         <AdminButton />
 
         {/* Separator */}

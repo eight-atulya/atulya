@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function GET(
   request: NextRequest,
@@ -8,7 +8,7 @@ export async function GET(
   try {
     const { bankId } = await params;
     const response = await sdk.getBankProfile({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
     return NextResponse.json(response.data, { status: 200 });
@@ -27,7 +27,7 @@ export async function PUT(
     const body = await request.json();
 
     const response = await sdk.createOrUpdateBank({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
       body: body,
     });

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ bank
       ? `?${tags.map((t) => `domain_tags=${encodeURIComponent(t)}`).join("&")}`
       : "";
     const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/forge/recipes${query}`, {
-      headers: getDataplaneHeaders(),
+      headers: getDataplaneHeadersForRequest(request),
     });
     const data = await res.json();
     if (!res.ok)

@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
 export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   const { bankId } = await params;
   const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/webhooks`, {
-    headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+    headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
   });
   const data = await res.json();
   if (!res.ok) return NextResponse.json({ error: data.detail || "Failed" }, { status: res.status });
@@ -16,7 +16,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
   const body = await request.json();
   const res = await fetch(`${DATAPLANE_URL}/v1/default/banks/${bankId}/webhooks`, {
     method: "POST",
-    headers: getDataplaneHeaders({ "Content-Type": "application/json" }),
+    headers: getDataplaneHeadersForRequest(request, { "Content-Type": "application/json" }),
     body: JSON.stringify(body),
   });
   const data = await res.json();

@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
-import { DATAPLANE_URL, getDataplaneHeaders } from "@/lib/atulya-client";
+import { DATAPLANE_URL, getDataplaneHeadersForRequest } from "@/lib/atulya-client";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ bankId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   try {
     const { bankId } = await params;
     const response = await fetch(
       `${DATAPLANE_URL}/v1/default/banks/${encodeURIComponent(bankId)}/entity-intelligence`,
       {
-        headers: getDataplaneHeaders(),
+        headers: getDataplaneHeadersForRequest(request),
         cache: "no-store",
       }
     );

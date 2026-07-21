@@ -16,7 +16,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { sdk, lowLevelClient } from "@/lib/atulya-client";
+import { sdk, createLowLevelClientForRequest } from "@/lib/atulya-client";
 
 export async function POST(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   const { bankId } = await params;
@@ -28,7 +28,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
   try {
     // [branch] Step 1 — how many memories are waiting for consolidation?
     const statsResponse = await sdk.getAgentStats({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 
@@ -39,7 +39,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ ban
 
     // [branch] Step 2 — trigger a fresh consolidation pass to recover them
     const consolidationResponse = await sdk.triggerConsolidation({
-      client: lowLevelClient,
+      client: createLowLevelClientForRequest(request),
       path: { bank_id: bankId },
     });
 

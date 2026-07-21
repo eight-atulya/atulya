@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { fetchDataplaneJson } from "@/lib/dataplane-proxy";
 import { dataplaneErrorResponse } from "@/lib/dataplane-route";
 
-export async function GET(_request: Request, { params }: { params: Promise<{ bankId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ bankId: string }> }) {
   const { bankId } = await params;
   const response = await fetchDataplaneJson({
+    request,
     path: `/v1/default/banks/${encodeURIComponent(bankId)}/repo/branches`,
     method: "GET",
   });

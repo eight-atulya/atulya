@@ -5,9 +5,9 @@
  *
  */
 
-import { CheckCircle2, Clock, ListOrdered, Loader2, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Loader2, XCircle } from "lucide-react";
 import { PlatformAdminRequired } from "@/components/platform-admin-required";
-import { adminFetch, OperationSummaryResponse } from "@/lib/admin-api";
+import { adminFetch, OperationSummaryResponse, TenantSummaryResponse } from "@/lib/admin-api";
 import { canUsePlatformAdmin, getCurrentIdentity } from "@/lib/server-auth";
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.ElementType }> = {
@@ -33,12 +33,16 @@ export default async function AdminOperationsPage({
   const limit = limitParam ?? "50";
 
   let ops: OperationSummaryResponse[] = [];
+  let tenants: TenantSummaryResponse[] = [];
   let error: string | null = null;
 
   try {
     const qs = new URLSearchParams({ schema, limit });
     if (status) qs.set("status", status);
-    ops = await adminFetch<OperationSummaryResponse[]>(`/operations?${qs}`);
+    [ops, tenants] = await Promise.all([
+      adminFetch<OperationSummaryResponse[]>(`/operations?${qs}`),
+      adminFetch<TenantSummaryResponse[]>("/tenants"),
+    ]);
   } catch (e) {
     error = e instanceof Error ? e.message : "Unknown error";
   }
@@ -51,7 +55,7 @@ export default async function AdminOperationsPage({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Operations</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -66,9 +70,26 @@ export default async function AdminOperationsPage({
             {ops.length} rows
           </p>
         </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted">
-          <ListOrdered className="h-4 w-4 text-muted-foreground" />
-        </div>
+        <form className="flex items-center gap-2" action="/admin/platform/operations">
+          <label htmlFor="operation-schema" className="sr-only">
+            Schema
+          </label>
+          <select
+            id="operation-schema"
+            name="schema"
+            defaultValue={schema}
+            className="h-9 min-w-44 rounded-md border bg-background px-3 text-sm"
+          >
+            {tenants.map((tenant) => (
+              <option key={tenant.schema_name} value={tenant.schema_name}>
+                {tenant.schema_name}
+              </option>
+            ))}
+          </select>
+          <button className="h-9 rounded-md border px-3 text-sm hover:bg-accent" type="submit">
+            Apply
+          </button>
+        </form>
       </div>
 
       {error && (
@@ -153,7 +174,7 @@ export default async function AdminOperationsPage({
           {STATUS_OPTIONS.map((s) => (
             <a
               key={s || "all"}
-              href={`/admin/operations?schema=${schema}${s ? `&status=${s}` : ""}&limit=${limit}`}
+              href={`/admin/platform/operations?schema=${schema}${s ? `&status=${s}` : ""}&limit=${limit}`}
               className={`text-xs px-2 py-1 rounded border transition-colors hover:bg-accent ${
                 status === s
                   ? "bg-accent text-accent-foreground border-border"

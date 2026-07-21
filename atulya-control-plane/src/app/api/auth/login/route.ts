@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   response.cookies.set(ATULYA_SESSION_COOKIE, data.token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.ATULYA_CP_COOKIE_SECURE === "true" || process.env.NODE_ENV === "production",
     path: "/",
     expires: data.expires_at ? new Date(data.expires_at) : undefined,
   });
