@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from typing import Any, Literal
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi import Depends, FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.responses import Response
 
 from atulya_api.extensions import AuthenticationError
@@ -3456,14 +3456,23 @@ def create_app(
         from atulya_api.api.admin import create_admin_router
 
         admin_router = create_admin_router(memory)
-        app.include_router(admin_router, prefix="/v1/admin", tags=["Admin"])
-        logging.info("Admin router mounted at /v1/admin/ (ATULYA_API_ADMIN_ENABLED=true)")
+        app.include_router(admin_router, prefix="/v1/platform", tags=["Platform"])
+        app.include_router(
+            admin_router,
+            prefix="/v1/admin",
+            tags=["Admin (deprecated)"],
+            deprecated=True,
+            include_in_schema=False,
+        )
+        logging.info("Platform router mounted at /v1/platform/ with /v1/admin/ compatibility aliases")
     else:
         logging.debug("Admin router disabled (set ATULYA_API_ADMIN_ENABLED=true to enable)")
 
     from atulya_api.api.auth import create_auth_router
+    from atulya_api.api.organizations import create_organization_router
 
     app.include_router(create_auth_router(memory), prefix="/v1/auth", tags=["Auth"])
+    app.include_router(create_organization_router(memory), prefix="/v1/orgs", tags=["Organizations"])
 
     # Mount HTTP extension router if available
     if http_extension:
@@ -3521,7 +3530,10 @@ def _register_routes(app: FastAPI):
         logger.error("Error in %s", context, exc_info=True)
         raise HTTPException(status_code=500, detail=str(exc))
 
-    def get_request_context(authorization: str | None = Header(default=None)) -> RequestContext:
+    async def get_request_context(
+        request: Request,
+        authorization: str | None = Header(default=None),
+    ) -> RequestContext:
         """
         Extract request context from Authorization header.
 
@@ -3537,7 +3549,72 @@ def _register_routes(app: FastAPI):
                 api_key = authorization[7:].strip()
             else:
                 api_key = authorization.strip()
-        return RequestContext(api_key=api_key)
+        request_context = RequestContext(api_key=api_key)
+        from atulya_api.auth_service import auth_mode
+
+        if auth_mode() != "database":
+            return request_context
+
+        tenant_context = await app.state.memory.tenant_extension.authenticate(request_context)
+        tenant_context.apply_to_request_context(request_context)
+
+        from atulya_api.api.access_policy import (
+            bank_id_from_payload,
+            bank_id_from_request,
+            required_action,
+        )
+        from atulya_api.auth import action_allowed, fq, scope_allowed
+
+        action = required_action(request.method, request.url.path)
+        if action is None:
+            return request_context
+        bank_id = bank_id_from_request(
+            {key: str(value) for key, value in request.path_params.items()},
+            dict(request.query_params),
+        )
+        if bank_id is None and request.method not in {"GET", "HEAD"}:
+            try:
+                bank_id = bank_id_from_payload(await request.json())
+            except Exception:
+                pass
+        scopes = set((request_context.action_scopes or {}).get(action, []))
+        allowed = action_allowed(request_context, action) and (
+            scope_allowed(request_context, action, bank_id)
+            if bank_id
+            else "org:*" in scopes or any(scope.startswith("bank:") for scope in scopes)
+        )
+        if allowed:
+            return request_context
+
+        required_scope = f"bank:{bank_id}" if bank_id else "org:*"
+        try:
+            pool = await app.state.memory._get_pool()
+            await pool.execute(
+                f"""
+                INSERT INTO {fq("audit_events")}
+                    (org_id, actor_principal_id, action, target_type, target_id, result, metadata)
+                VALUES ($1, $2, 'access.denied', 'http_route', $3, 'denied', $4)
+                """,
+                uuid.UUID(request_context.org_id) if request_context.org_id else None,
+                uuid.UUID(request_context.principal_id) if request_context.principal_id else None,
+                request.url.path,
+                json.dumps({"missing_action": action, "required_scope": required_scope}),
+            )
+        except Exception:
+            logger.debug("Failed to write access denial audit event", exc_info=True)
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "permission_denied",
+                "missing_action": action,
+                "required_scope": required_scope,
+                "identity": {
+                    "principal_id": request_context.principal_id,
+                    "org_id": request_context.org_id,
+                    "role": request_context.role,
+                },
+            },
+        )
 
     def _codebase_source_config_model(raw: dict[str, Any] | None) -> CodebaseSourceConfigResponse:
         return CodebaseSourceConfigResponse.model_validate(raw or {})
@@ -3561,7 +3638,12 @@ def _register_routes(app: FastAPI):
 
         return JSONResponse(
             status_code=401,
-            content={"detail": str(exc)},
+            content={
+                "detail": {
+                    "code": "authentication_failed",
+                    "message": getattr(exc, "reason", None) or str(exc),
+                }
+            },
         )
 
     @app.get(

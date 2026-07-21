@@ -6,6 +6,7 @@ import asyncio
 import io
 import json
 import logging
+import os
 import secrets
 import uuid
 import zipfile
@@ -16,6 +17,7 @@ from typing import Any
 import asyncpg
 import typer
 
+from ..auth import fq, hash_password
 from ..config import AtulyaConfig
 from ..engine.temporal import TimelineTemporalMetadata, classify_fact_temporal_metadata, normalize_datetime
 from ..pg0 import parse_pg0_url, resolve_database_url
@@ -51,9 +53,14 @@ def generate_auth_env(
     control_plane_port: int = typer.Option(9999, "--control-plane-port", help="Local UI port for the root .env block."),
     auth_schema: str = typer.Option("public", "--auth-schema", help="Schema that stores org/auth tables."),
     signup_mode: str = typer.Option(
-        "bootstrap",
+        "public",
         "--signup-mode",
         help="Signup mode: disabled, bootstrap, or public.",
+    ),
+    environment: str = typer.Option(
+        "development",
+        "--environment",
+        help="Runtime environment: development, staging, or production.",
     ),
 ):
     """Generate production-safe auth/admin environment values.
@@ -65,24 +72,255 @@ def generate_auth_env(
     if signup_mode not in {"disabled", "bootstrap", "public"}:
         typer.echo("Error: --signup-mode must be disabled, bootstrap, or public.", err=True)
         raise typer.Exit(1)
+    if environment not in {"development", "staging", "production"}:
+        typer.echo("Error: --environment must be development, staging, or production.", err=True)
+        raise typer.Exit(1)
 
     superuser_key = _new_secret("atulya_admin")
-    key_hash_pepper = _new_secret("atulya_pepper")
+    key_hash_pepper = _new_secret("atulya_key_pepper")
+    session_hash_pepper = _new_secret("atulya_session_pepper")
 
     typer.echo("# Repo-root .env")
+    typer.echo(f"ATULYA_ENVIRONMENT={environment}")
+    typer.echo("ATULYA_API_AUTH_MODE=database")
     typer.echo("ATULYA_API_ADMIN_ENABLED=true")
     typer.echo(f"ATULYA_API_SUPERUSER_KEY={superuser_key}")
-    typer.echo(f"ATULYA_CP_ADMIN_API_KEY={superuser_key}")
     typer.echo(f"ATULYA_API_KEY_HASH_PEPPER={key_hash_pepper}")
+    typer.echo(f"ATULYA_API_SESSION_HASH_PEPPER={session_hash_pepper}")
     typer.echo(f"ATULYA_API_AUTH_SCHEMA={auth_schema}")
     typer.echo(f"ATULYA_SIGNUP_MODE={signup_mode}")
+    typer.echo("ATULYA_AUTH_EMAIL_VERIFICATION=required")
+    typer.echo(f"ATULYA_AUTH_EMAIL_TRANSPORT={'smtp' if environment == 'production' else 'console'}")
+    typer.echo(f"ATULYA_AUTH_PUBLIC_URL=http://localhost:{control_plane_port}")
+    if environment == "production":
+        typer.echo("ATULYA_AUTH_SMTP_HOST=")
+        typer.echo("ATULYA_AUTH_SMTP_PORT=587")
+        typer.echo("ATULYA_AUTH_SMTP_USERNAME=")
+        typer.echo("ATULYA_AUTH_SMTP_PASSWORD=")
+        typer.echo("ATULYA_AUTH_EMAIL_FROM=")
+        typer.echo("ATULYA_AUTH_SMTP_STARTTLS=true")
+    typer.echo(f"ATULYA_CP_COOKIE_SECURE={'true' if environment == 'production' else 'false'}")
     typer.echo(f"ATULYA_API_PORT={api_port}")
     typer.echo(f"ATULYA_CP_PORT={control_plane_port}")
     typer.echo(f"ATULYA_CP_DATAPLANE_API_URL={dataplane_url}")
     typer.echo("")
     typer.echo("# atulya-control-plane/.env.local, only if running Next.js directly")
     typer.echo(f"ATULYA_CP_DATAPLANE_API_URL={dataplane_url}")
-    typer.echo(f"ATULYA_CP_ADMIN_API_KEY={superuser_key}")
+
+
+async def _auth_connection() -> asyncpg.Connection:
+    config = AtulyaConfig.from_env()
+    if not config.database_url:
+        raise RuntimeError("ATULYA_API_DATABASE_URL is not configured")
+    return await asyncpg.connect(await resolve_database_url(config.database_url))
+
+
+@app.command(name="create-platform-admin")
+def create_platform_admin(
+    email: str = typer.Option(..., "--email", prompt=True),
+    name: str = typer.Option(..., "--name", prompt=True),
+):
+    """Create a verified human platform operator using an interactive password."""
+
+    password = typer.prompt("Password", hide_input=True, confirmation_prompt=True)
+    if len(password) < 12:
+        typer.echo("Error: password must contain at least 12 characters.", err=True)
+        raise typer.Exit(1)
+
+    async def _create() -> None:
+        connection = await _auth_connection()
+        try:
+            async with connection.transaction():
+                normalized_email = email.strip().lower()
+                if await connection.fetchval(
+                    f"SELECT 1 FROM {fq('principals')} WHERE lower(email) = $1",
+                    normalized_email,
+                ):
+                    raise RuntimeError("A global account already exists for this email")
+                principal_id = uuid.uuid4()
+                await connection.execute(
+                    f"""
+                    INSERT INTO {fq("principals")}
+                        (id, email, display_name, principal_type, status, email_verified_at)
+                    VALUES ($1, $2, $3, 'user', 'active', NOW())
+                    """,
+                    principal_id,
+                    normalized_email,
+                    name.strip(),
+                )
+                await connection.execute(
+                    f"INSERT INTO {fq('principal_credentials')} (principal_id, password_hash) VALUES ($1, $2)",
+                    principal_id,
+                    hash_password(password),
+                )
+                await connection.execute(
+                    f"""
+                    INSERT INTO {fq("access_grants")}
+                        (org_id, subject_type, subject_id, action, scope_type, scope_id)
+                    VALUES (NULL, 'principal', $1, 'system.admin', 'system', '*')
+                    """,
+                    str(principal_id),
+                )
+                await connection.execute(
+                    f"""
+                    INSERT INTO {fq("audit_events")}
+                        (actor_principal_id, action, target_type, target_id, metadata)
+                    VALUES (NULL, 'platform.admin.create', 'principal', $1, $2)
+                    """,
+                    str(principal_id),
+                    json.dumps({"source": "atulya-admin"}),
+                )
+            typer.echo(f"Created platform admin {normalized_email} ({principal_id})")
+        finally:
+            await connection.close()
+
+    try:
+        asyncio.run(_create())
+    except RuntimeError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+
+@app.command(name="list-platform-admins")
+def list_platform_admins():
+    """List human identities holding the system administrator grant."""
+
+    async def _list() -> None:
+        connection = await _auth_connection()
+        try:
+            rows = await connection.fetch(
+                f"""
+                SELECT p.id::text, p.email, p.display_name, p.status, p.created_at::text
+                FROM {fq("principals")} p
+                JOIN {fq("access_grants")} g
+                  ON g.subject_type = 'principal' AND g.subject_id = p.id::text
+                WHERE g.org_id IS NULL AND g.action = 'system.admin'
+                  AND g.scope_type = 'system' AND g.scope_id = '*'
+                ORDER BY p.email
+                """
+            )
+            if not rows:
+                typer.echo("No platform administrators found.")
+                return
+            for row in rows:
+                typer.echo(f"{row['email']}\t{row['display_name']}\t{row['status']}\t{row['id']}")
+        finally:
+            await connection.close()
+
+    asyncio.run(_list())
+
+
+@app.command(name="revoke-platform-admin")
+def revoke_platform_admin(email: str = typer.Option(..., "--email", prompt=True)):
+    """Remove platform access and revoke all sessions for an identity."""
+
+    async def _revoke() -> None:
+        connection = await _auth_connection()
+        try:
+            async with connection.transaction():
+                principal_id = await connection.fetchval(
+                    f"SELECT id FROM {fq('principals')} WHERE lower(email) = $1",
+                    email.strip().lower(),
+                )
+                if not principal_id:
+                    raise RuntimeError("Platform administrator not found")
+                result = await connection.execute(
+                    f"""
+                    DELETE FROM {fq("access_grants")}
+                    WHERE org_id IS NULL AND subject_type = 'principal' AND subject_id = $1
+                      AND action = 'system.admin' AND scope_type = 'system' AND scope_id = '*'
+                    """,
+                    str(principal_id),
+                )
+                if result.endswith("0"):
+                    raise RuntimeError("Identity does not hold platform access")
+                await connection.execute(
+                    f"""
+                    UPDATE {fq("principal_sessions")}
+                    SET revoked_at = NOW(), revocation_reason = 'platform_admin_revoked'
+                    WHERE principal_id = $1 AND revoked_at IS NULL
+                    """,
+                    principal_id,
+                )
+                await connection.execute(
+                    f"""
+                    INSERT INTO {fq("audit_events")}
+                        (actor_principal_id, action, target_type, target_id, metadata)
+                    VALUES (NULL, 'platform.admin.revoke', 'principal', $1, $2)
+                    """,
+                    str(principal_id),
+                    json.dumps({"source": "atulya-admin"}),
+                )
+            typer.echo(f"Revoked platform access for {email.strip().lower()}")
+        finally:
+            await connection.close()
+
+    try:
+        asyncio.run(_revoke())
+    except RuntimeError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
+
+
+RESET_CONFIRMATION = "RESET-ATULYA-AUTH-AND-BANKS"
+
+
+@app.command(name="reset-development-auth-and-banks")
+def reset_development_auth_and_banks(
+    confirm: str = typer.Option("", "--confirm", help=f"Must equal {RESET_CONFIRMATION}."),
+):
+    """Destroy development auth, organization schemas, and memory-bank data."""
+
+    if os.getenv("ATULYA_ENVIRONMENT", "development").strip().lower() == "production":
+        typer.echo("Refusing to reset while ATULYA_ENVIRONMENT=production.", err=True)
+        raise typer.Exit(1)
+
+    async def _reset() -> None:
+        connection = await _auth_connection()
+        try:
+            schemas = await connection.fetch(f"SELECT schema_name FROM {fq('orgs')} ORDER BY schema_name")
+            auth_tables = (
+                "audit_events",
+                "auth_challenges",
+                "auth_rate_limits",
+                "access_grants",
+                "api_keys",
+                "principal_sessions",
+                "principal_credentials",
+                "membership_scopes",
+                "org_memberships",
+                "role_actions",
+                "roles",
+                "principals",
+                "orgs",
+            )
+            typer.echo("Organization schemas to drop:")
+            for row in schemas:
+                typer.echo(f"  {row['schema_name']}")
+            typer.echo("Auth tables to truncate:")
+            for table in auth_tables:
+                typer.echo(f"  {fq(table)}")
+            typer.echo(f"Memory-bank root to truncate:\n  {fq('banks')}")
+            if confirm != RESET_CONFIRMATION:
+                raise RuntimeError(f"Pass --confirm {RESET_CONFIRMATION} to execute the reset")
+            async with connection.transaction():
+                for row in schemas:
+                    schema_name = row["schema_name"]
+                    if not schema_name.startswith("org_"):
+                        raise RuntimeError(f"Refusing to drop unexpected schema {schema_name!r}")
+                    await connection.execute(f'DROP SCHEMA "{schema_name}" CASCADE')
+                tables = ", ".join(fq(table) for table in auth_tables)
+                await connection.execute(f"TRUNCATE TABLE {tables} CASCADE")
+                await connection.execute(f"TRUNCATE TABLE {fq('banks')} CASCADE")
+            typer.echo("Development auth, organization schemas, and memory banks reset.")
+        finally:
+            await connection.close()
+
+    try:
+        asyncio.run(_reset())
+    except RuntimeError as exc:
+        typer.echo(f"Error: {exc}", err=True)
+        raise typer.Exit(1) from exc
 
 
 # ---------------------------------------------------------------------------
@@ -109,7 +347,6 @@ def generate_auth_env(
 # ---------------------------------------------------------------------------
 BACKUP_TABLES: list[str] = [
     # --- Layer 0: roots (no FK parents) ---
-    "api_keys",  # admin RBAC key store — no FK deps
     "banks",
     "file_storage",
     # --- Layer 1: reference banks ---
@@ -163,7 +400,7 @@ REFRESH_VIEWS: list[str] = [
 # Bump this when BACKUP_TABLES changes in a breaking way (tables added/removed).
 # Restore rejects a backup whose manifest_version != MANIFEST_VERSION with a
 # clear error so the operator knows to use the matching atulya-admin version.
-MANIFEST_VERSION = "2"
+MANIFEST_VERSION = "3"
 
 
 async def _backup(database_url: str, output_path: Path, schema: str = "public") -> dict[str, Any]:

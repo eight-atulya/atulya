@@ -56,6 +56,7 @@ class TenantContext:
     role: Role = "user"
     allowed_bank_ids: list[str] | None = None
     org_id: str | None = None
+    membership_id: str | None = None
     principal_id: str | None = None
     principal_type: str | None = None
     display_name: str | None = None
@@ -94,6 +95,7 @@ class TenantContext:
         request_context.role = self.role
         request_context.allowed_bank_ids = self.allowed_bank_ids
         request_context.org_id = self.org_id
+        request_context.membership_id = self.membership_id
         request_context.principal_id = self.principal_id
         request_context.principal_type = self.principal_type
         request_context.display_name = self.display_name

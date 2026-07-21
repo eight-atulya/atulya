@@ -1,6 +1,6 @@
 """Built-in tenant extension implementations."""
 
-from atulya_api.auth import fq, hash_secret, normalize_action_scopes
+from atulya_api.auth import fq
 from atulya_api.config import get_config
 from atulya_api.extensions.tenant import AuthenticationError, Tenant, TenantContext, TenantExtension
 from atulya_api.models import RequestContext
@@ -212,23 +212,15 @@ class SuperuserTenantExtension(TenantExtension):
 # ---------------------------------------------------------------------------
 # DbApiKeyTenantExtension
 # ---------------------------------------------------------------------------
-# Production-grade DB-backed key store.  Replaces the static env-var key with
-# keys stored in the api_keys table (created by migration 080109b0cbdc).
+# Production-grade database identity resolver for sessions and service keys.
 #
 # Auth flow:
-#   1. SHA-256(incoming_key) → lookup in api_keys
-#   2. Check revoked_at IS NULL and expires_at > NOW()
-#   3. Return TenantContext(role=row.role, schema_name=row.schema_name,
-#                          allowed_bank_ids=row.allowed_bank_ids)
+#   1. Resolve the opaque session or hashed service key.
+#   2. Resolve its active organization membership and role.
+#   3. Build one TenantContext from role actions and ABAC scopes.
 #
-# Hot-path cache:
-#   - asyncio.Lock-protected in-memory dict: key_hash → (TenantContext, expiry_ts)
-#   - TTL = 60 s (configurable via config dict "cache_ttl_seconds")
-#   - Cache is invalidated automatically after TTL; explicit invalidation on revoke
-#     is not needed because revoked keys have revoked_at set in DB — any cached
-#     context for a revoked key will expire within TTL.
-#   - Cache is per-process; horizontally scaled deployments tolerate up to TTL
-#     delay on revocation (acceptable for API key security model).
+# Credentials are resolved against the database on every request so session and
+# key revocation is immediate across every API replica.
 #
 # Configuration:
 #   ATULYA_API_TENANT_EXTENSION=atulya_api.extensions.builtin.tenant:DbApiKeyTenantExtension
@@ -240,60 +232,17 @@ class DbApiKeyTenantExtension(TenantExtension):
     """
     DB-backed tenant extension using the api_keys table.
 
-    Provides full RBAC (role column) + ABAC (allowed_bank_ids column) via
-    DB-stored keys.  Includes a 60-second TTL cache to avoid a DB round-trip
-    on every request.
+    Resolves sessions and service keys through the same membership, role-action,
+    and scope tables.
 
     Requires migration 080109b0cbdc (api_keys table) to be applied.
     """
 
-    _CACHE_TTL_DEFAULT = 60  # seconds
-
     def __init__(self, config: dict[str, str]):
         super().__init__(config)
-        self._cache_ttl: int = int(config.get("cache_ttl_seconds", self._CACHE_TTL_DEFAULT))
-        # {key_hash: (TenantContext, expires_monotonic)}
-        self._cache: dict[str, tuple[TenantContext, float]] = {}
-        self._cache_lock: "asyncio.Lock | None" = None  # lazy init (event loop may not exist yet)
         # DB pool injected via on_startup or provided in config["_pool"] for testing.
         self._pool: "asyncpg.Pool | None" = config.get("_pool")  # type: ignore[assignment]
         self._schema: str = config.get("schema", get_config().database_schema)
-
-    def _get_lock(self) -> "asyncio.Lock":
-        import asyncio as _asyncio
-
-        if self._cache_lock is None:
-            self._cache_lock = _asyncio.Lock()
-        return self._cache_lock
-
-    def _hash_key(self, raw_key: str) -> str:
-        return hash_secret(raw_key, version=2)
-
-    async def _load_action_scopes(
-        self,
-        pool: "asyncpg.Pool",
-        *,
-        org_id: str | None,
-        principal_id: str | None,
-        role: str,
-    ) -> dict[str, list[str]]:
-        if not org_id:
-            return {}
-        rows = await pool.fetch(
-            f"""
-            SELECT action, scope_type, scope_id
-            FROM {fq("access_grants", self._schema)}
-            WHERE org_id = $1
-              AND (
-                (subject_type = 'principal' AND subject_id = $2)
-                OR (subject_type = 'role' AND subject_id = $3)
-              )
-            """,
-            org_id,
-            principal_id or "",
-            role,
-        )
-        return normalize_action_scopes(list(rows))
 
     async def _get_db_pool(self) -> "asyncpg.Pool":
         if self._pool is not None:
@@ -304,167 +253,43 @@ class DbApiKeyTenantExtension(TenantExtension):
         )
 
     async def authenticate(self, context: RequestContext) -> TenantContext:
-        import asyncio as _asyncio
-        import time
+        from atulya_api.auth_service import resolve_identity
 
         if not context.api_key:
             raise AuthenticationError("API key is required")
 
-        key_hash = self._hash_key(context.api_key)
-
-        # Fast path: check cache under lock
-        lock = self._get_lock()
-        async with lock:
-            if key_hash in self._cache:
-                tenant_ctx, cache_expires = self._cache[key_hash]
-                if time.monotonic() < cache_expires:
-                    return tenant_ctx
-                # Expired — evict
-                del self._cache[key_hash]
-
-        # Slow path: DB lookup. Session tokens and service API keys resolve into
-        # the same TenantContext envelope.
         pool = await self._get_db_pool()
-        if context.api_key.startswith("atulya_sess_"):
-            row = await pool.fetchrow(
-                f"""
-                SELECT
-                    s.id::text AS session_id,
-                    s.expires_at,
-                    s.revoked_at,
-                    p.id::text AS principal_id,
-                    p.email,
-                    p.display_name,
-                    p.principal_type,
-                    p.role,
-                    p.status AS principal_status,
-                    o.id::text AS org_id,
-                    o.schema_name,
-                    o.status AS org_status
-                FROM {fq("principal_sessions", self._schema)} s
-                JOIN {fq("principals", self._schema)} p ON p.id = s.principal_id
-                JOIN {fq("orgs", self._schema)} o ON o.id = p.org_id
-                WHERE s.token_hash = $1
-                """,
-                key_hash,
-            )
-            if row is None:
-                raise AuthenticationError("Invalid session")
-            if row["revoked_at"] is not None:
-                raise AuthenticationError("Session has been revoked")
-            if row["principal_status"] != "active":
-                raise AuthenticationError("Principal is disabled")
-            if row["org_status"] != "active":
-                raise AuthenticationError("Organization is disabled")
-            if row["expires_at"] is not None:
-                from datetime import datetime, timezone
-
-                if datetime.now(timezone.utc) > row["expires_at"].replace(tzinfo=timezone.utc):
-                    raise AuthenticationError("Session has expired")
-            await pool.execute(
-                f"UPDATE {fq('principal_sessions', self._schema)} SET last_used_at = NOW() WHERE id = $1",
-                uuid.UUID(row["session_id"]),
-            )
-            action_scopes = await self._load_action_scopes(
-                pool,
-                org_id=row["org_id"],
-                principal_id=row["principal_id"],
-                role=row["role"],
-            )
-            tenant_ctx = TenantContext(
-                schema_name=row["schema_name"],
-                role=row["role"],
-                allowed_bank_ids=None,
-                org_id=row["org_id"],
-                principal_id=row["principal_id"],
-                principal_type=row["principal_type"],
-                display_name=row["display_name"],
-                email=row["email"],
-                action_scopes=action_scopes,
-            )
-            context.tenant_id = row["org_id"]
-        else:
-            row = await pool.fetchrow(
-                f"""
-                SELECT
-                    k.id::text AS api_key_id,
-                    k.role,
-                    k.schema_name,
-                    k.allowed_bank_ids,
-                    k.expires_at,
-                    k.revoked_at,
-                    k.principal_id::text AS principal_id,
-                    p.email,
-                    p.display_name,
-                    p.principal_type,
-                    p.status AS principal_status,
-                    o.id::text AS org_id,
-                    o.status AS org_status
-                FROM {fq("api_keys", self._schema)} k
-                LEFT JOIN {fq("principals", self._schema)} p ON p.id = k.principal_id
-                LEFT JOIN {fq("orgs", self._schema)} o ON o.id = p.org_id
-                WHERE k.key_hash = $1 OR k.key_hash = $2
-                """,
-                key_hash,
-                hash_secret(context.api_key, version=1),
-            )
-
-            if row is None:
-                raise AuthenticationError("Invalid API key")
-
-            if row["revoked_at"] is not None:
-                raise AuthenticationError("API key has been revoked")
-
-            if row["principal_status"] is not None and row["principal_status"] != "active":
-                raise AuthenticationError("Principal is disabled")
-            if row["org_status"] is not None and row["org_status"] != "active":
-                raise AuthenticationError("Organization is disabled")
-
-            if row["expires_at"] is not None:
-                from datetime import datetime, timezone
-
-                if datetime.now(timezone.utc) > row["expires_at"].replace(tzinfo=timezone.utc):
-                    raise AuthenticationError("API key has expired")
-            await pool.execute(
-                f"UPDATE {fq('api_keys', self._schema)} SET last_used_at = NOW() WHERE id = $1",
-                uuid.UUID(row["api_key_id"]),
-            )
-            action_scopes = await self._load_action_scopes(
-                pool,
-                org_id=row["org_id"],
-                principal_id=row["principal_id"],
-                role=row["role"],
-            )
-            tenant_ctx = TenantContext(
-                schema_name=row["schema_name"],
-                role=row["role"],
-                allowed_bank_ids=list(row["allowed_bank_ids"]) if row["allowed_bank_ids"] else None,
-                org_id=row["org_id"],
-                principal_id=row["principal_id"],
-                principal_type=row["principal_type"],
-                display_name=row["display_name"],
-                email=row["email"],
-                action_scopes=action_scopes,
-            )
-            context.api_key_id = row["api_key_id"]
-            context.tenant_id = row["org_id"]
-
-        # Populate cache
-        async with lock:
-            import time as _time
-
-            self._cache[key_hash] = (tenant_ctx, _time.monotonic() + self._cache_ttl)
+        identity = await resolve_identity(pool, context.api_key)
+        if identity is None:
+            raise AuthenticationError("Invalid or expired credential")
+        if identity.active_org_id is None:
+            raise AuthenticationError("Select an organization before accessing memory banks")
+        tenant_ctx = TenantContext(
+            schema_name=identity.schema_name,
+            role=identity.role,  # type: ignore[arg-type]
+            org_id=identity.active_org_id,
+            membership_id=identity.membership_id,
+            principal_id=identity.principal_id,
+            principal_type=identity.principal_type,
+            display_name=identity.display_name,
+            email=identity.email,
+            allowed_actions=identity.allowed_actions,
+            action_scopes=identity.action_scopes,
+        )
+        context.api_key_id = identity.api_key_id
+        context.tenant_id = identity.active_org_id
 
         return tenant_ctx
 
     async def list_tenants(self) -> list[Tenant]:
-        """Return active org schemas, falling back to the auth schema before migration."""
+        """Return the auth schema and every active organization schema."""
         try:
             pool = await self._get_db_pool()
             rows = await pool.fetch(
                 f"SELECT schema_name FROM {fq('orgs', self._schema)} WHERE status = 'active' ORDER BY schema_name"
             )
-            return [Tenant(schema=r["schema_name"]) for r in rows] or [Tenant(schema=self._schema)]
+            schemas = [self._schema, *(row["schema_name"] for row in rows)]
+            return [Tenant(schema=schema) for schema in dict.fromkeys(schemas)]
         except Exception:
             return [Tenant(schema=self._schema)]
 

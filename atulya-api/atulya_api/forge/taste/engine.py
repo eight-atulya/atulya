@@ -212,11 +212,7 @@ async def handle_taste_transform_job(memory_engine: "MemoryEngine", task_dict: d
     if not bank_id:
         raise ValueError("bank_id is required for taste transform job")
     request = TasteTransformRequest.model_validate(task_dict.get("taste_request") or {})
-    internal_context = RequestContext(
-        internal=True,
-        tenant_id=task_dict.get("_tenant_id"),
-        api_key_id=task_dict.get("_api_key_id"),
-    )
+    internal_context = RequestContext.from_task_payload(task_dict)
     operation_id = task_dict.get("operation_id")
     if operation_id:
         await memory_engine._set_operation_stage(operation_id, "transform", {"set_count": len(request.set_ids)})
@@ -256,6 +252,7 @@ async def submit_taste_transform(
             "_api_key_id": request_context.api_key_id,
         },
         result_metadata={"operation_stage": "queued", "dataset_id": request.dataset_id},
+        request_context=request_context,
     )
 
 
@@ -307,11 +304,7 @@ async def handle_taste_variant_job(memory_engine: "MemoryEngine", task_dict: dic
     if not bank_id or not dataset_id:
         raise ValueError("bank_id and dataset_id are required for taste variant job")
     request = TasteGenerateRequest.model_validate(task_dict.get("generate_request") or {})
-    internal_context = RequestContext(
-        internal=True,
-        tenant_id=task_dict.get("_tenant_id"),
-        api_key_id=task_dict.get("_api_key_id"),
-    )
+    internal_context = RequestContext.from_task_payload(task_dict)
     operation_id = task_dict.get("operation_id")
     if operation_id:
         await memory_engine._set_operation_stage(operation_id, "generate", {"parent_count": len(request.set_ids)})
@@ -354,6 +347,7 @@ async def submit_taste_generate(
             "_api_key_id": request_context.api_key_id,
         },
         result_metadata={"operation_stage": "queued", "dataset_id": dataset_id},
+        request_context=request_context,
     )
 
 

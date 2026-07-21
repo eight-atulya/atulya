@@ -18,12 +18,7 @@ warnings.filterwarnings("ignore", message="websockets.server.WebSocketServerProt
 from atulya_api import MemoryEngine
 from atulya_api.api import create_app
 from atulya_api.config import get_config
-from atulya_api.extensions import (
-    DefaultExtensionContext,
-    OperationValidatorExtension,
-    TenantExtension,
-    load_extension,
-)
+from atulya_api.extensions import DefaultExtensionContext
 
 # Disable tokenizers parallelism to avoid warnings
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
@@ -32,13 +27,13 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 config = get_config()
 config.configure_logging()
 
-# Load operation validator extension if configured
-operation_validator = load_extension("OPERATION_VALIDATOR", OperationValidatorExtension)
+from atulya_api.auth_service import load_auth_extensions
+
+# Resolve database auth as a canonical pair, or load legacy/custom extensions.
+operation_validator, tenant_extension = load_auth_extensions()
 if operation_validator:
     logging.info(f"Loaded operation validator: {operation_validator.__class__.__name__}")
 
-# Load tenant extension if configured
-tenant_extension = load_extension("TENANT", TenantExtension)
 if tenant_extension:
     logging.info(f"Loaded tenant extension: {tenant_extension.__class__.__name__}")
 

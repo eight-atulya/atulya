@@ -71,11 +71,7 @@ async def handle_forge_job(memory_engine: "MemoryEngine", task_dict: dict[str, A
 
     request_payload = task_dict.get("forge_request") or {}
     request = parse_forge_request(request_payload)
-    internal_context = RequestContext(
-        internal=True,
-        tenant_id=task_dict.get("_tenant_id"),
-        api_key_id=task_dict.get("_api_key_id"),
-    )
+    internal_context = RequestContext.from_task_payload(task_dict)
 
     async def stage_callback(stage: str, extra: dict[str, Any]) -> None:
         await memory_engine._set_operation_stage(operation_id, stage, extra)
@@ -127,6 +123,7 @@ async def submit_forge_job(
             "recipe_id": request.recipe_id,
             "domain_tags": request.domain_tags,
         },
+        request_context=request_context,
     )
 
 

@@ -952,6 +952,11 @@ class MemoryEngine(MemoryEngineInterface):
         # The task was already authenticated at submission time, and execute_task sets _current_schema
         # from the task's _schema field.
         if request_context.internal:
+            # Internal work may target a schema other than the current request's
+            # schema (for example, a platform consolidation job). Prefer the
+            # explicit, already-authorized schema carried by the context.
+            if request_context.schema_name:
+                _current_schema.set(request_context.schema_name)
             return _current_schema.get()
 
         # Authenticate through tenant extension (always set, may be default no-auth extension)
@@ -999,18 +1004,11 @@ class MemoryEngine(MemoryEngineInterface):
             except Exception as exc:
                 logger.debug("Failed to mark parent retain operation as started (%s): %s", operation_id, exc)
 
-        # Restore tenant_id/api_key_id from task payload so extensions
-        # (e.g., operation validators) can attribute the operation correctly.
-        # internal=True to skip extension auth (worker has no API key),
-        # user_initiated=True so extensions know this originated from a user request.
         from atulya_api.models import RequestContext
 
-        context = RequestContext(
-            internal=True,
-            user_initiated=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        # Restore the resolved authorization envelope captured at enqueue time.
+        # The envelope contains no raw session or API-key secret.
+        context = RequestContext.from_task_payload(task_dict)
 
         await self.retain_batch_async(
             bank_id=bank_id,
@@ -1111,12 +1109,7 @@ class MemoryEngine(MemoryEngineInterface):
                 from atulya_api.extensions.operation_validator import FileConvertResult
                 from atulya_api.models import RequestContext
 
-                convert_context = RequestContext(
-                    internal=True,
-                    user_initiated=True,
-                    tenant_id=task_dict.get("_tenant_id"),
-                    api_key_id=task_dict.get("_api_key_id"),
-                )
+                convert_context = RequestContext.from_task_payload(task_dict)
                 await self._operation_validator.on_file_convert_complete(
                     FileConvertResult(
                         bank_id=bank_id,
@@ -1152,6 +1145,8 @@ class MemoryEngine(MemoryEngineInterface):
             retain_task_payload["_tenant_id"] = task_dict["_tenant_id"]
         if task_dict.get("_api_key_id"):
             retain_task_payload["_api_key_id"] = task_dict["_api_key_id"]
+        if task_dict.get("_authorization"):
+            retain_task_payload["_authorization"] = task_dict["_authorization"]
 
         # File metadata to attach after retain creates the document
         retain_task_payload["_file_metadata"] = {
@@ -2987,11 +2982,7 @@ class MemoryEngine(MemoryEngineInterface):
         operation_id = task_dict.get("operation_id")
         memory_ingest_mode = task_dict.get("memory_ingest_mode", "direct")
 
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
 
         if operation_id:
             await self._set_operation_stage(
@@ -3119,11 +3110,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         # Restore tenant_id/api_key_id from task payload so downstream operations
         # (e.g., mental model refreshes) can attribute usage to the correct org.
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
         result = await run_consolidation_job(
             memory_engine=self,
             bank_id=bank_id,
@@ -3488,11 +3475,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         from atulya_api.models import RequestContext
 
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
         resolved = await self._config_resolver.resolve_full_config(bank_id, internal_context)
         settings = normalize_dream_config(resolved.dream)
         if not settings.get("enabled"):
@@ -3934,11 +3917,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         from atulya_api.models import RequestContext
 
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
 
         await self._set_operation_stage(operation_id, "reflecting")
 
@@ -4018,11 +3997,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         # Restore tenant_id/api_key_id from task payload so extensions can
         # attribute the mental_model_refresh operation to the correct org.
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
 
         # Pre-fetch the mental model so we can supply accurate
         # facts_used/mental_models_used to the post-operation hook below
@@ -4152,11 +4127,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         from atulya_api.models import RequestContext
 
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
         mental_models, full_copy, events = await self._collect_sub_routine_inputs(
             bank_id=bank_id,
             request_context=internal_context,
@@ -4227,11 +4198,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         from atulya_api.models import RequestContext
 
-        internal_context = RequestContext(
-            internal=True,
-            tenant_id=task_dict.get("_tenant_id"),
-            api_key_id=task_dict.get("_api_key_id"),
-        )
+        internal_context = RequestContext.from_task_payload(task_dict)
         mental_models, full_copy, events = await self._collect_sub_routine_inputs(
             bank_id=bank_id,
             request_context=internal_context,
@@ -13478,6 +13445,9 @@ class MemoryEngine(MemoryEngineInterface):
             new_task_payload.pop("_retry_at", None)
             new_task_payload.pop("_claimed_at", None)
             new_task_payload.pop("_worker_id", None)
+            # Re-authorize legacy tasks when they are retried after the worker
+            # authorization envelope rollout. Never copy a raw credential.
+            new_task_payload["_authorization"] = request_context.to_task_authorization()
 
             metadata_payload = decode_jsonb(row["result_metadata"], {})
             if not isinstance(metadata_payload, dict):
@@ -13630,6 +13600,7 @@ class MemoryEngine(MemoryEngineInterface):
         result_metadata: dict[str, Any] | None = None,
         dedupe_by_bank: bool = False,
         dedupe_key: str | None = None,
+        request_context: "RequestContext | None" = None,
     ) -> dict[str, Any]:
         """Generic helper to submit an async operation.
 
@@ -13717,6 +13688,8 @@ class MemoryEngine(MemoryEngineInterface):
             "bank_id": bank_id,
             **task_payload,
         }
+        if request_context is not None:
+            full_payload["_authorization"] = request_context.to_task_authorization()
 
         await self._task_backend.submit_task(full_payload)
 
@@ -13847,6 +13820,7 @@ class MemoryEngine(MemoryEngineInterface):
                 source_ref=archive_name,
             ).to_dict(),
             dedupe_by_bank=False,
+            request_context=request_context,
         )
         return {
             "codebase_id": codebase_id,
@@ -13983,6 +13957,7 @@ class MemoryEngine(MemoryEngineInterface):
                 source_ref=filename,
             ).to_dict(),
             dedupe_by_bank=False,
+            request_context=request_context,
         )
         return {
             "codebase_id": codebase_id,
@@ -14100,6 +14075,7 @@ class MemoryEngine(MemoryEngineInterface):
                 source_ref=effective_ref,
             ).to_dict(),
             dedupe_by_bank=False,
+            request_context=request_context,
         )
         return {
             "codebase_id": codebase_id,
@@ -14225,6 +14201,7 @@ class MemoryEngine(MemoryEngineInterface):
                 source_ref=effective_ref,
             ).to_dict(),
             dedupe_by_bank=False,
+            request_context=request_context,
         )
         return {
             "snapshot_id": snapshot_id,
@@ -14329,6 +14306,7 @@ class MemoryEngine(MemoryEngineInterface):
             | {"memory_ingest_mode": memory_ingest_mode},
             dedupe_by_bank=True,
             dedupe_key=f"codebase_approve:{codebase_id}:{target_snapshot_id}:{memory_ingest_mode}",
+            request_context=request_context,
         )
         return {
             "codebase_id": codebase_id,
@@ -16139,6 +16117,7 @@ class MemoryEngine(MemoryEngineInterface):
                 task_payload=task_payload,
                 result_metadata=child_metadata.to_dict(),
                 dedupe_by_bank=False,
+                request_context=request_context,
             )
 
         return {
@@ -16247,6 +16226,7 @@ class MemoryEngine(MemoryEngineInterface):
                     "original_filename": file.filename,
                 },
                 dedupe_by_bank=False,
+                request_context=request_context,
             )
             operation_ids.append(result["operation_id"])
 
@@ -16297,6 +16277,7 @@ class MemoryEngine(MemoryEngineInterface):
             task_type="consolidation",
             task_payload=task_payload,
             dedupe_by_bank=True,
+            request_context=request_context,
         )
 
     async def submit_async_reflect(
@@ -16366,6 +16347,7 @@ class MemoryEngine(MemoryEngineInterface):
                 "tags_match": tags_match,
             },
             dedupe_by_bank=False,
+            request_context=request_context,
         )
 
     async def submit_async_refresh_mental_model(
@@ -16422,6 +16404,7 @@ class MemoryEngine(MemoryEngineInterface):
             task_payload=task_payload,
             result_metadata={"mental_model_id": mental_model_id, "name": mental_model["name"]},
             dedupe_by_bank=False,
+            request_context=request_context,
         )
 
     async def submit_async_sub_routine(
@@ -16462,6 +16445,7 @@ class MemoryEngine(MemoryEngineInterface):
             result_metadata={"mode": mode, "horizon_hours": horizon_hours, "force_rebuild": force_rebuild},
             dedupe_by_bank=True,
             dedupe_key=dedupe_key,
+            request_context=request_context,
         )
 
     async def submit_async_dream_generation(
@@ -16499,6 +16483,7 @@ class MemoryEngine(MemoryEngineInterface):
             result_metadata={"trigger_source": trigger_source, "run_type": run_type},
             dedupe_by_bank=True,
             dedupe_key=dedupe_key,
+            request_context=request_context,
         )
 
     async def _assemble_dream_runs(
@@ -17226,6 +17211,7 @@ class MemoryEngine(MemoryEngineInterface):
             },
             dedupe_by_bank=True,
             dedupe_key=dedupe_key,
+            request_context=request_context,
         )
 
     async def enqueue_startup_brain_warmup(self) -> int:
@@ -17234,7 +17220,7 @@ class MemoryEngine(MemoryEngineInterface):
 
         if not self._brain_runtime.enabled:
             return 0
-        internal_context = RequestContext(internal=True)
+        internal_context = RequestContext.system_internal()
         banks = await self.list_banks(request_context=internal_context)
         queued = 0
         for bank in banks:
@@ -17249,6 +17235,7 @@ class MemoryEngine(MemoryEngineInterface):
                 result_metadata={"startup_warmup": True},
                 dedupe_by_bank=True,
                 dedupe_key=f"{bank_id}:warmup:24:0",
+                request_context=internal_context,
             )
             queued += 1
         return queued

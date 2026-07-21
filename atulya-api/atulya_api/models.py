@@ -4,6 +4,7 @@ SQLAlchemy models for the memory system.
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any
 from uuid import UUID as PyUUID
 
 
@@ -21,6 +22,7 @@ class RequestContext:
     api_key_id: str | None = None  # UUID of the API key used for authentication
     tenant_id: str | None = None  # Tenant identifier (set by extension after auth)
     org_id: str | None = None
+    membership_id: str | None = None
     principal_id: str | None = None
     principal_type: str | None = None
     display_name: str | None = None
@@ -32,6 +34,103 @@ class RequestContext:
     allowed_bank_ids: list[str] | None = None  # None = unrestricted (all banks)
     allowed_actions: list[str] | None = None
     action_scopes: dict[str, list[str]] | None = None
+
+    @classmethod
+    def system_internal(cls, *, schema_name: str | None = None) -> "RequestContext":
+        """Create an explicit, non-user context for trusted system work.
+
+        Internal jobs must opt into this identity explicitly. Anonymous
+        ``internal=True`` contexts remain unable to pass RBAC/ABAC checks.
+        """
+        return cls(
+            internal=True,
+            role="superuser",
+            schema_name=schema_name,
+            allowed_actions=["system.admin"],
+            action_scopes={"system.admin": ["system:*"]},
+        )
+
+    def to_task_authorization(self) -> dict[str, Any]:
+        """Return the non-secret authorization envelope for a queued task.
+
+        Workers must not receive a session or API-key secret.  They do need the
+        already-resolved identity and permission boundary that was authorized
+        when the task was accepted, so an async operation cannot accidentally
+        become anonymous after the request has ended.
+        """
+        return {
+            "version": 1,
+            "tenant_id": self.tenant_id,
+            "org_id": self.org_id,
+            "membership_id": self.membership_id,
+            "principal_id": self.principal_id,
+            "principal_type": self.principal_type,
+            "display_name": self.display_name,
+            "email": self.email,
+            "role": self.role,
+            "schema_name": self.schema_name,
+            "api_key_id": self.api_key_id,
+            "allowed_bank_ids": list(self.allowed_bank_ids) if self.allowed_bank_ids is not None else None,
+            "allowed_actions": list(self.allowed_actions) if self.allowed_actions is not None else None,
+            "action_scopes": {action: list(scopes) for action, scopes in (self.action_scopes or {}).items()},
+            "user_initiated": self.user_initiated,
+        }
+
+    @classmethod
+    def from_task_payload(cls, task_payload: dict[str, Any]) -> "RequestContext":
+        """Restore a worker context without ever restoring a raw credential.
+
+        The legacy fields remain as a compatibility fallback for tasks queued
+        before authorization envelopes were introduced.  Such tasks retain
+        their old behavior and are still subject to normal operation checks.
+        """
+        snapshot = task_payload.get("_authorization")
+        if not isinstance(snapshot, dict):
+            return cls(
+                internal=True,
+                user_initiated=True,
+                tenant_id=task_payload.get("_tenant_id"),
+                api_key_id=task_payload.get("_api_key_id"),
+            )
+
+        def string_value(name: str) -> str | None:
+            value = snapshot.get(name)
+            return value if isinstance(value, str) else None
+
+        def string_list(name: str) -> list[str] | None:
+            value = snapshot.get(name)
+            if value is None:
+                return None
+            return [item for item in value if isinstance(item, str)] if isinstance(value, list) else None
+
+        raw_scopes = snapshot.get("action_scopes")
+        action_scopes = (
+            {
+                action: [scope for scope in scopes if isinstance(scope, str)]
+                for action, scopes in raw_scopes.items()
+                if isinstance(action, str) and isinstance(scopes, list)
+            }
+            if isinstance(raw_scopes, dict)
+            else None
+        )
+
+        return cls(
+            internal=True,
+            user_initiated=bool(snapshot.get("user_initiated", True)),
+            tenant_id=string_value("tenant_id"),
+            org_id=string_value("org_id"),
+            membership_id=string_value("membership_id"),
+            principal_id=string_value("principal_id"),
+            principal_type=string_value("principal_type"),
+            display_name=string_value("display_name"),
+            email=string_value("email"),
+            role=string_value("role") or "user",
+            schema_name=string_value("schema_name"),
+            api_key_id=string_value("api_key_id"),
+            allowed_bank_ids=string_list("allowed_bank_ids"),
+            allowed_actions=string_list("allowed_actions"),
+            action_scopes=action_scopes,
+        )
 
 
 from pgvector.sqlalchemy import Vector

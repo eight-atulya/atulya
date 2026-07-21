@@ -1,8 +1,9 @@
 """
 Admin API router for atulya-api.
 
-Provides superuser-gated endpoints for tenant management, worker control,
-API key CRUD, and system health.  All routes require is_superuser=True.
+Provides platform-operator endpoints for organization provisioning, worker
+control, schema inspection, and system health. Routes require a normal session
+with system.admin on system:*; the environment key is recovery-only.
 
 Mount via create_app() when ATULYA_API_ADMIN_ENABLED=true.
 
@@ -10,7 +11,7 @@ PCRM metadata:
 {
   "component": "admin-api",
   "security_model": "RBAC + ABAC via TenantContext",
-  "auth_dependency": "require_superuser",
+  "auth_dependency": "system.admin or emergency recovery key",
   "default_state": "disabled (ATULYA_API_ADMIN_ENABLED=false)"
 }
 """
@@ -18,13 +19,11 @@ PCRM metadata:
 from __future__ import annotations
 
 import asyncio
-import hashlib
 import hmac
+import json
 import logging
 import os
-import secrets
 import uuid
-from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -32,14 +31,12 @@ from pydantic import BaseModel, Field
 
 from atulya_api.auth import (
     ALL_ACTIONS,
+    auth_schema,
     fq,
-    generate_api_key,
-    hash_password,
-    hash_secret,
-    key_prefix,
     normalize_org_slug,
-    schema_for_org,
+    quote_ident,
 )
+from atulya_api.engine.jsonb_compat import decode_jsonb
 from atulya_api.extensions.tenant import TenantContext
 from atulya_api.models import RequestContext
 
@@ -72,7 +69,7 @@ class OrgCreateRequest(BaseModel):
     slug: str
     name: str
     owner_email: str
-    owner_password: str = Field(min_length=12)
+    owner_password: str | None = Field(default=None, min_length=12, deprecated=True)
     owner_name: str | None = None
 
 
@@ -232,15 +229,8 @@ async def _resolve_tenant_context(
     """
     Resolve TenantContext for admin endpoints.
 
-    Admin auth is SELF-CONTAINED: always checks ATULYA_API_SUPERUSER_KEY
-    directly via hmac.compare_digest — independent of whichever TenantExtension
-    is configured on the MemoryEngine. This means admin works even with
-    DefaultTenantExtension (the default).
-
-    Flow:
-      1. Key present + matches config.superuser_key → role="superuser"
-      2. Key present + no superuser key configured → 403
-      3. Key absent → 401
+    Human platform operators authenticate with normal database sessions. The
+    environment superuser key remains an emergency recovery credential.
     """
     from atulya_api.config import get_config
 
@@ -248,26 +238,62 @@ async def _resolve_tenant_context(
     provided_key = request_context.api_key
 
     if not provided_key:
-        from fastapi import HTTPException
+        raise HTTPException(status_code=401, detail={"code": "session_required"})
 
-        raise HTTPException(status_code=401, detail="API key required for admin access")
+    if provided_key.startswith("atulya_sess_"):
+        from atulya_api.auth_service import require_permission, resolve_identity, write_audit
+
+        pool = await memory._get_pool()
+        identity = await resolve_identity(pool, provided_key)
+        if identity is None:
+            raise HTTPException(status_code=401, detail={"code": "invalid_or_expired_session"})
+        try:
+            require_permission(identity, "system.admin")
+        except HTTPException:
+            await write_audit(
+                pool,
+                identity,
+                "access.denied",
+                org_id=identity.active_org_id,
+                target_type="platform_route",
+                result="denied",
+                metadata={"missing_action": "system.admin", "required_scope": "system:*"},
+            )
+            raise
+        return TenantContext(
+            schema_name=identity.schema_name,
+            org_id=identity.active_org_id,
+            principal_id=identity.principal_id,
+            membership_id=identity.membership_id,
+            role="superuser",
+            allowed_actions=identity.allowed_actions,
+            action_scopes=identity.action_scopes,
+        )
 
     superuser_key = config.superuser_key
     if not superuser_key:
-        from fastapi import HTTPException
-
         raise HTTPException(
             status_code=503,
-            detail="Admin is enabled but ATULYA_API_SUPERUSER_KEY is not configured",
+            detail={"code": "emergency_key_not_configured"},
         )
 
     if not hmac.compare_digest(provided_key.encode(), superuser_key.encode()):
-        from fastapi import HTTPException
-
-        raise HTTPException(status_code=403, detail="Superuser access required")
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "code": "permission_denied",
+                "missing_action": "system.admin",
+                "required_scope": "system:*",
+            },
+        )
 
     schema = config.superuser_schema or "public"
-    return TenantContext(schema_name=schema, role="superuser")
+    return TenantContext(
+        schema_name=schema,
+        role="superuser",
+        allowed_actions=list(ALL_ACTIONS),
+        action_scopes={"system.admin": ["system:*"]},
+    )
 
 
 def create_admin_router(memory: Any) -> APIRouter:
@@ -322,7 +348,7 @@ def create_admin_router(memory: Any) -> APIRouter:
                 target_type,
                 target_id,
                 result,
-                metadata or {},
+                json.dumps(metadata or {}),
             )
         except Exception:
             logger.debug("[ADMIN] failed to write audit event", exc_info=True)
@@ -335,6 +361,17 @@ def create_admin_router(memory: Any) -> APIRouter:
             raise HTTPException(status_code=503, detail="Database URL unavailable for schema migration")
         await asyncio.to_thread(run_migrations, db_url, schema=schema_name)
 
+    async def _validated_schema(pool: Any, schema_name: str) -> str:
+        if schema_name == "public":
+            return quote_ident(schema_name)
+        exists = await pool.fetchval(
+            f"SELECT 1 FROM {fq('orgs')} WHERE schema_name = $1",
+            schema_name,
+        )
+        if not exists:
+            raise HTTPException(status_code=404, detail={"code": "organization_schema_not_found"})
+        return quote_ident(schema_name)
+
     # ------------------------------------------------------------------
     # GET /v1/admin/system/health
     # ------------------------------------------------------------------
@@ -344,7 +381,6 @@ def create_admin_router(memory: Any) -> APIRouter:
         response_model=SystemHealthResponse,
         summary="Admin system health",
         description="Returns DB pool stats, migration version, and active worker count.",
-        tags=["Admin"],
         operation_id="admin_system_health",
     )
     async def admin_system_health(
@@ -354,25 +390,31 @@ def create_admin_router(memory: Any) -> APIRouter:
 
         pool = await memory._get_pool()
 
+        configured_auth_schema = auth_schema()
+        qualified_auth_schema = quote_ident(configured_auth_schema)
+
         # Migration version
         migration_version: str | None = None
         try:
-            row = await pool.fetchrow("SELECT version_num FROM alembic_version LIMIT 1")
+            row = await pool.fetchrow(f"SELECT version_num FROM {qualified_auth_schema}.alembic_version LIMIT 1")
             if row:
                 migration_version = row["version_num"]
         except Exception:
             pass
 
-        # Stuck/active worker count from async_operations
-        worker_count = 0
-        try:
-            row = await pool.fetchrow(
-                "SELECT COUNT(DISTINCT worker_id) AS cnt FROM async_operations WHERE worker_id IS NOT NULL AND status = 'pending'"
-            )
-            if row:
-                worker_count = row["cnt"] or 0
-        except Exception:
-            pass
+        worker_ids: set[str] = set()
+        tenant_ext = memory.tenant_extension
+        if tenant_ext:
+            for tenant in await tenant_ext.list_tenants():
+                try:
+                    schema = await _validated_schema(pool, tenant.schema)
+                    rows = await pool.fetch(
+                        f"SELECT DISTINCT worker_id FROM {schema}.async_operations "
+                        "WHERE worker_id IS NOT NULL AND status = 'pending'"
+                    )
+                    worker_ids.update(row["worker_id"] for row in rows)
+                except Exception:
+                    logger.debug("Could not inspect worker state for %s", tenant.schema, exc_info=True)
 
         return SystemHealthResponse(
             status="healthy",
@@ -382,15 +424,15 @@ def create_admin_router(memory: Any) -> APIRouter:
             db_pool_size=pool.get_size(),
             db_pool_free=pool.get_idle_size(),
             migration_version=migration_version,
-            worker_count=worker_count,
-            admin_schema=tenant_ctx.schema_name,
+            worker_count=len(worker_ids),
+            admin_schema=configured_auth_schema,
         )
 
     # ------------------------------------------------------------------
     # Org / principal / grant management
     # ------------------------------------------------------------------
 
-    @router.get("/orgs", response_model=list[OrgResponse], tags=["Admin"], operation_id="admin_list_orgs")
+    @router.get("/orgs", response_model=list[OrgResponse], operation_id="admin_list_orgs")
     async def admin_list_orgs(
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> list[OrgResponse]:
@@ -400,80 +442,132 @@ def create_admin_router(memory: Any) -> APIRouter:
         )
         return [OrgResponse(**dict(r)) for r in rows]
 
-    @router.post("/orgs", response_model=OrgResponse, status_code=201, tags=["Admin"], operation_id="admin_create_org")
+    @router.post("/orgs", response_model=OrgResponse, status_code=201, operation_id="admin_create_org")
     async def admin_create_org(
         body: OrgCreateRequest,
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> OrgResponse:
         pool = await memory._get_pool()
-        slug = normalize_org_slug(body.slug)
-        schema_name = schema_for_org(slug)
-
-        await _run_schema_migration(schema_name)
-        row = await pool.fetchrow(
-            f"""
-            INSERT INTO {fq("orgs")} (slug, name, schema_name)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (slug) DO UPDATE SET name = EXCLUDED.name, updated_at = NOW()
-            RETURNING id::text, slug, name, schema_name, status, created_at::text
-            """,
-            slug,
-            body.name,
-            schema_name,
-        )
         owner_email = body.owner_email.strip().lower()
         owner = await pool.fetchrow(
-            f"SELECT id::text FROM {fq('principals')} WHERE org_id = $1 AND lower(email) = $2",
-            uuid.UUID(row["id"]),
+            f"""
+            SELECT id::text FROM {fq("principals")}
+            WHERE lower(email) = $1 AND principal_type = 'user'
+              AND status = 'active' AND email_verified_at IS NOT NULL
+            """,
             owner_email,
         )
-        if owner:
-            owner = await pool.fetchrow(
-                f"""
-                UPDATE {fq("principals")}
-                SET display_name = $3, role = 'owner', status = 'active', updated_at = NOW()
-                WHERE org_id = $1 AND lower(email) = $2
-                RETURNING id::text
-                """,
-                uuid.UUID(row["id"]),
-                owner_email,
-                body.owner_name or owner_email,
+        if not owner:
+            raise HTTPException(
+                status_code=422,
+                detail={"code": "verified_owner_account_required", "owner_email": owner_email},
             )
-        else:
-            owner = await pool.fetchrow(
-                f"""
-                INSERT INTO {fq("principals")} (org_id, email, display_name, principal_type, role)
-                VALUES ($1, $2, $3, 'user', 'owner')
-                RETURNING id::text
-                """,
-                uuid.UUID(row["id"]),
-                owner_email,
-                body.owner_name or owner_email,
+        from atulya_api.auth_service import provision_workspace
+
+        try:
+            org_id = await provision_workspace(
+                memory,
+                pool,
+                owner["id"],
+                slug=normalize_org_slug(body.slug),
+                name=body.name,
             )
-        await pool.execute(
-            f"""
-            INSERT INTO {fq("principal_credentials")} (principal_id, password_hash)
-            VALUES ($1, $2)
-            ON CONFLICT (principal_id) DO UPDATE
-            SET password_hash = EXCLUDED.password_hash, password_changed_at = NOW()
-            """,
-            uuid.UUID(owner["id"]),
-            hash_password(body.owner_password),
+        except Exception as exc:
+            if "unique" in str(exc).lower() or "duplicate" in str(exc).lower():
+                raise HTTPException(status_code=409, detail={"code": "workspace_exists"}) from exc
+            raise
+        row = await pool.fetchrow(
+            f"SELECT id::text, slug, name, schema_name, status, created_at::text FROM {fq('orgs')} WHERE id = $1",
+            uuid.UUID(org_id),
         )
         await _audit(
-            org_id=row["id"],
-            actor_principal_id=None,
-            action="admin.orgs.create",
+            org_id=org_id,
+            actor_principal_id=tenant_ctx.principal_id,
+            action="platform.orgs.create",
             target_type="org",
-            target_id=row["id"],
-            metadata={"slug": slug, "owner_principal_id": owner["id"]},
+            target_id=org_id,
+            metadata={"slug": row["slug"], "owner_principal_id": owner["id"]},
+        )
+        return OrgResponse(**dict(row))
+
+    @router.patch("/orgs/{org_id}", response_model=OrgResponse, operation_id="admin_update_org")
+    async def admin_update_org(
+        org_id: str,
+        status: str = Query(...),
+        tenant_ctx: TenantContext = Depends(require_superuser),
+    ) -> OrgResponse:
+        if status not in {"active", "disabled"}:
+            raise HTTPException(status_code=400, detail={"code": "invalid_organization_status"})
+        pool = await memory._get_pool()
+        row = await pool.fetchrow(
+            f"""
+            UPDATE {fq("orgs")} SET status = $2, updated_at = NOW() WHERE id = $1
+            RETURNING id::text, slug, name, schema_name, status, created_at::text
+            """,
+            uuid.UUID(org_id),
+            status,
+        )
+        if not row:
+            raise HTTPException(status_code=404, detail={"code": "organization_not_found"})
+        if status == "disabled":
+            await pool.execute(
+                f"""
+                UPDATE {fq("principal_sessions")} s
+                SET revoked_at = NOW(), revocation_reason = 'organization_disabled'
+                WHERE s.active_org_id = $1 AND s.revoked_at IS NULL
+                """,
+                uuid.UUID(org_id),
+            )
+        await _audit(
+            org_id=org_id,
+            actor_principal_id=tenant_ctx.principal_id,
+            action="platform.orgs.status",
+            target_type="org",
+            target_id=org_id,
+            metadata={"status": status},
+        )
+        return OrgResponse(**dict(row))
+
+    @router.post("/orgs/{org_id}/retry-provisioning", response_model=OrgResponse, operation_id="admin_retry_org")
+    async def admin_retry_org(
+        org_id: str,
+        tenant_ctx: TenantContext = Depends(require_superuser),
+    ) -> OrgResponse:
+        pool = await memory._get_pool()
+        org = await pool.fetchrow(
+            f"SELECT id::text, slug, name, schema_name, status, created_at::text FROM {fq('orgs')} WHERE id = $1",
+            uuid.UUID(org_id),
+        )
+        if not org:
+            raise HTTPException(status_code=404, detail={"code": "organization_not_found"})
+        if org["status"] != "failed":
+            raise HTTPException(status_code=409, detail={"code": "organization_not_failed"})
+        await pool.execute(f"UPDATE {fq('orgs')} SET status = 'provisioning' WHERE id = $1", uuid.UUID(org_id))
+        try:
+            await _run_schema_migration(org["schema_name"])
+        except Exception:
+            await pool.execute(f"UPDATE {fq('orgs')} SET status = 'failed' WHERE id = $1", uuid.UUID(org_id))
+            raise
+        row = await pool.fetchrow(
+            f"""
+            UPDATE {fq("orgs")} SET status = 'active', updated_at = NOW() WHERE id = $1
+            RETURNING id::text, slug, name, schema_name, status, created_at::text
+            """,
+            uuid.UUID(org_id),
+        )
+        await _audit(
+            org_id=org_id,
+            actor_principal_id=tenant_ctx.principal_id,
+            action="platform.orgs.retry_provisioning",
+            target_type="org",
+            target_id=org_id,
         )
         return OrgResponse(**dict(row))
 
     @router.get(
         "/principals",
         response_model=list[PrincipalResponse],
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_list_principals",
     )
     async def admin_list_principals(
@@ -483,10 +577,13 @@ def create_admin_router(memory: Any) -> APIRouter:
         pool = await memory._get_pool()
         rows = await pool.fetch(
             f"""
-            SELECT id::text, org_id::text, email, display_name, principal_type, role, status, created_at::text
-            FROM {fq("principals")}
-            WHERE org_id = $1
-            ORDER BY created_at DESC
+            SELECT p.id::text, m.org_id::text, p.email, p.display_name, p.principal_type,
+                   r.name AS role, m.status, p.created_at::text
+            FROM {fq("principals")} p
+            JOIN {fq("org_memberships")} m ON m.principal_id = p.id
+            JOIN {fq("roles")} r ON r.id = m.role_id
+            WHERE m.org_id = $1
+            ORDER BY p.created_at DESC
             """,
             uuid.UUID(org_id),
         )
@@ -496,52 +593,25 @@ def create_admin_router(memory: Any) -> APIRouter:
         "/principals",
         response_model=PrincipalResponse,
         status_code=201,
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_create_principal",
     )
     async def admin_create_principal(
         body: PrincipalCreateRequest,
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> PrincipalResponse:
-        if body.principal_type not in {"user", "service"}:
-            raise HTTPException(status_code=400, detail="principal_type must be user or service")
-        if body.role not in {"owner", "admin", "operator", "viewer", "service", "user"}:
-            raise HTTPException(status_code=400, detail="Invalid role")
-        if body.principal_type == "user" and (not body.email or not body.password):
-            raise HTTPException(status_code=400, detail="Human users require email and password")
-        pool = await memory._get_pool()
-        row = await pool.fetchrow(
-            f"""
-            INSERT INTO {fq("principals")} (org_id, email, display_name, principal_type, role)
-            VALUES ($1, $2, $3, $4, $5)
-            RETURNING id::text, org_id::text, email, display_name, principal_type, role, status, created_at::text
-            """,
-            uuid.UUID(body.org_id),
-            body.email.strip().lower() if body.email else None,
-            body.display_name,
-            body.principal_type,
-            body.role,
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "deprecated_principal_mutation",
+                "message": "Use organization invitations or service-account endpoints.",
+            },
         )
-        if body.password:
-            await pool.execute(
-                f"INSERT INTO {fq('principal_credentials')} (principal_id, password_hash) VALUES ($1, $2)",
-                uuid.UUID(row["id"]),
-                hash_password(body.password),
-            )
-        await _audit(
-            org_id=body.org_id,
-            actor_principal_id=None,
-            action="admin.users.create",
-            target_type="principal",
-            target_id=row["id"],
-            metadata={"role": body.role, "principal_type": body.principal_type},
-        )
-        return PrincipalResponse(**dict(row))
 
     @router.patch(
         "/principals/{principal_id}",
         response_model=PrincipalResponse,
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_update_principal",
     )
     async def admin_update_principal(
@@ -550,37 +620,17 @@ def create_admin_router(memory: Any) -> APIRouter:
         role: str | None = Query(default=None),
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> PrincipalResponse:
-        if status is not None and status not in {"active", "disabled"}:
-            raise HTTPException(status_code=400, detail="status must be active or disabled")
-        if role is not None and role not in {"owner", "admin", "operator", "viewer", "service", "user"}:
-            raise HTTPException(status_code=400, detail="Invalid role")
-        pool = await memory._get_pool()
-        row = await pool.fetchrow(
-            f"""
-            UPDATE {fq("principals")}
-            SET status = COALESCE($2, status), role = COALESCE($3, role), updated_at = NOW()
-            WHERE id = $1
-            RETURNING id::text, org_id::text, email, display_name, principal_type, role, status, created_at::text
-            """,
-            uuid.UUID(principal_id),
-            status,
-            role,
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "deprecated_principal_mutation",
+                "message": "Use organization membership or service-account endpoints.",
+            },
         )
-        if not row:
-            raise HTTPException(status_code=404, detail="Principal not found")
-        await _audit(
-            org_id=row["org_id"],
-            actor_principal_id=None,
-            action="admin.users.update",
-            target_type="principal",
-            target_id=row["id"],
-            metadata={"status": status, "role": role},
-        )
-        return PrincipalResponse(**dict(row))
 
     @router.post(
         "/principals/{principal_id}/password",
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_reset_principal_password",
     )
     async def admin_reset_principal_password(
@@ -588,34 +638,18 @@ def create_admin_router(memory: Any) -> APIRouter:
         body: PasswordResetRequest,
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> dict[str, str]:
-        pool = await memory._get_pool()
-        await pool.execute(
-            f"""
-            INSERT INTO {fq("principal_credentials")} (principal_id, password_hash)
-            VALUES ($1, $2)
-            ON CONFLICT (principal_id) DO UPDATE
-            SET password_hash = EXCLUDED.password_hash, password_changed_at = NOW()
-            """,
-            uuid.UUID(principal_id),
-            hash_password(body.password),
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "admin_password_reset_removed",
+                "message": "Use the enumeration-safe password recovery flow.",
+            },
         )
-        principal_org_id = await pool.fetchval(
-            f"SELECT org_id::text FROM {fq('principals')} WHERE id = $1",
-            uuid.UUID(principal_id),
-        )
-        await _audit(
-            org_id=principal_org_id,
-            actor_principal_id=None,
-            action="admin.users.password_reset",
-            target_type="principal",
-            target_id=principal_id,
-        )
-        return {"status": "updated"}
 
     @router.get(
         "/access-grants",
         response_model=list[AccessGrantResponse],
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_list_access_grants",
     )
     async def admin_list_access_grants(
@@ -638,81 +672,43 @@ def create_admin_router(memory: Any) -> APIRouter:
         "/access-grants",
         response_model=AccessGrantResponse,
         status_code=201,
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_create_access_grant",
     )
     async def admin_create_access_grant(
         body: AccessGrantRequest,
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> AccessGrantResponse:
-        if body.action not in ALL_ACTIONS:
-            raise HTTPException(status_code=400, detail="Invalid action")
-        if body.subject_type not in {"principal", "role"}:
-            raise HTTPException(status_code=400, detail="subject_type must be principal or role")
-        if body.scope_type not in {"org", "bank", "system"}:
-            raise HTTPException(status_code=400, detail="scope_type must be org, bank, or system")
-        pool = await memory._get_pool()
-        row = await pool.fetchrow(
-            f"""
-            INSERT INTO {fq("access_grants")} (org_id, subject_type, subject_id, action, scope_type, scope_id)
-            VALUES ($1, $2, $3, $4, $5, $6)
-            ON CONFLICT (org_id, subject_type, subject_id, action, scope_type, scope_id)
-            DO UPDATE SET action = EXCLUDED.action
-            RETURNING id::text, org_id::text, subject_type, subject_id, action, scope_type, scope_id, created_at::text
-            """,
-            uuid.UUID(body.org_id),
-            body.subject_type,
-            body.subject_id,
-            body.action,
-            body.scope_type,
-            body.scope_id,
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "deprecated_grant_mutation",
+                "message": "Manage grants through the organization authorization service.",
+                "replacement": "/v1/orgs/{org_id}/grants",
+            },
         )
-        await _audit(
-            org_id=body.org_id,
-            actor_principal_id=None,
-            action="admin.grants.create",
-            target_type=body.subject_type,
-            target_id=body.subject_id,
-            metadata={"grant_action": body.action, "scope": f"{body.scope_type}:{body.scope_id}"},
-        )
-        return AccessGrantResponse(**dict(row))
 
     @router.delete(
         "/access-grants/{grant_id}",
-        tags=["Admin"],
+        include_in_schema=False,
         operation_id="admin_delete_access_grant",
     )
     async def admin_delete_access_grant(
         grant_id: str,
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> dict[str, str]:
-        pool = await memory._get_pool()
-        grant = await pool.fetchrow(
-            f"""
-            DELETE FROM {fq("access_grants")}
-            WHERE id = $1
-            RETURNING org_id::text, subject_type, subject_id, action, scope_type, scope_id
-            """,
-            uuid.UUID(grant_id),
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "deprecated_grant_mutation",
+                "message": "Manage grants through the organization authorization service.",
+                "replacement": "/v1/orgs/{org_id}/grants/{grant_id}",
+            },
         )
-        result = "DELETE 1" if grant else "DELETE 0"
-        deleted = int(result.split()[-1]) if result else 0
-        if deleted == 0:
-            raise HTTPException(status_code=404, detail="Grant not found")
-        await _audit(
-            org_id=grant["org_id"],
-            actor_principal_id=None,
-            action="admin.grants.delete",
-            target_type=grant["subject_type"],
-            target_id=grant["subject_id"],
-            metadata={"grant_action": grant["action"], "scope": f"{grant['scope_type']}:{grant['scope_id']}"},
-        )
-        return {"status": "deleted"}
 
     @router.get(
         "/audit-events",
         response_model=list[AuditEventResponse],
-        tags=["Admin"],
         operation_id="admin_list_audit_events",
     )
     async def admin_list_audit_events(
@@ -745,7 +741,7 @@ def create_admin_router(memory: Any) -> APIRouter:
                 """,
                 limit,
             )
-        return [AuditEventResponse(**dict(r)) for r in rows]
+        return [AuditEventResponse(**{**dict(row), "metadata": decode_jsonb(row["metadata"], {})}) for row in rows]
 
     # ------------------------------------------------------------------
     # GET /v1/admin/tenants
@@ -756,7 +752,6 @@ def create_admin_router(memory: Any) -> APIRouter:
         response_model=list[TenantSummaryResponse],
         summary="List all tenants",
         description="Returns all tenants known to the tenant extension with bank counts.",
-        tags=["Admin"],
         operation_id="admin_list_tenants",
     )
     async def admin_list_tenants(
@@ -772,7 +767,8 @@ def create_admin_router(memory: Any) -> APIRouter:
         result: list[TenantSummaryResponse] = []
         for t in tenants:
             try:
-                row = await pool.fetchrow(f"SELECT COUNT(*) AS cnt FROM {t.schema}.banks")
+                qualified_schema = await _validated_schema(pool, t.schema)
+                row = await pool.fetchrow(f"SELECT COUNT(*) AS cnt FROM {qualified_schema}.banks")
                 bank_count = row["cnt"] if row else 0
             except Exception:
                 bank_count = 0
@@ -788,7 +784,6 @@ def create_admin_router(memory: Any) -> APIRouter:
         "/tenants/{schema}/banks",
         summary="List banks in a tenant schema",
         description="Returns all bank IDs and names within the specified tenant schema.",
-        tags=["Admin"],
         operation_id="admin_list_tenant_banks",
     )
     async def admin_list_tenant_banks(
@@ -796,9 +791,10 @@ def create_admin_router(memory: Any) -> APIRouter:
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> list[dict[str, Any]]:
         pool = await memory._get_pool()
+        qualified_schema = await _validated_schema(pool, schema)
         try:
             rows = await pool.fetch(
-                f"SELECT bank_id, name, created_at::text, updated_at::text FROM {schema}.banks ORDER BY created_at DESC"
+                f"SELECT bank_id, name, created_at::text, updated_at::text FROM {qualified_schema}.banks ORDER BY created_at DESC"
             )
             return [dict(r) for r in rows]
         except Exception as exc:
@@ -813,7 +809,6 @@ def create_admin_router(memory: Any) -> APIRouter:
         response_model=list[WorkerStatusResponse],
         summary="List active workers",
         description="Lists workers with pending/stuck operation counts from async_operations.",
-        tags=["Admin"],
         operation_id="admin_list_workers",
     )
     async def admin_list_workers(
@@ -821,7 +816,8 @@ def create_admin_router(memory: Any) -> APIRouter:
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> list[WorkerStatusResponse]:
         pool = await memory._get_pool()
-        fq = f"{schema}.async_operations"
+        qualified_schema = await _validated_schema(pool, schema)
+        operations_table = f"{qualified_schema}.async_operations"
         try:
             rows = await pool.fetch(
                 f"""
@@ -830,7 +826,7 @@ def create_admin_router(memory: Any) -> APIRouter:
                     COUNT(*) FILTER (WHERE status = 'pending') AS pending_count,
                     COUNT(*) FILTER (WHERE status = 'pending' AND updated_at < NOW() - INTERVAL '5 minutes') AS stuck_count,
                     MAX(updated_at)::text AS last_seen_at
-                FROM {fq}
+                FROM {operations_table}
                 WHERE worker_id IS NOT NULL
                 GROUP BY worker_id
                 ORDER BY last_seen_at DESC NULLS LAST
@@ -861,7 +857,6 @@ def create_admin_router(memory: Any) -> APIRouter:
             "Release all tasks claimed by the specified worker so another worker can pick them up. "
             "Use worker_id='__all_stuck__' to release all tasks with no active worker."
         ),
-        tags=["Admin"],
         operation_id="admin_decommission_worker",
     )
     async def admin_decommission_worker(
@@ -871,13 +866,14 @@ def create_admin_router(memory: Any) -> APIRouter:
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> DecommissionResponse:
         pool = await memory._get_pool()
-        fq = f"{schema}.async_operations"
+        qualified_schema = await _validated_schema(pool, schema)
+        operations_table = f"{qualified_schema}.async_operations"
 
         if worker_id == "__all_stuck__":
             # Release all pending tasks with no assigned worker and last updated > 5 min ago.
             result = await pool.execute(
                 f"""
-                UPDATE {fq}
+                UPDATE {operations_table}
                 SET worker_id = NULL, status = 'pending', updated_at = NOW()
                 WHERE status = 'pending'
                   AND (worker_id IS NULL OR updated_at < NOW() - INTERVAL '5 minutes')
@@ -886,7 +882,7 @@ def create_admin_router(memory: Any) -> APIRouter:
         elif body.release_stuck:
             result = await pool.execute(
                 f"""
-                UPDATE {fq}
+                UPDATE {operations_table}
                 SET worker_id = NULL, status = 'pending', updated_at = NOW()
                 WHERE worker_id = $1 AND status = 'pending'
                 """,
@@ -895,12 +891,20 @@ def create_admin_router(memory: Any) -> APIRouter:
         else:
             # Just clear worker claim without re-queuing (leave as pending, detach worker_id).
             result = await pool.execute(
-                f"UPDATE {fq} SET worker_id = NULL WHERE worker_id = $1",
+                f"UPDATE {operations_table} SET worker_id = NULL WHERE worker_id = $1",
                 worker_id,
             )
 
         released = int(result.split()[-1]) if result else 0
         logger.info("[ADMIN] decommission worker=%s schema=%s released=%d", worker_id, schema, released)
+        await _audit(
+            org_id=None,
+            actor_principal_id=tenant_ctx.principal_id,
+            action="platform.workers.decommission",
+            target_type="worker",
+            target_id=worker_id,
+            metadata={"schema": schema, "released_count": released},
+        )
         return DecommissionResponse(worker_id=worker_id, released_count=released)
 
     # ------------------------------------------------------------------
@@ -912,7 +916,6 @@ def create_admin_router(memory: Any) -> APIRouter:
         response_model=list[OperationSummaryResponse],
         summary="List operations across all tenants",
         description="Returns recent async operations across all tenant schemas visible to the superuser.",
-        tags=["Admin"],
         operation_id="admin_list_operations",
     )
     async def admin_list_operations(
@@ -922,7 +925,8 @@ def create_admin_router(memory: Any) -> APIRouter:
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> list[OperationSummaryResponse]:
         pool = await memory._get_pool()
-        fq = f"{schema}.async_operations"
+        qualified_schema = await _validated_schema(pool, schema)
+        operations_table = f"{qualified_schema}.async_operations"
 
         where = ""
         params: list[Any] = []
@@ -937,7 +941,7 @@ def create_admin_router(memory: Any) -> APIRouter:
                 SELECT
                     operation_id::text, bank_id, operation_type, status,
                     worker_id, created_at::text, updated_at::text, error_message
-                FROM {fq}
+                FROM {operations_table}
                 {where}
                 ORDER BY created_at DESC
                 LIMIT ${len(params)}
@@ -969,7 +973,6 @@ def create_admin_router(memory: Any) -> APIRouter:
         "/consolidate/{schema}",
         summary="Trigger consolidation for all banks in a schema",
         description="Enqueues a consolidation task for every bank in the given schema.",
-        tags=["Admin"],
         operation_id="admin_trigger_consolidation",
     )
     async def admin_trigger_consolidation(
@@ -977,69 +980,79 @@ def create_admin_router(memory: Any) -> APIRouter:
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> dict[str, Any]:
         pool = await memory._get_pool()
+        qualified_schema = await _validated_schema(pool, schema)
 
         try:
-            bank_rows = await pool.fetch(f"SELECT bank_id FROM {schema}.banks")
+            bank_rows = await pool.fetch(f"SELECT bank_id FROM {qualified_schema}.banks")
         except Exception as exc:
             raise HTTPException(status_code=400, detail=f"Cannot list banks in schema '{schema}': {exc}")
 
         queued: list[str] = []
         for row in bank_rows:
             bid = row["bank_id"]
-            rc = RequestContext(internal=True)
+            # Platform jobs may target a schema different from the operator's
+            # active workspace. Preserve the real actor and authorization while
+            # binding the internal task to the validated target schema.
+            rc = RequestContext(
+                internal=True,
+                user_initiated=True,
+                role=tenant_ctx.role,
+                principal_id=tenant_ctx.principal_id,
+                principal_type=tenant_ctx.principal_type,
+                display_name=tenant_ctx.display_name,
+                email=tenant_ctx.email,
+                allowed_actions=tenant_ctx.allowed_actions,
+                action_scopes=tenant_ctx.action_scopes,
+                schema_name=schema,
+            )
             try:
                 result = await memory.submit_async_consolidation(bank_id=bid, request_context=rc)
                 queued.append(result["operation_id"])
             except Exception as exc:
                 logger.warning("[ADMIN] consolidation queue failed bank=%s: %s", bid, exc)
 
-        return {"schema": schema, "queued_count": len(queued), "operation_ids": queued}
-
-    # ------------------------------------------------------------------
-    # API Key management
-    # NOTE: Requires the api_keys table (T7 migration).
-    #       All routes return 503 if the table doesn't exist yet.
-    # ------------------------------------------------------------------
-
-    def _hash_key(raw_key: str) -> str:
-        """SHA-256 hex digest used as the stored key_hash."""
-        return hash_secret(raw_key)
-
-    def _verify_key(raw_key: str, stored_hash: str) -> bool:
-        return hmac.compare_digest(_hash_key(raw_key), stored_hash)
-
-    async def _ensure_api_keys_table(pool: Any, schema: str) -> None:
-        exists = await pool.fetchval(
-            "SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_schema=$1 AND table_name='api_keys')",
-            schema,
+        await _audit(
+            org_id=None,
+            actor_principal_id=tenant_ctx.principal_id,
+            action="platform.consolidation.trigger",
+            target_type="schema",
+            target_id=schema,
+            metadata={"queued_count": len(queued)},
         )
-        if not exists:
-            raise HTTPException(
-                status_code=503,
-                detail="api_keys table does not exist. Run 'atulya-admin migrate' to apply pending migrations.",
-            )
+        return {"schema": schema, "queued_count": len(queued), "operation_ids": queued}
 
     @router.get(
         "/api-keys",
         response_model=list[ApiKeyResponse],
+        include_in_schema=False,
         summary="List API keys",
         description="Returns all API keys (redacted — raw key is never returned after creation).",
-        tags=["Admin"],
         operation_id="admin_list_api_keys",
     )
     async def admin_list_api_keys(
-        schema: str = Query(default="public"),
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> list[ApiKeyResponse]:
         pool = await memory._get_pool()
-        await _ensure_api_keys_table(pool, schema)
         rows = await pool.fetch(
             f"""
-            SELECT id::text, name, role, schema_name, allowed_bank_ids,
-                   created_at::text, expires_at::text, revoked_at::text,
-                   principal_id::text, key_prefix, last_used_at::text, description
-            FROM {schema}.api_keys
-            ORDER BY created_at DESC
+            SELECT k.id::text, k.name, r.name AS role, o.schema_name,
+                   ARRAY(
+                       SELECT ms.scope_id
+                       FROM {fq("org_memberships")} m2
+                       JOIN {fq("membership_scopes")} ms ON ms.membership_id = m2.id
+                       WHERE m2.principal_id = k.principal_id
+                         AND m2.org_id = o.id
+                         AND ms.scope_type = 'bank'
+                       ORDER BY ms.scope_id
+                   ) AS allowed_bank_ids,
+                   k.created_at::text, k.expires_at::text, k.revoked_at::text,
+                   k.principal_id::text, k.key_prefix, k.last_used_at::text, k.description
+            FROM {fq("api_keys")} k
+            JOIN {fq("principals")} p ON p.id = k.principal_id
+            JOIN {fq("org_memberships")} m ON m.principal_id = p.id
+            JOIN {fq("orgs")} o ON o.id = m.org_id
+            JOIN {fq("roles")} r ON r.id = m.role_id
+            ORDER BY k.created_at DESC
             """
         )
         return [
@@ -1064,178 +1077,66 @@ def create_admin_router(memory: Any) -> APIRouter:
         "/api-keys",
         response_model=ApiKeyResponse,
         status_code=201,
+        include_in_schema=False,
         summary="Create API key",
         description=(
             "Creates a new API key and returns the raw key **once**. Store it securely — it cannot be retrieved again."
         ),
-        tags=["Admin"],
         operation_id="admin_create_api_key",
     )
     async def admin_create_api_key(
         body: ApiKeyCreateRequest,
-        schema: str = Query(default="public"),
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> ApiKeyResponse:
-        pool = await memory._get_pool()
-        await _ensure_api_keys_table(pool, schema)
-
-        # Validate role
-        valid_roles = {"superuser", "owner", "admin", "operator", "viewer", "service", "user"}
-        if body.role not in valid_roles:
-            raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {valid_roles}")
-
-        raw_key = generate_api_key()
-        key_hash = _hash_key(raw_key)
-
-        expires_at = None
-        if body.expires_days:
-            from datetime import timedelta
-
-            expires_at = (datetime.now(timezone.utc) + timedelta(days=body.expires_days)).isoformat()
-
-        key_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
-        await pool.execute(
-            f"""
-            INSERT INTO {schema}.api_keys
-                (id, key_hash, name, role, schema_name, allowed_bank_ids, created_at, expires_at,
-                 principal_id, key_prefix, hash_version, description)
-            VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7, $8, $9, 2, $10)
-            """,
-            uuid.UUID(key_id),
-            key_hash,
-            body.name,
-            body.role,
-            body.schema_name,
-            body.allowed_bank_ids,
-            expires_at,
-            uuid.UUID(body.principal_id) if body.principal_id else None,
-            key_prefix(raw_key),
-            body.description,
-        )
-        logger.info("[ADMIN] created api_key id=%s name=%s role=%s", key_id, body.name, body.role)
-        await _audit(
-            org_id=None,
-            actor_principal_id=None,
-            action="admin.keys.create",
-            target_type="api_key",
-            target_id=key_id,
-            metadata={"name": body.name, "role": body.role, "principal_id": body.principal_id},
-        )
-
-        return ApiKeyResponse(
-            id=key_id,
-            name=body.name,
-            role=body.role,
-            schema_name=body.schema_name,
-            allowed_bank_ids=body.allowed_bank_ids,
-            created_at=now,
-            expires_at=expires_at,
-            revoked_at=None,
-            principal_id=body.principal_id,
-            key_prefix=key_prefix(raw_key),
-            last_used_at=None,
-            description=body.description,
-            raw_key=raw_key,  # Only present on creation response
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "legacy_api_key_mutation_removed",
+                "message": "Create keys through an organization service account.",
+                "replacement": "/v1/orgs/{org_id}/service-accounts/{principal_id}/keys",
+            },
         )
 
     @router.patch(
         "/api-keys/{key_id}",
         response_model=ApiKeyResponse,
+        include_in_schema=False,
         summary="Update API key",
         description="Update name, role, or allowed_bank_ids for an existing key.",
-        tags=["Admin"],
         operation_id="admin_update_api_key",
     )
     async def admin_update_api_key(
         key_id: str,
         body: ApiKeyUpdateRequest,
-        schema: str = Query(default="public"),
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> ApiKeyResponse:
-        pool = await memory._get_pool()
-        await _ensure_api_keys_table(pool, schema)
-
-        set_clauses: list[str] = []
-        params: list[Any] = [uuid.UUID(key_id)]
-
-        if body.name is not None:
-            params.append(body.name)
-            set_clauses.append(f"name = ${len(params)}")
-        if body.role is not None:
-            valid_roles = {"superuser", "owner", "admin", "operator", "viewer", "service", "user"}
-            if body.role not in valid_roles:
-                raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {valid_roles}")
-            params.append(body.role)
-            set_clauses.append(f"role = ${len(params)}")
-        if body.allowed_bank_ids is not None:
-            params.append(body.allowed_bank_ids)
-            set_clauses.append(f"allowed_bank_ids = ${len(params)}")
-
-        if not set_clauses:
-            raise HTTPException(status_code=422, detail="No fields provided to update")
-
-        row = await pool.fetchrow(
-            f"""
-            UPDATE {schema}.api_keys
-            SET {", ".join(set_clauses)}
-            WHERE id = $1 AND revoked_at IS NULL
-            RETURNING id::text, name, role, schema_name, allowed_bank_ids,
-                      created_at::text, expires_at::text, revoked_at::text,
-                      principal_id::text, key_prefix, last_used_at::text, description
-            """,
-            *params,
-        )
-        if not row:
-            raise HTTPException(status_code=404, detail=f"API key '{key_id}' not found or already revoked")
-
-        return ApiKeyResponse(
-            id=row["id"],
-            name=row["name"],
-            role=row["role"],
-            schema_name=row["schema_name"],
-            allowed_bank_ids=list(row["allowed_bank_ids"]) if row["allowed_bank_ids"] else None,
-            created_at=row["created_at"],
-            expires_at=row["expires_at"],
-            revoked_at=row["revoked_at"],
-            principal_id=row["principal_id"],
-            key_prefix=row["key_prefix"],
-            last_used_at=row["last_used_at"],
-            description=row["description"],
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "legacy_api_key_mutation_removed",
+                "message": "Update the service account role or bank scope instead.",
+                "replacement": "/v1/orgs/{org_id}/service-accounts/{principal_id}",
+            },
         )
 
     @router.delete(
         "/api-keys/{key_id}",
+        include_in_schema=False,
         summary="Revoke API key",
         description="Soft-deletes an API key by setting revoked_at. The key is immediately inactive.",
-        tags=["Admin"],
         operation_id="admin_revoke_api_key",
     )
     async def admin_revoke_api_key(
         key_id: str,
-        schema: str = Query(default="public"),
         tenant_ctx: TenantContext = Depends(require_superuser),
     ) -> dict[str, str]:
-        pool = await memory._get_pool()
-        await _ensure_api_keys_table(pool, schema)
-
-        result = await pool.execute(
-            f"UPDATE {schema}.api_keys SET revoked_at = NOW() WHERE id = $1 AND revoked_at IS NULL",
-            uuid.UUID(key_id),
+        raise HTTPException(
+            status_code=410,
+            detail={
+                "code": "legacy_api_key_mutation_removed",
+                "message": "Revoke keys through the owning organization service account.",
+                "replacement": "/v1/orgs/{org_id}/service-accounts/{principal_id}/keys/{key_id}",
+            },
         )
-        revoked = int(result.split()[-1]) if result else 0
-        if revoked == 0:
-            raise HTTPException(status_code=404, detail=f"API key '{key_id}' not found or already revoked")
-
-        logger.info("[ADMIN] revoked api_key id=%s", key_id)
-        await _audit(
-            org_id=None,
-            actor_principal_id=None,
-            action="admin.keys.revoke",
-            target_type="api_key",
-            target_id=key_id,
-        )
-        return {"status": "revoked", "id": key_id}
 
     return router

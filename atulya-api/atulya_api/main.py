@@ -30,7 +30,7 @@ from .daemon import (
     IdleTimeoutMiddleware,
     daemonize,
 )
-from .extensions import DefaultExtensionContext, OperationValidatorExtension, TenantExtension, load_extension
+from .extensions import DefaultExtensionContext
 
 # Filter deprecation warnings from third-party libraries
 warnings.filterwarnings("ignore", message="websockets.legacy is deprecated")
@@ -158,15 +158,16 @@ def main():
     # Register cleanup handlers
     atexit.register(_cleanup)
 
-    # Load operation validator extension if configured
-    operation_validator = load_extension("OPERATION_VALIDATOR", OperationValidatorExtension)
+    from atulya_api.auth_service import load_auth_extensions
+
+    # Database auth installs the canonical tenant and policy extensions as one
+    # unit. Legacy/custom deployments continue through the extension loader.
+    operation_validator, tenant_extension = load_auth_extensions()
     if operation_validator:
         import logging
 
         logging.info(f"Loaded operation validator: {operation_validator.__class__.__name__}")
 
-    # Load tenant extension if configured
-    tenant_extension = load_extension("TENANT", TenantExtension)
     if tenant_extension:
         import logging
 

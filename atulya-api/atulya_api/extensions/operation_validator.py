@@ -717,10 +717,10 @@ class AccessControlOperationValidator(OperationValidatorExtension):
         return self._check(ctx.request_context, action, ctx.bank_id)
 
     async def validate_mental_model_get(self, ctx: MentalModelGetContext) -> ValidationResult:
-        return self._check(ctx.request_context, "bank.read", ctx.bank_id)
+        return self._check(ctx.request_context, "brain.read", ctx.bank_id)
 
     async def validate_mental_model_refresh(self, ctx: MentalModelRefreshContext) -> ValidationResult:
-        return self._check(ctx.request_context, "bank.write", ctx.bank_id)
+        return self._check(ctx.request_context, "brain.write", ctx.bank_id)
 
     async def filter_bank_list(self, ctx: BankListContext) -> BankListResult:
         from atulya_api.auth import can_perform
