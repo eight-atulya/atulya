@@ -1,5 +1,7 @@
 # Admin and Access Control
 
+For the complete setup flow, including generated values, first platform-admin creation, and control-plane request flow, see [Identity and Platform Admin](./identity-and-platform-admin).
+
 Atulya uses one database-backed identity and authorization model:
 
 - Human users authenticate with email/password and opaque HTTP-only sessions.

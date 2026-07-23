@@ -2,6 +2,8 @@
 
 The `atulya-admin` CLI provides administrative commands for managing your Atulya deployment, including database migrations, backup, and restore operations.
 
+For the identity setup flow and how a platform operator reaches `/admin/platform`, see [Identity and Platform Admin](./identity-and-platform-admin).
+
 ## Installation
 
 The admin CLI is included with the `atulya-api` package:
@@ -220,4 +222,3 @@ The admin CLI uses the same environment variables as the API service. The most i
 export ATULYA_API_DATABASE_URL=postgresql://user:pass@localhost:5432/atulya
 atulya-admin backup /backups/mybackup.zip
 ```
-

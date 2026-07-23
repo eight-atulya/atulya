@@ -183,6 +183,7 @@ const sidebars: SidebarsConfig = {
         { type: 'doc', id: 'developer/installation',  label: 'Installation',  customProps: { icon: 'lu-package' } },
         { type: 'doc', id: 'developer/services',      label: 'Services',      customProps: { icon: 'lu-server' } },
         { type: 'doc', id: 'developer/configuration', label: 'Configuration', customProps: { icon: 'lu-settings' } },
+        { type: 'doc', id: 'developer/identity-and-platform-admin', label: 'Identity and Platform Admin', customProps: { icon: 'lu-shield' } },
         { type: 'doc', id: 'developer/admin-cli',     label: 'Admin CLI',     customProps: { icon: 'lu-terminal' } },
         { type: 'doc', id: 'developer/extensions',    label: 'Extensions',    customProps: { icon: 'lu-plug' } },
         { type: 'doc', id: 'developer/models',        label: 'Models',        customProps: { icon: 'lu-cpu' } },
