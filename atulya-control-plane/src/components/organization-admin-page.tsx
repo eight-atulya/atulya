@@ -295,7 +295,7 @@ function Overview({ data, refresh }: { data: any; refresh: () => void }) {
           </div>
         ))}
       </div>
-      <div className="rounded-md border">
+      <div className="overflow-hidden rounded-md border border-highlight">
         <dl className="grid gap-px bg-border sm:grid-cols-2">
           {[
             ["Workspace", data.name],

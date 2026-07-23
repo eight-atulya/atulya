@@ -63,9 +63,9 @@ export function AdminNav({
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm transition-colors",
+              "flex h-9 items-center gap-2.5 rounded-md border border-transparent px-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight",
               active
-                ? "bg-accent font-medium text-accent-foreground"
+                ? "border-highlight bg-highlight/5 font-medium text-highlight"
                 : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
             )}
           >
@@ -106,8 +106,8 @@ export function AdminMobileNav({
           <Menu className="h-4 w-4" />
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="flex w-72 flex-col gap-0 p-0">
-        <div className="border-b px-5 py-4">
+      <SheetContent side="left" className="flex w-72 flex-col gap-0 border-highlight p-0">
+        <div className="border-b border-highlight/30 px-5 py-4">
           <SheetTitle>Administration</SheetTitle>
           <SheetDescription>{orgName}</SheetDescription>
         </div>
@@ -120,7 +120,7 @@ export function AdminMobileNav({
           </div>
         )}
         {platformItems.length > 0 && (
-          <div className="flex min-h-0 flex-col border-t">
+          <div className="flex min-h-0 flex-col border-t border-highlight/30">
             <p className="px-5 pb-1 pt-4 text-[10px] font-semibold uppercase text-muted-foreground">
               Platform
             </p>

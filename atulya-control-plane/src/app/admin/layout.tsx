@@ -57,12 +57,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex min-w-0 items-center gap-2">
             <Link
               href="/dashboard"
-              className="flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              className="flex h-8 items-center gap-1.5 rounded-md border border-highlight px-2.5 text-xs text-highlight transition-colors hover:bg-highlight hover:text-highlight-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-highlight"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Memory banks</span>
             </Link>
-            <span className="max-w-40 truncate rounded-md border px-2 py-1 text-[11px] text-muted-foreground">
+            <span className="inline-flex h-8 max-w-40 items-center truncate rounded-md border px-2.5 text-xs text-muted-foreground">
               {identity.display_name || identity.email}
             </span>
           </div>

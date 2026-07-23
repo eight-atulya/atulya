@@ -1,7 +1,7 @@
 /**
  * consolidation-recover — recover failed consolidations in atulya.
  *
- * Atulya has no dedicated "recover" endpoint (hindsight does).
+ * Atulya has no dedicated "recover" endpoint (legacy does).
  * Best equivalent: read pending_consolidation from stats, then trigger a
  * fresh consolidation.  The UI's recover button will see retried_count > 0
  * when there was real pending work, prompting a toast.

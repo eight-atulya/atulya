@@ -1,5 +1,5 @@
 """
-Regression tests for Group 4 of the hindsight bugfix backport: worker
+Regression tests for Group 4 of the legacy bugfix backport: worker
 fairness, consolidation slot reservation, and idempotent ``submit_task``.
 
 Three independent issues, all in the same surface (worker poller +

@@ -129,7 +129,7 @@ The fields most worth grepping after a feature port:
 | Retain append mode | `update_mode` |
 | Tag groups | `tag_groups`, `TagGroup`, `TagGroupLeaf`, `TagGroupAnd`, `TagGroupOr`, `TagGroupNot` |
 | Observation cap | `max_observations_per_scope`, `observation_scopes` |
-| Hindsight leak audit | `hindsight` (must return 0) |
+| legacy leak audit | `legacy` (must return 0) |
 
 ## File map of generated artifacts
 

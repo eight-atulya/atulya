@@ -1,5 +1,5 @@
 """
-Regression tests for Group 7 of the hindsight bugfix backport: bounded
+Regression tests for Group 7 of the legacy bugfix backport: bounded
 ``AtulyaEmbedded._cleanup``.
 
 Before the fix ``_cleanup`` did ``with self._lock:`` unconditionally, so any

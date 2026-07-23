@@ -206,7 +206,7 @@ Why this subject works:
 Body skeleton (full text in `git show 01a3530`):
 
 ```
-<lede: ports three production features at full parity, zero residual hindsight>
+<lede: ports three production features at full parity, zero residual legacy>
 
 Features
 - Retain update_mode='append': ...

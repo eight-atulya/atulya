@@ -1,7 +1,7 @@
 /**
  * Entity co-occurrence graph — derived from atulya's memory graph.
  *
- * ROOT CAUSE: Hindsight has a materialised `entity_cooccurrences` table
+ * ROOT CAUSE: legacy has a materialised `entity_cooccurrences` table
  * populated during every retain.  Atulya does NOT have this table.
  * `getGraphIntelligence` (graph/intelligence) is a separate computed feature
  * that is empty right after ingest.
@@ -12,7 +12,7 @@
  *   2. Fetch entity list for UUID + mention_count + last_seen.
  *   3. For every pair of entities sharing the same memory → co-occurrence +1.
  *   4. Return nodes + edges in the constellation.convertEntityGraphData() shape
- *      (identical to hindsight's entity_graph response).
+ *      (identical to legacy's entity_graph response).
  *
  * Confidence: high — two stable SDK methods (getGraph + listEntities).
  *

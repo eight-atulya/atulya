@@ -1,5 +1,5 @@
 """
-Regression tests for Group 5 of the hindsight bugfix backport: retry budgets
+Regression tests for Group 5 of the legacy bugfix backport: retry budgets
 and timeouts.
 
 This file pins down four invariants that operators rely on for predictable

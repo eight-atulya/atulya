@@ -1,6 +1,6 @@
 /**
  * Constellation — canvas-based star-field graph viewer.
- * Ported from hindsight-control-plane; adapts imports for atulya's graph-2d types.
+ * Ported from legacy-control-plane; adapts imports for atulya's graph-2d types.
  *
  */
 

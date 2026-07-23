@@ -1,5 +1,5 @@
 """
-Regression tests for Group 3 of the hindsight bugfix backport.
+Regression tests for Group 3 of the legacy bugfix backport.
 
 The bug: ``apply_combined_scoring`` treated cross-encoder scores as
 authoritative, so a misconfigured / passthrough reranker that returns the

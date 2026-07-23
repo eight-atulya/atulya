@@ -1,6 +1,6 @@
 """
 Regression tests for the retain pipeline idempotency contract (Group 2 of the
-hindsight bugfix backport).
+legacy bugfix backport).
 
 The bug: the retain pipeline had no documented idempotency guarantee. A retain
 task that crashed after writing chunks would, on retry:

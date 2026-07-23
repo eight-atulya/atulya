@@ -1,6 +1,6 @@
 ---
 name: atulya-system-testing
-description: Run the Atulya repo through end-to-end system testing — toolchain check, lint, Python pytest, Rust cargo check, TypeScript build, control-plane typecheck, OpenAPI + client regen as a contract test, cross-client field smoke test, and hindsight-leak audit. Use when validating a change before commit/PR, after pulling main, before a release, or when the user asks to "run all tests", "verify everything", "system sanity check", or "end-to-end test".
+description: Run the Atulya repo through end-to-end system testing — toolchain check, lint, Python pytest, Rust cargo check, TypeScript build, control-plane typecheck, OpenAPI + client regen as a contract test, cross-client field smoke test, and legacy-leak audit. Use when validating a change before commit/PR, after pulling main, before a release, or when the user asks to "run all tests", "verify everything", "system sanity check", or "end-to-end test".
 ---
 
 # Atulya System Testing
@@ -69,7 +69,7 @@ Copy this checklist and tick items as you go:
 - [ ] 6. OpenAPI + client regen (scripts/generate-clients.sh)
 - [ ] 7. Post-regen rebuild of dependents (cargo, tsc)
 - [ ] 8. Cross-client field smoke test
-- [ ] 9. Hindsight reference audit
+- [ ] 9. legacy reference audit
 - [ ] 10. Report findings to user
 ```
 
@@ -223,13 +223,13 @@ A `0` or `MISS` on any line means that surface didn't pick up the new field —
 either the regen didn't run, the spec doesn't expose the field, or a manual
 hand-patch is needed in that client.
 
-### 9. Hindsight reference audit
+### 9. legacy reference audit
 
-Atulya was forked from `hindsight`. There must be **zero** mentions of
-`hindsight` anywhere in the source tree.
+Atulya was forked from `legacy`. There must be **zero** mentions of
+`legacy` anywhere in the source tree.
 
 ```bash
-grep -ric 'hindsight' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
+grep -ric 'legacy' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
   . 2>/dev/null \
   | grep -v ':0$'
 # (empty output above = clean)
@@ -253,7 +253,7 @@ Template:
 | Control-plane tsc --noEmit | ✅ |
 | Client regen (contract) | ✅ all 4 clients regenerated |
 | Cross-client smoke test | ✅ <field> in all 5 surfaces |
-| Hindsight audit | ✅ zero references |
+| legacy audit | ✅ zero references |
 ```
 
 If anything is amber/red, list the exact file + line, the failure mode, and

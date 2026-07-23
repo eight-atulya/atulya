@@ -1,5 +1,5 @@
 """
-Regression tests for the orphan-observation race fix (Group 1 of the hindsight
+Regression tests for the orphan-observation race fix (Group 1 of the legacy
 bugfix backport).
 
 The bug: consolidation reads a source memory, calls an LLM for several seconds,

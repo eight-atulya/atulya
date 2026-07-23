@@ -1,5 +1,5 @@
 """
-Regression tests for Group 6 of the hindsight bugfix backport: ``max_tokens``
+Regression tests for Group 6 of the legacy bugfix backport: ``max_tokens``
 must be honoured end-to-end through reflect.
 
 Three independent invariants are pinned down here:

@@ -53,7 +53,7 @@ Copy this checklist at the start of any non-trivial task:
 - [ ] 6. If API surface changed: regenerate clients
 - [ ] 7. If clients regenerated: rebuild dependents (cargo, tsc)
 - [ ] 8. Update docs (atulya-docs + skills/atulya-docs)
-- [ ] 9. Hindsight reference audit
+- [ ] 9. legacy reference audit
 - [ ] 10. Report findings + propose commit message (do not commit unsolicited)
 ```
 
@@ -189,14 +189,14 @@ Skipping the skill copy means future agents (including you, next session)
 won't see the documentation. The mirror script is fast (< 1 s) and
 idempotent.
 
-### 9. Hindsight reference audit
+### 9. legacy reference audit
 
 ```bash
-grep -ric 'hindsight' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
+grep -ric 'legacy' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
   . 2>/dev/null | grep -v ':0$'
 ```
 
-Must return empty. If you ported logic from `hindsight`, scrub every
+Must return empty. If you ported logic from `legacy`, scrub every
 reference (paths, comments, docstrings, error messages).
 
 ### 10. Report
@@ -297,7 +297,7 @@ Pydantic boundary parsing, type hints required, comments explain "why" not
 - ✅ Lint passes for files you touched
 - ✅ If API changed: client regen + dependent rebuilds pass
 - ✅ Docs updated in both `atulya-docs/docs/` and `skills/atulya-docs/references/`
-- ✅ Hindsight grep returns zero
+- ✅ legacy grep returns zero
 - ✅ Final report posted
 
 For the heavyweight "ship-it" pre-commit / pre-PR validation, hand off to

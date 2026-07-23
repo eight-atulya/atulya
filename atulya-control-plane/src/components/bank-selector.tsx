@@ -489,13 +489,13 @@ function BankSelectorInner() {
               role="combobox"
               aria-expanded={open}
               id="bank-selector-trigger"
-              className="h-9 w-[250px] justify-between border-2 border-primary font-bold hover:bg-accent"
+              className="h-9 w-[250px] justify-between border-2 border-highlight font-bold text-highlight hover:bg-highlight hover:text-highlight-foreground focus-visible:ring-highlight"
             >
               <span className="truncate">{currentBank || "Select a memory bank..."}</span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[250px] p-0">
+          <PopoverContent className="w-[250px] border-highlight p-0">
             <Command>
               {sortedBanks.length > 0 && <CommandInput placeholder="Search memory banks..." />}
               <CommandList>
@@ -505,6 +505,7 @@ function BankSelectorInner() {
                     <CommandItem
                       key={bank}
                       value={bank}
+                      className="data-[selected=true]:bg-highlight data-[selected=true]:text-highlight-foreground"
                       onSelect={(value) => {
                         setCurrentBank(value);
                         setOpen(false);
@@ -539,7 +540,7 @@ function BankSelectorInner() {
               {/* Footer: Create new bank */}
               <div className="border-t border-border p-1">
                 <button
-                  className="w-full flex items-center gap-2 px-2 py-2 text-sm rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-2 text-sm text-muted-foreground transition-colors hover:bg-highlight hover:text-highlight-foreground"
                   onClick={() => {
                     setOpen(false);
                     setCreateDialogOpen(true);

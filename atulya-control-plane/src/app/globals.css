@@ -22,6 +22,9 @@
   --border: oklch(0.9037 0 0);
   --input: oklch(0.9731 0 0);
   --ring: oklch(0.5 0.2 25);
+  /* Brand highlight: use sparingly for deliberate attention, borders, and focus rings. */
+  --highlight: #ffff00;
+  --highlight-foreground: #000000;
   --chart-1: oklch(0.5 0.2 25);
   --chart-2: oklch(0.55 0.18 20);
   --chart-3: oklch(0.45 0.15 30);
@@ -105,6 +108,8 @@
   --border: #27272a;
   --input: #111113;
   --ring: oklch(0.58 0.2 25);
+  --highlight: #ffff00;
+  --highlight-foreground: #000000;
   --chart-1: oklch(0.58 0.2 25);
   --chart-2: oklch(0.63 0.18 20);
   --chart-3: oklch(0.5 0.15 30);
@@ -160,6 +165,8 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-highlight: var(--highlight);
+  --color-highlight-foreground: var(--highlight-foreground);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -299,6 +306,12 @@ pre {
   background-clip: padding-box;
   backdrop-filter: blur(28px) saturate(1.12);
   -webkit-backdrop-filter: blur(28px) saturate(1.12);
+}
+
+/* Admin chrome uses the brand highlight; bank and landing shells keep neutral frames. */
+.control-plane-shell[data-shell-variant="admin"] > .control-plane-topbar,
+.control-plane-shell[data-shell-variant="admin"] > .control-plane-sidebar-slot {
+  border-color: var(--highlight);
 }
 
 .control-plane-shell {

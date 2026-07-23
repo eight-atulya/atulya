@@ -35,7 +35,7 @@ Use when the user wants a new tunable knob (e.g. `max_observations_per_scope`,
 - [ ] 7. Lint: ./scripts/hooks/lint.sh
 - [ ] 8. Control-plane typecheck:
         ( cd atulya-control-plane && npx tsc --noEmit )
-- [ ] 9. Hindsight grep audit
+- [ ] 9. legacy grep audit
 - [ ] 10. Report
 ```
 
@@ -77,14 +77,14 @@ Use when the user wants a new route (e.g. `POST /v1/banks/{id}/foo`).
          - atulya-docs/docs/developer/api/<area>.mdx
          - bash scripts/generate-docs-skill.sh
 - [ ] 12. MCP tool? If yes, register it in the MCP tool layer.
-- [ ] 13. Hindsight grep
+- [ ] 13. legacy grep
 - [ ] 14. Report with the new endpoint URL + sample curl
 ```
 
 ## Playbook 3 — Port a feature from another repo
 
 Use when the user says "port X from repo Y" (e.g. the recent
-hindsight → atulya port).
+legacy → atulya port).
 
 ```
 - [ ] 1. Locate the source code in the donor repo. Read all files involved.
@@ -254,8 +254,8 @@ bash scripts/generate-docs-skill.sh
 # Start the API + control plane locally on default ports
 ./scripts/dev/start.sh
 
-# Hindsight reference audit (must return empty)
-grep -ric 'hindsight' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
+# legacy reference audit (must return empty)
+grep -ric 'legacy' --include='*.{py,ts,tsx,rs,go,md,json,yaml,yml,sh}' \
   /home/atulya-agent/atulya-agent/atulya 2>/dev/null | grep -v ':0$'
 ```
 
