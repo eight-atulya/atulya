@@ -1,5 +1,48 @@
 """
 Adaptive correction actions for anomaly events.
+
+Purpose
+    Apply automatic, in-transaction remediations for open anomaly events
+    immediately after detection during retain. Currently handles high-severity
+    contradictions (confidence reduction) and causal flaws (suggestions only).
+
+Trigger path
+    - ``engine/retain/orchestrator.retain_batch`` after ``persist_anomalies``,
+      passing new event IDs into ``apply_adaptive_corrections`` on the same conn.
+
+Inputs
+    - Open asyncpg ``conn``, ``bank_id``, list of ``anomaly_event_ids``.
+
+Outputs
+    - Count of corrections applied (inserts + status updates).
+
+Side effects
+    - UPDATE ``memory_units.confidence_score`` for contradiction auto-fix.
+    - INSERT into ``anomaly_corrections`` audit table.
+    - UPDATE ``anomaly_events.status`` to ``resolved`` or ``acknowledged``.
+
+Mutability
+    - Only ``unit_ids[0]`` is adjusted for contradictions (first unit in event).
+    - Causal flaw types do not mutate memory — suggestion JSON only.
+
+Impact radius
+    - Recall ranking via confidence_score changes.
+    - Operator views of anomaly resolution state.
+
+Core logic
+    - ``contradiction`` with severity >= 0.7: multiply confidence by
+      ``(1 - severity * adaptive_alpha(severity))``, clamped [0, 1].
+    - ``flaw_missing_step`` / ``flaw_temporal_violation``: insert
+      ``chain_repair_suggestion`` and mark acknowledged.
+
+Failure modes
+    - Empty ID list returns 0 without queries.
+    - Only processes rows with ``status = 'open'``.
+
+Maintenance notes
+    - Good: add a new branch with matching ``CorrectionType`` and audit row.
+    - Bad: auto-delete memories or links without explicit product approval.
+    - ``_adaptive_alpha`` increases adjustment aggressiveness above severity 0.5.
 """
 
 from __future__ import annotations
@@ -10,6 +53,7 @@ from atulya_api.engine.memory_engine import fq_table
 
 
 def _adaptive_alpha(score: float, alpha_base: float = 0.35) -> float:
+    """Scale correction strength; higher severity → slightly larger alpha."""
     return alpha_base * (1.0 + 0.2 * (score - 0.5))
 
 
@@ -20,7 +64,9 @@ async def apply_adaptive_corrections(
     anomaly_event_ids: list[str],
 ) -> int:
     """
-    Apply in-transaction correction updates for high-severity anomalies.
+    Apply in-transaction correction updates for high-severity open anomalies.
+
+    Returns the number of anomalies that received a correction action.
     """
     if not anomaly_event_ids:
         return 0

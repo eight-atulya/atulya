@@ -1,4 +1,46 @@
-"""Forge job orchestration."""
+"""Forge job orchestration.
+
+Purpose
+    Execute the staged Data Forge pipeline: optional ingest retain, consolidation
+    wait, recipe materialization, quality audit, and optional memory-repo commit.
+
+Trigger path
+    - ``forge/engine.handle_forge_job`` (async worker) calls ``run_forge_job``.
+    - ``stage_callback`` reports progress to operation stage tracking.
+
+Inputs
+    - ``ForgeJobRequest`` with recipe_id, ingest source, quality threshold.
+    - ``operation_id`` becomes ``forge_job_id`` on each ATR record.
+    - ``RequestContext`` for tenant auth and retain/consolidation calls.
+
+Outputs
+    - Dict with audited record JSON, quality summary, exportable count, optional
+      ``repo_commit_id``.
+
+Side effects
+    - ``retain_batch_async`` when ingest sessions present.
+    - ``submit_async_consolidation`` + poll when ``wait_consolidation``.
+    - Recipe may read bank DB via ``ForgeRecipeContext``.
+    - Optional ``commit_memory_repo`` snapshot on completion.
+
+Mutability
+    - ``audited`` records get ``lineage.repo_commit_id`` mutated in-place when
+      repo commit succeeds.
+
+Impact radius
+    - Entire forge job lifecycle, ``forge_records`` persistence, training exports.
+
+Core logic
+    Stages: ingest → purify (consolidation) → recipe → audit → [repo_commit].
+
+Failure modes
+    - ``TimeoutError`` if consolidation pending exceeds 300s.
+    - Zero records logs warning but returns success with empty list.
+
+Maintenance notes
+    - Good: add a stage via ``set_stage`` without changing return contract.
+    - Bad: skip consolidation when recipe depends on observations.
+"""
 
 from __future__ import annotations
 
@@ -33,6 +75,7 @@ async def wait_for_consolidation(
     poll_interval: float = 2.0,
     timeout: float = 300.0,
 ) -> None:
+    """Poll bank stats until ``pending_consolidation`` reaches zero or timeout."""
     start = time.time()
     while True:
         if time.time() - start > timeout:
@@ -53,6 +96,7 @@ async def run_forge_job(
     request_context: "RequestContext",
     stage_callback: Any | None = None,
 ) -> dict[str, Any]:
+    """Run full forge pipeline; ``stage_callback(stage, extra)`` is optional progress hook."""
     async def set_stage(stage: str, extra: dict[str, Any] | None = None) -> None:
         if stage_callback:
             await stage_callback(stage, extra or {})
