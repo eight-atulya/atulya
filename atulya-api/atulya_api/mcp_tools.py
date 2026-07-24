@@ -1,8 +1,65 @@
-"""Shared MCP tool implementations for Atulya.
+"""
+Shared MCP tool implementations for retain, recall, reflect, and bank admin.
 
-This module provides the core tool logic used by both:
-- mcp_local.py (stdio transport for Claude Code)
-- api/mcp.py (HTTP transport for API server)
+Purpose
+-------
+Single source of tool handlers used by both HTTP MCP (``api/mcp.py``) and stdio
+MCP (``mcp_local.py``). Translates MCP JSON arguments into ``MemoryEngine``
+calls with consistent ``RequestContext``, validation, and error shaping.
+
+Trigger path
+------------
+``register_mcp_tools(mcp, memory, config)`` from MCP server setup. Each
+``_register_*`` function binds one FastMCP tool to an async handler.
+
+Inputs
+------
+- ``MCPToolsConfig``: bank_id/api_key/tenant resolvers, tool allowlist,
+  optional custom retain/recall descriptions.
+- Tool arguments from MCP clients (content, query, bank_id when multi-bank).
+- ``OperationValidatorExtension`` may reject before engine runs.
+
+Outputs
+------
+JSON-serializable dicts returned to MCP clients. Errors are caught and returned
+as tool error text where appropriate.
+
+Side effects
+------------
+Full engine side effects per tool: DB writes (retain, CRUD), LLM calls
+(reflect, mental-model refresh), async task enqueue.
+
+Mutability
+----------
+``_get_request_context`` builds fresh ``RequestContext`` per invocation from
+context-var resolvers — handlers must not cache across calls.
+
+Impact radius
+-------------
+~3k lines — largest MCP surface. Parameter changes must mirror ``api/http.py``
+routes and control-plane proxies. Tag group parsing (``_parse_tag_groups``)
+must match HTTP recall schema.
+
+Core logic
+----------
+``register_mcp_tools`` dispatches to per-tool registrars. Bank filtering
+(``_apply_bank_tool_filtering``) hides tools when resolver returns no bank.
+``build_content_dict`` normalizes retain payloads (timestamps, tags, append mode).
+
+Failure modes
+-------------
+``OperationValidationError``, engine exceptions, and ``ValueError`` from tag
+parsing surface to clients. Invalid timestamps return structured errors from
+``build_content_dict``.
+
+Maintenance notes
+-----------------
+Good: add a tool by implementing ``_register_<name>`` and listing it in both
+MCP server ``_ALL_TOOLS`` sets.
+
+Bad: duplicate engine call logic in ``mcp_local.py`` — keep handlers here.
+
+Bad: omit ``RequestContext`` fields when adding metering dimensions.
 """
 
 import json

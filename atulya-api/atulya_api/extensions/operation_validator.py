@@ -1,4 +1,67 @@
-"""Operation Validator Extension for validating retain/recall/reflect/consolidate operations."""
+"""
+Operation validator extension: pre/post hooks for memory operations.
+
+Purpose
+-------
+Defines the ``OperationValidatorExtension`` contract for allow/deny and audit
+hooks around retain, recall, reflect, consolidate, bank CRUD, mental-model
+access, and file conversion. Enables rate limits, quotas, content policy, and
+usage metering without modifying ``MemoryEngine`` core logic.
+
+Trigger path
+------------
+Loaded via ``ATULYA_API_OPERATION_VALIDATOR_EXTENSION``. ``MemoryEngine`` and
+HTTP layer call ``validate_*`` before operations and ``on_*_complete`` after.
+Rejections raise ``OperationValidationError`` (HTTP status from
+``ValidationResult.status_code``).
+
+Inputs
+------
+Typed context dataclasses (``RetainContext``, ``RecallContext``, etc.) carrying
+**all** user-supplied parameters plus ``RequestContext``. Post-hooks receive
+result dataclasses with success flags, token usage, and errors.
+
+Outputs
+-------
+``ValidationResult.accept()`` or ``.reject(reason, status_code)``. Post-hooks
+return None; side effects (logging, billing) happen inside overrides.
+
+Side effects
+------------
+Defined by concrete extension implementations — this module only defines the
+interface and context shapes.
+
+Mutability
+----------
+Context objects are constructed per call; validators should treat them as
+read-only snapshots.
+
+Impact radius
+-------------
+A reject in ``validate_retain`` blocks all retain paths (HTTP, MCP, worker).
+Adding a new engine operation requires a matching validate/on pair here and in
+``MemoryEngine`` call sites.
+
+Core logic
+----------
+Two-phase hook: validate (abstract, must implement for core ops) then optional
+on_complete (default no-op). Context dataclasses separate pre vs post payloads.
+
+Failure modes
+-------------
+``OperationValidationError`` propagates to HTTP 403/429/etc. Missing validator
+means no extension loaded (operations proceed unchecked).
+
+Maintenance notes
+-----------------
+Good: implement only ``validate_*`` and use default post-hooks.
+
+Bad: raise generic Exception — use ``ValidationResult.reject`` for consistent
+status codes.
+
+Bad: omit fields from context dataclasses when adding API parameters — breaks
+policy engines that need full visibility.
+"""
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field

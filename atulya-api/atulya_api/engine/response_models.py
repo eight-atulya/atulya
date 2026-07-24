@@ -1,9 +1,60 @@
 """
-Core response models for Atulya memory system.
+Pydantic contracts for MemoryEngine outputs and reflect traces.
 
-These models define the structure of data returned by the core MemoryEngine class.
-API response models should be kept separate and convert from these core models to maintain
-API stability even if internal models change.
+Purpose
+-------
+Defines the internal result shapes returned by ``MemoryEngine`` (recall, reflect,
+retain side-effects, mental models, directives) before HTTP/MCP layers map them
+to public API schemas. Keeps engine logic decoupled from OpenAPI response models
+in ``api/http.py``.
+
+Trigger path
+------------
+Constructed inside ``MemoryEngine``, recall/reflect pipelines, MCP tools
+(``mcp_tools.py``), and operation-validator post-hooks. HTTP routes convert
+these to API-facing Pydantic models at the boundary.
+
+Inputs
+------
+Raw rows, LLM outputs, and in-memory structures from search, reflect agent
+loops, and consolidation. ``VALID_RECALL_FACT_TYPES`` gates recall filters.
+
+Outputs
+-------
+Typed models (``RecallResult``, ``ReflectResult``, ``MentalModel``, traces)
+consumed by callers. No persistence — serialization happens upstream.
+
+Side effects
+------------
+None. Models are immutable value objects after construction.
+
+Mutability
+----------
+Pydantic models are treated as immutable at call sites; lists/dicts inside
+fields should not be mutated in place after return.
+
+Impact radius
+-------------
+Changing field names or semantics breaks MCP tool JSON, control-plane proxies,
+operation-validator hooks, and tests that assert on engine outputs. API layer
+may shield external clients only if converters are updated in the same change.
+
+Core logic
+----------
+Captures evidence bundles for recall (facts, entities, chunks, traces) and
+reflect (answer, tool/LLM traces, directive/observation refs, token usage).
+
+Failure modes
+-------------
+Validation errors at model construction indicate engine bugs or schema drift.
+Deprecated ``opinion`` fact type is excluded from ``VALID_RECALL_FACT_TYPES``.
+
+Maintenance notes
+-----------------
+Good: add optional fields with defaults to extend traces without breaking MCP.
+
+Bad: rename ``ReflectResult`` fields without updating ``reflect_serialization.py``
+and control-plane types.
 """
 
 from typing import Any

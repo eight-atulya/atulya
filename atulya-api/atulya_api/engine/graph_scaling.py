@@ -1,3 +1,63 @@
+"""
+Graph intelligence UI scaling: summaries, neighborhoods, and render modes.
+
+Purpose
+-------
+Transforms full graph-intelligence payloads into control-plane-friendly
+summaries and focused neighborhoods so large banks remain navigable in the
+graph UI. Selects detail/compact/overview modes by node counts and caps
+rendered nodes/edges.
+
+Trigger path
+------------
+Called from ``MemoryEngine`` graph-intelligence HTTP handlers when clients
+request summary or neighborhood views (lazy import inside engine methods).
+Tests in ``tests/test_graph_intelligence.py``.
+
+Inputs
+------
+- ``GraphIntelligenceResponse`` or evidence graph dict from ``graph_intelligence``.
+- Config limits: ``DETAIL_NODE_LIMIT``, ``COMPACT_NODE_LIMIT``, neighborhood caps.
+- Node status, change scores, entity tokens for clustering.
+
+Outputs
+------
+``GraphSummaryResponse``, ``GraphNeighborhoodResponse`` with display labels,
+status tones, bundled edges, and focus hints for the UI canvas.
+
+Side effects
+------------
+None — pure transformation of in-memory graph structures.
+
+Mutability
+----------
+Input graph objects must not be mutated; builders construct new Pydantic models.
+
+Impact radius
+-------------
+Changing limits or ``select_graph_render_mode`` thresholds alters UI behavior
+for all banks at scale. Status tone mapping affects conflict/stale highlighting.
+
+Core logic
+----------
+``select_graph_render_mode(total_nodes)`` picks mode. ``build_state_graph_summary``
+/ ``build_evidence_graph_summary`` cluster and rank nodes; neighborhood builders
+BFS-expand from focus IDs within caps.
+
+Failure modes
+-------------
+Empty graphs return valid empty summaries. Missing node refs in neighborhood
+requests may yield partial subgraphs.
+
+Maintenance notes
+-----------------
+Good: tune caps via constants at module top with test updates.
+
+Bad: push unbounded full graphs to the client — use summary/neighborhood paths.
+
+Bad: change ``GraphStatusTone`` values without updating control-plane styles.
+"""
+
 from __future__ import annotations
 
 from collections import defaultdict, deque
@@ -117,6 +177,7 @@ class GraphNeighborhoodResponse(BaseModel):
 
 
 def select_graph_render_mode(total_nodes: int) -> GraphRenderMode:
+    """Pick detail/compact/overview from total node count using module caps."""
     if total_nodes > COMPACT_NODE_LIMIT:
         return "overview"
     if total_nodes > DETAIL_NODE_LIMIT:
@@ -187,6 +248,7 @@ def _cluster_edge_id(source_id: str, target_id: str, label: str | None) -> str:
 
 
 def build_state_graph_summary(graph: GraphIntelligenceResponse) -> GraphSummaryResponse:
+    """Build UI summary for state-surface graph: top nodes, clusters, bundled edges."""
     mode_hint = select_graph_render_mode(graph.total_nodes)
     top_nodes = sorted(
         graph.nodes,

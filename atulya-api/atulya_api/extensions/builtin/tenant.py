@@ -1,4 +1,56 @@
-"""Built-in tenant extension implementations."""
+"""
+Built-in ``TenantExtension`` implementations for single-tenant deployments.
+
+Purpose
+-------
+Provides default auth strategies shipped with Atulya: no-auth single schema
+(``DefaultTenantExtension``), shared API-key gate (``ApiKeyTenantExtension``),
+and superuser key layering (``SuperuserTenantExtension``).
+
+Trigger path
+------------
+Selected via ``ATULYA_API_TENANT_EXTENSION`` (see each class docstring).
+``DefaultTenantExtension`` is the implicit fallback when no extension is
+configured. ``SuperuserTenantExtension`` wraps a delegate (usually
+``ApiKeyTenantExtension``) for admin bypass keys.
+
+Inputs
+------
+- ``ATULYA_API_DATABASE_SCHEMA``, ``ATULYA_API_TENANT_API_KEY``,
+  ``ATULYA_API_SUPERUSER_KEY``, ``ATULYA_API_TENANT_MCP_AUTH_DISABLED``.
+- ``RequestContext.api_key`` per request.
+
+Outputs
+------
+``TenantContext`` with schema and optional ``role="superuser"``.
+
+Side effects
+------------
+None beyond auth decisions. ``mcp_auth_disabled`` allows unauthenticated MCP
+when explicitly enabled (back-compat only).
+
+Mutability
+----------
+Extensions cache schema at ``__init__``; env changes require process restart.
+
+Impact radius
+-------------
+Wrong extension class or leaked API keys expose entire schema. Superuser key
+comparison uses ``hmac.compare_digest`` — preserve timing-safe checks.
+
+Failure modes
+-------------
+``ValueError`` at startup if required keys missing. ``AuthenticationError`` on
+bad API key at request time.
+
+Maintenance notes
+-----------------
+Good: implement custom ``TenantExtension`` for per-key schema routing.
+
+Bad: disable MCP auth in production without network-level protection.
+
+Bad: add insecure superuser key fallbacks — startup must fail closed.
+"""
 
 from atulya_api.auth import fq
 from atulya_api.config import get_config
